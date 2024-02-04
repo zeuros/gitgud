@@ -1,0 +1,43 @@
+{
+  "applicationId": "js.neutralino.zero",
+  "version": "1.0.0",
+  "defaultMode": "window",
+  "documentRoot": "/build/browser/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "nativeAllowList": [
+    "app.*",
+    "os.*",
+    "filesystem.*",
+    "debug.log"
+  ],
+  "modes": {
+    "window": {
+      "title": "neutralino-angular",
+      "width": 800,
+      "height": 500,
+      "minWidth": 400,
+      "minHeight": 200,
+      "center": true,
+      "fullScreen": false,
+      "alwaysOnTop": false,
+      "icon": "/angular-src/src/assets/icon.png",
+      "enableInspector": true,
+      "borderless": false,
+      "maximize": false,
+      "hidden": false,
+      "resizable": true,
+      "exitProcessOnClose": false,
+      "useSavedState": true
+    }
+  },
+  "cli": {
+    "binaryName": "neutralino-angular",
+    "resourcesPath": "/build/browser",
+    "clientLibrary": "/build/browser/assets/neutralino.js",
+    "extensionsPath": "/extensions/",
+    "binaryVersion": "5.1.0",
+    "clientVersion": "5.1.0"
+  }
+}
