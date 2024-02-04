@@ -1,19 +1,13 @@
 import { Injectable } from '@angular/core';
-import { StorePlace } from "../enums/store-place.enum";
+import { StorageName } from "../enums/storage-name.enum";
 
 @Injectable({
-  providedIn: 'root'
+    providedIn: 'root'
 })
 export class SettingsService {
 
-  constructor() { }
+    store = (where: StorageName, item: any) => localStorage.setItem(where, JSON.stringify(item));
 
-  store(where: StorePlace, item: any) {
-    localStorage.setItem(item, JSON.stringify(item));
-  }
-
-  get<T>(where: StorePlace): T {
-    return JSON.parse(localStorage.getItem(where)!);
-  }
+    get = <T>(where: StorageName): T | undefined => JSON.parse(localStorage.getItem(where)!);
 
 }

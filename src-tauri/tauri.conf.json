@@ -13,8 +13,17 @@
     "allowlist": {
       "all": false,
       "shell": {
-        "all": false,
+        "all": true,
         "open": true
+      },
+      "path": {
+        "all": true
+      },
+      "dialog": {
+        "all": true
+      },
+      "fs": {
+        "all": true
       }
     },
     "bundle": {

@@ -1,0 +1,11 @@
+<div class="open-folder-btn-container">
+    <p-button pRipple label="Open" [text]="true" (click)="gitRepositoryService.openRepository()"
+              icon="pi pi-folder" size="large" [outlined]="false" [rounded]="false"/>
+</div>
+
+<p-tabView [activeIndex]="selectedGitRepositoryIndex" (activeIndexChange)="changeSelectedGitRepositoryIndex($event)"
+           [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings">
+    <p-tabPanel [header]="repository.name" [closable]="true" *ngFor="let repository of gitRepositoryService.repositories$ | async">
+        <gitgud-repository [repositoryFolder]="repository.directory"></gitgud-repository>
+    </p-tabPanel>
+</p-tabView>

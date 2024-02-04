@@ -1,0 +1,33 @@
+
+:host ::ng-deep {
+  .p-tabview-panels {
+    padding: 0;
+  }
+
+  .p-tabview-nav-container {
+    margin-left: 150px;
+  }
+}
+
+.open-folder-btn-container {
+  width: 150px;
+  height: 47px;
+  float: left;
+  justify-content: center;
+  display: flex;
+
+  ::ng-deep p-button {
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+
+
+    button {
+      &:focus {
+        box-shadow: none;
+      }
+
+      width: 100%;
+    }
+  }
+}
