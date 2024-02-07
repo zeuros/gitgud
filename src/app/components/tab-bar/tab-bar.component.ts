@@ -40,4 +40,5 @@ export class TabBarComponent {
     changeSelectedGitRepositoryIndex = (index: number) => this.settingsService.store(StorageName.SelectedGitRepository, index);
 
 
+    removeRepository = (repositoryIndex: number) => this.gitRepositoryService.removeRepository(this.gitRepositoryService.repositories[repositoryIndex].directory);
 }

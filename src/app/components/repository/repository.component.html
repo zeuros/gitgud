@@ -1,4 +1,4 @@
-<p-splitter [panelSizes]="[20, 50, 30]" [minSizes]="[15, 40, 15]">
+<p-splitter [panelSizes]="repository?.sizes ?? []" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event.sizes)">
     <ng-template pTemplate>
         <gitgud-remote-panel class="col flex align-items-center justify-content-center"></gitgud-remote-panel>
     </ng-template>

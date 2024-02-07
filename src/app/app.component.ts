@@ -22,4 +22,5 @@ export class AppComponent {
         from(invoke<string>("greet", {name}))
             .subscribe(text => this.greetingMessage = text);
     }
+
 }

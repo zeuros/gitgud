@@ -28,7 +28,8 @@
             "assets": ["src/assets"],
             "styles": [
               "src/styles.scss",
-              "node_modules/typeface-muli/index.css"
+              "node_modules/typeface-muli/index.css",
+              "node_modules/font-awesome/css/font-awesome.min.css"
             ]
           },
           "configurations": {

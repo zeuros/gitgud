@@ -4,8 +4,8 @@
 </div>
 
 <p-tabView [activeIndex]="selectedGitRepositoryIndex" (activeIndexChange)="changeSelectedGitRepositoryIndex($event)"
-           [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings">
-    <p-tabPanel [header]="repository.name" [closable]="true" *ngFor="let repository of gitRepositoryService.repositories$ | async">
-        <gitgud-repository [repositoryFolder]="repository.directory"></gitgud-repository>
+           [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings" (onClose)="removeRepository($event.index)">
+    <p-tabPanel [header]="repository.name" [closable]="true" *ngFor="let repository of gitRepositoryService.repositories" >
+        <gitgud-repository [repository]="repository"></gitgud-repository>
     </p-tabPanel>
 </p-tabView>
