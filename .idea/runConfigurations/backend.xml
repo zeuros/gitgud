@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="backend" type="NodeJSConfigurationType" activateToolWindowBeforeRun="false" path-to-node="$USER_HOME$/AppData/Roaming/npm/neu.cmd" node-parameters="run" working-dir="$PROJECT_DIR$/backend">
+    <method v="2" />
+  </configuration>
+</component>

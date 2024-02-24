@@ -1,7 +1,6 @@
-# Tauri + Angular
 
-This template should help get you started developing with Tauri and Angular.
+# Gitting started
 
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) + [Angular Language Service](https://marketplace.visualstudio.com/items?itemName=Angular.ng-template).
+- Install Neutralino & Angular CLIs (ng & neu available in CLI)
+- `npm i` in frontend
+- Run frontend / backend project targets
