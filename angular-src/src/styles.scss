@@ -1,7 +1,4 @@
-// Global styles
 
-body {
-  padding: 0;
-  margin: 0;
-  background: #1c1e23;
-}
+@import "primeng/resources/themes/bootstrap4-dark-purple/theme.css";
+
+@import "app/app-wide-styles/global";

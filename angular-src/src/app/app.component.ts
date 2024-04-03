@@ -1,12 +1,12 @@
 import {Component} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {RouterOutlet} from '@angular/router';
-import {SampleComponent} from "./components/sample-component/sample.component";
+import {TabBarComponent} from "./components/tab-bar/tab-bar.component";
 
 @Component({
     selector: 'app-root',
     standalone: true,
-    imports: [CommonModule, RouterOutlet, SampleComponent],
+    imports: [CommonModule, RouterOutlet, TabBarComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
