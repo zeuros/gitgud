@@ -6,6 +6,10 @@ import {AvatarModule} from "primeng/avatar";
 import {TabViewModule} from "primeng/tabview";
 import {StorePlace} from "../../enums/store-place.enum";
 import {SettingsService} from "../../services/settings.service";
+import {GitRepositoryService} from "../../services/git-repository.service";
+import {RepositoryComponent} from "../repository/repository.component";
+import {RippleModule} from "primeng/ripple";
+import {NgForOf} from "@angular/common";
 
 @Component({
     selector: 'gitgud-tab-bar',
@@ -14,7 +18,10 @@ import {SettingsService} from "../../services/settings.service";
         ToolbarModule,
         SplitButtonModule,
         AvatarModule,
-        TabViewModule
+        TabViewModule,
+        RepositoryComponent,
+        RippleModule,
+        NgForOf,
     ],
     templateUrl: './tab-bar.component.html',
     styleUrl: './tab-bar.component.scss'
@@ -24,7 +31,8 @@ export class TabBarComponent {
     selectedRepoIndex;
 
     constructor(
-        settingsService: SettingsService
+        private settingsService: SettingsService,
+        protected gitRepositoryService: GitRepositoryService,
     ) {
         this.selectedRepoIndex = settingsService.get<number>(StorePlace.SelectedGitRepository)
     }
@@ -41,4 +49,9 @@ export class TabBarComponent {
     ];
 
 
+    removeRepository = (repositoryIndex: number) => this.gitRepositoryService.removeRepository(this.gitRepositoryService.repositories[repositoryIndex].directory);
+
+    selectGitRepository(indexOfRepo: number) {
+        // ...
+    }
 }

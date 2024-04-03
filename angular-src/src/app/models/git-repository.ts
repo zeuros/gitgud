@@ -1,4 +1,5 @@
 export interface GitRepository {
+    directory: string, // Identify the directory (like an id)
     name: string,
-    directory: string
+    sizes: number[] // panels sizes
 }

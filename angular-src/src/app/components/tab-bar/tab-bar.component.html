@@ -1,9 +1,14 @@
-<p-tabView [(activeIndex)]="selectedRepoIndex" [scrollable]="true">
-    <p-tabPanel header="Header 1"> Content 1 </p-tabPanel>
-    <p-tabPanel header="Header 2">
-        <ng-template pTemplate="content"> Complex Content to Lazy Load </ng-template>
+<div class="open-folder-btn-container">
+    <p-button pRipple label="Open" [text]="true" (click)="gitRepositoryService.openRepository()"
+              icon="pi pi-folder" size="large" [outlined]="false" [rounded]="false"/>
+</div>
+
+<p-tabView [activeIndex]="selectedRepoIndex" (activeIndexChange)="selectGitRepository($event)"
+           [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings" (onClose)="removeRepository($event.index)">
+    <p-tabPanel [header]="repository.name" [closable]="true" *ngFor="let repository of gitRepositoryService.repositories">
+        <gitgud-repository [repository]="repository"></gitgud-repository>
     </p-tabPanel>
     <p-tabPanel header="Header 3">
-        <ng-template pTemplate="content"> Complex Content to Lazy Load </ng-template>
+        <ng-template pTemplate="content"> Complex Content to Lazy Load</ng-template>
     </p-tabPanel>
 </p-tabView>
