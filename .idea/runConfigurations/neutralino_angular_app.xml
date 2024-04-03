@@ -1,5 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="neutralino-angular-app" type="NodeJSConfigurationType" activateToolWindowBeforeRun="false" application-parameters=" -- --remote-debugging-port=5555" path-to-node="$USER_HOME$/AppData/Roaming/npm/neu.cmd" node-parameters="run" working-dir="$PROJECT_DIR$">
-    <method v="2" />
-  </configuration>
-</component>
