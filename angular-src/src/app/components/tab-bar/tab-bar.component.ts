@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
-import { ToolbarModule } from "primeng/toolbar";
-import { SplitButtonModule } from "primeng/splitbutton";
-import { MenuItem } from "primeng/api";
-import { AvatarModule } from "primeng/avatar";
-import { TabViewModule } from "primeng/tabview";
-import { SettingsService } from "../../services/settings.service";
-import { StorePlace } from "../../enums/store-place.enum";
+import {Component} from '@angular/core';
+import {ToolbarModule} from "primeng/toolbar";
+import {SplitButtonModule} from "primeng/splitbutton";
+import {MenuItem} from "primeng/api";
+import {AvatarModule} from "primeng/avatar";
+import {TabViewModule} from "primeng/tabview";
+import {StorePlace} from "../../enums/store-place.enum";
+import {SettingsService} from "../../services/settings.service";
 
 @Component({
     selector: 'gitgud-tab-bar',
@@ -26,7 +26,7 @@ export class TabBarComponent {
     constructor(
         settingsService: SettingsService
     ) {
-        this.selectedRepoIndex = settingsService.get<number>(StorePlace.SelectedRepo)
+        this.selectedRepoIndex = settingsService.get<number>(StorePlace.SelectedGitRepository)
     }
 
     items: MenuItem[] = [

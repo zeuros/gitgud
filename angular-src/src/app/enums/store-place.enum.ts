@@ -1,3 +1,4 @@
 export enum StorePlace {
-    SelectedRepo = 'SelectedRepo',
+    GitRepositories = 'GitRepositories',
+    SelectedGitRepository = 'SelectedGitRepository',
 }
