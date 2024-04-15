@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="build-watch-angular" type="js.build_tools.npm">
-    <package-json value="$PROJECT_DIR$/angular-src/package.json" />
+  <configuration default="false" name="run" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/package.json" />
     <command value="run" />
     <scripts>
-      <script value="watch" />
+      <script value="start:electron" />
     </scripts>
     <node-interpreter value="project" />
     <envs />

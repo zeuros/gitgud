@@ -1,11 +1,15 @@
 {
   "name": "gitgud",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "main": "main.js",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --configuration development",
+    "start": "ng serve",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development"
+    "test": "ng test",
+    "lint": "ng lint",
+    "e2e": "ng e2e",
+    "start:electron": "ng build --base-href ./ && electron ."
   },
   "private": true,
   "dependencies": {
@@ -30,8 +34,8 @@
     "@angular-devkit/build-angular": "^17.3.1",
     "@angular/cli": "^17.3.1",
     "@angular/compiler-cli": "^17.3.1",
-    "@neutralinojs/lib": "^5.1.0",
     "@types/jasmine": "~5.1.0",
+    "electron": "^29.1.6",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",

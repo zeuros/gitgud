@@ -1,52 +1,22 @@
-# Developer tools' files
-.lite_workspace.lua
 
-# Neutralinojs binaries and builds
-/bin
-/dist
-.tmp
-build
+# Dependencies
+node_modules
+dist
 
-# Neutralinojs client (minified)
-neutralino.js
+# Miscellaneous
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+/reports
+/src/translations/template.*
+/.angular/cache
+.sass-cache/
 
-# Neutralinojs related files
-.storage
-*.log
-
-
-# User-specific stuff:
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/vcs.xml
-.idea/jsLibraryMappings.xml
-
-# Sensitive or high-churn files:
-.idea/dataSources.ids
-.idea/dataSources.xml
-.idea/dataSources.local.xml
-.idea/sqlDataSources.xml
-.idea/dynamic.xml
-.idea/uiDesigner.xml
-.idea/sonarlint
-
-# Gradle:
-.idea/gradle.xml
-.idea/libraries
-
-# Mongo Explorer plugin:
-.idea/mongoSettings.xml
-
-## File-based project format:
-*.iws
-
-## Plugin-specific files:
-
-# IntelliJ
-/out/
-
-# mpeltonen/sbt-idea plugin
-.idea_modules/
-
-*.iml
-modules.xml
+# System files
+.DS_Store
+Thumbs.db
