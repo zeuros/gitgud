@@ -1,11 +1,11 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="run" type="js.build_tools.npm">
+  <configuration default="false" name="watch" type="js.build_tools.npm">
     <package-json value="$PROJECT_DIR$/package.json" />
     <command value="run" />
     <scripts>
-      <script value="start:electron" />
+      <script value="watch:electron" />
     </scripts>
-    <node-interpreter value="project" />
+    <node-interpreter value="$PROJECT_DIR$/../../../../Program Files/nodejs/node" />
     <envs />
     <method v="2" />
   </configuration>

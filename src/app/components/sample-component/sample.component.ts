@@ -1,23 +1,21 @@
 import {Component} from '@angular/core';
-import {ElectronService} from "ngx-electron";
-import * as electron from "electron";
+import {ipcMain} from 'electron';
 
 @Component({
     selector: 'app-sample-component',
     standalone: true,
     templateUrl: './sample.component.html',
-    styleUrl: './sample.component.scss'
+    styleUrl: './sample.component.scss',
 })
 export class SampleComponent {
 
-    constructor(
-        private electron: ElectronService
-    ) {
+    constructor() {
     }
 
-
     protected test = () => {
-        this.electron.ipcRenderer.sendSync('git-clone', 'https://github.com/torch2424/made-with-webassembly.git', 'folder')
+        debugger
+        console.log((window as any).versions.node());
+        //ipcRenderer.sendSync('git-clone', 'https://github.com/torch2424/made-with-webassembly.git', 'folder')
     };
 
 }
