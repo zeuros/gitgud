@@ -5,14 +5,13 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --base-href ./",
     "rebuild": "electron-rebuild",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "angular:watch": "ng build --watch --base-href ./",
-    "watch:electron": "npm run start:electron && npm run angular:watch",
-    "start:electron": "electron ."
+    "electron:dev": "electron . --dev",
+    "run:dev": "concurrently \"ng serve\" \"electron .\""
   },
   "private": true,
   "dependencies": {
@@ -39,6 +38,7 @@
     "@angular/cli": "^17.3.1",
     "@angular/compiler-cli": "^17.3.1",
     "@types/jasmine": "~5.1.0",
+    "concurrently": "^8.2.2",
     "electron": "^29.3.0",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
