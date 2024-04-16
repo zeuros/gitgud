@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="watch" type="js.build_tools.npm">
+  <configuration default="false" name="run:dev" type="js.build_tools.npm">
     <package-json value="$PROJECT_DIR$/package.json" />
     <command value="run" />
     <scripts>
-      <script value="watch:electron" />
+      <script value="run:dev" />
     </scripts>
     <node-interpreter value="$PROJECT_DIR$/../../../../Program Files/nodejs/node" />
     <envs />

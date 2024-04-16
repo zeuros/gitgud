@@ -1,5 +1,8 @@
 import {Component} from '@angular/core';
 import {ipcMain} from 'electron';
+import {GitTools} from "../../models/git-tools";
+import {catchError, from} from "rxjs";
+import {GitToolsService} from "../../services/git-tools.service";
 
 @Component({
     selector: 'app-sample-component',
@@ -9,13 +12,12 @@ import {ipcMain} from 'electron';
 })
 export class SampleComponent {
 
-    constructor() {
+    constructor(
+        protected gitToolsService: GitToolsService,
+    ) {
     }
 
-    protected test = () => {
-        debugger
-        console.log((window as any).versions.node());
-        //ipcRenderer.sendSync('git-clone', 'https://github.com/torch2424/made-with-webassembly.git', 'folder')
-    };
+    protected test = () => this.gitToolsService.clone('https://github.com/isomorphic-git/lightning-fs', 'C:/test-repo')
+            .subscribe(() => console.log('repo cloned !'));
 
 }

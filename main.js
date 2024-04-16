@@ -9,8 +9,8 @@ let mainWindow
 
 const createWindow = () => {
     mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 2600,
+        height: 1600,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             allowEval: true,
@@ -18,13 +18,9 @@ const createWindow = () => {
         }
     })
 
-    mainWindow.loadURL(
-        url.format({
-            pathname: path.join(__dirname, `/dist/index.html`),
-            protocol: "file:",
-            slashes: true
-        })
-    );
+
+    // Dev stuff (todo: don't put it for prod builds)
+    mainWindow.loadURL("http://localhost:4200/");
     // Open the DevTools.
     mainWindow.webContents.openDevTools()
 
@@ -42,9 +38,7 @@ app.on('activate', function () {
 })
 
 
-const dir = path.join(process.cwd(), 'test-clone')
-ipcMain.on('git-clone', async (event, ...args) => {
-    console.log('ttest');
-    //const dir = path.join(process.cwd(), 'test-clone')
-    //event.returnValue = await git.clone({fs, http, dir, url: 'https://github.com/isomorphic-git/lightning-fs'});
-});
+ipcMain.handle('git-clone', async (event, url, dir) => await git.clone({fs, http, dir, url}));
+ipcMain.handle('sample-error', async (event, ...args) => {throw 'wops !';});
+
+
