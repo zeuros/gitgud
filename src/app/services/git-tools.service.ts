@@ -1,12 +1,17 @@
 import {Injectable} from '@angular/core';
 import {GitTools} from "../models/git-tools";
 import {from} from "rxjs";
+import {MessageService} from "primeng/api";
 
 @Injectable({
     providedIn: 'root'
 })
 export class GitToolsService {
 
+    constructor(
+        private messageService: MessageService,
+    ) {
+    }
     // Git tools is an ipc api
     private gitTools = (window as any).gitTools as GitTools;
 
@@ -14,7 +19,8 @@ export class GitToolsService {
     sampleError = () => from(this.gitTools.sampleError().catch(this.doProperErrorManagement));
 
     private doProperErrorManagement = (e: any) => {
-        console.error(e); // TODO: proper error management
+        const backendErrorMessage = e.toString().replace(/Error: Error invoking remote method (.*):/, ''); // TODO: show this in popup service:
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: backendErrorMessage });
         console.error(e);
     }
 
