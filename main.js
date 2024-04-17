@@ -20,9 +20,20 @@ const createWindow = () => {
         }
     })
 
+<<<<<<< HEAD
 
     // Dev stuff (todo: don't put it for prod builds)
     mainWindow.loadURL("http://localhost:4200/");
+=======
+    fdsqf
+    mainWindow.loadURL(
+        url.format({
+            pathname: path.join(__dirname, `/dist/index.html`),
+            protocol: "file:",
+            slashes: true
+        })
+    );
+>>>>>>> 947d908 (autrecommit)
     // Open the DevTools.
     mainWindow.webContents.openDevTools()
 
