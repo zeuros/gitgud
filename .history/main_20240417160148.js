@@ -13,7 +13,6 @@ function createWindow() {
         }
     })
 
-    fdsqf
     mainWindow.loadURL(
         url.format({
             pathname: path.join(__dirname, `/dist/index.html`),
