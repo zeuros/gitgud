@@ -8,6 +8,8 @@ const fs = require('fs')
 let mainWindow
 
 const createWindow = () => {
+
+    
     mainWindow = new BrowserWindow({
         width: 2600,
         height: 1600,
