@@ -1,8 +1,6 @@
 import {Component} from '@angular/core';
-import {ipcMain} from 'electron';
-import {GitTools} from "../../models/git-tools";
-import {catchError, from} from "rxjs";
 import {GitToolsService} from "../../services/git-tools.service";
+import {PopupService} from "../../services/popup.service";
 
 @Component({
     selector: 'app-sample-component',
@@ -14,10 +12,11 @@ export class SampleComponent {
 
     constructor(
         protected gitToolsService: GitToolsService,
+        protected popupService: PopupService,
     ) {
     }
 
     protected test = () => this.gitToolsService.clone('https://github.com/isomorphic-git/lightning-fs', 'C:/test-repo')
-            .subscribe(() => console.log('repo cloned !'));
+        .subscribe(() => this.popupService.info('Repository cloned'));
 
 }
