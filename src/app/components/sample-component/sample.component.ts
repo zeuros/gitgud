@@ -12,11 +12,8 @@ export class SampleComponent {
 
     constructor(
         protected gitToolsService: GitToolsService,
-        protected popupService: PopupService,
     ) {
     }
 
-    protected test = () => this.gitToolsService.clone('https://github.com/isomorphic-git/lightning-fs', 'C:/test-repo')
-        .subscribe(() => this.popupService.info('Repository cloned'));
 
 }

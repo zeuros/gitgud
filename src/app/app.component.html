@@ -1,6 +1,9 @@
 <div class="app-container">
 
-    <app-sample-component></app-sample-component>
+    <div class="flex">
+        <p-button label="yoooo" icon="pi pi-plus-circle" (onClick)="showOpenOrCloneModal()"/>
+        <p-tabMenu [model]="repositoriesTabs" [(activeItem)]="activeItemIndex"/>
+    </div>
 
 </div>
 
