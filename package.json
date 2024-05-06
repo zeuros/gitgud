@@ -2,6 +2,7 @@
   "name": "gitgud",
   "version": "1.0.0",
   "main": "main.js",
+  "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -14,7 +15,6 @@
     "angular:dev": "ng serve",
     "run:dev-all": "concurrently \"ng serve\" \"electron .\""
   },
-  "private": true,
   "dependencies": {
     "@angular/animations": "^17.3.1",
     "@angular/common": "^17.3.1",
