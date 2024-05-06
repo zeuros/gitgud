@@ -1,0 +1,6 @@
+
+<div class="flex gap-3">
+    <p-button label="Open existing repository" icon="pi pi-folder" (onClick)="openExistingRepository()"/>
+    <p-button label="Clone repory" icon="pi pi-folder" (onClick)="showOpenOrCloneModal()"/>
+    <p-tabMenu [model]="repositoriesTabs" [(activeItem)]="activeItemIndex"/>
+</div>

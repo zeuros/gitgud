@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {GitToolsService} from "../../../services/git-tools.service";
+import {ElectronIpcApiService} from "../../../services/electron-ipc-api.service";
 import {PopupService} from "../../../services/popup.service";
 import {FieldsetModule} from "primeng/fieldset";
 import {ButtonModule} from "primeng/button";
@@ -29,13 +29,13 @@ export class CloneOrOpenDirectoryDialogComponent {
     repositoryUrl?: string;
 
     constructor(
-        private gitToolsService: GitToolsService,
+        private electronIpcApiService: ElectronIpcApiService,
         private popupService: PopupService,
     ) {
 
     }
 
-    protected clone = () => this.gitToolsService.clone('https://github.com/isomorphic-git/lightning-fs', 'C:/test-repo')
+    protected clone = () => this.electronIpcApiService.clone('https://github.com/isomorphic-git/lightning-fs', 'C:/test-repo')
         .subscribe(() => this.popupService.info('Repository cloned'));
 
 }

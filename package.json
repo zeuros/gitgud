@@ -11,7 +11,8 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "electron:dev": "electron . --dev",
-    "run:dev": "concurrently \"ng serve\" \"electron .\""
+    "angular:dev": "ng serve",
+    "run:dev-all": "concurrently \"ng serve\" \"electron .\""
   },
   "private": true,
   "dependencies": {
