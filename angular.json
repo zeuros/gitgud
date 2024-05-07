@@ -15,7 +15,7 @@
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
-      "prefix": "app",
+      "prefix": "gitgud",
       "schematics": {},
       "architect": {
         "build": {

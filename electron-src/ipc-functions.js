@@ -67,7 +67,7 @@ const bindIpcFunctions = () => {
     ipcMain.handle('git-list-remotes', async (event, args) => await git.listRemotes(args));
     ipcMain.handle('git-list-server-refs', async (event, args) => await git.listServerRefs(args));
     ipcMain.handle('git-list-tags', async (event, args) => await git.listTags(args));
-    ipcMain.handle('git-log', async (event, dir, depth = 1) => await git.log({fs, dir, depth}));
+    ipcMain.handle('git-log', async (event, args) => await git.log({...args, fs}));
     ipcMain.handle('git-merge', async (event, args) => await git.merge(args));
     ipcMain.handle('git-pack-objects', async (event, args) => await git.packObjects(args));
     ipcMain.handle('git-pull', async (event, args) => await git.pull(args));

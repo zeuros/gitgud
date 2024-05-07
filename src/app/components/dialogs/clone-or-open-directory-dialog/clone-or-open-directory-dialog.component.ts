@@ -10,7 +10,7 @@ import {PanelModule} from "primeng/panel";
 import {CardModule} from "primeng/card";
 
 @Component({
-    selector: 'app-clone-or-open-directory-dialog',
+    selector: 'gitgud-clone-or-open-directory-dialog',
     standalone: true,
     imports: [
         FieldsetModule,

@@ -5,3 +5,12 @@ body {
   background: #1c1e23;
 }
 
+.space-between {
+  justify-content: space-between;
+}
+
+.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+}

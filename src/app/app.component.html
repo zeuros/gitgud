@@ -1,6 +1,21 @@
-<div class="app-container">
+<div>
 
-    <app-top-bar/>
+    <gitgud-top-bar class="float-left"/>
+
+    <p-tabView
+            [activeIndex]="gitRepositoryService.activeIndex == -1 ? 0 : gitRepositoryService.activeIndex"
+            (activeIndexChange)="gitRepositoryService.selectRepositoryByIndex($event)"
+            [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings">
+        <p-tabPanel
+                *ngFor="let repository of gitRepositoryService.repositories"
+                (close)="gitRepositoryService.removeRepository(repository)"
+                [leftIcon]="'fa fa-code-fork'"
+                [header]="repository.name"
+                [closable]="true">
+            <gitgud-repository-view [gitRepository]="repository"/>
+        </p-tabPanel>
+
+    </p-tabView>
 
 </div>
 

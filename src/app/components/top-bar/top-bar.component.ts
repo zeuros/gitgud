@@ -2,13 +2,12 @@ import {Component} from '@angular/core';
 import {DialogModule} from "primeng/dialog";
 import {ButtonModule} from "primeng/button";
 import {TabMenuModule} from "primeng/tabmenu";
-import {MenuItem} from "primeng/api";
 import {DialogService, DynamicDialogRef} from "primeng/dynamicdialog";
-import {ElectronIpcApiService} from "../../services/electron-ipc-api.service";
 import {CloneOrOpenDirectoryDialogComponent} from "../dialogs/clone-or-open-directory-dialog/clone-or-open-directory-dialog.component";
+import {GitRepositoryService} from "../../services/git-repository.service";
 
 @Component({
-    selector: 'app-top-bar',
+    selector: 'gitgud-top-bar',
     standalone: true,
     imports: [TabMenuModule, ButtonModule, DialogModule],
     templateUrl: './top-bar.component.html',
@@ -16,23 +15,13 @@ import {CloneOrOpenDirectoryDialogComponent} from "../dialogs/clone-or-open-dire
 })
 export class TopBarComponent {
 
-    protected repositoriesTabs: MenuItem[] = [];
-    activeItemIndex: MenuItem | undefined;
-
     cloneOrOpenDirectoryDialogRef: DynamicDialogRef | undefined;
 
     constructor(
         private dialogService: DialogService,
-        private electronApiService: ElectronIpcApiService,
+        private gitRepositoryService: GitRepositoryService,
     ) {
-        this.repositoriesTabs = JSON.parse(localStorage.getItem('repositories-tabs')!) ?? [] as MenuItem[];
     }
-
-    protected openExistingRepository = () => {
-        this.electronApiService.openFolderPicker().subscribe(selectedFolder => {
-            console.log(selectedFolder);
-        });
-    };
 
     protected showOpenOrCloneModal = () => {
         this.cloneOrOpenDirectoryDialogRef = this.dialogService.open(CloneOrOpenDirectoryDialogComponent, {
@@ -41,5 +30,7 @@ export class TopBarComponent {
             modal: true,
         });
     };
+
+    openNewRepo = () => this.gitRepositoryService.openExistingRepository().subscribe(console.log);
 
 }
