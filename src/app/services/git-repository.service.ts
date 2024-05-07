@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, switchMap, tap} from "rxjs";
+import {BehaviorSubject, forkJoin, of, switchMap, tap} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
@@ -43,12 +43,17 @@ export class GitRepositoryService {
         this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: filterFunction(repo)})));
 
 
-    openExistingRepository = () =>
-        this.electronIpcApiService.openFolderPicker()
-            .pipe(
-                tap(this.openRepository),
-                switchMap(this.electronIpcApiService.log),
-            );
+    openExistingRepository = () => of({}).pipe(
+        switchMap(this.electronIpcApiService.openFolderPicker),
+        tap(this.openRepository),
+        switchMap(dir => forkJoin([
+            this.electronIpcApiService.listLocalBranches(dir),
+            this.electronIpcApiService.listRemoteBranches(dir),
+            this.electronIpcApiService.listRemotes(dir),
+            this.electronIpcApiService.log(dir),
+        ])),
+        tap(([localBranches, remoteBranches, remotes, commits]) => this.modifyCurrentRepository({localBranches, remoteBranches, remotes, commits})),
+    );
 
     private openRepository = (repoDirectory: string) => {
         const existingRepository = this.repositories.find(repo => repo.name == lastFolderName(repoDirectory));
@@ -71,7 +76,7 @@ export class GitRepositoryService {
     /**
      * Saves state of a repo
      */
-    saveCurrentRepository = (repoEdits: Partial<GitRepository>) =>
+    modifyCurrentRepository = (repoEdits: Partial<GitRepository>) =>
         this.repositories$.next(this.repositories.map(repo => repo.selected ? {...repo, ...repoEdits} : repo));
 
     removeRepository = (repository: GitRepository) => this.repositories$.next(this.repositories.filter(r => r.name != repository.name));
