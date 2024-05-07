@@ -1,3 +1,5 @@
+import {CommitObject} from "isomorphic-git";
+
 export interface ElectronIpcApi {
     pickGitFolder: (args?: any) => Promise<string>,
     sampleError: (args?: any) => Promise<any>,
@@ -36,13 +38,13 @@ export interface ElectronIpcApi {
     init: (args?: any) => Promise<any>,
     isDescendent: (args?: any) => Promise<any>,
     isIgnored: (args?: any) => Promise<any>,
-    listBranches: (args?: any) => Promise<any>,
+    listBranches: (args?: any) => Promise<string[]>,
     listFiles: (args?: any) => Promise<any>,
     listNotes: (args?: any) => Promise<any>,
-    listRemotes: (args?: any) => Promise<any>,
+    listRemotes: (args?: any) => Promise<{ remote: string; url: string; }[]>,
     listServerRefs: (args?: any) => Promise<any>,
     listTags: (args?: any) => Promise<any>,
-    log: (args?: any) => Promise<any>,
+    log: (args?: any) => Promise<CommitObject[]>,
     merge: (args?: any) => Promise<any>,
     packObjects: (args?: any) => Promise<any>,
     pull: (args?: any) => Promise<any>,
