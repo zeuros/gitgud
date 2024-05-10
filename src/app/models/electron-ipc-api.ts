@@ -1,4 +1,4 @@
-import {CommitObject} from "isomorphic-git";
+import {ReadCommitResult} from "isomorphic-git";
 
 export interface ElectronIpcApi {
     pickGitFolder: (args?: any) => Promise<string>,
@@ -44,7 +44,7 @@ export interface ElectronIpcApi {
     listRemotes: (args?: any) => Promise<{ remote: string; url: string; }[]>,
     listServerRefs: (args?: any) => Promise<any>,
     listTags: (args?: any) => Promise<any>,
-    log: (args?: any) => Promise<CommitObject[]>,
+    log: (args?: any) => Promise<ReadCommitResult[]>,
     merge: (args?: any) => Promise<any>,
     packObjects: (args?: any) => Promise<any>,
     pull: (args?: any) => Promise<any>,

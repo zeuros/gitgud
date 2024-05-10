@@ -1,4 +1,4 @@
-import {CommitObject} from "isomorphic-git";
+import {ReadCommitResult} from "isomorphic-git";
 
 export class GitRepository {
     constructor(
@@ -8,7 +8,7 @@ export class GitRepository {
         public selected = true, // currently selected
         public localBranches: string[] = [],
         public remoteBranches: string[] = [],
-        public commits: CommitObject[] = [],
+        public commits: ReadCommitResult[] = [],
         public remotes: { remote: string; url: string }[] = [],
     ) {
     }

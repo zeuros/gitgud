@@ -14,3 +14,17 @@ body {
   cursor: not-allowed;
   pointer-events: none;
 }
+
+.context-menu {
+  width: unset; // Removes default primeng context menu width at 12.5em
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.borderless .p-datatable-table {
+  thead th, tbody td {
+    border-style: none;
+  }
+}

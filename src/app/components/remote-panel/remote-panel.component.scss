@@ -2,4 +2,17 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  ::ng-deep {
+    .selected-branch > .p-treenode-content {
+
+      background: rgba(147, 216, 148, 0.16);
+      color: #9ad893;
+
+      .p-treenode-icon {
+        color: #9ad893;
+      }
+    }
+  }
 }
+
