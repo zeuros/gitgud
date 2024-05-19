@@ -8,5 +8,5 @@ import { Component } from '@angular/core';
   styleUrl: './history-tree.component.scss'
 })
 export class HistoryTreeComponent {
-
+  test = [];
 }
