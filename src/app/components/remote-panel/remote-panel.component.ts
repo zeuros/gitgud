@@ -41,7 +41,7 @@ export class RemotePanelComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.localBranches = this.gitRepository.localBranches?.map(b => branchToTreeNode(b));
+        this.localBranches = Object.keys(this.gitRepository.branchesAndLogs).map(b => branchToTreeNode(b));
         this.remoteBranches = this.gitRepository.remoteBranches?.filter(b => b != 'HEAD').map(b => branchToTreeNode(b));
     }
 

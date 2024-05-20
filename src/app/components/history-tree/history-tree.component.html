@@ -1,5 +1,5 @@
 <p-table
-        [value]="(gitRepository?.commits ?? []).map(getCommitObject)"
+        [value]="Object.values(commmitTree).sort(byCommitDate)"
         [rowHover]="true"
         selectionMode="single"
         styleClass="pointer borderless"
@@ -14,15 +14,15 @@
     <ng-template pTemplate="body" let-commit>
         <tr [pSelectableRow]="commit">
             <td></td>
-            <td class="bubble-td">
-                <div class="bubble user-name-bubble">{{ $commit(commit).author.name.slice(0, 1) }}</div>
+            <td class="bubble-td" [style.padding-left.px]="$commitResult(commit).bars.indents * 20">
+                <div class="bubble user-name-bubble">{{ $commitResult(commit).commit.author.name.slice(0, 1) }}</div>
                 <div class="bubble bar top"></div>
                 <div class="bubble bar right">
                     <div class="quarter-circle"></div>
                 </div>
-                <div class="bubble bar bottom"></div>
+                <div *ngIf="$commitResult(commit).commit.parent.length" class="bubble bar bottom"></div>
             </td>
-            <td>{{ $commit(commit).message }}</td>
+            <td>{{ $commitResult(commit).commit.message }}</td>
         </tr>
     </ng-template>
 </p-table>
