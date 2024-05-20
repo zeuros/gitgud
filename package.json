@@ -25,7 +25,7 @@
     "@angular/platform-browser-dynamic": "^17.3.1",
     "@angular/router": "^17.3.1",
     "font-awesome": "^4.7.0",
-    "isomorphic-git": "^1.25.9",
+    "isomorphic-git": "^1.25.10",
     "primeflex": "^3.3.1",
     "primeicons": "^7.0.0",
     "primeng": "^17.16.0",

@@ -47,12 +47,11 @@ export class GitRepositoryService {
         switchMap(this.electronIpcApiService.openFolderPicker),
         tap(this.openRepository),
         switchMap(dir => forkJoin([
-            this.electronIpcApiService.listLocalBranches(dir),
+            this.electronIpcApiService.logAll(dir),
             this.electronIpcApiService.listRemoteBranches(dir),
             this.electronIpcApiService.listRemotes(dir),
-            this.electronIpcApiService.log(dir),
         ])),
-        tap(([localBranches, remoteBranches, remotes, commits]) => this.modifyCurrentRepository({localBranches, remoteBranches, remotes, commits})),
+        tap(([branchesAndLogs, remoteBranches, remotes]) => this.modifyCurrentRepository({branchesAndLogs, remoteBranches, remotes})),
     );
 
     private openRepository = (repoDirectory: string) => {
