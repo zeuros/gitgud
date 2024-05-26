@@ -2,37 +2,48 @@ import {Component, Input} from '@angular/core';
 import {GitRepository} from "../../models/git-repository";
 import {TableModule} from "primeng/table";
 import {ReadCommitResult} from "isomorphic-git";
+import {NgIf} from "@angular/common";
 
-type MyCommitObject = ReadCommitResult & { bars: { top: boolean, bottom: boolean, indents: number } };
+type MyCommitObject = ReadCommitResult & {
+  bars: {
+    top: boolean,
+    bottom: boolean,
+    indents: number,
+    colorIndex: number,
+  }
+};
 
 @Component({
   selector: 'gitgud-history-tree',
   standalone: true,
   imports: [
     TableModule,
+    NgIf,
   ],
   templateUrl: './history-tree.component.html',
   styleUrl: './history-tree.component.scss',
 })
 export class HistoryTreeComponent {
 
-  constructor() {
-  }
-
-  protected commmitTree: { [oid: string]: MyCommitObject } = {};
+  protected branchesCount = 1;
+  protected commitTree: { [oid: string]: MyCommitObject } = {};
 
   @Input() set gitRepository(gitRepository: GitRepository) {
-    console.log(gitRepository.branchesAndLogs);
+    const branches = Object.keys(gitRepository.branchesAndLogs);
 
-    Object.keys(gitRepository.branchesAndLogs).forEach((branch, indexBranch) => {
-      const branchCommits = gitRepository.branchesAndLogs[branch];
+    this.branchesCount = branches.length;
 
-      branchCommits.forEach(commit => {
-        if (!this.commmitTree[commit.oid]) {
-          this.commmitTree[commit.oid] = {...commit, bars: {bottom: true, indents: indexBranch, top: true},}
-        }
-      })
-    })
+    branches
+      .toSorted(branch => branch == gitRepository.currentBranch ? -1 : 0)
+      .forEach((branch, indexBranch) => {
+        const branchCommits = gitRepository.branchesAndLogs[branch];
+
+        branchCommits.forEach(commit => {
+          if (!this.commitTree[commit.oid]) {
+            this.commitTree[commit.oid] = {...commit, bars: {bottom: true, indents: indexBranch, top: true, colorIndex: indexBranch + 1}}
+          }
+        })
+      });
 
     // this.commitResults = Object.values(gitRepository.branchesAndLogs).flatMap(branch => this.toMyCommitObject(branch, gitRepository.branchesAndLogs[branch]));
   }
@@ -62,6 +73,7 @@ export class HistoryTreeComponent {
 
 
   protected readonly $commitResult = (c: MyCommitObject) => c
+  protected readonly Object = Object;
 
   // private updateCommitsTree(currentCommit: ReadCommitResult, commitIndex: number) {
   //   // Init columns
@@ -84,6 +96,5 @@ export class HistoryTreeComponent {
   //   console.log(this.commmitTree.length - 1, currentCommit.commit.message);
   //   return this.commmitTree.length - 1;
   // }
-  protected readonly Object = Object;
 
 }

@@ -20,7 +20,7 @@ export interface ElectronIpcApi {
     getConfig: (args?: any) => Promise<any>,
     getConfigAll: (args?: any) => Promise<any>,
     setConfig: (args?: any) => Promise<any>,
-    currentBranch: (args?: any) => Promise<any>,
+    currentBranch: (args?: any) => Promise<string>,
     deleteBranch: (args?: any) => Promise<any>,
     deleteRef: (args?: any) => Promise<any>,
     deleteRemote: (args?: any) => Promise<any>,

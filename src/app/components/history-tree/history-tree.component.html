@@ -1,5 +1,5 @@
 <p-table
-        [value]="Object.values(commmitTree).sort(byCommitDate)"
+        [value]="Object.values(commitTree).sort(byCommitDate)"
         [rowHover]="true"
         selectionMode="single"
         styleClass="pointer borderless"
@@ -14,7 +14,9 @@
     <ng-template pTemplate="body" let-commit>
         <tr [pSelectableRow]="commit">
             <td></td>
-            <td class="bubble-td" [style.padding-left.px]="$commitResult(commit).bars.indents * 20">
+            <td class="bubble-td"
+                [style.padding-left.px]="$commitResult(commit).bars.indents * 20"
+                [style.filter]="'hue-rotate(' + $commitResult(commit).bars.colorIndex * 360 / this.branchesCount + 'deg)'">
                 <div class="bubble user-name-bubble">{{ $commitResult(commit).commit.author.name.slice(0, 1) }}</div>
                 <div class="bubble bar top"></div>
                 <div class="bubble bar right">

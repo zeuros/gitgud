@@ -49,9 +49,10 @@ export class GitRepositoryService {
         switchMap(dir => forkJoin([
             this.electronIpcApiService.logAll(dir),
             this.electronIpcApiService.listRemoteBranches(dir),
+            this.electronIpcApiService.currentBranch(dir),
             this.electronIpcApiService.listRemotes(dir),
         ])),
-        tap(([branchesAndLogs, remoteBranches, remotes]) => this.modifyCurrentRepository({branchesAndLogs, remoteBranches, remotes})),
+        tap(([branchesAndLogs, remoteBranches, currentBranch, remotes]) => this.modifyCurrentRepository({branchesAndLogs, remoteBranches, currentBranch, remotes})),
     );
 
     private openRepository = (repoDirectory: string) => {

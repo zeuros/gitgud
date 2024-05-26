@@ -33,16 +33,19 @@ export class ElectronIpcApiService {
 
   // BORING, this is a mess
   // Log all local branches commits
-  logAll = (dir: string): Observable<BranchesAndLogs> => this.listLocalBranches(dir).pipe(tap(r => console.log(r)))
-    .pipe(
-      switchMap(branches => forkJoin(branches.map(branch => this.log(dir, branch).pipe(map(log => ({branch, log})))))),
-      map((logs) => logs.reduce((acc, {branch, log}) => ({...acc, [branch]: log}), {} as BranchesAndLogs)),
-    );
+  logAll = (dir: string): Observable<BranchesAndLogs> =>
+    this.listLocalBranches(dir)
+      .pipe(
+        tap(r => console.log(r)),
+        switchMap(branches => forkJoin(branches.map(branch => this.log(dir, branch).pipe(map(log => ({branch, log})))))),
+        map((logs) => logs.reduce((acc, {branch, log}) => ({...acc, [branch]: log}), {} as BranchesAndLogs)),
+      );
 
   listRemotes = (dir: string) => from(this.electronIpcApi.listRemotes({dir}).catch(this.popupService.error)).pipe(map(notUndefined));
 
-  listLocalBranches = (dir: string) => from(this.electronIpcApi.listBranches({dir}).catch(this.popupService.error)).pipe(map(notUndefined))
-    .pipe(map(branches => branches.reverse()));
+  listLocalBranches = (dir: string) => from(this.electronIpcApi.listBranches({dir}).catch(this.popupService.error)).pipe(map(notUndefined));
+
+  currentBranch = (dir: string) => from(this.electronIpcApi.currentBranch({dir}).catch(this.popupService.error)).pipe(map(notUndefined));
 
   listRemoteBranches = (dir: string, remote = 'origin') => from(this.electronIpcApi.listBranches({dir, remote}).catch(this.popupService.error)).pipe(map(notUndefined));
 

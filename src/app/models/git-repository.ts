@@ -1,4 +1,3 @@
-import {ReadCommitResult} from "isomorphic-git";
 import {BranchesAndLogs} from "../services/electron-ipc-api.service";
 
 export class GitRepository {
@@ -8,6 +7,7 @@ export class GitRepository {
         public sizes = [20, 50, 30], // panels sizes
         public selected = true, // currently selected
         public branchesAndLogs: BranchesAndLogs = {},
+        public currentBranch?: string,
         public remoteBranches: string[] = [],
         public remotes: { remote: string; url: string }[] = [],
     ) {
