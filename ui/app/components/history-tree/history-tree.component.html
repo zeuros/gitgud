@@ -1,0 +1,23 @@
+<p-table
+        [value]="Object.values(commitTree).sort(byCommitDate)"
+        [rowHover]="true"
+        selectionMode="single"
+        styleClass="pointer borderless"
+>
+    <ng-template pTemplate="header">
+        <tr>
+            <th>Branch / Tag</th>
+            <th>Graph</th>
+            <th>Commit message</th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-commit>
+        <tr [pSelectableRow]="$commitTreeCommit(commit)">
+            <td></td>
+            <td class="graph-line-td">
+                <gitgud-commit-graph-line [commit]="$commitTreeCommit(commit)"/>
+            </td>
+            <td>{{ $commitTreeCommit(commit).body }}</td>
+        </tr>
+    </ng-template>
+</p-table>

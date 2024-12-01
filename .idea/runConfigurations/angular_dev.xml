@@ -5,7 +5,7 @@
     <scripts>
       <script value="angular:dev" />
     </scripts>
-    <node-interpreter value="project" />
+    <node-interpreter value="$USER_HOME$/AppData/Local/fnm_multishells/6056_1732523611521/node" />
     <envs />
     <method v="2" />
   </configuration>

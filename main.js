@@ -1,6 +1,6 @@
 const {app, BrowserWindow} = require('electron');
 const path = require("path");
-const {bindIpcFunctions} = require("./electron-src/ipc-functions");
+const {bindIpcFunctions} = require("./src/ipc-functions");
 
 let mainWindow;
 

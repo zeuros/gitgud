@@ -13,7 +13,7 @@
   "projects": {
     "gitgud": {
       "root": "",
-      "sourceRoot": "src",
+      "sourceRoot": "ui",
       "projectType": "application",
       "prefix": "gitgud",
       "schematics": {},
@@ -22,13 +22,13 @@
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "outputPath": "dist",
-            "index": "src/index.html",
-            "main": "src/main.ts",
+            "index": "ui/index.html",
+            "main": "ui/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
-            "assets": ["src/assets"],
+            "assets": ["ui/assets"],
             "styles": [
-              "src/styles.scss"
+              "ui/styles.scss"
             ]
           },
           "configurations": {

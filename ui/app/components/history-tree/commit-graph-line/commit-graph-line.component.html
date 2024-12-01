@@ -1,0 +1,21 @@
+<div class="uuu">
+    <!-- TODO: get color from proper color palette -->
+    <div *ngFor="let columnChar of commit.drawCommitLine; index as i" [style.filter]="'hue-rotate(' + i * 360 / commit.drawCommitLine.length + 'deg)'">
+
+        <!-- Draw a space -->
+        <div *ngIf="columnChar == ''">
+
+        </div>
+
+        <!-- Draw the commit bubble -->
+        <div *ngIf="columnChar == '◉'" class="bubble-container">
+            <div class="bubble user-name-bubble">{{ commit.author.name.slice(0, 1) }}</div>
+            <div class="bubble bar top"></div>
+            <div class="bubble bar right">
+                <div class="quarter-circle"></div>
+            </div>
+<!--            <div *ngIf="commit.parent.length" class="bubble bar bottom"></div>-->
+        </div>
+
+    </div>
+</div>
