@@ -3,7 +3,7 @@ import {DialogModule} from "primeng/dialog";
 import {ButtonModule} from "primeng/button";
 import {TabMenuModule} from "primeng/tabmenu";
 import {DialogService, DynamicDialogRef} from "primeng/dynamicdialog";
-import {CloneOrOpenDirectoryDialogComponent} from "../dialogs/clone-or-open-directory-dialog/clone-or-open-directory-dialog.component";
+import {CloneOrOpenDirectoryDialogComponent} from "../dialogs/clone-or-open-directory-dialog/clone-or-open-directory-diaconsole.component";
 import {GitRepositoryService} from "../../services/git-repository.service";
 
 @Component({

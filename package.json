@@ -1,19 +1,28 @@
 {
   "name": "gitgud",
   "version": "1.0.0",
-  "main": "main.js",
+  "main": "app/main.ts",
   "private": true,
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build --base-href ./",
-    "rebuild": "electron-rebuild",
-    "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e",
-    "electron:dev": "electron . --dev",
-    "angular:dev": "ng serve",
-    "run:dev-all": "concurrently \"ng serve\" \"electron .\""
+    "start": "npm-run-all -p electron:serve ng:serve",
+    "ng:serve": "ng serve -c web -o",
+    "build": "npm run electron:serve-tsc && ng build --base-href ./",
+    "build:dev": "npm run build -- -c dev",
+    "build:prod": "npm run build -- -c production",
+    "web:build": "npm run build -- -c web-production",
+    "electron": "electron",
+    "electron:serve-tsc": "tsc -p tsconfig.serve.json",
+    "electron:serve": "wait-on tcp:4200 && npm run electron:serve-tsc && electron . --serve",
+    "electron:local": "npm run build:prod && electron .",
+    "electron:build": "npm run build:prod && electron-builder build --publish=never",
+    "test": "ng test --watch=false",
+    "test:watch": "ng test",
+    "e2e": "npm run build:prod && playwright test -c e2e/playwright.config.ts e2e/",
+    "e2e:show-trace": "playwright show-trace e2e/tracing/trace.zip",
+    "version": "conventional-changelog -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md",
+    "lint": "ng lint"
   },
   "dependencies": {
     "@angular/animations": "^17.3.1",
@@ -24,6 +33,9 @@
     "@angular/platform-browser": "^17.3.1",
     "@angular/platform-browser-dynamic": "^17.3.1",
     "@angular/router": "^17.3.1",
+    "byline": "^5.0.0",
+    "dugite": "^3.0.0-rc5",
+    "event-kit": "^2.5.3",
     "font-awesome": "^4.7.0",
     "isomorphic-git": "^1.25.10",
     "primeflex": "^3.3.1",
@@ -35,9 +47,13 @@
     "zone.js": "~0.14.2"
   },
   "devDependencies": {
+    "npm-run-all": "^4.1.5",
     "@angular-devkit/build-angular": "^17.3.1",
+    "@angular-builders/custom-webpack": "17.0.3-beta.1",
     "@angular/cli": "^17.3.1",
     "@angular/compiler-cli": "^17.3.1",
+    "@types/byline": "^4.2.36",
+    "@types/event-kit": "^2.4.4",
     "@types/jasmine": "~5.1.0",
     "concurrently": "^8.2.2",
     "electron": "^29.3.0",
@@ -47,6 +63,8 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.4.5"
+    "electron-builder": "25.1.8",
+    "typescript": "~5.4.5",
+    "wait-on": "8.0.1"
   }
 }

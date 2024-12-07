@@ -1,15 +1,17 @@
-const {app, BrowserWindow} = require('electron');
-const path = require("path");
-const {bindIpcFunctions} = require("./electron-src/ipc-functions");
+import {bindIpcFunctions} from "./ipc-functions";
+import {app, BrowserWindow} from "electron";
+import path from "path";
 
+// @ts-ignore
 let mainWindow;
 
 const createWindow = () => {
-    mainWindow = new BrowserWindow({
+    // @ts-ignore
+  mainWindow = new BrowserWindow({
         width: 2600,
         height: 1600,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
+            preload: path.join(__dirname, 'preload.ts'),
             allowEval: true,
             nodeIntegration: true,
         }
