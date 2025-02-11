@@ -1,0 +1,12 @@
+{
+  "name": "gitgud",
+  "description": "Angular Electron sample",
+  "author": {
+    "name": "zeuros"
+  },
+  "version": "1.0.0",
+  "main": "main.js",
+  "private": true,
+  "dependencies": {
+  }
+}

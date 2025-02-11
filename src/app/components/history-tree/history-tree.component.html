@@ -1,0 +1,30 @@
+<p-table
+        [value]="Object.values(commitTree).sort(byCommitDate)"
+        [rowHover]="true"
+        selectionMode="single"
+        styleClass="pointer borderless"
+>
+    <ng-template pTemplate="header">
+        <tr>
+            <th>Branch / Tag</th>
+            <th>Graph</th>
+            <th>Commit message</th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-commit>
+        <tr [pSelectableRow]="commit">
+            <td></td>
+            <td class="bubble-td"
+                [style.padding-left.px]="$commitResult(commit).bars.indents * 20"
+                [style.filter]="'hue-rotate(' + $commitResult(commit).bars.colorIndex * 360 / this.branchesCount + 'deg)'">
+                <div class="bubble user-name-bubble">{{ $commitResult(commit).commit.author.name.slice(0, 1) }}</div>
+                <div class="bubble bar top"></div>
+                <div class="bubble bar right">
+                    <div class="quarter-circle"></div>
+                </div>
+                <div *ngIf="$commitResult(commit).commit.parent.length" class="bubble bar bottom"></div>
+            </td>
+            <td>{{ $commitResult(commit).commit.message }}</td>
+        </tr>
+    </ng-template>
+</p-table>
