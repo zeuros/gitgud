@@ -1,4 +1,3 @@
-import {BranchesAndLogs} from "../services/electron-ipc-api.service";
 
 export class GitRepository {
     constructor(
@@ -6,7 +5,7 @@ export class GitRepository {
         public name: string,
         public sizes = [20, 50, 30], // panels sizes
         public selected = true, // currently selected
-        public branchesAndLogs: BranchesAndLogs = {},
+        // public branchesAndLogs: BranchesAndLogs = {},
         public currentBranch?: string,
         public remoteBranches: string[] = [],
         public remotes: { remote: string; url: string }[] = [],

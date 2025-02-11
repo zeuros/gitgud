@@ -31,6 +31,6 @@ export class TopBarComponent {
         });
     };
 
-    openNewRepo = () => this.gitRepositoryService.openExistingRepository().subscribe(console.log);
+    // openNewRepo = () => this.gitRepositoryService.openExistingRepository().subscribe(console.log);
 
 }
