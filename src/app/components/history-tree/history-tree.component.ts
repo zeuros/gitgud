@@ -1,9 +1,9 @@
 import {Component, Input} from '@angular/core';
 import {GitRepository} from "../../models/git-repository";
 import {TableModule} from "primeng/table";
-import {ReadCommitResult} from "isomorphic-git";
 import {NgIf} from "@angular/common";
 
+type ReadCommitResult = {};
 type MyCommitObject = ReadCommitResult & {
   bars: {
     top: boolean,
@@ -29,26 +29,26 @@ export class HistoryTreeComponent {
   protected commitTree: { [oid: string]: MyCommitObject } = {};
 
   @Input() set gitRepository(gitRepository: GitRepository) {
-    const branches = Object.keys(gitRepository.branchesAndLogs);
+    // const branches = Object.keys(gitRepository.branchesAndLogs);
 
-    this.branchesCount = branches.length;
+    // this.branchesCount = branches.length;
 
-    branches
-      .toSorted(branch => branch == gitRepository.currentBranch ? -1 : 0)
-      .forEach((branch, indexBranch) => {
-        const branchCommits = gitRepository.branchesAndLogs[branch];
-
-        branchCommits.forEach(commit => {
-          if (!this.commitTree[commit.oid]) {
-            this.commitTree[commit.oid] = {...commit, bars: {bottom: true, indents: indexBranch, top: true, colorIndex: indexBranch + 1}}
-          }
-        })
-      });
+    // branches
+    //   .toSorted(branch => branch == gitRepository.currentBranch ? -1 : 0)
+    //   .forEach((branch, indexBranch) => {
+    //     const branchCommits = gitRepository.branchesAndLogs[branch];
+    //
+    //     branchCommits.forEach(commit => {
+    //       if (!this.commitTree[commit.oid]) {
+    //         this.commitTree[commit.oid] = {...commit, bars: {bottom: true, indents: indexBranch, top: true, colorIndex: indexBranch + 1}}
+    //       }
+    //     })
+    //   });
 
     // this.commitResults = Object.values(gitRepository.branchesAndLogs).flatMap(branch => this.toMyCommitObject(branch, gitRepository.branchesAndLogs[branch]));
   }
 
-  protected byCommitDate = (commit: MyCommitObject, commit2: MyCommitObject) => commit.commit.author.timestamp < commit2.commit.author.timestamp ? 1 : -1;
+  // protected byCommitDate = (commit: MyCommitObject, commit2: MyCommitObject) => commit.commit.author.timestamp < commit2.commit.author.timestamp ? 1 : -1;
 
   /**
    * Read commits bottom to top and style them (indentation & connections)
@@ -72,7 +72,7 @@ export class HistoryTreeComponent {
     // }
 
 
-  protected readonly $commitResult = (c: MyCommitObject) => c
+    // protected readonly $commitResult = (c: MyCommitObject) => c
   protected readonly Object = Object;
 
   // private updateCommitsTree(currentCommit: ReadCommitResult, commitIndex: number) {

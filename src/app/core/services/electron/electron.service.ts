@@ -6,7 +6,7 @@ import {ipcRenderer, webFrame} from 'electron';
 import * as childProcess from 'child_process';
 import * as fs from 'fs';
 import * as util from 'util';
-import {from, map} from "rxjs";
+import {from, map, Observable} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -30,7 +30,7 @@ export class ElectronService {
       this.util = (window as any).require('util');
       this.promisedExec = this.util.promisify(this.childProcess.exec);
 
-      this.exec('node --version').subscribe(out => console.log(out));
+      this.exec('node --version').subscribe(console.log);
 
       // Notes :
       // * A NodeJS's dependency imported with 'window.require' MUST BE present in `dependencies` of both `app/package.json`
@@ -51,5 +51,9 @@ export class ElectronService {
 
   get isElectron() {
     return !!window?.process?.type;
+  }
+
+  clone(comIsomorphicGitLightningFs: string, cTestRepo: string): Observable<void> {
+    return new Observable<void>();
   }
 }
