@@ -2,7 +2,10 @@ import {GitRepository} from "../models/git-repository";
 import {lastFolderName} from "./utils";
 import {TreeNode} from "primeng/api";
 
-export const directoryToNewRepository = (directory: string) => new GitRepository(directory, lastFolderName(directory));
+export const directoryToNewRepository = (directory: string) => {
+  // TODO: gather all repo infos to create the GitRepository object
+  return new GitRepository(directory, lastFolderName(directory));
+}
 
 export const branchToTreeNode = (branch: string, subBranch?: string): TreeNode<string> => {
 

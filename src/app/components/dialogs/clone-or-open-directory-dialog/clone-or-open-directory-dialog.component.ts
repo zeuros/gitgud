@@ -7,7 +7,7 @@ import {InputTextModule} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {PanelModule} from "primeng/panel";
 import {CardModule} from "primeng/card";
-import {ElectronService} from "../../../core/services";
+import {GitApiService} from "../../../services/git-api.service";
 
 @Component({
   selector: 'gitgud-clone-or-open-directory-dialog',
@@ -29,13 +29,13 @@ export class CloneOrOpenDirectoryDialogComponent {
   repositoryUrl?: string;
 
   constructor(
-    private electronService: ElectronService,
+    private gitApiService: GitApiService,
     private popupService: PopupService,
   ) {
 
   }
 
-  protected clone = () => this.electronService.clone('https://github.com/isomorphic-git/lightning-fs', 'C:/test-repo')
+  protected clone = () => this.gitApiService.clone('https://github.com/isomorphic-git/lightning-fs', 'C:/test-repo')
     .subscribe(() => this.popupService.info('Repository cloned'));
 
 }

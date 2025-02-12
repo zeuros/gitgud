@@ -30,15 +30,16 @@
     "lint": "ng lint"
   },
   "dependencies": {
+    "@angular/animations": "^17.3.12",
     "@angular/common": "17.3.12",
     "@angular/compiler": "17.3.12",
     "@angular/core": "17.3.12",
     "@angular/forms": "17.3.12",
-    "@angular/animations": "^17.3.12",
     "@angular/language-service": "17.3.12",
     "@angular/platform-browser": "17.3.12",
     "@angular/platform-browser-dynamic": "17.3.12",
     "@angular/router": "17.3.12",
+    "@electron/remote": "^2.1.2",
     "font-awesome": "^4.7.0",
     "primeflex": "^3.3.1",
     "primeicons": "^7.0.0",

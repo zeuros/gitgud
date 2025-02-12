@@ -1,86 +1,95 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, forkJoin, of, switchMap, tap} from "rxjs";
+import {BehaviorSubject} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
-import {lastFolderName} from "../utils/utils";
+import {byPath, throwEx} from "../utils/utils";
 import {directoryToNewRepository} from "../utils/repository-utils";
-import {ElectronService} from "../core/services";
+import {GitApiService} from "./git-api.service";
 
+/**
+ * Holds repositories and their states
+ */
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class GitRepositoryService {
 
-    private repositories$;
+  private repositories$;
 
-    constructor(
-        settingsService: SettingsService,
-        private electronService: ElectronService,
-    ) {
-        this.repositories$ = new BehaviorSubject<GitRepository[]>(settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? [])
+  constructor(
+    settingsService: SettingsService,
+    private gitApiService: GitApiService,
+  ) {
+    this.repositories$ = new BehaviorSubject<GitRepository[]>(settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? [])
 
-        // Storing repositories modifications into localstorage
-        this.repositories$.subscribe(repoChanges => settingsService.store(StorageName.GitRepositories, repoChanges));
+    // Storing repositories modifications into localstorage
+    this.repositories$.subscribe(repoChanges => settingsService.store(StorageName.GitRepositories, repoChanges));
+  }
+
+  get repositories() {
+    return this.repositories$.getValue();
+  }
+
+  get selectedRepository() {
+    return this.repositories.find(r => r.selected) ?? throwEx('No repo selected');
+  }
+
+  get activeIndex() {
+    return this.repositories.findIndex(r => r.name == this.selectedRepository?.name);
+  };
+
+  selectRepositoryByIndex = (repositoryIndex: number) =>
+    this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: index == repositoryIndex})));
+
+  selectRepository = (filterFunction: (repo: GitRepository) => boolean) =>
+    this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: filterFunction(repo)})));
+
+  openRepository = () => {
+    const repoDirectory = this.gitApiService.pickGitFolder();
+
+    const existingRepository = this.repositories.find(byPath(repoDirectory));
+    if (existingRepository) {
+      this.selectRepository(repo => repo.name == existingRepository.name);
+    } else {
+      this.createAndSelectRepository(repoDirectory);
     }
 
-    get repositories() {
-        return this.repositories$.getValue();
-    }
+    return this.selectedRepository;
+  }
 
-    get selectedRepository() {
-        return this.repositories.find(r => r.selected);
-    }
+  createAndSelectRepository = (gitDir: string) => {
+    this.repositories$.next([
+      ...this.repositories.map(r => ({...r, selected: false})),
+      directoryToNewRepository(gitDir),
+    ]);
+  };
 
-    get activeIndex() {
-        return this.repositories.findIndex(r => r.name == this.selectedRepository?.name);
-    };
+  /**
+   * Saves state of a repo
+   */
+  modifyCurrentRepository = (repoEdits: Partial<GitRepository>) =>
+    this.repositories$.next(this.repositories.map(repo => repo.selected ? {...repo, ...repoEdits} : repo));
 
-    selectRepositoryByIndex = (repositoryIndex: number) =>
-        this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: index == repositoryIndex})));
+  removeRepository = (repository: GitRepository) => this.repositories$.next(this.repositories.filter(r => r.name != repository.name));
 
-    selectRepository = (filterFunction: (repo: GitRepository) => boolean) =>
-        this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: filterFunction(repo)})));
+  private repositoryNotAlreadyImported = (directory: string) => !this.repositories.find(r => r.directory == directory);
 
-
-    // openExistingRepository = () => of({}).pipe(
-    //     switchMap(this.electronService.openFolderPicker),
-    //     tap(this.openRepository),
-    //     switchMap(dir => forkJoin([
-    //         this.electronService.logAll(dir),
-    //         this.electronService.listRemoteBranches(dir),
-    //         this.electronService.currentBranch(dir),
-    //         this.electronService.listRemotes(dir),
-    //     ])),
-    //     tap(([branchesAndLogs, remoteBranches, currentBranch, remotes]) => this.modifyCurrentRepository({branchesAndLogs, remoteBranches, currentBranch, remotes})),
-    // );
-
-    private openRepository = (repoDirectory: string) => {
-        const existingRepository = this.repositories.find(repo => repo.name == lastFolderName(repoDirectory));
-
-        if (existingRepository)
-            this.selectRepository(repo => repo.name == existingRepository.name);
-        else
-            this.createAndSelectRepository(repoDirectory);
-
-        return this.selectedRepository;
-    }
-
-    createAndSelectRepository = (directory: string) => {
-        this.repositories$.next([
-            ...this.repositories.map(r => ({...r, selected: false})),
-            directoryToNewRepository(directory),
-        ]);
-    };
-
-    /**
-     * Saves state of a repo
-     */
-    modifyCurrentRepository = (repoEdits: Partial<GitRepository>) =>
-        this.repositories$.next(this.repositories.map(repo => repo.selected ? {...repo, ...repoEdits} : repo));
-
-    removeRepository = (repository: GitRepository) => this.repositories$.next(this.repositories.filter(r => r.name != repository.name));
-
-    private repositoryNotAlreadyImported = (directory: string) => !this.repositories.find(r => r.directory == directory);
-
+  // private readRepository(repositoryPath: string): GitRepository {
+  //   const existingRepository = this.repositories.find(byPath(repositoryPath));
+  //   if (existingRepository) return existingRepository;
+  //
+  //   // Create repository object
+  //   this.repositories.push()
+  //     .pipe(
+  //       tap(this.openRepository),
+  //       switchMap(dir => forkJoin([
+  //         this.electronService.logAll(dir),
+  //         this.electronService.listRemoteBranches(dir),
+  //         this.electronService.currentBranch(dir),
+  //         this.electronService.listRemotes(dir),
+  //       ])),
+  //       // tap(([branchesAndLogs, remoteBranches, currentBranch, remotes]) => this.modifyCurrentRepository({branchesAndLogs, remoteBranches, currentBranch, remotes})),
+  //     )
+  // }
 }

@@ -1,12 +1,14 @@
 import {app, BrowserWindow, screen} from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import {initialize, enable} from "@electron/remote/main";
 
-let window: BrowserWindow | null;
+let window: Electron.CrossProcessExports.BrowserWindow | null;
 const args = process.argv.slice(1),
   serve = args.some(val => val === '--serve');
 
-function createWindow(): BrowserWindow {
+function createWindow() {
+
 
   const displayWindowSize = screen.getPrimaryDisplay().workAreaSize;
 
@@ -21,6 +23,10 @@ function createWindow(): BrowserWindow {
       contextIsolation: false,
     }
   });
+
+  // Initialize remote api, it's like ipc but much more simple, and avoiding the hassle of re-typing in front / back.
+  initialize();
+  enable(window.webContents);
 
   if (serve) {
     const debug = require('electron-debug');

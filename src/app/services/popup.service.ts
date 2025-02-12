@@ -1,22 +1,24 @@
 import {Injectable} from '@angular/core';
-import {MessageService} from "primeng/api";
+import {Message, MessageService} from "primeng/api";
+import {errorMessage} from "../utils/utils";
+
+const defaultMessageConfig: Message = {styleClass: 'headLess', summary: '', life: 5000};
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class PopupService {
 
-    constructor(
-        private messageService: MessageService,
-    ) {
+  constructor(
+    private messageService: MessageService,
+  ) {
+  }
 
-    }
 
-    public info = (message: any) => this.messageService.add({severity: 'info', detail: message.toString()});
+  public info = (message: Error | string) => this.messageService.add({...defaultMessageConfig, severity: 'info', detail: message.toString()});
 
-    public error = (e: any) => {
-        const backendErrorMessage = e.toString().replace(/Error: Error invoking remote method (.*):/, ''); // TODO: show this in popup service:
-        this.messageService.add({severity: 'error', detail: backendErrorMessage});
-        console.error(e);
-    }
+  public warn = (message: Error | string) => this.messageService.add({...defaultMessageConfig, severity: 'warn', detail: errorMessage(message)});
+
+  public err = (message: Error | string) => this.messageService.add({...defaultMessageConfig, severity: 'error', detail: errorMessage(message)});
+
 }
