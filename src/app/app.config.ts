@@ -17,7 +17,7 @@ export const appConfig: ApplicationConfig = {
     DialogService,
     provideHttpClient(),
     importProvidersFrom(
-    TranslateModule.forRoot({
+    TranslateModule.forRoot({ // TODO: use translation in app (see
       defaultLanguage: 'en',
       loader: {
         provide: TranslateLoader,

@@ -1,5 +1,4 @@
 import {Component} from '@angular/core';
-import {ElectronService} from './core/services';
 import {TranslateService} from '@ngx-translate/core';
 import {APP_CONFIG} from '../environments/environment';
 import {TabViewModule} from "primeng/tabview";
@@ -9,6 +8,7 @@ import {CommonModule} from '@angular/common';
 import {RouterOutlet} from '@angular/router';
 import {ToastModule} from "primeng/toast";
 import {GitRepositoryService} from "./services/git-repository.service";
+import {GitApiService} from "./services/git-api.service";
 
 @Component({
   standalone: true,
@@ -19,18 +19,17 @@ import {GitRepositoryService} from "./services/git-repository.service";
 })
 export class AppComponent {
   constructor(
-    private electronService: ElectronService,
+    private gitApiService: GitApiService,
     private translate: TranslateService,
     protected gitRepositoryService: GitRepositoryService,
   ) {
     this.translate.setDefaultLang('en');
     console.log('APP_CONFIG', APP_CONFIG);
 
-    if (electronService.isElectron) {
+    if (gitApiService.isElectron) {
       console.log(process.env);
       console.log('Run in electron');
-      console.log('Electron ipcRenderer', this.electronService.ipcRenderer);
-      console.log('NodeJS childProcess', this.electronService.childProcess);
+      console.log('NodeJS childProcess', this.gitApiService.childProcess);
     } else {
       console.log('Run in browser');
     }
