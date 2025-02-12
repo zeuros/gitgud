@@ -71,7 +71,8 @@ export class GitRepositoryService {
   modifyCurrentRepository = (repoEdits: Partial<GitRepository>) =>
     this.repositories$.next(this.repositories.map(repo => repo.selected ? {...repo, ...repoEdits} : repo));
 
-  removeRepository = (repository: GitRepository) => this.repositories$.next(this.repositories.filter(r => r.name != repository.name));
+  removeRepository = (repoIndex: number) =>
+    this.repositories$.next(this.repositories.filter((r, i) => i != repoIndex));
 
   private repositoryNotAlreadyImported = (directory: string) => !this.repositories.find(r => r.directory == directory);
 

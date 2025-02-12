@@ -5,10 +5,10 @@
     <p-tabView
             [activeIndex]="gitRepositoryService.activeIndex == -1 ? 0 : gitRepositoryService.activeIndex"
             (activeIndexChange)="gitRepositoryService.selectRepositoryByIndex($event)"
-            [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings">
+            [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings"
+            (onClose)="gitRepositoryService.removeRepository($event.index)">
         <p-tabPanel
                 *ngFor="let repository of gitRepositoryService.repositories"
-                (close)="gitRepositoryService.removeRepository(repository)"
                 [leftIcon]="'fa fa-code-fork'"
                 [header]="repository.name"
                 [closable]="true">
