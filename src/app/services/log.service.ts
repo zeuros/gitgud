@@ -15,6 +15,7 @@ export class LogService {
     shortSha: '%h', // short SHA
     summary: '%s', // summary
     body: '%b', // body
+    branch: '%d',
     // author identity string, matching format of GIT_AUTHOR_IDENT.
     //   author name <author email> <author date>
     // author date format dependent on --date arg, should be raw
@@ -24,7 +25,7 @@ export class LogService {
     trailers: '%(trailers:unfold,only)',
     refs: '%D',
   };
-  private parse = this.logParserService.createLogParser(this.fields);
+  private logParse = this.logParserService.createLogParser(this.fields);
 
   constructor(
     private gitApiService: GitApiService,
@@ -35,14 +36,13 @@ export class LogService {
   /**
    * Get the repository's commits using `revisionRange` and limited to `limit`
    */
-  getCommits = (
-    repository: GitRepository,
+  getCommitLog = (
+    repositoryPath: string,
     revisionRange?: string,
     limit?: number,
     skip?: number,
     additionalArgs: ReadonlyArray<string> = []
   ): Observable<Commit[]> => {
-
 
     const args = ['log']
 
@@ -68,8 +68,8 @@ export class LogService {
       ...additionalArgs,
       '--'
     )
-    return this.gitApiService.git(args)
-      .pipe(map(log => this.parse(log).map(commit => {
+    return this.gitApiService.git(args, repositoryPath)
+      .pipe(map(log => this.logParse(log).map(commit => {
         // Ref is of the format: (HEAD -> master, tag: some-tag-name, tag: some-other-tag,with-a-comma, origin/master, origin/HEAD)
         // Refs are comma separated, but some like tags can also contain commas in the name, so we split on the pattern ", " and then
         // check each ref for the tag prefix. We used to use the regex /tag: ([^\s,]+)/g)`, but will clip a tag with a comma short.
@@ -82,6 +82,7 @@ export class LogService {
           commit.shortSha,
           commit.summary,
           commit.body,
+          commit.branch,
           CommitIdentity.parseIdentity(commit.author),
           CommitIdentity.parseIdentity(commit.committer),
           commit.parents.length > 0 ? commit.parents.split(' ') : [],

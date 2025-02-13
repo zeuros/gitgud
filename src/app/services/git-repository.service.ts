@@ -1,10 +1,10 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, map, Observable} from "rxjs";
+import {BehaviorSubject, map, Observable, tap} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
 import {byDirectory, byIndex, isRootDirectory, throwEx} from "../utils/utils";
-import {directoryToNewRepository} from "../utils/repository-utils";
+import {createRepository} from "../utils/repository-utils";
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -55,18 +55,27 @@ export class GitRepositoryService {
   selectRepository = (filterFunction: (repo: GitRepository) => boolean) =>
     this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: filterFunction(repo)})));
 
+  /**
+   * Opens or retrieve repository after user picks a repo folder
+   */
   openRepository = () => {
     const repoDirectory = this.pickGitFolder();
 
-    const existingRepository = this.repositories.find(byDirectory(repoDirectory));
+    const repo = this.repositories.find(byDirectory(repoDirectory)) ?? this.addToRepos(createRepository(repoDirectory));
+    repo.selected = true;
 
-    if (existingRepository) {
-      this.selectRepository(repo => repo.directory == existingRepository.directory);
-    } else {
-      this.createAndSelectRepository(repoDirectory);
-    }
+    this.selectRepository(r => r.directory == repo.directory);
 
-    return this.selectedRepository;
+    return this.updateLogsAndBranches(repo)
+      .pipe(tap(this.updateRepositories));
+  }
+
+  private updateRepositories = (updatedRepo: GitRepository) =>
+    this.repositories$.next(this.repositories.map(r => r.directory == updatedRepo.directory ? updatedRepo : r));
+
+  private addToRepos = (repo: GitRepository) => {
+    this.repositories$.next([...this.repositories, repo]);
+    return repo
   }
 
 
@@ -96,17 +105,9 @@ export class GitRepositoryService {
 
   }
 
-  createAndSelectRepository = (gitDir: string) => {
-    this.updateLogAndBranches(directoryToNewRepository(gitDir)).subscribe(updatedRepo => {
-      this.repositories$.next([
-        ...this.repositories.map(r => ({...r, selected: false})),
-        updatedRepo,
-      ]);
-    })
-  };
 
-  private updateLogAndBranches = (gitRepository: GitRepository): Observable<GitRepository> =>
-    this.logService.getCommits(gitRepository, 'HEAD', 100, 0)
+  private updateLogsAndBranches = (gitRepository: GitRepository): Observable<GitRepository> =>
+    this.logService.getCommitLog(gitRepository.directory, 'HEAD', 100, 0)
       .pipe(map(logs => ({...gitRepository, logs})));
 
   /**
@@ -152,4 +153,5 @@ export class GitRepositoryService {
   //       // tap(([branchesAndLogs, remoteBranches, currentBranch, remotes]) => this.modifyCurrentRepository({branchesAndLogs, remoteBranches, currentBranch, remotes})),
   //     )
   // }
+
 }
