@@ -19,4 +19,6 @@ export const errorMessage = (message: Error | string) => {
   return message;
 }
 
-export const byPath = (path: string) => (repo: GitRepository) => path === repo.directory;
+export const byDirectory = (directory: string) => (repo: GitRepository) => directory === repo.directory;
+
+export const byIndex = (repoIndex: number) => (repo: GitRepository, i: number) => i === repoIndex;
