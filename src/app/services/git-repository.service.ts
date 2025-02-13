@@ -3,7 +3,7 @@ import {BehaviorSubject} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
-import {byPath, throwEx} from "../utils/utils";
+import {byIndex, byDirectory, throwEx} from "../utils/utils";
 import {directoryToNewRepository} from "../utils/repository-utils";
 import {GitApiService} from "./git-api.service";
 
@@ -36,7 +36,7 @@ export class GitRepositoryService {
   }
 
   get activeIndex() {
-    return this.repositories.findIndex(r => r.name == this.selectedRepository?.name);
+    return this.repositories.findIndex(r => r.directory == this.selectedRepository?.directory);
   };
 
   selectRepositoryByIndex = (repositoryIndex: number) =>
@@ -48,9 +48,10 @@ export class GitRepositoryService {
   openRepository = () => {
     const repoDirectory = this.gitApiService.pickGitFolder();
 
-    const existingRepository = this.repositories.find(byPath(repoDirectory));
+    const existingRepository = this.repositories.find(byDirectory(repoDirectory));
+
     if (existingRepository) {
-      this.selectRepository(repo => repo.name == existingRepository.name);
+      this.selectRepository(repo => repo.directory == existingRepository.directory);
     } else {
       this.createAndSelectRepository(repoDirectory);
     }
@@ -71,8 +72,23 @@ export class GitRepositoryService {
   modifyCurrentRepository = (repoEdits: Partial<GitRepository>) =>
     this.repositories$.next(this.repositories.map(repo => repo.selected ? {...repo, ...repoEdits} : repo));
 
-  removeRepository = (repoIndex: number) =>
-    this.repositories$.next(this.repositories.filter((r, i) => i != repoIndex));
+  removeRepository = (repoIndex: number) => {
+    const repoToRemove = this.repositories.find(byIndex(repoIndex))!;
+
+    // Effectively remove the repo from the repo list
+    this.repositories$.next(this.repositories.filter((_, i) => i !== repoIndex));
+
+    // Selects the next repository in next tab (if available)
+    if (repoToRemove.selected) {
+      if (this.repositories.length >= repoIndex)
+        this.selectRepositoryByIndex(repoIndex);
+      else if (repoIndex - 1 >= 0)
+        this.selectRepositoryByIndex(repoIndex - 1);
+
+      // Else, no repos at all, nothing to select !
+    }
+
+  }
 
   private repositoryNotAlreadyImported = (directory: string) => !this.repositories.find(r => r.directory == directory);
 
