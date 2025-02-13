@@ -2,14 +2,13 @@ import {Injectable} from '@angular/core';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting javascript file will look as if you never imported the module at all.
-
 import * as childProcess from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
+import {ExecOptions} from 'child_process';
 import * as util from 'util';
 import {from, map, Observable} from "rxjs";
-import {isRootDirectory, throwEx} from "../utils/utils";
+import {omitUndefined} from "../utils/utils";
 import * as electron from "@electron/remote";
+import * as path from 'path';
 
 /**
  * This service helps manipulate git through @electron/remote
@@ -19,13 +18,11 @@ import * as electron from "@electron/remote";
 })
 export class GitApiService {
 
-  electron: typeof electron = (window as any).require('@electron/remote')
-  dialog = this.electron.dialog;
   childProcess: typeof childProcess = (window as any).require('child_process');
-  fs: typeof fs = (window as any).require('fs');
-  path: typeof path = (window as any).require('path');
   util: typeof util = (window as any).require('util');
-  promisedExec: (cmd: string) => Promise<{ stdout: string, stderr: string }> = this.util.promisify(this.childProcess.exec);
+  electron: typeof electron = (window as any).require('@electron/remote')
+  promisedExec = this.util.promisify(this.childProcess.execFile);
+  path: typeof path = (window as any).require('path');
 
   constructor() {
     // Notes :
@@ -40,14 +37,18 @@ export class GitApiService {
     // ipcRenderer.invoke can serve many common use cases.
     // https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrendererinvokechannel-args
 
-    // Sample code to exec anything on machine (safe ?)
-    this.exec('node --version')
-      .pipe(map(version => `Node version: ${version}`))
+    this.git(['--version'])
+      .pipe(map(version => `Git version: ${version}`))
       .subscribe(console.log);
   }
 
-  exec = (cmd: string, args: string[] = []) => from(this.promisedExec(`${cmd} ${args.join(' ')}`))
-    .pipe(map(({stdout}) => stdout));
+  /**
+   * @param args
+   * @param cwd Which folder to execute git from
+   */
+  git = (args: string[] = [], cwd?: string) =>
+    this.exec('git', args, {cwd, env: process.env});
+
 
   get isElectron() {
     return !!window?.process?.type;
@@ -58,31 +59,9 @@ export class GitApiService {
     return new Observable<void>();
   }
 
+  exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
+    from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit'})))
+      .pipe(map(({stdout}) => stdout));
 
-  pickGitFolder = () => {
-
-    const pickedGitFolder = (this.dialog.showOpenDialogSync({properties: ['openDirectory']}) ?? throwEx('No folder selected'))[0];
-
-    return this.findGitDir(pickedGitFolder);
-
-  }
-
-  /**
-   * Lookup in parent folder, and check if path corresponds to a git repo
-   */
-  findGitDir = (gitDir: string): string => {
-
-    if (this.fs.statSync(gitDir).isFile())
-      return this.findGitDir(this.path.dirname(gitDir));
-
-    const files = this.fs.readdirSync(gitDir);
-    if (files.includes('.git'))
-      return gitDir;
-    else if (isRootDirectory(gitDir))
-      return throwEx(`This folder is not a valid git repository`);
-    else
-      return this.findGitDir(this.path.resolve(gitDir, '..'))
-
-  }
 
 }

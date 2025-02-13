@@ -1,3 +1,4 @@
+import {Commit} from "./commit";
 
 export class GitRepository {
     constructor(
@@ -5,6 +6,7 @@ export class GitRepository {
         public name: string,
         public sizes = [20, 50, 30], // panels sizes
         public selected = true, // currently selected
+        public logs: Commit[] = [],
         // public branchesAndLogs: BranchesAndLogs = {},
         public currentBranch?: string,
         public remoteBranches: string[] = [],

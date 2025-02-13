@@ -46,6 +46,7 @@
     "primeng": "^17.18.15",
     "rxjs": "7.8.1",
     "tslib": "2.6.3",
+    "lodash": "^4.17.21",
     "zone.js": "0.14.4"
   },
   "devDependencies": {
@@ -64,6 +65,7 @@
     "@playwright/test": "1.43.1",
     "@types/jest": "29.5.12",
     "@types/node": "20.12.7",
+    "@types/lodash": "^4.17.15",
     "@typescript-eslint/eslint-plugin": "7.7.1",
     "@typescript-eslint/parser": "7.7.1",
     "conventional-changelog-cli": "4.1.0",

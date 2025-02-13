@@ -1,5 +1,6 @@
 import {TreeNode} from "primeng/api";
 import {GitRepository} from "../models/git-repository";
+import {isUndefined, omitBy} from "lodash";
 
 export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
 
@@ -22,3 +23,7 @@ export const errorMessage = (message: Error | string) => {
 export const byDirectory = (directory: string) => (repo: GitRepository) => directory === repo.directory;
 
 export const byIndex = (repoIndex: number) => (repo: GitRepository, i: number) => i === repoIndex;
+
+export const omitUndefined = <T extends object>(o: T | undefined) => {
+  return omitBy<T>(o, isUndefined);
+}
