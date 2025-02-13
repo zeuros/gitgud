@@ -1,11 +1,15 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject} from "rxjs";
+import {BehaviorSubject, map, Observable} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
-import {byIndex, byDirectory, throwEx} from "../utils/utils";
+import {byDirectory, byIndex, isRootDirectory, throwEx} from "../utils/utils";
 import {directoryToNewRepository} from "../utils/repository-utils";
-import {GitApiService} from "./git-api.service";
+
+import * as fs from 'fs';
+import * as path from 'path';
+import * as electron from "@electron/remote";
+import {LogService} from "./log.service";
 
 /**
  * Holds repositories and their states
@@ -17,9 +21,14 @@ export class GitRepositoryService {
 
   private repositories$;
 
+  fs: typeof fs = (window as any).require('fs');
+  path: typeof path = (window as any).require('path');
+  electron: typeof electron = (window as any).require('@electron/remote')
+  dialog = this.electron.dialog;
+
   constructor(
     settingsService: SettingsService,
-    private gitApiService: GitApiService,
+    private logService: LogService,
   ) {
     this.repositories$ = new BehaviorSubject<GitRepository[]>(settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? [])
 
@@ -31,8 +40,8 @@ export class GitRepositoryService {
     return this.repositories$.getValue();
   }
 
-  get selectedRepository() {
-    return this.repositories.find(r => r.selected) ?? throwEx('No repo selected');
+  get selectedRepository(): GitRepository | undefined {
+    return this.repositories.find(r => r.selected);
   }
 
   get activeIndex() {
@@ -42,11 +51,12 @@ export class GitRepositoryService {
   selectRepositoryByIndex = (repositoryIndex: number) =>
     this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: index == repositoryIndex})));
 
+  // Clicks on a tab to select a repo, or opens a new one
   selectRepository = (filterFunction: (repo: GitRepository) => boolean) =>
     this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: filterFunction(repo)})));
 
   openRepository = () => {
-    const repoDirectory = this.gitApiService.pickGitFolder();
+    const repoDirectory = this.pickGitFolder();
 
     const existingRepository = this.repositories.find(byDirectory(repoDirectory));
 
@@ -59,12 +69,45 @@ export class GitRepositoryService {
     return this.selectedRepository;
   }
 
+
+  pickGitFolder = () => {
+
+    const pickedGitFolder = (this.dialog.showOpenDialogSync({properties: ['openDirectory']}) ?? throwEx('No folder selected'))[0];
+
+    return this.findGitDir(pickedGitFolder);
+
+  }
+
+  /**
+   * Lookup in parent folder, and check if path corresponds to a git repo
+   */
+  findGitDir = (gitDir: string): string => {
+
+    if (this.fs.statSync(gitDir).isFile())
+      return this.findGitDir(this.path.dirname(gitDir));
+
+    const files = this.fs.readdirSync(gitDir);
+    if (files.includes('.git'))
+      return gitDir;
+    else if (isRootDirectory(gitDir))
+      return throwEx(`This folder is not a valid git repository`);
+    else
+      return this.findGitDir(this.path.resolve(gitDir, '..'))
+
+  }
+
   createAndSelectRepository = (gitDir: string) => {
-    this.repositories$.next([
-      ...this.repositories.map(r => ({...r, selected: false})),
-      directoryToNewRepository(gitDir),
-    ]);
+    this.updateLogAndBranches(directoryToNewRepository(gitDir)).subscribe(updatedRepo => {
+      this.repositories$.next([
+        ...this.repositories.map(r => ({...r, selected: false})),
+        updatedRepo,
+      ]);
+    })
   };
+
+  private updateLogAndBranches = (gitRepository: GitRepository): Observable<GitRepository> =>
+    this.logService.getCommits(gitRepository, 'HEAD', 100, 0)
+      .pipe(map(logs => ({...gitRepository, logs})));
 
   /**
    * Saves state of a repo
