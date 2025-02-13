@@ -105,6 +105,7 @@ export class Commit {
     public readonly shortSha: string,
     public readonly summary: string,
     public readonly body: string,
+    public readonly branch: string,
     public readonly author: CommitIdentity,
     public readonly committer: CommitIdentity,
     public readonly parentSHAs: ReadonlyArray<string>,

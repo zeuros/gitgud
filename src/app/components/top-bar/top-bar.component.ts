@@ -34,7 +34,7 @@ export class TopBarComponent {
     });
   };
 
-  openRepo = () => of(this.gitRepositoryService.openRepository())
-    .subscribe({next: console.log, error: this.popupService.warn});
+  openRepo = () => this.gitRepositoryService.openRepository()
+    .subscribe({error: this.popupService.warn});
 
 }

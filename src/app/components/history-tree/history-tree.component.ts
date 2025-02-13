@@ -2,9 +2,9 @@ import {Component, Input} from '@angular/core';
 import {GitRepository} from "../../models/git-repository";
 import {TableModule} from "primeng/table";
 import {NgIf} from "@angular/common";
+import {Commit} from "../../models/commit";
 
-type ReadCommitResult = {};
-type MyCommitObject = ReadCommitResult & {
+type MyCommitObject = Commit & {
   bars: {
     top: boolean,
     bottom: boolean,
@@ -71,8 +71,6 @@ export class HistoryTreeComponent {
     //   };
     // }
 
-
-    // protected readonly $commitResult = (c: MyCommitObject) => c
   protected readonly Object = Object;
 
   // private updateCommitsTree(currentCommit: ReadCommitResult, commitIndex: number) {
@@ -96,5 +94,7 @@ export class HistoryTreeComponent {
   //   console.log(this.commmitTree.length - 1, currentCommit.commit.message);
   //   return this.commmitTree.length - 1;
   // }
+
+  protected readonly $commitResult = (c: MyCommitObject) => c
 
 }
