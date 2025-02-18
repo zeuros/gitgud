@@ -3,13 +3,13 @@ import {RemotePanelComponent} from "../remote-panel/remote-panel.component";
 import {SplitterModule} from "primeng/splitter";
 import {GitRepositoryService} from "../../services/git-repository.service";
 import {CommitSectionComponent} from "../commit-section/commit-section.component";
-import {HistoryTreeComponent} from "../history-tree/history-tree.component";
+import {LogsComponent} from "../logs/logs.component";
 import {GitRepository} from "../../models/git-repository";
 
 @Component({
     selector: 'gitgud-repository-view',
     standalone: true,
-    imports: [RemotePanelComponent, HistoryTreeComponent, CommitSectionComponent, SplitterModule],
+    imports: [RemotePanelComponent, LogsComponent, CommitSectionComponent, SplitterModule],
     templateUrl: './repository-view.component.html',
     styleUrl: './repository-view.component.scss'
 })
