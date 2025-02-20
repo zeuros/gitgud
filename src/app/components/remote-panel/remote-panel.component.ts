@@ -7,7 +7,6 @@ import {TreeModule} from "primeng/tree";
 import {branchToTreeNode} from "../../utils/repository-utils";
 import {ContextMenuModule} from "primeng/contextmenu";
 import {MenuItem, TreeNode} from "primeng/api";
-import {single} from "rxjs";
 import {leaves} from "../../utils/utils";
 import {PopupService} from "../../services/popup.service";
 
@@ -28,23 +27,6 @@ import {PopupService} from "../../services/popup.service";
 export class RemotePanelComponent implements OnInit {
 
   @Input() gitRepository!: GitRepository;
-
-  protected selectedLocalBranch: any;
-  protected selectedRemoteBranch: any;
-  protected localBranches: TreeNode<string>[] = [];
-  protected remoteBranches: TreeNode<string>[] = [];
-
-  constructor(
-    private popupService: PopupService,
-  ) {
-  }
-
-  ngOnInit(): void {
-    // this.localBranches = Object.keys(this.gitRepository.branchesAndLogs).map(b => branchToTreeNode(b));
-    this.remoteBranches = this.gitRepository.remoteBranches?.filter(b => b != 'HEAD').map(b => branchToTreeNode(b));
-  }
-
-
   contextMenu: MenuItem[] = [
     {label: 'Pull (fast-forward if possible)', icon: 'pi pi-cloud-download', command: () => this.popupService.info('Pull (fast-forward if possible) selected')},
     {label: 'Push (Set Upstream)', icon: 'pi pi-cloud-upload', command: () => this.popupService.info('Push (Set Upstream) selected')},
@@ -60,14 +42,24 @@ export class RemotePanelComponent implements OnInit {
     {label: 'Copy branch name', icon: 'pi pi-copy', command: () => this.popupService.info('Copy branch name selected')},
     {label: 'Copy commit sha', icon: 'pi pi-receipt', command: () => this.popupService.info('Copy commit sha selected')},
   ];
+  protected selectedLocalBranch: any;
+  protected selectedRemoteBranch: any;
+  protected localBranches: TreeNode<string>[] = [];
+  protected remoteBranches: TreeNode<string>[] = [];
 
+  constructor(
+    private popupService: PopupService,
+  ) {
+  }
+
+  ngOnInit(): void {
+    // this.localBranches = Object.keys(this.gitRepository.branchesAndLogs).map(b => branchToTreeNode(b));
+    this.remoteBranches = this.gitRepository.remoteBranches?.filter(b => b != 'HEAD').map(b => branchToTreeNode(b));
+  }
 
   checkoutBranch(branch: TreeNode<string>, allBranches: TreeNode<string>[]) {
     leaves(allBranches).forEach(b => delete b.styleClass);
     branch.styleClass = 'selected-branch';
     this.popupService.info(`Branch ${branch.data} checked out`);
   }
-
-  $node = (node: TreeNode<string>) => node;
-  protected readonly single = single;
 }

@@ -6,7 +6,6 @@ import {DialogService, DynamicDialogRef} from "primeng/dynamicdialog";
 import {CloneOrOpenDirectoryDialogComponent} from "../dialogs/clone-or-open-directory-dialog/clone-or-open-directory-dialog.component";
 import {GitRepositoryService} from "../../services/git-repository.service";
 import {PopupService} from "../../services/popup.service";
-import {of} from "rxjs";
 
 @Component({
   selector: 'gitgud-top-bar',
@@ -26,6 +25,9 @@ export class TopBarComponent {
   ) {
   }
 
+  openRepo = () => this.gitRepositoryService.openRepository()
+    .subscribe({error: this.popupService.warn});
+
   protected showOpenOrCloneModal = () => {
     this.cloneOrOpenDirectoryDialogRef = this.dialogService.open(CloneOrOpenDirectoryDialogComponent, {
       header: 'Clone a repository',
@@ -33,8 +35,5 @@ export class TopBarComponent {
       modal: true,
     });
   };
-
-  openRepo = () => this.gitRepositoryService.openRepository()
-    .subscribe({error: this.popupService.warn});
 
 }

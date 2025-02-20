@@ -1,12 +1,11 @@
 import {TreeNode} from "primeng/api";
 import {GitRepository} from "../models/git-repository";
 import {isUndefined, omitBy} from "lodash";
+import {LogObject} from "../models/log-object";
 
 export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
 
 export const leaves = (treeNodes: TreeNode<string>[]): TreeNode<string>[] => treeNodes.flatMap(treeNode => treeNode.leaf ? [treeNode] : leaves(treeNode.children!));
-
-export const findInLeaves = (treeNodes: TreeNode<string>[], filterFunction: (b: TreeNode<string>) => boolean) => leaves(treeNodes).find(filterFunction);
 
 export const isRootDirectory = (path: string) => ['C:\\', '/'].includes(path);
 
@@ -22,8 +21,15 @@ export const errorMessage = (message: Error | string) => {
 
 export const byDirectory = (directory: string) => (repo: GitRepository) => directory === repo.directory;
 
-export const byIndex = (repoIndex: number) => (repo: GitRepository, i: number) => i === repoIndex;
+export const byIndex = (repoIndex: number) => (_: GitRepository, i: number) => i === repoIndex;
+
+// Compare LogObjects by date
+export const byLogObjectDate = (o: LogObject, o2: LogObject) => o.author.date < o2.author.date ? 1 : -1
 
 export const omitUndefined = <T extends object>(o: T | undefined) => {
   return omitBy<T>(o, isUndefined);
 }
+
+// Filters
+export const removeDuplicates = <T>(item: T, index: number, array: T[]): boolean => array.indexOf(item) === index
+export const removeUndefined = <T>(v: T | undefined): v is T => !!v
