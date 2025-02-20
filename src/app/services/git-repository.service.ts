@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, map, Observable, tap} from "rxjs";
+import {BehaviorSubject, forkJoin, map, Observable, tap} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
@@ -10,6 +10,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as electron from "@electron/remote";
 import {LogService} from "./log.service";
+import {StashService} from "./stash.service";
+import {BranchService} from "./branch.service";
 
 /**
  * Holds repositories and their states
@@ -19,16 +21,17 @@ import {LogService} from "./log.service";
 })
 export class GitRepositoryService {
 
-  private repositories$;
-
   fs: typeof fs = (window as any).require('fs');
   path: typeof path = (window as any).require('path');
   electron: typeof electron = (window as any).require('@electron/remote')
   dialog = this.electron.dialog;
+  private repositories$;
 
   constructor(
     settingsService: SettingsService,
     private logService: LogService,
+    private branchService: BranchService,
+    private stashService: StashService,
   ) {
     this.repositories$ = new BehaviorSubject<GitRepository[]>(settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? [])
 
@@ -53,7 +56,7 @@ export class GitRepositoryService {
 
   // Clicks on a tab to select a repo, or opens a new one
   selectRepository = (filterFunction: (repo: GitRepository) => boolean) =>
-    this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: filterFunction(repo)})));
+    this.repositories$.next(this.repositories.map(repo => ({...repo, selected: filterFunction(repo)})));
 
   /**
    * Opens or retrieve repository after user picks a repo folder
@@ -69,15 +72,6 @@ export class GitRepositoryService {
     return this.updateLogsAndBranches(repo)
       .pipe(tap(this.updateRepositories));
   }
-
-  private updateRepositories = (updatedRepo: GitRepository) =>
-    this.repositories$.next(this.repositories.map(r => r.directory == updatedRepo.directory ? updatedRepo : r));
-
-  private addToRepos = (repo: GitRepository) => {
-    this.repositories$.next([...this.repositories, repo]);
-    return repo
-  }
-
 
   pickGitFolder = () => {
 
@@ -105,11 +99,6 @@ export class GitRepositoryService {
 
   }
 
-
-  private updateLogsAndBranches = (gitRepository: GitRepository): Observable<GitRepository> =>
-    this.logService.getCommitLog(gitRepository.directory, 'HEAD', 100, 0)
-      .pipe(map(logs => ({...gitRepository, logs})));
-
   /**
    * Saves state of a repo
    */
@@ -134,24 +123,20 @@ export class GitRepositoryService {
 
   }
 
-  private repositoryNotAlreadyImported = (directory: string) => !this.repositories.find(r => r.directory == directory);
+  private updateRepositories = (updatedRepo: GitRepository) =>
+    this.repositories$.next(this.repositories.map(r => r.directory == updatedRepo.directory ? updatedRepo : r));
 
-  // private readRepository(repositoryPath: string): GitRepository {
-  //   const existingRepository = this.repositories.find(byPath(repositoryPath));
-  //   if (existingRepository) return existingRepository;
-  //
-  //   // Create repository object
-  //   this.repositories.push()
-  //     .pipe(
-  //       tap(this.openRepository),
-  //       switchMap(dir => forkJoin([
-  //         this.electronService.logAll(dir),
-  //         this.electronService.listRemoteBranches(dir),
-  //         this.electronService.currentBranch(dir),
-  //         this.electronService.listRemotes(dir),
-  //       ])),
-  //       // tap(([branchesAndLogs, remoteBranches, currentBranch, remotes]) => this.modifyCurrentRepository({branchesAndLogs, remoteBranches, currentBranch, remotes})),
-  //     )
-  // }
+  private addToRepos = (repo: GitRepository) => {
+    this.repositories$.next([...this.repositories, repo]);
+    return repo
+  }
+
+  private updateLogsAndBranches = (gitRepository: GitRepository): Observable<GitRepository> =>
+    forkJoin({
+      logs: this.logService.getCommitLog(gitRepository.directory, '--branches', 10000, 0, ['--remotes', '--tags', '--source']), // Source will show which branch the commit is in
+      branches: this.branchService.getBranches(gitRepository.directory), // Source will show which branch the  commit is in
+      stashes: this.stashService.getStashes(gitRepository.directory), // Source will show which branch commit is in
+    })
+      .pipe(map(updates => ({...gitRepository, ...updates})), tap(console.log));
 
 }

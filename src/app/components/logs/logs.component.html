@@ -1,0 +1,40 @@
+<p-table
+        [value]="displayLog"
+        [selection]="displayLog.find(isPointedByHead)"
+        [rowHover]="true"
+        [scrollable]="true"
+        selectionMode="single"
+        styleClass="pointer borderless p-datatable-sm"
+>
+    <ng-template pTemplate="header">
+        <tr class="uppercase text-gray">
+            <th>Branch / Tag</th>
+            <th>Graph</th>
+            <th style="min-width: 100px;">Commit message</th>
+            <th>Author</th>
+            <th style="min-width: 170px;">Commit date / time</th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-commit>
+        <tr class="commit-row" [pSelectableRow]="commit">
+            <td class="branch-tag">
+                <i *ngIf="$displayCommit(commit).branchDetails?.isPointedByLocalHead" class="fa fa-check mr-2"></i>
+                {{ $displayCommit(commit).branchDetails?.branches?.map(branchName).filter(removeDuplicates).join('\n') ?? '' }}
+                <i *ngIf="$displayCommit(commit).branchDetails?.remote" class="fa fa-github mr-2"></i>
+                <i *ngIf="$displayCommit(commit).branchDetails?.local" class="fa fa-laptop mr-2"></i>
+            </td>
+            <td class="graph"
+                [style.padding-left.px]="$displayCommit(commit).bars.indent * 20"
+                [style.filter]="'hue-rotate(' + $displayCommit(commit).bars.color * 360 / notZero(this.branches.length) + 'deg)'">
+                <div class="bubble user-name-bubble">{{ $displayCommit(commit).author.name.slice(0, 1) }}</div>
+                <div class="bubble bar top"></div>
+                <div class="bubble bar right">
+                    <div class="quarter-circle"></div>
+                </div>
+            </td>
+            <td class="summary">{{ $displayCommit(commit).summary }}</td>
+            <td class="text-gray">{{ $displayCommit(commit).author.name }}</td>
+            <td class="text-gray">{{ $displayCommit(commit).author.date | date: 'd/M/YYYY HH:mm' }}</td>
+        </tr>
+    </ng-template>
+</p-table>
