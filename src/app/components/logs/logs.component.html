@@ -24,8 +24,8 @@
                 <i *ngIf="$displayCommit(commit).branchDetails?.local" class="fa fa-laptop mr-2"></i>
             </td>
             <td class="graph"
-                [style.padding-left.px]="$displayCommit(commit).bars.indent * 20"
-                [style.filter]="'hue-rotate(' + $displayCommit(commit).bars.color * 360 / notZero(this.branches.length) + 'deg)'">
+                [style.padding-left.px]="$displayCommit(commit).style.indent * 20"
+                [style.filter]="'hue-rotate(' + $displayCommit(commit).style.indent * 360 / notZero(this.branches.length) + 'deg)'">
                 <div class="bubble user-name-bubble">{{ $displayCommit(commit).author.name.slice(0, 1) }}</div>
                 <div class="bubble bar top"></div>
                 <div class="bubble bar right">
