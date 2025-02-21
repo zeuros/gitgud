@@ -11,11 +11,8 @@ export interface LogObjectDisplayInfo {
     remote: boolean,
     isPointedByLocalHead: boolean,
   }
-  bars: {
-    top: boolean,
-    bottom: boolean,
+  style: {
     indent: number,
-    color: number,
   }
 }
 
