@@ -33,3 +33,7 @@ export const omitUndefined = <T extends object>(o: T | undefined) => {
 // Filters
 export const removeDuplicates = <T>(item: T, index: number, array: T[]): boolean => array.indexOf(item) === index
 export const removeUndefined = <T>(v: T | undefined): v is T => !!v
+
+// Reverse array AND start indexes from bottom !
+export const reversedForEach = <T>(a: T[], callbackfn: (value: T, index: number, array: T[]) => void) =>
+  a.slice().reverse().forEach((element: T, index: number, array: T[]) => callbackfn(element, a.length - 1 - index, array));
