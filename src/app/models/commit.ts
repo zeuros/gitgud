@@ -2,6 +2,7 @@ import {GitAuthor} from "./git-author";
 import {CommitIdentity} from "./commit-identity";
 import {isCoAuthoredByTrailer, ITrailer} from "./interpret-trailers";
 import {LogObject} from "./log-object";
+import {DisplayRef} from "./display-ref";
 
 /**
  * Extract any Co-Authored-By trailers from an array of arbitrary

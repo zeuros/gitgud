@@ -11,7 +11,9 @@ export interface LogObjectDisplayInfo {
     remote: boolean,
     isPointedByLocalHead: boolean,
   }
-  style: {
+  style?: {
+    isRootCommit: boolean, // Beginning of a tree
+    isMergeCommit: boolean, // A merge child is a child that ends a branch by merging it into another one.
     indent: number,
   }
 }
