@@ -38,7 +38,7 @@
                             <div [style.left.px]="2 + col * 35"
                                  class="drawing line"
                                  [ngClass]="logMatrixSymbolClasses[toDraw]"
-                                 [style.filter]="'hue-rotate(' + displayLog[rowIndex].style.indent * 360 / notZero(this.branches.length) + 'deg)'">
+                                 [style.filter]="'hue-rotate(' + col * 360 / notZero(this.branches.length) + 'deg)'">
                             </div>
                         </ng-container>
                     </ng-container>

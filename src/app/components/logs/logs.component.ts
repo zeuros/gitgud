@@ -297,14 +297,15 @@ export class LogsComponent {
 
   private drawTwoCommitsConnection = (parent: Coordinates, child: Coordinates, logMatrix: LogMatrix) => {
 
-    // TODO: Draw horizontal connection to reach children column on parent's row
-    // ...
-
-
     if (parent.col == child.col) { // Successive commits: Just connect them and the gaps between them
       logMatrix[parent.row][parent.col] = [...logMatrix[parent.row][parent.col], LogMatrixSymbol.VERTICAL_TOP];
       logMatrix[child.row][child.col] = [...logMatrix[child.row][child.col], LogMatrixSymbol.VERTICAL_BOTTTOM];
     }
+
+    for (let rowIndex = parent.row - 1; rowIndex > child.row; rowIndex--) {
+      logMatrix[rowIndex][child.col] = [...logMatrix[rowIndex][child.col], LogMatrixSymbol.VERTICAL];
+    }
+
   };
 
 }
