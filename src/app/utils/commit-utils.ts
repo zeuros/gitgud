@@ -10,7 +10,7 @@ export type ChildrenMap = { [parentSha: string]: Commit[] };
  * True if the commit children have not splitted edges like (c) - (c) and not like (c) <
  *                                                                                       (c)
  */
-export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: { [sha: string]: Commit[] }): boolean => {
+export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: ChildrenMap): boolean => {
   const childrenCommits = childMap[displayRef.sha] ?? [];
 
   if (childrenCommits.length > 1) return false; // Found a branching (commit with 2+ children)

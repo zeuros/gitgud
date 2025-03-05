@@ -14,6 +14,8 @@ export const throwEx = (message: string) => {
   throw new Error(message);
 }
 
+export const notZero = (n: number) => n == 0 ? 1 : n;
+
 export const errorMessage = (message: Error | string) => {
   if (message instanceof Error) return message.message; // avoids having 'Error: ...' which the Error class brings
   return message;
