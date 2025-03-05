@@ -23,8 +23,8 @@
                 <i *ngIf="displayLog[rowIndex].branchDetails?.remote" class="fa fa-github mr-2"></i>
                 <i *ngIf="displayLog[rowIndex].branchDetails?.local" class="fa fa-laptop mr-2"></i>
             </td>
-            <td class="graph" [style.min-width.px]="logMatrix[0].length * 30">
-                <ng-container *ngFor="let rowCell of logMatrix[rowIndex]; index as col">
+            <td class="graph" [style.min-width.px]="drawMatrix[0].length * 30">
+                <ng-container *ngFor="let rowCell of drawMatrix[rowIndex]; index as col">
                     <ng-container *ngFor="let toDraw of rowCell"> <!-- toDraw is a CellContent -->
                         <ng-container *ngIf="isDisplayRef(toDraw)">
                             <div
