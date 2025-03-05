@@ -25,20 +25,20 @@
             </td>
             <td class="graph" [style.min-width.px]="logMatrix[0].length * 30">
                 <ng-container *ngFor="let rowCell of logMatrix[rowIndex]; index as col">
-                    <ng-container *ngFor="let toDraw of rowCell">
+                    <ng-container *ngFor="let toDraw of rowCell"> <!-- toDraw is a CellContent -->
                         <ng-container *ngIf="isDisplayRef(toDraw)">
                             <div
-                                 class="drawing bubble {{ $displayRef(toDraw).style.isMergeCommit ? 'le-dot' : 'user-name-bubble' }}"
-                                 [style.left.px]="col * 35"
-                                 [style.filter]="'hue-rotate(' + displayLog[rowIndex].style.indent * 360 / notZero(this.branches.length) + 'deg)'">
-                                {{  $displayRef(toDraw).style.isMergeCommit ? '' : $displayRef(toDraw).author.name.slice(0, 1) }}
+                                    class="drawing bubble {{ isMergeCommit($displayRef(toDraw.value)) ? 'le-dot' : 'user-name-bubble' }}"
+                                    [style.left.px]="col * 24"
+                                    [style.filter]="'hue-rotate(' + toDraw.color * 360 / notZero(this.branches.length) + 'deg)'">
+                                {{ isMergeCommit($displayRef(toDraw.value)) ? '' : $displayRef(toDraw.value).author.name.slice(0, 1) }}
                             </div>
                         </ng-container>
-                        <ng-container *ngIf="isLogMatrixSymbol(toDraw)">
-                            <div [style.left.px]="2 + col * 35"
+                        <ng-container *ngIf="isLogMatrixSymbol(toDraw.value)">
+                            <div [style.left.px]="2 + col * 24"
                                  class="drawing line"
-                                 [ngClass]="logMatrixSymbolClasses[toDraw]"
-                                 [style.filter]="'hue-rotate(' + col * 360 / notZero(this.branches.length) + 'deg)'">
+                                 [ngClass]="logMatrixSymbolClasses[toDraw.value]"
+                                 [style.filter]="'hue-rotate(' + toDraw.color * 360 / notZero(this.branches.length) + 'deg)'">
                             </div>
                         </ng-container>
                     </ng-container>

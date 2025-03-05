@@ -4,13 +4,13 @@ import {TableModule} from 'primeng/table';
 import {DatePipe, JsonPipe, NgClass, NgForOf, NgIf} from '@angular/common';
 import {Commit} from '../../models/commit';
 import {RefType} from '../../enums/ref-type.enum';
-import {removeDuplicates, removeUndefined, reversedForEach, throwEx} from '../../utils/utils';
+import {notZero, removeDuplicates, removeUndefined, reversedForEach, throwEx} from '../../utils/utils';
 import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
-import {byName, bySha, cellContainsCommit, isDisplayRef} from "../../utils/log-utils";
+import {byName, bySha, cellContainsCommit, isDisplayRef, isLogMatrixSymbol} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
 import {max} from "lodash";
-import {buildChildrenMap, buildCommitMap, ChildrenMap, CommitMap, hasNoBranching} from "../../utils/commit-utils";
+import {buildChildrenMap, buildCommitMap, ChildrenMap, hasNoBranching} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
 import {CellContent, LogMatrix, LogMatrixSymbol, Row} from "../../models/log-matrix";
 
@@ -32,7 +32,6 @@ import {CellContent, LogMatrix, LogMatrixSymbol, Row} from "../../models/log-mat
 export class LogsComponent {
 
   protected displayLog: DisplayRef[] = []; // Commits ready for display
-  protected refs: string[] = [];
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected readonly removeDuplicates = removeDuplicates;
   protected logMatrix: LogMatrix = [[]];
@@ -41,12 +40,14 @@ export class LogsComponent {
     [LogMatrixSymbol.VERTICAL]: 'vertical full',
     [LogMatrixSymbol.VERTICAL_TOP]: 'vertical top',
     [LogMatrixSymbol.VERTICAL_BOTTTOM]: 'vertical bottom',
-    [LogMatrixSymbol.TOP_RIGHT]: 'turn top-right',
-    [LogMatrixSymbol.TOP_LEFT]: 'turn top-left',
-    [LogMatrixSymbol.BOTTOM_RIGHT]: 'turn bottom-right',
-    [LogMatrixSymbol.BOTTOM_LEFT]: 'turn bottom-left'
+    [LogMatrixSymbol.LEFT_UP]: 'turn left-up',
+    [LogMatrixSymbol.RIGHT_UP]: 'turn right-up',
+    [LogMatrixSymbol.UP_RIGHT]: 'turn up-right',
+    [LogMatrixSymbol.UP_LEFT]: 'turn up-left'
   };
   protected isDisplayRef = isDisplayRef;
+  protected readonly notZero = notZero;
+  protected readonly isLogMatrixSymbol = isLogMatrixSymbol;
 
   @Input() set gitRepository(gitRepository: GitRepository) {
 
@@ -59,64 +60,33 @@ export class LogsComponent {
 
     const childrenMap = buildChildrenMap(gitRepository.logs);
 
-    this.displayLog = this.prepareDisplayLog(gitRepository.logs, gitRepository.stashes, commitMap, childrenMap);
+    this.displayLog = gitRepository.logs.map(this.commitToDisplayRef);
 
     // TODO: move columns of successive commits onto another column in order to save space if possible
 
-    this.logMatrix = this.drawCommitsConnections(this.clearEmptyColumns(this.buildLogMatrix(this.displayLog)), this.displayLog, childrenMap);
+    const logMatrix = this.packColumns(this.clearEmptyColumns(this.buildLogMatrix(this.displayLog, childrenMap)));
+
+    this.logMatrix = this.drawCommitsConnections(logMatrix, this.displayLog, childrenMap);
 
   }
-
-  protected notZero = (i: number) => i == 0 ? 1 : i;
 
   protected branchName = (b: Branch) => b.name.replace('origin/', '');
 
   protected isPointedByHead = (d: DisplayRef) => d.branchDetails?.isPointedByLocalHead;
 
-  protected isLogMatrixSymbol = (toDraw: CellContent) => !isDisplayRef(toDraw)
-
   protected $displayRef = (displayRef: any): DisplayRef => displayRef;
 
-  // TODO: separate commit indent and put it into matrix
-  private computeCommitIndent = (displayRef: DisplayRef, commitMap: { [sha: string]: Commit }, childrenMap: { [sha: string]: Commit[] }): DisplayRef => {
+  protected isMergeCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length > 1
 
-    let indent = this.computeCommitIndentation(displayRef);
+  private computeCommitIndentation = (displayRef: DisplayRef | Commit, allRefs: string[], childrenMap: ChildrenMap) => {
 
-    // If the commit has no parentSha => It is a tree root commit ! => It means that the next commits belong to another tree.
-    // In order to indent commits for this new tree, we clear the saved commits refs and restart commits indentation
-    const isRootCommit = displayRef.parentSHAs.length == 0;
-    if (isRootCommit) this.refs = [];
-
-    // const hasAParentFromSameBranch = displayRef.parentSHAs.map(parentSha => commitMap[parentSha]).some(parent => parent.ref == displayRef.ref);
-    // const parentHasOnlyOneChild = displayRef.parentSHAs.map(parentSha => commitMap[parentSha]).some(parent => parent.ref == displayRef.ref);
-    const hasOneChild = childrenMap[displayRef.sha]?.length == 1;
-
-
-    // TODO: move this optimization into dedicated function
-    // If this commit has not branching above (all children aligned), align it with its children.
-    if (hasOneChild && hasNoBranching(displayRef, childrenMap))
-      indent = this.computeCommitIndentation(childrenMap[displayRef.sha][0]);
-
-    return {
-      ...displayRef,
-      style: {
-        isRootCommit,
-        isMergeCommit: displayRef.parentSHAs.length > 1, // A merge child is a child that ends a branch by merging it into another one. A merge commit has two parents commit
-        // A branch child is a child that continues a branch or creates a new one.
-        // isBranchChildren: hasAParentFromSameBranch || parentHasOnlyOneChild, // A branch children has a parent from same branch OR his parent is from different branch but with one child
-        indent, // e.g. If commit belongs to most recently committed branch, indent is 0 etc ...
-      }
-    };
-  }
-
-  private computeCommitIndentation = (displayRef: DisplayRef | Commit) => {
     // get raw ref related to our commit (the branch it has been committed with) and match corresponding local branch
     // Group commits by their local branch (one column = one local branch) ...
     const refLocalBranch = this.findLocalRef(displayRef.ref);
-    const refLocalBranchIndex = this.refs.indexOf(refLocalBranch);
+    const refLocalBranchIndex = allRefs.indexOf(refLocalBranch);
 
     // We merge the local & remote branches to put them on the same column (meaning commits of the same local branch have the same indentation)
-    return refLocalBranchIndex >= 0 ? refLocalBranchIndex : (this.refs.push(refLocalBranch) - 1);
+    return refLocalBranchIndex >= 0 ? refLocalBranchIndex : (allRefs.push(refLocalBranch) - 1);
   }
 
   /**
@@ -129,7 +99,6 @@ export class LogsComponent {
 
     return {
       ...commit,
-      pointedByHead: true,
       refType: RefType.COMMIT,
       // Fix stash commit date not being at the real stash date.
       // committer: refType == RefType.STASH ? this.findStash(commit.sha)!.committer : commit.committer,
@@ -145,16 +114,7 @@ export class LogsComponent {
     };
   };
 
-  private prepareDisplayLog = (logs: ReadonlyArray<Commit>, stashes: ReadonlyArray<Commit>, commitMap: CommitMap, childrenMap: ChildrenMap) => {
-
-    const displayCommits = logs.map(this.commitToDisplayRef).map(r => this.computeCommitIndent(r, commitMap, childrenMap));
-
-    const displayStashes = stashes.map(s => this.stashToDisplayRef(s, displayCommits)) // Append stashes to log, removes ref since stashes never belongs to branches.
-
-    return this.insertStashesIntoLog(displayCommits, displayStashes);
-
-  };
-
+  // TODO: Append stashes to logMatrix
   private stashToDisplayRef = (s: Stash, displayCommits: DisplayRef[]): DisplayRef => {
 
     const parentCommit = displayCommits.find(c => s.parentSHAs.includes(c.sha)) ?? throwEx(`Couldn't find stash (${s.summary}) parent(s) (${s.parentSHAs})`)
@@ -162,7 +122,6 @@ export class LogsComponent {
     return {
       ...s,
       refType: RefType.STASH,
-      pointedByHead: false,
       ref: '',
       branchDetails: {
         branches: [],
@@ -170,11 +129,6 @@ export class LogsComponent {
         local: false,
         remote: false
       },
-      style: {
-        isRootCommit: false,
-        isMergeCommit: false,
-        indent: parentCommit.style!.indent,// same as his parent commit
-      }
     }
   };
 
@@ -239,21 +193,50 @@ export class LogsComponent {
   };
 
   // Matrix with just commits inside
-  private buildLogMatrix = (displayLog: DisplayRef[]) => {
-    const columnCount = max(displayLog.map(c => c.style!.indent))! + 1;
+  private buildLogMatrix = (displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
 
-    return displayLog.map(commit => {
+    const commitsIndents = this.computeCommitsIndents(displayLog, childrenMap);
+
+    const columnCount = max(commitsIndents)! + 1;
+
+    return displayLog.map((commit, i) => {
       // Create new row
       const row: Row = new Array(columnCount).fill([]);
 
-      const commitColumn = commit.style!.indent;
+      const commitColumn = commitsIndents[i];
 
       // Draw current commit
-      row[commitColumn] = [commit];
+      row[commitColumn] = [new CellContent(commit, commitColumn)];
 
       return row;
     });
   };
+
+  private computeCommitsIndents(displayLog: DisplayRef[], childrenMap: ChildrenMap) {
+
+    let refs: string[] = [];
+
+    return displayLog.map((commit, i) => {
+
+      // If the commit has no parentSha => It is a tree root commit ! => It means that the next commits belong to another tree.
+      // In order to indent commits for this new tree, we clear the saved commits refs and restart commits indentation
+      const isRootCommit = commit.parentSHAs.length == 0;
+      if (isRootCommit) {
+        const childIndent = this.computeCommitIndentation(childrenMap[commit.sha][0], refs, childrenMap);
+        refs = []; // Clear branches related to the tree to restart indent from 0
+        return childIndent;
+      }
+
+      const hasOneChild = childrenMap[commit.sha]?.length == 1;
+
+      // TODO: move this optimization into dedicated function
+      // If this commit has not branching above (all children aligned), align it with its children.
+      if (hasOneChild && hasNoBranching(commit, childrenMap))
+        return this.computeCommitIndentation(childrenMap[commit.sha][0], refs, childrenMap);
+
+      return this.computeCommitIndentation(commit, refs, childrenMap);
+    });
+  }
 
   private clearEmptyColumns = (buildLogMatrix: LogMatrix) => {
     // Find columns that only contain empty arrays
@@ -287,25 +270,73 @@ export class LogsComponent {
         const childCoordinates = new Coordinates(childRow, logMatrix[childRow].findIndex(cellContainsCommit));
 
         // Draw connection between parent and children
-        this.drawTwoCommitsConnection(commitCoordinates, childCoordinates, logMatrix);
+        this.drawTwoCommitsConnection(commitCoordinates, childCoordinates, logMatrix, child);
       })
     });
 
     return logMatrix;
   };
 
+  private drawTwoCommitsConnection = (parent: Coordinates, child: Coordinates, logMatrix: LogMatrix, childCommit: Commit) => {
 
-  private drawTwoCommitsConnection = (parent: Coordinates, child: Coordinates, logMatrix: LogMatrix) => {
+    const isChildrenRight = parent.col < child.col; // Determine the direction of the connection
 
+    // Connections between successive commits on same column
     if (parent.col == child.col) { // Successive commits: Just connect them and the gaps between them
-      logMatrix[parent.row][parent.col] = [...logMatrix[parent.row][parent.col], LogMatrixSymbol.VERTICAL_TOP];
-      logMatrix[child.row][child.col] = [...logMatrix[child.row][child.col], LogMatrixSymbol.VERTICAL_BOTTTOM];
+      logMatrix[parent.row][parent.col] = [...logMatrix[parent.row][parent.col], new CellContent(LogMatrixSymbol.VERTICAL_TOP, child.col)];
+      logMatrix[child.row][child.col] = [...logMatrix[child.row][child.col], new CellContent(LogMatrixSymbol.VERTICAL_BOTTTOM, child.col)];
+
+      // Draw vertical lines from parent to child
+      for (let rowIndex = parent.row - 1; rowIndex > child.row; rowIndex--) {
+        logMatrix[rowIndex][child.col] = [...logMatrix[rowIndex][child.col], new CellContent(LogMatrixSymbol.VERTICAL, child.col)];
+      }
     }
 
-    for (let rowIndex = parent.row - 1; rowIndex > child.row; rowIndex--) {
-      logMatrix[rowIndex][child.col] = [...logMatrix[rowIndex][child.col], LogMatrixSymbol.VERTICAL];
-    }
 
+    // Draw the horizontal line between parent -> child columns at parent row like '---(c)  if parent is on different column
+    if (parent.col != child.col) {
+      if (isChildrenRight) {
+        for (let col = parent.col + 1; col < child.col; col++) {
+          logMatrix[parent.row][col] = [...logMatrix[parent.row][col], new CellContent(LogMatrixSymbol.HORIZONTAL, child.col)];
+        }
+      } else {
+        for (let col = parent.col - 1; col > child.col; col--) {
+          logMatrix[parent.row][col] = [...logMatrix[parent.row][col], new CellContent(LogMatrixSymbol.HORIZONTAL, child.col)];
+        }
+      }
+
+      // If parent and child are in different columns, we need to draw a turn. Draw the turns at each end
+      if (this.isMergeCommit(childCommit)) { // Draw [Edge to merge children](https://pvigier.github.io/media/img/commit-graph/design_straight_branches/first_parent.svg)
+        const turnSymbol = isChildrenRight ? LogMatrixSymbol.UP_RIGHT : LogMatrixSymbol.UP_LEFT;
+        logMatrix[child.row][parent.col] = [...logMatrix[parent.row][child.col], new CellContent(turnSymbol, parent.col)]; // Turn to child
+
+        // Draw horizontal line from turn to child TODO: test this
+        const colDirection = isChildrenRight ? 1 : -1;
+        for (let colIndex = parent.col + colDirection; colIndex != child.col; colIndex += colDirection) {
+          logMatrix[child.row][colIndex] = [...logMatrix[child.row][colIndex], new CellContent(LogMatrixSymbol.HORIZONTAL, parent.col)];
+        }
+
+      } else { // Draw [Edge to branch children](https://pvigier.github.io/media/img/commit-graph/design_straight_branches/other_parent.svg)
+        if (isChildrenRight) {
+          logMatrix[parent.row][child.col] = [...logMatrix[parent.row][child.col], new CellContent(LogMatrixSymbol.RIGHT_UP, child.col)]; // Turn to child
+        } else { // Child is to the left of parent
+          logMatrix[parent.row][child.col] = [...logMatrix[parent.row][child.col], new CellContent(LogMatrixSymbol.LEFT_UP, child.col)]; // Turn to child
+        }
+
+        // Draw vertical line from child turn to child
+        for (let rowIndex = parent.row - 1; rowIndex > child.row; rowIndex--) {
+          logMatrix[rowIndex][child.col] = [...logMatrix[rowIndex][child.col], new CellContent(LogMatrixSymbol.VERTICAL, child.col)];
+        }
+      }
+
+    }
   };
 
+  // Push columns of commits to the left if possible
+  private packColumns = (logMatrix: LogMatrix) => {
+    // If there's room on the left, move the commits
+
+
+    return logMatrix;
+  }
 }

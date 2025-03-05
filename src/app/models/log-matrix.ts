@@ -12,14 +12,17 @@ export enum LogMatrixSymbol {
   VERTICAL_BOTTTOM = '.', // Connects a commit to a commit below it
   VERTICAL_TOP = 'ˈ', // Connects a commit to a commit on top of it
   VERTICAL = '|',
-  BOTTOM_RIGHT = '|▔',
-  BOTTOM_LEFT = '▔|',
-  TOP_LEFT = '_|',
-  TOP_RIGHT = '|_',
+  UP_RIGHT = '|▔',
+  UP_LEFT = '▔|',
+  RIGHT_UP = '_|',
+  LEFT_UP = '|_',
 }
 
-export type CellContent = LogMatrixSymbol | DisplayRef;
-export type CellContents = (LogMatrixSymbol | DisplayRef)[];
+export class CellContent {
+  constructor(public value: LogMatrixSymbol | DisplayRef, public color: number) {
+  }
+}
+export type CellContents = CellContent[];
 export type Row = CellContents[];
 export type LogMatrix = Row[];
 // logMatrix = [

@@ -43,7 +43,7 @@
   color: $hmmmmmmGray;
 }
 
-$primeng-purple-line: rgba(206, 147, 216, 0.32);
+$primeng-purple-line: rgba(206, 147, 216, 0.9);
 
 .graph {
   position: relative;
@@ -72,13 +72,16 @@ $primeng-purple-line: rgba(206, 147, 216, 0.32);
     }
 
     &.le-dot {
-      $le-dot-radius: 13px;
-      margin-left: 5px;
+      $le-dot-radius: 26px;
+      margin-left: -1px;
       width: $le-dot-radius;
       height: $le-dot-radius;
-      border-radius: $le-dot-radius;
+      border-radius: $le-dot-radius / 2;
       top: 50%;
       margin-top: calc($le-dot-radius / -2);
+      background-clip: content-box;
+      padding: 5px;
+      border: 1px solid $primeng-purple-line;
     }
 
     &.line {
@@ -87,53 +90,68 @@ $primeng-purple-line: rgba(206, 147, 216, 0.32);
       color: $primeng-purple-line;
       font-size: 18px;
       line-height: 24px;
-      
+
       &.horizontal {
-        width: 100%;
+        width: 25px;
+        margin-left: -3px;
         border-top: 2px solid currentColor;
+        margin-top: -2px;
         top: 50%;
       }
-      
+
       &.vertical {
         width: 2px;
         background-color: currentColor;
         height: 16%;
+
         &.top {
           top: 0;
         }
+
         &.bottom {
           bottom: 0;
         }
+
         &.full {
           top: 0;
           height: 100%;
         }
       }
-      
+
       &.turn {
         width: 12px;
-        height: 12px;
+        height: 50%;
         border: 2px solid currentColor;
-        border-radius: 0;
-        
-        &.top-right {
-          border-bottom: none;
-          border-left: none;
+        top: 0;
+
+        &.up-right {
+          border-bottom: 0;
+          border-right: 0;
+          border-radius: 12px 0 0 0;
+          top: unset;
+          bottom: 0;
         }
-        
-        &.top-left {
-          border-bottom: none;
-          border-right: none;
+
+        &.up-left {
+          border-bottom: 0;
+          border-left: 0;
+          border-radius: 0 12px 0 0;
+          top: unset;
+          bottom: 0;
+          margin-left: -1px;
         }
-        
-        &.bottom-right {
-          border-top: none;
-          border-left: none;
+
+        &.right-up {
+          margin-left: -1px;
+          border-top: 0;
+          border-left: 0;
+          border-radius: 0 0 12px 0;
         }
-        
-        &.bottom-left {
-          border-top: none;
-          border-right: none;
+
+        &.left-up {
+          border-top: 0;
+          border-right: 0;
+          border-radius: 0 0 0 12px;
         }
       }
     }
