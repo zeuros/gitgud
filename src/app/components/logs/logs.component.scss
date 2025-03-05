@@ -76,7 +76,7 @@ $primeng-purple-line: rgba(206, 147, 216, 0.9);
       margin-left: -1px;
       width: $le-dot-radius;
       height: $le-dot-radius;
-      border-radius: $le-dot-radius / 2;
+      border-radius: calc($le-dot-radius / 2);
       top: 50%;
       margin-top: calc($le-dot-radius / -2);
       background-clip: content-box;

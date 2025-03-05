@@ -4,13 +4,13 @@ import {TableModule} from 'primeng/table';
 import {DatePipe, JsonPipe, NgClass, NgForOf, NgIf} from '@angular/common';
 import {Commit} from '../../models/commit';
 import {RefType} from '../../enums/ref-type.enum';
-import {notZero, removeDuplicates, removeUndefined, reversedForEach, throwEx} from '../../utils/utils';
+import {notUndefined, notZero, removeDuplicates, reversedForEach, throwEx} from '../../utils/utils';
 import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
 import {byName, bySha, cellContainsCommit, isDisplayRef, isLogMatrixSymbol} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
-import {max} from "lodash";
-import {buildChildrenMap, buildCommitMap, ChildrenMap, hasNoBranching} from "../../utils/commit-utils";
+import {max, min} from "lodash";
+import {buildChildrenMap, buildCommitMap, ChildrenMap, CommitMap, hasNoBranching, isMergeCommit, isRootCommit} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
 import {CellContent, LogMatrix, LogMatrixSymbol, Row} from "../../models/log-matrix";
 
@@ -34,7 +34,7 @@ export class LogsComponent {
   protected displayLog: DisplayRef[] = []; // Commits ready for display
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected readonly removeDuplicates = removeDuplicates;
-  protected logMatrix: LogMatrix = [[]];
+  protected drawMatrix: LogMatrix = [[]];
   protected logMatrixSymbolClasses: { [s in LogMatrixSymbol]: string } = {
     [LogMatrixSymbol.HORIZONTAL]: 'horizontal',
     [LogMatrixSymbol.VERTICAL]: 'vertical full',
@@ -45,9 +45,10 @@ export class LogsComponent {
     [LogMatrixSymbol.UP_RIGHT]: 'turn up-right',
     [LogMatrixSymbol.UP_LEFT]: 'turn up-left'
   };
-  protected isDisplayRef = isDisplayRef;
+  protected readonly isDisplayRef = isDisplayRef;
   protected readonly notZero = notZero;
   protected readonly isLogMatrixSymbol = isLogMatrixSymbol;
+  protected readonly isMergeCommit = isMergeCommit;
 
   @Input() set gitRepository(gitRepository: GitRepository) {
 
@@ -62,11 +63,10 @@ export class LogsComponent {
 
     this.displayLog = gitRepository.logs.map(this.commitToDisplayRef);
 
-    // TODO: move columns of successive commits onto another column in order to save space if possible
 
-    const logMatrix = this.packColumns(this.clearEmptyColumns(this.buildLogMatrix(this.displayLog, childrenMap)));
+    const commitMatrix = this.clearEmptyColumns(this.packColumns(this.clearEmptyColumns(this.buildCommitMatrix(this.displayLog, childrenMap)), commitMap));
 
-    this.logMatrix = this.drawCommitsConnections(logMatrix, this.displayLog, childrenMap);
+    this.drawMatrix = this.addCommitsConnectionLines(this.fromCommitMatrix(commitMatrix), this.displayLog, childrenMap);
 
   }
 
@@ -76,9 +76,7 @@ export class LogsComponent {
 
   protected $displayRef = (displayRef: any): DisplayRef => displayRef;
 
-  protected isMergeCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length > 1
-
-  private computeCommitIndentation = (displayRef: DisplayRef | Commit, allRefs: string[], childrenMap: ChildrenMap) => {
+  private computeCommitIndentation = (displayRef: DisplayRef | Commit, allRefs: string[]) => {
 
     // get raw ref related to our commit (the branch it has been committed with) and match corresponding local branch
     // Group commits by their local branch (one column = one local branch) ...
@@ -139,9 +137,10 @@ export class LogsComponent {
     commitBranches
       .split(', ')
       .map(this.findBranchByRef)
-      .filter(removeUndefined)
+      .filter(notUndefined)
       .filter(removeDuplicates);
 
+  // TODO
   private insertStashesIntoLog = (displayCommits: DisplayRef[], stashes: DisplayRef[]) => {
     const stashByParentSha: { [sha: string]: DisplayRef } = {}; // { [sha]: stash0, [sha1]: stash0, [sha3]: stash1 ...}
 
@@ -193,7 +192,7 @@ export class LogsComponent {
   };
 
   // Matrix with just commits inside
-  private buildLogMatrix = (displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
+  private buildCommitMatrix = (displayLog: DisplayRef[], childrenMap: ChildrenMap): DisplayRef[][] => {
 
     const commitsIndents = this.computeCommitsIndents(displayLog, childrenMap);
 
@@ -201,12 +200,12 @@ export class LogsComponent {
 
     return displayLog.map((commit, i) => {
       // Create new row
-      const row: Row = new Array(columnCount).fill([]);
+      const row = new Array(columnCount).fill(undefined);
 
       const commitColumn = commitsIndents[i];
 
       // Draw current commit
-      row[commitColumn] = [new CellContent(commit, commitColumn)];
+      row[commitColumn] = commit;
 
       return row;
     });
@@ -216,13 +215,12 @@ export class LogsComponent {
 
     let refs: string[] = [];
 
-    return displayLog.map((commit, i) => {
+    return displayLog.map(commit => {
 
       // If the commit has no parentSha => It is a tree root commit ! => It means that the next commits belong to another tree.
       // In order to indent commits for this new tree, we clear the saved commits refs and restart commits indentation
-      const isRootCommit = commit.parentSHAs.length == 0;
-      if (isRootCommit) {
-        const childIndent = this.computeCommitIndentation(childrenMap[commit.sha][0], refs, childrenMap);
+      if (isRootCommit(commit)) {
+        const childIndent = this.computeCommitIndentation(childrenMap[commit.sha][0], refs);
         refs = []; // Clear branches related to the tree to restart indent from 0
         return childIndent;
       }
@@ -232,49 +230,51 @@ export class LogsComponent {
       // TODO: move this optimization into dedicated function
       // If this commit has not branching above (all children aligned), align it with its children.
       if (hasOneChild && hasNoBranching(commit, childrenMap))
-        return this.computeCommitIndentation(childrenMap[commit.sha][0], refs, childrenMap);
+        return this.computeCommitIndentation(childrenMap[commit.sha][0], refs);
 
-      return this.computeCommitIndentation(commit, refs, childrenMap);
+      return this.computeCommitIndentation(commit, refs);
     });
   }
 
-  private clearEmptyColumns = (buildLogMatrix: LogMatrix) => {
-    // Find columns that only contain empty arrays
-    const emptyColumnIndexes = buildLogMatrix[0].map((_, colIndex) => {
-      return buildLogMatrix.every(row => row[colIndex].length === 0);
-    });
+  private clearEmptyColumns = (buildLogMatrix: DisplayRef[][]) => {
+    // Find columns that contain no commits
+    buildLogMatrix[0]
+      .map((_, colIndex) => buildLogMatrix.every(row => row[colIndex] == undefined) ? colIndex : undefined)
+      .filter(notUndefined) // We have a list of empty columns
+      .forEach(emptyColumn => {
+        for (let row = 0; row < buildLogMatrix.length; row++) {
+          delete buildLogMatrix[row][emptyColumn];
+        }
+      });
 
-    // If no empty columns found, return original matrix
-    if (!emptyColumnIndexes.includes(true)) {
-      return buildLogMatrix;
-    }
-
-    // Remove empty columns from each row
-    return buildLogMatrix.map(row => {
-      return row.filter((_, colIndex) => !emptyColumnIndexes[colIndex]);
-    });
+    return buildLogMatrix;
   };
 
-  // Reads commits bottom to top and draw their children branches and merges
-  private drawCommitsConnections = (logMatrix: LogMatrix, displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
+  /**
+   * Reads commits bottom to top and draw each commits edges (branches and merges)
+   * @param drawMatrix a matrix filled with commits only (yet)
+   * @param displayLog
+   * @param childrenMap
+   */
+  private addCommitsConnectionLines = (drawMatrix: LogMatrix, displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
 
     // For each commit starting from root commit
     reversedForEach(displayLog, (commit, indexFromBottom) => { // Starts with the bottom commit, bottom index
 
-      const commitCoordinates = new Coordinates(indexFromBottom, logMatrix[indexFromBottom].findIndex(cellContainsCommit));
+      const commitCoordinates = new Coordinates(indexFromBottom, drawMatrix[indexFromBottom].findIndex(cellContainsCommit));
 
       // Draw a connection with its children
       childrenMap[commit.sha]?.forEach(child => {
 
         const childRow = displayLog.findIndex(bySha(child.sha));
-        const childCoordinates = new Coordinates(childRow, logMatrix[childRow].findIndex(cellContainsCommit));
+        const childCoordinates = new Coordinates(childRow, drawMatrix[childRow].findIndex(cellContainsCommit));
 
         // Draw connection between parent and children
-        this.drawTwoCommitsConnection(commitCoordinates, childCoordinates, logMatrix, child);
+        this.drawTwoCommitsConnection(commitCoordinates, childCoordinates, drawMatrix, child);
       })
     });
 
-    return logMatrix;
+    return drawMatrix;
   };
 
   private drawTwoCommitsConnection = (parent: Coordinates, child: Coordinates, logMatrix: LogMatrix, childCommit: Commit) => {
@@ -306,7 +306,7 @@ export class LogsComponent {
       }
 
       // If parent and child are in different columns, we need to draw a turn. Draw the turns at each end
-      if (this.isMergeCommit(childCommit)) { // Draw [Edge to merge children](https://pvigier.github.io/media/img/commit-graph/design_straight_branches/first_parent.svg)
+      if (isMergeCommit(childCommit)) { // Draw [Edge to merge children](https://pvigier.github.io/media/img/commit-graph/design_straight_branches/first_parent.svg)
         const turnSymbol = isChildrenRight ? LogMatrixSymbol.UP_RIGHT : LogMatrixSymbol.UP_LEFT;
         logMatrix[child.row][parent.col] = [...logMatrix[parent.row][child.col], new CellContent(turnSymbol, parent.col)]; // Turn to child
 
@@ -332,11 +332,72 @@ export class LogsComponent {
     }
   };
 
-  // Push columns of commits to the left if possible
-  private packColumns = (logMatrix: LogMatrix) => {
-    // If there's room on the left, move the commits
+  // move columns of successive commits onto another column in order to save column space if possible
+  private packColumns = (commitMatrix: DisplayRef[][], commitMap: CommitMap) => {
+    // TODO:
 
+    return commitMatrix;
+  }
 
-    return logMatrix;
+  private findSequencesOfCommits = (commitMatrix: DisplayRef[][], col: number, commitMap: CommitMap) => {
+
+    const columnCommitRows = this.columnCommitRows(commitMatrix, col);
+    const columnCommits = columnCommitRows.map(commitRow => commitMatrix[commitRow][col] as DisplayRef);
+
+    const sequences: [startRow: number, endRow: number][] = [];
+    let currentSequence = [];
+
+    for (let i = 0; i < columnCommits.length; i++) {
+      const nextCommitSha = i < columnCommits.length - 1 ? columnCommits[i + 1].sha : undefined;
+
+      // skip merge commits
+      if (isMergeCommit(columnCommits[i])) continue;
+
+      // Add current commit row to current sequence
+      currentSequence.push(columnCommitRows[i]);
+
+      // if next commit is not a parent of this one, create a new sequence
+      if (nextCommitSha && !columnCommits[i].parentSHAs.includes(nextCommitSha)) {
+        // Push the row of the parent of the commit, we obtain the range of rows to free
+        // const parentCommitRow = this.displayLog.indexOf(commitMap[columnCommits[i].parentSHAs[0]])
+        currentSequence.push(columnCommitRows[i]);
+        // currentSequence.push(parentCommitRow);
+        sequences.push([min(currentSequence)!, max(currentSequence)!]);
+        currentSequence = [];
+      }
+    }
+
+    return sequences;
+  }
+
+  // Return rows of the column containing a commit
+  private columnCommitRows = (logMatrix: DisplayRef[][], col: number) => {
+    const columnCommits = [];
+
+    for (let row = 0; row < logMatrix.length - 1; row++) {
+      if (logMatrix[row][col] != undefined) {
+        columnCommits.push(row);
+      }
+    }
+
+    return columnCommits;
+  }
+
+  // Transforms commit matrix into elements to draw matrix
+  private fromCommitMatrix = (commitMatrix: DisplayRef[][]): LogMatrix => {
+
+    const columnCount = commitMatrix[0].length;
+
+    return commitMatrix.map((_, rowIndex) => {
+      // Create new row
+      const row: Row = new Array(columnCount).fill([]);
+
+      const commitColumn = commitMatrix[rowIndex].findIndex(notUndefined);
+
+      // Put commit into drawMatrix
+      row[commitColumn] = [new CellContent(commitMatrix[rowIndex].find(notUndefined)!, commitColumn)];
+
+      return row;
+    });
   }
 }

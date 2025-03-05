@@ -5,6 +5,10 @@ import {DisplayRef} from "../models/display-ref";
 export type CommitMap = { [sha: string]: Commit };
 export type ChildrenMap = { [parentSha: string]: Commit[] };
 
+
+export const isMergeCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length > 1
+export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0
+
 /**
  *                                                                                       (c)
  * True if the commit children have not splitted edges like (c) - (c) and not like (c) <
