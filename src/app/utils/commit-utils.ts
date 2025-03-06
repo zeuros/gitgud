@@ -1,12 +1,14 @@
 import {Commit} from "../models/commit";
 import {DisplayRef} from "../models/display-ref";
+import {RefType} from "../enums/ref-type.enum";
 
 
 export type CommitMap = { [sha: string]: Commit };
 export type ChildrenMap = { [parentSha: string]: Commit[] };
 
 
-export const isMergeCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length > 1
+export const isMergeRef = (displayRef: DisplayRef) => displayRef.refType == RefType.COMMIT && displayRef.parentSHAs.length > 1;
+export const isMergeCommit = (displayRef: Commit) => displayRef.parentSHAs.length > 1;
 export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0
 
 /**
