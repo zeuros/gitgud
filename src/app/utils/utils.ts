@@ -9,8 +9,8 @@ export const leaves = (treeNodes: TreeNode<string>[]): TreeNode<string>[] => tre
 
 export const isRootDirectory = (path: string) => ['C:\\', '/'].includes(path);
 
+// TODO: test
 export const throwEx = (message: string) => {
-  console.log(new Error(message).toString());
   throw new Error(message);
 }
 

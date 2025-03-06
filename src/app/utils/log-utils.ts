@@ -2,6 +2,7 @@ import {Branch} from "../models/branch";
 import {Commit} from "../models/commit";
 import {DisplayRef} from "../models/display-ref";
 import {CellContent, CellContents} from "../models/log-matrix";
+import {throwEx} from "./utils";
 
 export const formatArg = (fields: Object) => {
   const format = Object.values(fields).join('%x00');
@@ -15,3 +16,6 @@ export const cellContainsCommit = (cell: CellContents) => cell.some(isDisplayRef
 // Commits or stashes
 export const isDisplayRef = (toDraw: CellContent) => (toDraw.value as any)?.refType != undefined;
 export const isLogMatrixSymbol = (toDraw: CellContent) => !isDisplayRef(toDraw)
+
+export const findParentCommit = (child: DisplayRef) => (commit: DisplayRef) =>
+    child.parentSHAs.includes(commit.sha) ?? throwEx(`Couldn't find stash (${child.summary}) with parent(s): (${child.parentSHAs})`)

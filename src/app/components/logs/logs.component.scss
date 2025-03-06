@@ -61,8 +61,8 @@ $primeng-purple-line: rgba(206, 147, 216, 0.9);
 
     &.user-name-bubble {
       $bubble-radius: 24px;
-      padding-left: 0.5em;
-      padding-top: 0.1em;
+      padding-left: 0.55em;
+      padding-top: 0.12em;
       height: $bubble-radius;
       width: $bubble-radius;
       font-weight: bold;
@@ -82,6 +82,22 @@ $primeng-purple-line: rgba(206, 147, 216, 0.9);
       background-clip: content-box;
       padding: 5px;
       border: 1px solid $primeng-purple-line;
+    }
+
+    &.stash {
+      $stash-radius: 26px;
+      margin-left: -1px;
+      width: $stash-radius;
+      height: $stash-radius;
+      border-radius: calc($stash-radius / 4);
+      margin-top: calc($stash-radius / -2);
+      background-clip: content-box;
+      padding: 5px;
+      -o-background-size: 100% 100%;
+      -webkit-background-size: 100% 100%;
+      background: url(/assets/images/chest.svg) no-repeat center right calc(-0.15em + 0.2275rem);
+      background-size: 90% 90%;
+      border: 1px dashed $primeng-purple-line;
     }
 
     &.line {
