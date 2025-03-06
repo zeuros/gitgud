@@ -32,6 +32,9 @@ export const omitUndefined = <T extends object>(o: T | undefined) => {
   return omitBy<T>(o, isUndefined);
 }
 
+export const rangesOverlap = ([min1, max1]: [number, number], [min2, max2]: [number, number]) =>
+  min2 < min1 ? max2 > min1 : min2 < max1;
+
 // Filters
 export const removeDuplicates = <T>(item: T, index: number, array: T[]): boolean => array.indexOf(item) === index
 export const notUndefined = <T>(v: T | undefined): v is T => !!v

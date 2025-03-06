@@ -4,7 +4,7 @@ import {TableModule} from 'primeng/table';
 import {DatePipe, JsonPipe, NgClass, NgForOf, NgIf} from '@angular/common';
 import {Commit} from '../../models/commit';
 import {RefType} from '../../enums/ref-type.enum';
-import {notUndefined, notZero, removeDuplicates, reversedForEach, throwEx} from '../../utils/utils';
+import {notUndefined, notZero, rangesOverlap, removeDuplicates, reversedForEach, throwEx} from '../../utils/utils';
 import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
 import {byName, bySha, cellContainsCommit, isDisplayRef, isLogMatrixSymbol} from "../../utils/log-utils";
@@ -62,7 +62,6 @@ export class LogsComponent {
     const childrenMap = buildChildrenMap(gitRepository.logs);
 
     this.displayLog = gitRepository.logs.map(this.commitToDisplayRef);
-
 
     const commitMatrix = this.clearEmptyColumns(this.packColumns(this.clearEmptyColumns(this.buildCommitMatrix(this.displayLog, childrenMap)), commitMap));
 
@@ -332,14 +331,32 @@ export class LogsComponent {
     }
   };
 
+  // TODO: test it thoroughly
   // move columns of successive commits onto another column in order to save column space if possible
   private packColumns = (commitMatrix: DisplayRef[][], commitMap: CommitMap) => {
-    // TODO:
+    const lastColumn = commitMatrix[0].length - 1;
+
+    // Check if the first column is available to welcome sequences of commits of the last column
+    for (let sourceCol = lastColumn; sourceCol > 0; sourceCol--) { // Browse columns last to second
+      for (const rowRange of this.sequencesOfCommitsRanges(commitMatrix, sourceCol, commitMap)) {
+        for (let destCol = 0; destCol < lastColumn; destCol++) { // Browse columns first to N
+          if (this.rangeIsFree(destCol, rowRange, commitMatrix)) {
+            // Move commits from source col to dest col on given range
+            this.moveCommits(rowRange, sourceCol, destCol, commitMatrix);
+          }
+
+        }
+      }
+    }
 
     return commitMatrix;
   }
 
-  private findSequencesOfCommits = (commitMatrix: DisplayRef[][], col: number, commitMap: CommitMap) => {
+  /**
+   * For a given column, return lists of successive commits. Returns the rows ranges of these commits
+   * Also adds the parent of each commit list ranges into the range
+   */
+  private sequencesOfCommitsRanges = (commitMatrix: DisplayRef[][], col: number, commitMap: CommitMap) => {
 
     const columnCommitRows = this.columnCommitRows(commitMatrix, col);
     const columnCommits = columnCommitRows.map(commitRow => commitMatrix[commitRow][col] as DisplayRef);
@@ -356,14 +373,14 @@ export class LogsComponent {
       // Add current commit row to current sequence
       currentSequence.push(columnCommitRows[i]);
 
-      // if next commit is not a parent of this one, create a new sequence
-      if (nextCommitSha && !columnCommits[i].parentSHAs.includes(nextCommitSha)) {
-        // Push the row of the parent of the commit, we obtain the range of rows to free
-        // const parentCommitRow = this.displayLog.indexOf(commitMap[columnCommits[i].parentSHAs[0]])
-        currentSequence.push(columnCommitRows[i]);
-        // currentSequence.push(parentCommitRow);
-        sequences.push([min(currentSequence)!, max(currentSequence)!]);
-        currentSequence = [];
+      // If next commit is parent and on same column, continue building the sequence
+      if (nextCommitSha && columnCommits[i].parentSHAs.includes(nextCommitSha)) {
+        continue;
+      } else {
+        // Push the row of the parent of the commit, we obtain the range of rows to free (including their connections with parent)
+        const parentCommitRow = this.displayLog.findIndex(e => e.sha == commitMap[columnCommits[i].parentSHAs[0]]?.sha)
+        sequences.push([min(currentSequence)!, parentCommitRow]);
+        currentSequence = []; // Restart a sequence for next commits in column.
       }
     }
 
@@ -399,5 +416,42 @@ export class LogsComponent {
 
       return row;
     });
+  }
+
+  // If no commit or commit line is found on this range, return true
+  private rangeIsFree = (destCol: number, [startRow, endRow]: [number, number], commitMatrix: DisplayRef[][]) => {
+    // No commits on the range ?
+    for (let row = startRow; row < endRow; row++) {
+      if (commitMatrix[row][destCol] != undefined)
+        return false;
+    }
+
+    // Find the first commit over the range
+    let firstCommitOverTheRange = this.findFirstCommitOverRow(startRow, destCol, commitMatrix);
+
+    if (firstCommitOverTheRange != undefined) {
+      const parentCommitRow = this.displayLog.findIndex(bySha(firstCommitOverTheRange.parentSHAs[0]))
+      return !rangesOverlap([startRow, endRow], [this.displayLog.findIndex(bySha(firstCommitOverTheRange.sha)), parentCommitRow]);
+    }
+
+    // No commit over the range, so no line passing by, range is free
+    return true;
+
+  }
+
+  private findFirstCommitOverRow = (startRow: number, destCol: number, commitMatrix: DisplayRef[][]) => {
+    for (let row = startRow; row > 0; row--) {
+      if (commitMatrix[row][destCol] != undefined) return commitMatrix[row][destCol];
+    }
+    return undefined;
+  }
+
+  private moveCommits = ([rowStart, rowEnd]: [number, number], sourceCol: number, destCol: number, commitMatrix: DisplayRef[][]) => {
+    for (let row = rowStart; row < rowEnd - 1; row++) {
+      if (commitMatrix[row][sourceCol] != undefined) {
+        commitMatrix[row][destCol] = commitMatrix[row][sourceCol];
+        commitMatrix[row][sourceCol] = undefined as unknown as DisplayRef;
+      }
+    }
   }
 }
