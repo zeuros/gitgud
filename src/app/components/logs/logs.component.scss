@@ -19,7 +19,7 @@
         min-width: 100px;
       }
 
-      td.summary {
+      td.summary, td.author, td.date {
         @extend .ellipsis;
         color: $huaaaaaGray;
         min-width: 100px;

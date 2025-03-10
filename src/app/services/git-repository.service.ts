@@ -133,7 +133,7 @@ export class GitRepositoryService {
 
   private updateLogsAndBranches = (gitRepository: GitRepository): Observable<GitRepository> =>
     forkJoin({
-      logs: this.logService.getCommitLog(gitRepository.directory, '--branches', 10000, 0, ['--remotes', '--tags', '--source']), // Source will show which branch the commit is in
+      logs: this.logService.getCommitLog(gitRepository.directory, '--branches', 2000, 0, ['--remotes', '--tags', '--source']), // Source will show which branch the commit is in
       branches: this.branchService.getBranches(gitRepository.directory), // Source will show which branch the  commit is in
       stashes: this.stashService.getStashes(gitRepository.directory), // Source will show which branch commit is in
     })

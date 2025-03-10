@@ -4,6 +4,7 @@ import {Branch} from "./branch";
 
 export interface LogObjectDisplayInfo {
   refType: RefType,
+  indent?: number,
   branchDetails?: { // Present only if commit pointed by branches
     branches: Branch[],
     local: boolean,
