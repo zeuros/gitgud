@@ -34,7 +34,7 @@ export class ParserService {
         entries.push(entry)
       }
 
-      return entries
+      return entries;
     }
   }
 

@@ -3,12 +3,10 @@ import {DisplayRef} from "../models/display-ref";
 import {RefType} from "../enums/ref-type.enum";
 
 
-export type CommitMap = { [sha: string]: Commit };
-export type ChildrenMap = { [parentSha: string]: Commit[] };
+export type ChildrenMap = { [parentSha: string]: DisplayRef[] };
 
 
-export const isMergeRef = (displayRef: DisplayRef) => displayRef.refType == RefType.COMMIT && displayRef.parentSHAs.length > 1;
-export const isMergeCommit = (displayRef: Commit) => displayRef.parentSHAs.length > 1;
+export const isMergeCommit = (displayRef: DisplayRef) => displayRef.refType == RefType.COMMIT && displayRef.parentSHAs.length > 1;
 export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0
 
 /**
@@ -27,26 +25,16 @@ export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: Childr
 }
 
 // Build the opposite of the Commit.parentShas => Commit.childShas
-export const buildChildrenMap = (logs: ReadonlyArray<Commit>) => {
+export const buildChildrenMap = (logs: DisplayRef[]) => {
   const commitsChildrenShas: ChildrenMap = {};
 
   for (const commit of logs) {
     for (const sha of commit.parentSHAs) {
-      commitsChildrenShas[sha] = commitsChildrenShas[sha]?.length
-        ? [...commitsChildrenShas[sha], commit]
-        : [commit];
+      if (!commitsChildrenShas[sha])
+        commitsChildrenShas[sha] = [];
+      commitsChildrenShas[sha].push(commit);
     }
   }
 
   return commitsChildrenShas;
-}
-
-export const buildCommitMap = (logs: ReadonlyArray<Commit>) => {
-  const commitMap: CommitMap = {};
-
-  for (const commit of logs) {
-    commitMap[commit.sha] = commit;
-  }
-
-  return commitMap;
 }

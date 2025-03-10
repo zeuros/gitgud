@@ -62,7 +62,7 @@ export class GitApiService {
   }
 
   exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
-    from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit'})))
+    from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
       .pipe(map(({stdout}) => stdout));
 
 

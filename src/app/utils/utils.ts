@@ -1,7 +1,6 @@
 import {TreeNode} from "primeng/api";
 import {GitRepository} from "../models/git-repository";
 import {isUndefined, omitBy} from "lodash";
-import {LogObject} from "../models/log-object";
 
 export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
 
@@ -14,8 +13,6 @@ export const throwEx = (message: string) => {
   throw new Error(message);
 }
 
-export const notZero = (n: number) => n == 0 ? 1 : n;
-
 export const errorMessage = (message: Error | string) => {
   if (message instanceof Error) return message.message; // avoids having 'Error: ...' which the Error class brings
   return message;
@@ -25,15 +22,9 @@ export const byDirectory = (directory: string) => (repo: GitRepository) => direc
 
 export const byIndex = (repoIndex: number) => (_: GitRepository, i: number) => i === repoIndex;
 
-// Compare LogObjects by date
-export const byLogObjectDate = (o: LogObject, o2: LogObject) => o.author.date < o2.author.date ? 1 : -1
-
 export const omitUndefined = <T extends object>(o: T | undefined) => {
   return omitBy<T>(o, isUndefined);
 }
-
-export const rangesOverlap = ([min1, max1]: [number, number], [min2, max2]: [number, number]) =>
-  min2 < min1 ? max2 > min1 : min2 < max1;
 
 // Filters
 export const removeDuplicates = <T>(item: T, index: number, array: T[]): boolean => array.indexOf(item) === index
