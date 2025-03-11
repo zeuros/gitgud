@@ -3,8 +3,8 @@
     /*Customization (TODO: upgrade primeng and use its better theme designer)*/
     --nice-background: #1c1e23;
 
-    font-family: Roboto, "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
-    --font-family: Roboto, "Helvetica Neue Light", "Helvetica Neue", Helvetica,
+    font-family: 'Nunito', Roboto, "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    --font-family: 'Nunito', Roboto, "Helvetica Neue Light", "Helvetica Neue", Helvetica,
     Arial, "Lucida Grande", sans-serif;
     --surface-a: var(--nice-background);
     --surface-b: #121212;
