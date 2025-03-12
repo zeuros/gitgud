@@ -2,9 +2,38 @@
 
 :host {
   width: 100%;
+  position: relative;
 
   ::ng-deep {
     .p-datatable {
+
+      table {
+        border-collapse: collapse;
+      }
+
+      .p-datatable-tbody > tr {
+        background-color: transparent;
+
+
+        & > td {
+          border: 0 solid transparent;
+          padding: 3px 0.5rem;
+          border-top-width: 6px;
+        }
+
+        &:hover {
+          td.summary, td.author, td.date, .commit-highlight-background {
+            background: #ce93d81c;
+          }
+        }
+
+        // row selected
+        &.p-highlight, &.p-highlight:hover {
+          td.summary, td.author, td.date, .commit-highlight-background {
+            background: #755a975c;
+          }
+        }
+      }
 
       .p-datatable-thead > tr > th {
         font-size: 14px;
@@ -27,7 +56,22 @@
       }
 
       td.graph {
-        min-width: 50px;
+        position: relative;
+        overflow: visible;
+
+        #commit-graph-canvas {
+          position: absolute;
+          pointer-events: none;
+          z-index: 100;
+          background: transparent;
+        }
+
+        .commit-highlight-background {
+          top: 0;
+          bottom: 0;
+          right: 0;
+          position: absolute;
+        }
       }
     }
   }
@@ -35,7 +79,7 @@
 
 .ellipsis {
   white-space: nowrap;
-  overflow: hidden;
+  overflow-x: hidden;
   text-overflow: ellipsis;
 }
 
@@ -173,6 +217,3 @@ $primeng-purple-line: rgba(206, 147, 216, 0.9);
     }
   }
 }
-
-
-
