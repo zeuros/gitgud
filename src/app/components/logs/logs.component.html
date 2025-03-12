@@ -4,7 +4,7 @@
         [selection]="[displayLog.find(isPointedByHead)]"
         [rowHover]="true"
         [scrollable]="true"
-        [scrollHeight]="'flex'"
+        scrollHeight="calc(100vh - 58px)"
         [resizableColumns]="true"
         selectionMode="multiple" [metaKeySelection]="true"
         styleClass="pointer borderless p-datatable-sm"
@@ -27,16 +27,14 @@
                 <i *ngIf="displayLog[rowIndex].branchDetails?.local" class="fa fa-laptop mr-2"></i>
             </td>
             <td class="graph">
-                <div>
-                    <canvas #canvas
-                            *ngIf="rowIndex == 0"
-                            id="commit-graph-canvas"
-                            [height]="yPosition(displayLog.length - 1) + NODE_RADIUS"
-                            [width]="xPosition(graphColumnCount - 1) + NODE_RADIUS"
-                            [style.left.px]="CANVAS_MARGIN[0]"
-                            [style.top.px]="CANVAS_MARGIN[1]"
-                    ></canvas>
-                </div>
+                <canvas #canvas
+                        *ngIf="rowIndex == 0"
+                        id="commit-graph-canvas"
+                        [height]="yPosition(COMMITS_SHOWN_ON_CANVAS)"
+                        [width]="xPosition(graphColumnCount - 1) + NODE_RADIUS"
+                        [style.left.px]="CANVAS_MARGIN[0]"
+                        [style.top.px]="CANVAS_MARGIN[1]"
+                ></canvas>
                 <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN[0] + xPosition(displayLog[rowIndex].indent)"></div>
             </td>
             <td class="summary">{{ displayLog[rowIndex].summary }}</td>

@@ -35,10 +35,15 @@
         }
       }
 
-      .p-datatable-thead > tr > th {
-        font-size: 14px;
-        font-weight: bold;
-        color: $hmmmmmmGray;
+      .p-datatable-thead {
+
+        z-index: 200;
+
+        & > tr > th {
+          font-size: 14px;
+          font-weight: bold;
+          color: $hmmmmmmGray;
+        }
       }
     }
 
