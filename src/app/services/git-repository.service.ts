@@ -28,7 +28,7 @@ export class GitRepositoryService {
   private repositories$;
 
   constructor(
-    settingsService: SettingsService,
+    private settingsService: SettingsService,
     private logService: LogService,
     private branchService: BranchService,
     private stashService: StashService,
@@ -36,7 +36,7 @@ export class GitRepositoryService {
     this.repositories$ = new BehaviorSubject<GitRepository[]>(settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? [])
 
     // Storing repositories modifications into localstorage
-    this.repositories$.subscribe(repoChanges => settingsService.store(StorageName.GitRepositories, repoChanges));
+    this.repositories$.subscribe(this.saveRepoChanges);
   }
 
   get repositories() {
@@ -50,6 +50,9 @@ export class GitRepositoryService {
   get activeIndex() {
     return this.repositories.findIndex(r => r.directory == this.selectedRepository?.directory);
   };
+
+  // Just saves changes of current repo, doesn't trigger subscribers
+  saveRepoChanges = (repos: GitRepository[]) => this.settingsService.store(StorageName.GitRepositories, repos)
 
   selectRepositoryByIndex = (repositoryIndex: number) =>
     this.repositories$.next(this.repositories.map((repo, index) => ({...repo, selected: index == repositoryIndex})));
@@ -102,8 +105,10 @@ export class GitRepositoryService {
   /**
    * Saves state of a repo
    */
-  modifyCurrentRepository = (repoEdits: Partial<GitRepository>) =>
-    this.repositories$.next(this.repositories.map(repo => repo.selected ? {...repo, ...repoEdits} : repo));
+  modifyCurrentRepository = (repoEdits: Partial<GitRepository>, triggerChanges = true) => {
+    const editedRepos = this.repositories.map(repo => repo.selected ? {...repo, ...repoEdits} : repo);
+    triggerChanges ? this.repositories$.next(editedRepos) : this.saveRepoChanges(editedRepos);
+  }
 
   removeRepository = (repoIndex: number) => {
     const repoToRemove = this.repositories.find(byIndex(repoIndex))!;

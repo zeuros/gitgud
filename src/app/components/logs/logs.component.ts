@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
 import {GitRepository} from '../../models/git-repository';
 import {TableModule} from 'primeng/table';
-import {DatePipe, JsonPipe, NgClass, NgForOf, NgIf} from '@angular/common';
+import {DatePipe, JsonPipe, NgClass, NgForOf, NgIf, NgStyle} from '@angular/common';
 import {Commit} from '../../models/commit';
 import {RefType} from '../../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../../utils/utils';
@@ -9,12 +9,14 @@ import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
 import {byName} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
-import {max} from "lodash";
-import {buildChildrenMap, ChildrenMap, isMergeCommit, isRootCommit} from "../../utils/commit-utils";
+import {max, uniqBy} from "lodash";
+import {buildChildrenMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
 import {first, interval, map} from "rxjs";
 import {IntervalTree} from "node-interval-tree";
 import {Edge} from "../../models/edge";
+import {GitRepositoryService} from "../../services/git-repository.service";
+import {DragDropModule} from "primeng/dragdrop";
 
 @Component({
   selector: 'gitgud-logs',
@@ -26,6 +28,8 @@ import {Edge} from "../../models/edge";
     NgForOf,
     JsonPipe,
     NgClass,
+    NgStyle,
+    DragDropModule,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -39,15 +43,19 @@ export class LogsComponent implements AfterViewInit {
   protected readonly ROW_HEIGHT = this.NODE_DIAMETER + this.NODES_VERTICAL_SPACING;
   protected readonly COMMITS_SHOWN_ON_CANVAS = 37; // TODO: change it on screen resize depending table row count
 
-
   protected displayLog: DisplayRef[] = []; // Commits ready for display
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected graphColumnCount?: number;
   protected removeDuplicates = removeDuplicates;
   private columns: ('taken' | 'free')[] = []; // keep track of the states of the columns when drawing commits from top to bottom
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
-  @ViewChild("logTable", {read: ElementRef}) private logTable?: ElementRef<HTMLElement>;
+  @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
   private edges?: IntervalTree<Edge>;
+
+  constructor(
+    private gitRepositoryService: GitRepositoryService,
+  ) {
+  }
 
   @Input() set gitRepository(gitRepository: GitRepository) {
 
@@ -56,50 +64,72 @@ export class LogsComponent implements AfterViewInit {
     // Sort branches by last commit date put on it => first branch is the one pointing to the last commit in date
     this.branches = gitRepository.branches;
 
-    const commitsLog = gitRepository.logs.map(this.commitToDisplayRef);
+    const commits = gitRepository.logs.map(this.commitToDisplayRef);
+    const stashes = gitRepository.stashes.map(this.stashToDisplayRef);
+    const childrenMap = buildChildrenMap([...commits, ...stashes]);
 
-    const childrenMap = buildChildrenMap(commitsLog);
+    this.computeCommitsIndents(commits, childrenMap);
 
-    this.computeCommitsIndents(commitsLog, childrenMap);
+    const displayLog = this.markRows(this.appendStashes(commits, stashes, childrenMap));
 
-    const edges = this.updateEdgeIntervals(commitsLog, childrenMap);
+    this.graphColumnCount = max(displayLog.map(c => c.indent!))! + 1;
 
-    const displayLog = this.appendStashes(commitsLog, gitRepository.stashes, childrenMap);
-
-    this.graphColumnCount = max(commitsLog.map(c => c.indent!))! + 1;
+    const edges = this.updateEdgeIntervals(displayLog, childrenMap);
 
     this.waitForCanvasToAppear
-      .subscribe(canvasContext => this.drawLog(canvasContext, displayLog, 0, edges))
+      .subscribe(canvasContext => {
+        this.logTable.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT});
+        this.moveCanvasDown(gitRepository.startCommit);
+        this.drawLog(canvasContext, displayLog, gitRepository.startCommit, edges)
+      })
 
     this.displayLog = displayLog;
     this.edges = edges;
   }
 
+  get logTable() {
+    return this.logTableRef!.nativeElement.querySelector(".p-datatable-wrapper")!
+  }
+
   ngAfterViewInit() {
-    this.logTable!.nativeElement
-      .querySelector(".p-datatable-wrapper")!
-      .addEventListener("scroll", ({target}) => this.scrollCanvasCommits((target as HTMLElement).scrollTop));
+    this.logTable.addEventListener("scroll", this.onTableScroll);
   }
 
   protected branchName = (b: Branch) => b.name.replace('origin/', '');
 
-  protected isPointedByHead = (d: DisplayRef) => d.branchDetails?.isPointedByLocalHead;
+  protected isPointedByHead = (d: DisplayRef) => d.isPointedByLocalHead;
 
-  protected refContents = (ref: DisplayRef) => isMergeCommit(ref) || ref.refType == RefType.STASH ? '' : ref.author.name.slice(0, 1);
+  protected initials = (ref: DisplayRef) => ref.author.name.split(' ').slice(0, 2).map(e => e[0]).join('');
 
   protected xPosition = (col?: number) => this.NODE_RADIUS + (col ?? 0) * this.NODE_DIAMETER;
 
   protected yPosition = (row?: number) => this.NODE_RADIUS + (row ?? 0) * this.ROW_HEIGHT;
 
+  protected indentColorFilter = (indent: number) => `hue-rotate(${indent * 360 / 7}deg)`;
+
+  // TODO: show ghost branch on the left of commit if merged
+  protected branchesAndRef = (displayLogElement: DisplayRef) =>
+    uniqBy([...displayLogElement.branchesDetails/*, this.findBranchByRef(displayLogElement.ref)*/], 'branchesDetails.name');
+
+  private onTableScroll: EventListener = ({target}) => {
+    const startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
+    this.gitRepositoryService.modifyCurrentRepository({startCommit}, false);
+    this.moveCanvasDown(startCommit);
+    this.drawLog(this.canvasContext(), this.displayLog, startCommit, this.edges!);
+  }
+
+  /**
+   * Creates an interval tree with all the vertical connections between commits
+   */
   private updateEdgeIntervals = (commitsLog: DisplayRef[], childrenMap: ChildrenMap) => {
     const edges = new IntervalTree<Edge>();
 
     commitsLog.forEach(commit => {
 
-      const [parentRow, parentCol] = [commitsLog.indexOf(commit), commit.indent!];
+      const [parentRow, parentCol] = [commit.row!, commit.indent!];
 
       childrenMap[commit.sha]?.forEach(child => {
-        const [childRow, childCol,] = [commitsLog.indexOf(child), child.indent!];
+        const [childRow, childCol] = [child.row!, child.indent!];
         edges.insert(new Edge(childRow, childCol, parentRow, parentCol, child.summary, isMergeCommit(child) ? RefType.MERGE_COMMIT : RefType.COMMIT));
       });
     });
@@ -155,26 +185,20 @@ export class LogsComponent implements AfterViewInit {
 
   /**
    * Read commits top to bottom and style them (indentation & connections)
-   * TODO: Create a matrix with the drawn commits, links between them, etc...
+   * TODO: Cleanup this branch mess and use basic types provided by github-desktop, also clean the uniqBy
    */
   private commitToDisplayRef = (commit: Commit): DisplayRef => {
-    // Find branches pointing to this commit
-    const commitBranches = this.findCommitBranches(commit.branches)
+    const commitBranches = this.findCommitBranches(commit.branches) ?? [];
 
     return {
       ...commit,
       refType: RefType.COMMIT,
-      // Fix stash commit date not being at the real stash date.
-      // committer: refType == RefType.STASH ? this.findStash(commit.sha)!.committer : commit.committer,
-      branchDetails: commitBranches.length ? {
-        // This commit is pointed by origin branch (starts with origin/). Shows the [gitHub] icon
+      isPointedByLocalHead: !!commitBranches.find(b => !b.name.includes('origin/') && b.isHeadPointed),
+      branchesDetails: commitBranches.map(b => ({
+        ...b,
         remote: !!commitBranches.find(b => b.name.includes('origin/')), // TODO: do it in view if short enough
-        // This commit is pointed by a local branch. Shows the 💻 icon
         local: !!commitBranches.find(b => !b.name.includes('origin/')),
-        // This commit is pointed by HEAD, preselect the commit line, and add the 💻 icon
-        isPointedByLocalHead: !!commitBranches.find(b => !b.name.includes('origin/') && b.isHeadPointed),
-        branches: commitBranches,
-      } : undefined,
+      })),
     };
   };
 
@@ -183,12 +207,8 @@ export class LogsComponent implements AfterViewInit {
     ...s,
     refType: RefType.STASH,
     ref: '',
-    branchDetails: {
-      branches: [],
-      isPointedByLocalHead: false,
-      local: false,
-      remote: false
-    },
+    isPointedByLocalHead: false,
+    branchesDetails: [],
   });
 
   /**
@@ -210,11 +230,10 @@ export class LogsComponent implements AfterViewInit {
     return this.branches.find(byName(branchRef));
   };
 
-  // Matrix with just commits inside
+  // Indent will be reused for future commits
   private computeCommitsIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) =>
     displayLog.map(commit => {
 
-      // Indent will be reused for future commits
       commit.indent = this.computeCommitIndent(commit, childrenMap);
 
       return commit;
@@ -227,31 +246,16 @@ export class LogsComponent implements AfterViewInit {
 
     canvas.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
 
-    displayLog.slice(startCommit, startCommit + this.COMMITS_SHOWN_ON_CANVAS).forEach((ref, index) => { // Starts with the bottom commit, bottom index
-
-      const commitCoordinates = new Coordinates(index, ref.indent!);
-
-      if (ref.refType == RefType.STASH) {
-        // TODO: Rework stashes
-        // const stashParentRow = displayLog.findIndex(c => ref.parentSHAs.includes(c.sha));
-        // commitCoordinates.col = displayLog[stashParentRow].indent!;
-        // this.drawNode(canvas, commitCoordinates, ref);
-        // const parentCoordinates = new Coordinates(stashParentRow, displayLog[stashParentRow].indent!);
-        // this.drawEdge(canvas, parentCoordinates, commitCoordinates, ref);
-      } else { // RefType.COMMIT
-        this.drawNode(canvas, commitCoordinates, ref);
-        // Draw commit connection with its children
-      }
-
-    });
-
     edges.search(startCommit, startCommit + this.COMMITS_SHOWN_ON_CANVAS)
       .forEach(edge => this.drawEdge(canvas, edge, startCommit))
+
+    displayLog.slice(startCommit, startCommit + this.COMMITS_SHOWN_ON_CANVAS)
+      .forEach((ref, indexForThisSlice) => this.drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref));
 
     return canvas;
   };
 
-  private appendStashes = (commitsLog: DisplayRef[], stashes: ReadonlyArray<Commit>, childrenMap: ChildrenMap) => {
+  private appendStashes = (commitsLog: DisplayRef[], stashes: DisplayRef[], childrenMap: ChildrenMap) => {
     stashes.map(this.stashToDisplayRef).forEach(this.insertStashIntoLog(commitsLog, childrenMap));
     return commitsLog;
   }
@@ -315,7 +319,7 @@ export class LogsComponent implements AfterViewInit {
 
   private computeCommitIndent = (commit: DisplayRef, childrenMap: ChildrenMap) => {
 
-    const children = childrenMap[commit.sha] ?? [];
+    const children = (childrenMap[commit.sha] ?? []).filter(isCommit);
 
     if (!children.length) { // Top of a branch, has no children
       return this.findFreeColumnOrPushNewColumn(); // we return a free column from left to right (add one otherwise)
@@ -336,8 +340,7 @@ export class LogsComponent implements AfterViewInit {
     }
 
     // Indent the commit with one if its children, on the leftest possible
-    const childrenOnTheLeft = childToAlignWith.sort((a, b) => a.indent! < b.indent! ? -1 : 1)[0];
-    const indent = childrenOnTheLeft.indent!;
+    const indent = childToAlignWith[0].indent!;
 
     // Free all child columns that are not this commit's column, and have only one parent
     childrenMap[commit.sha]
@@ -368,19 +371,19 @@ export class LogsComponent implements AfterViewInit {
     this.prepareStyleForDrawingCommit(canvas, ref.indent!);
 
     if (isMergeCommit(ref)) {
-      canvas.arc(x, y, this.NODE_RADIUS / 2, 0, 2 * Math.PI, true);
+      canvas.arc(x, y, this.NODE_RADIUS / 2.3, 0, 2 * Math.PI, true);
       canvas.fill();
 
       canvas.beginPath();
-      canvas.arc(x, y, this.NODE_RADIUS, 0, 2 * Math.PI, true);
+      canvas.arc(x, y, this.NODE_RADIUS / 1.4, 0, 2 * Math.PI, true);
       canvas.lineWidth = 2;
       canvas.stroke();
-    } else if (ref.refType == RefType.COMMIT) {
+    } else if (isCommit(ref)) {
       canvas.arc(x, y, this.NODE_RADIUS, 0, 2 * Math.PI, true);
       canvas.fill();
 
       this.prepareForCommitTextDraw(canvas);
-      canvas.fillText(this.refContents(ref).toUpperCase(), x, y + 1);
+      canvas.fillText(this.initials(ref).toUpperCase(), x, y + 1);
       canvas.fill();
     } else { // Stash
       const img = new Image();
@@ -394,7 +397,7 @@ export class LogsComponent implements AfterViewInit {
   private prepareForCommitTextDraw(canvas: CanvasRenderingContext2D) {
     canvas.beginPath();
     canvas.fillStyle = 'white';
-    canvas.font = "normal 900 14px Roboto, sans-serif"; // Nunito not working here :/
+    canvas.font = "normal 900 13.5px Roboto, sans-serif"; // Nunito not working here :/
     canvas.textAlign = 'center';
     canvas.textBaseline = 'middle';
     canvas.shadowColor = 'rgba(0, 0, 0, 0.8)';
@@ -404,20 +407,21 @@ export class LogsComponent implements AfterViewInit {
   private prepareStyleForDrawingCommit(canvas: CanvasRenderingContext2D, indent: number) {
     canvas.beginPath();
     canvas.fillStyle = canvas.strokeStyle = 'rgba(206, 147, 216, 0.9)';
-    canvas.filter = `hue-rotate(${indent * 360 / 7}deg)`;
+    canvas.filter = this.indentColorFilter(indent);
     canvas.shadowColor = 'rgba(0, 0, 0, 0.8)';
     canvas.shadowBlur = 10;
   }
 
   private canvasContext = () => this.canvas?.nativeElement?.getContext('2d')!;
+
   // Canvas appears in the first row of the table, I don't know how to do it properly
   private waitForCanvasToAppear = interval(20).pipe(map(this.canvasContext), first(notUndefined));
 
-  private scrollCanvasCommits = (scrollTop: number) => {
-    const startCommit = Math.floor(scrollTop / this.ROW_HEIGHT);
+  private moveCanvasDown = (startCommit: number) => this.canvas!.nativeElement.style.top = `${startCommit * this.ROW_HEIGHT}px`;
 
-    this.canvas!.nativeElement.style.top = `${startCommit * this.ROW_HEIGHT}px`;
+  private markRows = (log: DisplayRef[]) => log.map((c, i) => {
+    c.row = i;
+    return c;
+  })
 
-    this.drawLog(this.canvasContext(), this.displayLog, startCommit, this.edges!);
-  }
 }

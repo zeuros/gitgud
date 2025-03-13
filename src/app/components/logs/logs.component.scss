@@ -1,5 +1,9 @@
 @import '../../../styles/variables';
 
+
+$primeng-purple-line: rgba(66, 48, 69, 0.9);
+
+
 :host {
   width: 100%;
   position: relative;
@@ -48,9 +52,52 @@
     }
 
     .commit-row {
-      td.branch-tag {
-        @extend .ellipsis;
-        min-width: 100px;
+      td.branch-tag-td {
+        min-width: 70px;
+        max-width: 200px;
+        position: relative;
+        padding: 0 !important;
+
+        // Other branches will appear below on hover
+        &:hover {
+          overflow: visible;
+
+          .branch-tag {
+            .commit-branch {
+              max-width: 300px;
+              z-index: 400;
+            }
+          }
+        }
+
+        .branch-tag {
+
+          .commit-branch {
+            cursor: grab;
+            z-index: 300; // Display this over commit graph
+            transition: all 0.1s;
+            position: absolute;
+            left: 8px;
+            display: flex;
+            max-width: 100%;
+            border: 1px solid rgba(119, 87, 126, 0.9);
+            background-color: $primeng-purple-line;
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            padding: 1.5px 4px;
+            align-items: center;
+
+            .branch-name {
+              @extend .ellipsis;
+              font-size: 13px;
+              margin-right: 4px;
+            }
+
+            .float-icons {
+              font-size: 16px;
+            }
+          }
+        }
       }
 
       td.summary, td.author, td.date {
@@ -91,8 +138,6 @@
 .text-gray {
   color: $hmmmmmmGray;
 }
-
-$primeng-purple-line: rgba(206, 147, 216, 0.9);
 
 .graph {
   position: relative;

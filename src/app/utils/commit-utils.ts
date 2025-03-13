@@ -6,7 +6,8 @@ import {RefType} from "../enums/ref-type.enum";
 export type ChildrenMap = { [parentSha: string]: DisplayRef[] };
 
 
-export const isMergeCommit = (displayRef: DisplayRef) => displayRef.refType == RefType.COMMIT && displayRef.parentSHAs.length > 1;
+export const isCommit = (displayRef: DisplayRef) => displayRef.refType == RefType.COMMIT;
+export const isMergeCommit = (displayRef: DisplayRef) => isCommit(displayRef) && displayRef.parentSHAs.length > 1;
 export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0
 
 /**
@@ -25,10 +26,10 @@ export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: Childr
 }
 
 // Build the opposite of the Commit.parentShas => Commit.childShas
-export const buildChildrenMap = (logs: DisplayRef[]) => {
+export const buildChildrenMap = (commitLog: DisplayRef[]) => {
   const commitsChildrenShas: ChildrenMap = {};
 
-  for (const commit of logs) {
+  for (const commit of commitLog) {
     for (const sha of commit.parentSHAs) {
       if (!commitsChildrenShas[sha])
         commitsChildrenShas[sha] = [];

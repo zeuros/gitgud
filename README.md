@@ -1,4 +1,8 @@
 
+# TODOs
+
+- Avoid lines crossing commits using [forbidden indices](https://pvigier.github.io/2019/05/06/commit-graph-drawing-algorithms.html#proof1)
+- make each commit tree shifted relative to the previous one for readability
 
 # Memo:
 
