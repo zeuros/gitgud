@@ -12,7 +12,7 @@
     <ng-template pTemplate="header">
         <tr class="uppercase text-gray">
             <th pResizableColumn>Branch / Tag</th>
-            <th pResizableColumn [style.min-width.px]="CANVAS_MARGIN[0] + xPosition(graphColumnCount)">Graph</th>
+            <th pResizableColumn [style.max-width.px]="CANVAS_MARGIN[0] + xPosition(graphColumnCount)" [style.width.px]="CANVAS_MARGIN[0] + xPosition(graphColumnCount)">Graph</th>
             <th pResizableColumn style="min-width: 100px;">Commit message</th>
             <th pResizableColumn>Author</th>
             <th pResizableColumn style="min-width: 170px;">Commit date / time</th>
@@ -20,11 +20,19 @@
     </ng-template>
     <ng-template pTemplate="body" let-rowIndex="rowIndex">
         <tr class="commit-row" [pSelectableRow]="displayLog[rowIndex]" [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2">
-            <td class="branch-tag">
-                <i *ngIf="displayLog[rowIndex].branchDetails?.isPointedByLocalHead" class="fa fa-check mr-2"></i>
-                {{ displayLog[rowIndex].branchDetails?.branches?.map(branchName).filter(removeDuplicates).join('\n') ?? '' }}
-                <i *ngIf="displayLog[rowIndex].branchDetails?.remote" class="fa fa-github mr-2"></i>
-                <i *ngIf="displayLog[rowIndex].branchDetails?.local" class="fa fa-laptop mr-2"></i>
+            <td class="branch-tag-td">
+                <div class="branch-tag" *ngFor="let branch of branchesAndRef(displayLog[rowIndex]); let i = index">
+                    <div class="commit-branch"
+                         [ngStyle]="{top: i * 30 + 'px', filter: indentColorFilter(displayLog[rowIndex].indent)}"
+                         pDraggable>
+                        <i *ngIf="displayLog[rowIndex].isPointedByLocalHead" class="fa fa-check mr-2"></i>
+                        <span class="branch-name">{{ branchName(branch) }}</span>
+                        <span class="float-icons">
+                            <i *ngIf="branch?.remote" class="fa fa-github mr-2"></i>
+                            <i *ngIf="branch?.local" class="fa fa-laptop mr-2"></i>
+                        </span>
+                    </div>
+                </div>
             </td>
             <td class="graph">
                 <canvas #canvas

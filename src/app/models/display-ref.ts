@@ -4,13 +4,13 @@ import {Branch} from "./branch";
 
 export interface LogObjectDisplayInfo {
   refType: RefType,
+  row?: number,
   indent?: number,
-  branchDetails?: { // Present only if commit pointed by branches
-    branches: Branch[],
-    local: boolean,
-    remote: boolean,
-    isPointedByLocalHead: boolean,
-  }
+  isPointedByLocalHead: boolean, // If commit is pointed by HEAD, preselect the commit line, and add the 💻 icon
+  branchesDetails: (Branch & { // Present only if commit pointed by branches
+    local: boolean, // This commit is pointed by origin branch (starts with origin/). Shows the [gitHub] icon
+    remote: boolean, // This commit is pointed by a local branch. Shows the 💻 icon
+  })[]
 }
 
 // DisplayRef = LogObject (shared with Commit & Stash) = display data
