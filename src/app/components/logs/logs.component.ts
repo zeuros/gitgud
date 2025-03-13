@@ -7,12 +7,14 @@ import {RefType} from '../../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../../utils/utils';
 import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
-import {byName, bySha} from "../../utils/log-utils";
+import {byName} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
 import {max} from "lodash";
 import {buildChildrenMap, ChildrenMap, isMergeCommit, isRootCommit} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
 import {first, interval, map} from "rxjs";
+import {IntervalTree} from "node-interval-tree";
+import {Edge} from "../../models/edge";
 
 @Component({
   selector: 'gitgud-logs',
@@ -35,7 +37,7 @@ export class LogsComponent implements AfterViewInit {
   protected readonly NODE_RADIUS = this.NODE_DIAMETER / 2;
   protected readonly NODES_VERTICAL_SPACING = 8;
   protected readonly ROW_HEIGHT = this.NODE_DIAMETER + this.NODES_VERTICAL_SPACING;
-  protected readonly COMMITS_SHOWN_ON_CANVAS = 45;
+  protected readonly COMMITS_SHOWN_ON_CANVAS = 37; // TODO: change it on screen resize depending table row count
 
 
   protected displayLog: DisplayRef[] = []; // Commits ready for display
@@ -45,7 +47,7 @@ export class LogsComponent implements AfterViewInit {
   private columns: ('taken' | 'free')[] = []; // keep track of the states of the columns when drawing commits from top to bottom
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild("logTable", {read: ElementRef}) private logTable?: ElementRef<HTMLElement>;
-  private childrenMap?: ChildrenMap;
+  private edges?: IntervalTree<Edge>;
 
   @Input() set gitRepository(gitRepository: GitRepository) {
 
@@ -56,20 +58,21 @@ export class LogsComponent implements AfterViewInit {
 
     const commitsLog = gitRepository.logs.map(this.commitToDisplayRef);
 
-    // TODO: refacto
     const childrenMap = buildChildrenMap(commitsLog);
 
     this.computeCommitsIndents(commitsLog, childrenMap);
+
+    const edges = this.updateEdgeIntervals(commitsLog, childrenMap);
 
     const displayLog = this.appendStashes(commitsLog, gitRepository.stashes, childrenMap);
 
     this.graphColumnCount = max(commitsLog.map(c => c.indent!))! + 1;
 
     this.waitForCanvasToAppear
-      .subscribe(canvasContext => this.drawLog(canvasContext, displayLog, 0, childrenMap!))
+      .subscribe(canvasContext => this.drawLog(canvasContext, displayLog, 0, edges))
 
     this.displayLog = displayLog;
-    this.childrenMap = childrenMap;
+    this.edges = edges;
   }
 
   ngAfterViewInit() {
@@ -83,20 +86,39 @@ export class LogsComponent implements AfterViewInit {
   protected isPointedByHead = (d: DisplayRef) => d.branchDetails?.isPointedByLocalHead;
 
   protected refContents = (ref: DisplayRef) => isMergeCommit(ref) || ref.refType == RefType.STASH ? '' : ref.author.name.slice(0, 1);
+
   protected xPosition = (col?: number) => this.NODE_RADIUS + (col ?? 0) * this.NODE_DIAMETER;
+
   protected yPosition = (row?: number) => this.NODE_RADIUS + (row ?? 0) * this.ROW_HEIGHT;
 
-  private drawEdgesBetweenTwoCommits = (canvas: CanvasRenderingContext2D, parent: Coordinates, child: Coordinates, parentRef: DisplayRef, childRef: DisplayRef) => {
+  private updateEdgeIntervals = (commitsLog: DisplayRef[], childrenMap: ChildrenMap) => {
+    const edges = new IntervalTree<Edge>();
 
-    const [xParent, yParent] = [this.xPosition(parent.col), this.yPosition(parent.row)];
-    const [xChild, yChild] = [this.xPosition(child.col), this.yPosition(child.row)];
+    commitsLog.forEach(commit => {
 
+      const [parentRow, parentCol] = [commitsLog.indexOf(commit), commit.indent!];
 
-    this.prepareStyleForDrawingCommit(canvas, isMergeCommit(childRef) ? parentRef : childRef);
+      childrenMap[commit.sha]?.forEach(child => {
+        const [childRow, childCol,] = [commitsLog.indexOf(child), child.indent!];
+        edges.insert(new Edge(childRow, childCol, parentRow, parentCol, child.summary, isMergeCommit(child) ? RefType.MERGE_COMMIT : RefType.COMMIT));
+      });
+    });
+
+    return edges;
+  }
+
+  private drawEdge = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: number) => {
+
+    const topScroll = startCommit * this.ROW_HEIGHT;
+    const [xParent, yParent] = [this.xPosition(edge.parentCol), this.yPosition(edge.parentRow) - topScroll];
+    const [xChild, yChild] = [this.xPosition(edge.childCol), this.yPosition(edge.childRow) - topScroll];
+
+    const isMergeCommit = edge.type == RefType.MERGE_COMMIT;
+    this.prepareStyleForDrawingCommit(canvas, isMergeCommit ? edge.parentCol : edge.childCol);
 
     const isChildrenRight = xParent < xChild
 
-    if (isMergeCommit(childRef)) {
+    if (isMergeCommit) {
       canvas.moveTo(xParent, yParent - this.NODE_RADIUS);
       if (xParent == xChild) {
         canvas.lineTo(xParent, yChild + this.NODE_RADIUS);
@@ -110,68 +132,25 @@ export class LogsComponent implements AfterViewInit {
           canvas.lineTo(xChild + this.NODE_RADIUS, yChild);
         }
       }
-
     } else {
-      // if (isChildrenRight) {
-      //   canvas.lineTo(xParent, yChild - this.NODE_RADIUS);
-      //   canvas.quadraticCurveTo(xParent, yChild, xParent + this.NODE_RADIUS, yChild);
-      // } else {
-      //   canvas.lineTo(xParent, yChild - this.NODE_RADIUS);
-      //   canvas.quadraticCurveTo(xParent, yChild, xParent - this.NODE_RADIUS, yChild);
-      // }
+      if (xParent == xChild) {
+        canvas.moveTo(xParent, yParent - this.NODE_RADIUS);
+        canvas.lineTo(xParent, yChild + this.NODE_RADIUS);
+      } else {
+        if (isChildrenRight) {
+          canvas.moveTo(xParent + this.NODE_RADIUS, yParent);
+          canvas.lineTo(xChild - this.NODE_RADIUS, yParent);
+          canvas.quadraticCurveTo(xChild, yParent, xChild, yParent - this.NODE_RADIUS);
+          canvas.lineTo(xChild, yChild + this.NODE_RADIUS);
+        } else {
+          canvas.moveTo(xParent - this.NODE_RADIUS, yParent);
+          canvas.lineTo(xChild + this.NODE_RADIUS, yParent);
+          canvas.quadraticCurveTo(xChild, yParent, xChild, yParent - this.NODE_RADIUS);
+          canvas.lineTo(xChild, yChild + this.NODE_RADIUS);
+        }
+      }
     }
     canvas.stroke();
-
-    // Connections between successive commits on same column
-    // if (parent.col == child.col) { // Successive commits: Just connect them and the gaps between them
-    //   logMatrix[parent.row][parent.col] = [...logMatrix[parent.row][parent.col], new CellContent(VERTICAL_TOP, child.col)];
-    //
-    //   // Draw vertical lines from parent to child
-    //   for (let rowIndex = parent.row - 1; rowIndex > child.row; rowIndex--) {
-    //     logMatrix[rowIndex][child.col] = [...logMatrix[rowIndex][child.col], new CellContent(VERTICAL, child.col)];
-    //   }
-    // }
-    //
-    // // Draw the little connection of the child to the line coming from its parent
-    // logMatrix[child.row][child.col] = [...logMatrix[child.row][child.col], new CellContent(VERTICAL_BOTTTOM, child.col)];
-    //
-    // // Draw the horizontal line between parent -> child columns at parent row like '---(c)  if parent is on different column
-    // if (parent.col != child.col) {
-    //   if (isChildrenRight) {
-    //     for (let col = parent.col + 1; col < child.col; col++) {
-    //       logMatrix[parent.row][col] = [...logMatrix[parent.row][col], new CellContent(HORIZONTAL, child.col)];
-    //     }
-    //   } else {
-    //     for (let col = parent.col - 1; col > child.col; col--) {
-    //       logMatrix[parent.row][col] = [...logMatrix[parent.row][col], new CellContent(HORIZONTAL, child.col)];
-    //     }
-    //   }
-    //
-    //   // If parent and child are in different columns, we need to draw a turn. Draw the turns at each end
-    //   if (isMergeCommit(childCommit)) { // Draw [Edge to merge children](https://pvigier.github.io/media/img/commit-graph/design_straight_branches/first_parent.svg)
-    //     const turnSymbol = isChildrenRight ? UP_RIGHT:UP_LEFT;
-    //     logMatrix[child.row][parent.col] = [...logMatrix[parent.row][child.col], new CellContent(turnSymbol, parent.col)]; // Turn to child
-    //
-    //     // Draw horizontal line from turn to child TODO: test this
-    //     const colDirection = isChildrenRight ? 1 : -1;
-    //     for (let colIndex = parent.col + colDirection; colIndex != child.col; colIndex += colDirection) {
-    //       logMatrix[child.row][colIndex] = [...logMatrix[child.row][colIndex], new CellContent(HORIZONTAL, parent.col)];
-    //     }
-    //
-    //   } else { // Draw [Edge to branch children](https://pvigier.github.io/media/img/commit-graph/design_straight_branches/other_parent.svg)
-    //     if (isChildrenRight) {
-    //       logMatrix[parent.row][child.col] = [...logMatrix[parent.row][child.col], new CellContent(RIGHT_UP, child.col)]; // Turn to child
-    //     } else { // Child is to the left of parent
-    //       logMatrix[parent.row][child.col] = [...logMatrix[parent.row][child.col], new CellContent(LEFT_UP, child.col)]; // Turn to child
-    //     }
-    //
-    //     // Draw vertical line from child turn to child
-    //     for (let rowIndex = parent.row - 1; rowIndex > child.row; rowIndex--) {
-    //       logMatrix[rowIndex][child.col] = [...logMatrix[rowIndex][child.col], new CellContent(VERTICAL, child.col)];
-    //     }
-    //   }
-
-    // }
   };
 
   /**
@@ -234,45 +213,40 @@ export class LogsComponent implements AfterViewInit {
   // Matrix with just commits inside
   private computeCommitsIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) =>
     displayLog.map(commit => {
+
       // Indent will be reused for future commits
       commit.indent = this.computeCommitIndent(commit, childrenMap);
+
       return commit;
     });
 
   /**
    * Draw each commit / stash and their connections
    */
-  private drawLog = (canvas: CanvasRenderingContext2D, displayLog: DisplayRef[], startCommit: number, childrenMap: ChildrenMap) => {
+  private drawLog = (canvas: CanvasRenderingContext2D, displayLog: DisplayRef[], startCommit: number, edges: IntervalTree<Edge>) => {
 
     canvas.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
-
-    const scrollTop = startCommit * this.ROW_HEIGHT;
 
     displayLog.slice(startCommit, startCommit + this.COMMITS_SHOWN_ON_CANVAS).forEach((ref, index) => { // Starts with the bottom commit, bottom index
 
       const commitCoordinates = new Coordinates(index, ref.indent!);
+
       if (ref.refType == RefType.STASH) {
-        const stashParentRow = displayLog.findIndex(c => ref.parentSHAs.includes(c.sha));
-        commitCoordinates.col = displayLog[stashParentRow].indent!;
+        // TODO: Rework stashes
+        // const stashParentRow = displayLog.findIndex(c => ref.parentSHAs.includes(c.sha));
+        // commitCoordinates.col = displayLog[stashParentRow].indent!;
         // this.drawNode(canvas, commitCoordinates, ref);
-        //   const parentCoordinates = new Coordinates(stashParentRow, displayLog[stashParentRow].indent!);
-        //   this.drawEdgesBetweenTwoCommits(canvas, parentCoordinates, commitCoordinates, ref);
+        // const parentCoordinates = new Coordinates(stashParentRow, displayLog[stashParentRow].indent!);
+        // this.drawEdge(canvas, parentCoordinates, commitCoordinates, ref);
       } else { // RefType.COMMIT
         this.drawNode(canvas, commitCoordinates, ref);
         // Draw commit connection with its children
-        childrenMap[ref.sha]?.forEach(child => {
-
-          const childRow = displayLog.findIndex(bySha(child.sha));
-          const childCoordinates = new Coordinates(childRow - startCommit, displayLog[childRow].indent!);
-
-          // Draw connection between parent and children
-          this.drawEdgesBetweenTwoCommits(canvas, commitCoordinates, childCoordinates, ref, child);
-        });
       }
-
 
     });
 
+    edges.search(startCommit, startCommit + this.COMMITS_SHOWN_ON_CANVAS)
+      .forEach(edge => this.drawEdge(canvas, edge, startCommit))
 
     return canvas;
   };
@@ -361,21 +335,18 @@ export class LogsComponent implements AfterViewInit {
       return this.findFreeColumnOrPushNewColumn();
     }
 
-    if (childToAlignWith.length == 1) {
-      return childToAlignWith[0].indent!
-    } else {
-      // Save children commit on the left
-      const leftCol = childToAlignWith[0].indent!;
+    // Indent the commit with one if its children, on the leftest possible
+    const childrenOnTheLeft = childToAlignWith.sort((a, b) => a.indent! < b.indent! ? -1 : 1)[0];
+    const indent = childrenOnTheLeft.indent!;
 
-      // Free all child columns but the leftest
-      childrenMap[commit.sha]
-        .filter(child => child.indent! != leftCol)
-        .forEach(child => {
-          this.columns[child.indent!] = 'free';
-        });
+    // Free all child columns that are not this commit's column, and have only one parent
+    childrenMap[commit.sha]
+      .filter(child => child.indent! != indent && child.parentSHAs[0] == commit.sha)
+      .forEach(child => {
+        this.columns[child.indent!] = 'free';
+      });
 
-      return leftCol;
-    }
+    return indent;
 
   }
 
@@ -394,7 +365,7 @@ export class LogsComponent implements AfterViewInit {
   private drawNode(canvas: CanvasRenderingContext2D, commitCoordinates: Coordinates, ref: DisplayRef) {
     const [x, y] = [this.xPosition(commitCoordinates.col), this.yPosition(commitCoordinates.row)];
 
-    this.prepareStyleForDrawingCommit(canvas, ref);
+    this.prepareStyleForDrawingCommit(canvas, ref.indent!);
 
     if (isMergeCommit(ref)) {
       canvas.arc(x, y, this.NODE_RADIUS / 2, 0, 2 * Math.PI, true);
@@ -430,10 +401,10 @@ export class LogsComponent implements AfterViewInit {
     canvas.shadowBlur = 3;
   }
 
-  private prepareStyleForDrawingCommit(canvas: CanvasRenderingContext2D, ref: DisplayRef) {
+  private prepareStyleForDrawingCommit(canvas: CanvasRenderingContext2D, indent: number) {
     canvas.beginPath();
     canvas.fillStyle = canvas.strokeStyle = 'rgba(206, 147, 216, 0.9)';
-    canvas.filter = `hue-rotate(${ref.indent! * 360 / 7}deg)`;
+    canvas.filter = `hue-rotate(${indent * 360 / 7}deg)`;
     canvas.shadowColor = 'rgba(0, 0, 0, 0.8)';
     canvas.shadowBlur = 10;
   }
@@ -447,6 +418,6 @@ export class LogsComponent implements AfterViewInit {
 
     this.canvas!.nativeElement.style.top = `${startCommit * this.ROW_HEIGHT}px`;
 
-    this.drawLog(this.canvasContext(), this.displayLog, startCommit, this.childrenMap!);
+    this.drawLog(this.canvasContext(), this.displayLog, startCommit, this.edges!);
   }
 }
