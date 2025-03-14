@@ -10,7 +10,7 @@ import {Branch, BranchType} from "../../models/branch";
 import {byName} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
 import {max, uniqBy} from "lodash";
-import {buildChildrenMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit} from "../../utils/commit-utils";
+import {buildChildrenMap, buildShaMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit, isStash, ShaMap, stashParentCommitSha} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
 import {first, interval, map} from "rxjs";
 import {IntervalTree} from "node-interval-tree";
@@ -46,7 +46,7 @@ export class LogsComponent implements AfterViewInit {
   protected displayLog: DisplayRef[] = []; // Commits ready for display
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected graphColumnCount?: number;
-  private treeCount = 0;
+  private treeLockedColumn?: number;
   private columns: ['taken' | 'free', count: number][] = []; // keep track of the states of the columns when drawing commits from top to bottom
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
@@ -65,12 +65,17 @@ export class LogsComponent implements AfterViewInit {
     this.branches = gitRepository.branches;
 
     const commits = gitRepository.logs.map(this.commitToDisplayRef);
-    const stashes = gitRepository.stashes.map(this.stashToDisplayRef);
+    const stashes: DisplayRef[] = []//gitRepository.stashes.map(this.stashToDisplayRef);
+
+    const shaMap = buildShaMap([...commits, ...stashes]);
     const childrenMap = buildChildrenMap([...commits, ...stashes]);
 
-    this.computeCommitsIndents(commits, childrenMap);
+    const displayLog = this.saveRowIndexIntoDisplayRef(this.insertStashesIntoCommits(commits, stashes, shaMap));
 
-    const displayLog = this.markRows(this.appendStashes(commits, stashes, childrenMap));
+    this.computeCommitsIndents(displayLog, childrenMap);
+    // this.computeStashesIndents(displayLog, childrenMap);
+
+    // const displayLog = this.saveRowIndexIntoDisplayRef(this.appendStashes(commits, stashes, childrenMap));
 
     this.graphColumnCount = max(displayLog.map(c => c.indent!))! + 1;
 
@@ -110,6 +115,21 @@ export class LogsComponent implements AfterViewInit {
   // TODO: show ghost branch on the left of commit if merged
   protected branchesAndRef = (displayLogElement: DisplayRef) =>
     uniqBy([...displayLogElement.branchesDetails/*, this.findBranchByRef(displayLogElement.ref)*/], 'branchesDetails.name');
+
+  // Stashes are like commit => stash => stash
+  private insertStashIntoCommits = (stash: DisplayRef, commits: DisplayRef[], shaMap: ShaMap) => {
+    const parentSha = stashParentCommitSha(stash, shaMap);
+
+    const parentCommitRow = commits.findIndex(c => c.sha == parentSha);
+
+    // If we have merge commits above, we have a line starting from the parent commit, so we must move the stash upper
+    const countMergeCommitsAbove = this.countMergeCommitsAbove(parentCommitRow, commits);
+
+    const stashInsertionRow = parentCommitRow - countMergeCommitsAbove;
+
+    // Insert stash into commitsLog, over its parent commit, and over merge commits
+    commits.splice(stashInsertionRow, 0, stash);
+  }
 
   private onTableScroll: EventListener = ({target}) => {
     const startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
@@ -232,13 +252,8 @@ export class LogsComponent implements AfterViewInit {
 
   // Indent will be reused for future commits
   private computeCommitsIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
-    this.treeCount = 0;
-
-    return displayLog.map(commit => {
-
+    displayLog.forEach(commit => {
       commit.indent = this.computeCommitIndent(commit, childrenMap);
-
-      return commit;
     });
   };
 
@@ -257,28 +272,6 @@ export class LogsComponent implements AfterViewInit {
 
     return canvas;
   };
-
-  private appendStashes = (commitsLog: DisplayRef[], stashes: DisplayRef[], childrenMap: ChildrenMap) => {
-    stashes.map(this.stashToDisplayRef).forEach(this.insertStashIntoLog(commitsLog, childrenMap));
-    return commitsLog;
-  };
-
-  // Insert a stash into the commit log and display matrix
-  private insertStashIntoLog = (commitsLog: DisplayRef[], childrenMap: ChildrenMap) => (stash: DisplayRef) => {
-    const parentCommitRow = commitsLog.findIndex(c => stash.parentSHAs.includes(c.sha));
-    const parentCommitCol = commitsLog[parentCommitRow].indent!;
-
-    // If we have merge commits above, we have a line starting from the parent commit, so we must move the stash upper
-    const countMergeCommitsAbove = this.countMergeCommitsAbove(parentCommitRow, commitsLog);
-
-    const stashInsertionRow = parentCommitRow - countMergeCommitsAbove;
-    // And place the stash inside on parent's column
-    const stashCol = this.findFreeColumnForStash(stashInsertionRow, parentCommitRow, parentCommitCol, commitsLog, childrenMap);
-
-    // Insert stash into commitsLog, over its parent commit, and over merge commits
-    commitsLog.splice(stashInsertionRow, 0, {...stash, indent: stashCol});
-
-  }
 
   private countMergeCommitsAbove(startRow: number, commitsLog: DisplayRef[]) {
     for (let row = startRow - 1; row > 0; row--) {
@@ -321,6 +314,7 @@ export class LogsComponent implements AfterViewInit {
   }
 
   private computeCommitIndent = (commit: DisplayRef, childrenMap: ChildrenMap) => {
+
     const children = (childrenMap[commit.sha] ?? []).filter(isCommit);
 
     if (!children.length) { // Top of a branch, has no children
@@ -330,9 +324,13 @@ export class LogsComponent implements AfterViewInit {
     // If the commit has no parentSha => It is a tree root commit ! => It means that the following commits belong to another tree.
     // In order to indent commits for this new tree, we clear the saved commits refs and restart commits indentation from column 0
     if (isRootCommit(commit)) {
-      this.treeCount++;
-      this.columns = new Array(this.treeCount % 2).fill(['taken', 1]);
-      return children[0].indent!;
+
+      // Lock starting column of the tree for the next tree (looks better)
+      if (this.treeLockedColumn != undefined) this.setColumnFree(this.treeLockedColumn);
+
+      this.treeLockedColumn = children[0].indent!;
+
+      return children[0].indent!; // The column of a root commit will remain taken since it doesn't have a parent to free the column
     }
 
     // If commit has a child having current commit as first parent, we align with this commit
@@ -395,7 +393,7 @@ export class LogsComponent implements AfterViewInit {
         canvas.drawImage(img, x - this.NODE_RADIUS, y - this.NODE_RADIUS, this.NODE_DIAMETER, this.NODE_DIAMETER);
       }
     }
-  }
+  };
 
   private prepareForCommitTextDraw(canvas: CanvasRenderingContext2D) {
     canvas.beginPath();
@@ -405,7 +403,7 @@ export class LogsComponent implements AfterViewInit {
     canvas.textBaseline = 'middle';
     canvas.shadowColor = 'rgba(0, 0, 0, 0.8)';
     canvas.shadowBlur = 3;
-  }
+  };
 
   private prepareStyleForDrawingCommit(canvas: CanvasRenderingContext2D, indent: number) {
     canvas.beginPath();
@@ -413,7 +411,7 @@ export class LogsComponent implements AfterViewInit {
     canvas.filter = this.indentColorFilter(indent);
     canvas.shadowColor = 'rgba(0, 0, 0, 0.8)';
     canvas.shadowBlur = 10;
-  }
+  };
 
   private canvasContext = () => this.canvas?.nativeElement?.getContext('2d')!;
 
@@ -422,12 +420,34 @@ export class LogsComponent implements AfterViewInit {
 
   private moveCanvasDown = (startCommit: number) => this.canvas!.nativeElement.style.top = `${startCommit * this.ROW_HEIGHT}px`;
 
-  private markRows = (log: DisplayRef[]) => log.map((c, i) => {
+  private saveRowIndexIntoDisplayRef = (log: DisplayRef[]) => log.map((c, i) => {
     c.row = i;
     return c;
-  })
+  });
 
   private setColumnFree = (column: number) => {
     this.columns[column] = ['free', this.columns[column] ? (this.columns[column][1] + 1) : 0];
-  }
+  };
+
+  private insertStashesIntoCommits = (commits: DisplayRef[], stashes: DisplayRef[], shaMap: ShaMap) => {
+    stashes.forEach(s => this.insertStashIntoCommits(s, commits, shaMap))
+    return commits;
+  };
+
+  private computeStashesIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
+    displayLog.filter(isStash).forEach(stash => {
+
+      const parentCommitRow = displayLog.findIndex(c => stash.parentSHAs.includes(c.sha));
+      const parentCommitCol = displayLog[parentCommitRow].indent!;
+
+      // If we have merge commits above, we have a line starting from the parent commit, so we must move the stash upper
+      const countMergeCommitsAbove = this.countMergeCommitsAbove(parentCommitRow, displayLog);
+
+      const stashInsertionRow = parentCommitRow - countMergeCommitsAbove;
+      // And place the stash inside on parent's column
+
+      // Insert stash into displayLog, over its parent commit, and over merge commits
+      stash.indent = this.findFreeColumnForStash(stashInsertionRow, parentCommitRow, parentCommitCol, displayLog, childrenMap);
+    })
+  };
 }
