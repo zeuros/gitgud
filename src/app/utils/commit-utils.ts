@@ -4,9 +4,11 @@ import {RefType} from "../enums/ref-type.enum";
 
 
 export type ChildrenMap = { [parentSha: string]: DisplayRef[] };
+export type ShaMap = { [sha: string]: DisplayRef };
 
 
 export const isCommit = (displayRef: DisplayRef) => displayRef.refType == RefType.COMMIT;
+export const isStash = (displayRef: DisplayRef) => displayRef.refType == RefType.STASH;
 export const isMergeCommit = (displayRef: DisplayRef) => isCommit(displayRef) && displayRef.parentSHAs.length > 1;
 export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0
 
@@ -25,6 +27,10 @@ export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: Childr
   return hasNoBranching(childrenCommits[0], childMap);
 }
 
+export const hasChild = (stash: DisplayRef, childrenMap: ChildrenMap) => !!childrenMap[stash.sha];
+
+export const stashParentCommitSha = (stash: DisplayRef, shaMap: ShaMap) => stash.parentSHAs.find(parentSha => isCommit(shaMap[parentSha]))!;
+
 // Build the opposite of the Commit.parentShas => Commit.childShas
 export const buildChildrenMap = (commitLog: DisplayRef[]) => {
   const commitsChildrenShas: ChildrenMap = {};
@@ -38,4 +44,14 @@ export const buildChildrenMap = (commitLog: DisplayRef[]) => {
   }
 
   return commitsChildrenShas;
+}
+
+export const buildShaMap = (logs: DisplayRef[]) => {
+  const commitMap: ShaMap = {};
+
+  for (const commit of logs) {
+    commitMap[commit.sha] = commit;
+  }
+
+  return commitMap;
 }
