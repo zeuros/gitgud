@@ -22,9 +22,7 @@
         <tr class="commit-row" [pSelectableRow]="displayLog[rowIndex]" [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2">
             <td class="branch-tag-td">
                 <div class="branch-tag" *ngFor="let branch of branchesAndRef(displayLog[rowIndex]); let i = index">
-                    <div class="commit-branch"
-                         [ngStyle]="{top: i * 30 + 'px', filter: indentColorFilter(displayLog[rowIndex].indent)}"
-                         pDraggable>
+                    <div class="commit-branch" [ngStyle]="{top: i * 30 + 'px', filter: indentColorFilter(displayLog[rowIndex].indent)}" pDraggable>
                         <i *ngIf="displayLog[rowIndex].isPointedByLocalHead" class="fa fa-check mr-2"></i>
                         <span class="branch-name">{{ branchName(branch) }}</span>
                         <span class="float-icons">
