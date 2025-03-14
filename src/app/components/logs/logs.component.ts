@@ -46,8 +46,8 @@ export class LogsComponent implements AfterViewInit {
   protected displayLog: DisplayRef[] = []; // Commits ready for display
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected graphColumnCount?: number;
-  protected removeDuplicates = removeDuplicates;
-  private columns: ('taken' | 'free')[] = []; // keep track of the states of the columns when drawing commits from top to bottom
+  private treeCount = 0;
+  private columns: ['taken' | 'free', count: number][] = []; // keep track of the states of the columns when drawing commits from top to bottom
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
   private edges?: IntervalTree<Edge>;
@@ -231,13 +231,16 @@ export class LogsComponent implements AfterViewInit {
   };
 
   // Indent will be reused for future commits
-  private computeCommitsIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) =>
-    displayLog.map(commit => {
+  private computeCommitsIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
+    this.treeCount = 0;
+
+    return displayLog.map(commit => {
 
       commit.indent = this.computeCommitIndent(commit, childrenMap);
 
       return commit;
     });
+  };
 
   /**
    * Draw each commit / stash and their connections
@@ -258,7 +261,7 @@ export class LogsComponent implements AfterViewInit {
   private appendStashes = (commitsLog: DisplayRef[], stashes: DisplayRef[], childrenMap: ChildrenMap) => {
     stashes.map(this.stashToDisplayRef).forEach(this.insertStashIntoLog(commitsLog, childrenMap));
     return commitsLog;
-  }
+  };
 
   // Insert a stash into the commit log and display matrix
   private insertStashIntoLog = (commitsLog: DisplayRef[], childrenMap: ChildrenMap) => (stash: DisplayRef) => {
@@ -318,7 +321,6 @@ export class LogsComponent implements AfterViewInit {
   }
 
   private computeCommitIndent = (commit: DisplayRef, childrenMap: ChildrenMap) => {
-
     const children = (childrenMap[commit.sha] ?? []).filter(isCommit);
 
     if (!children.length) { // Top of a branch, has no children
@@ -328,7 +330,8 @@ export class LogsComponent implements AfterViewInit {
     // If the commit has no parentSha => It is a tree root commit ! => It means that the following commits belong to another tree.
     // In order to indent commits for this new tree, we clear the saved commits refs and restart commits indentation from column 0
     if (isRootCommit(commit)) {
-      this.columns = [];
+      this.treeCount++;
+      this.columns = new Array(this.treeCount % 2).fill(['taken', 1]);
       return children[0].indent!;
     }
 
@@ -346,7 +349,7 @@ export class LogsComponent implements AfterViewInit {
     childrenMap[commit.sha]
       .filter(child => child.indent! != indent && child.parentSHAs[0] == commit.sha)
       .forEach(child => {
-        this.columns[child.indent!] = 'free';
+        this.setColumnFree(child.indent!);
       });
 
     return indent;
@@ -355,12 +358,12 @@ export class LogsComponent implements AfterViewInit {
 
   // keep track of the states of the columns when drawing commits from top to bottom
   private findFreeColumnOrPushNewColumn = () => {
-    const freeColumn = this.columns.indexOf('free');
+    const freeColumn = this.columns.findIndex(c => c[0] == 'free');
     if (freeColumn != -1) {
-      this.columns[freeColumn] = 'taken';
+      this.columns[freeColumn] = ['taken', 1];
       return freeColumn;
     } else {
-      this.columns.push('taken');
+      this.columns.push(['taken', 1]);
       return this.columns.length - 1;
     }
   }
@@ -424,4 +427,7 @@ export class LogsComponent implements AfterViewInit {
     return c;
   })
 
+  private setColumnFree = (column: number) => {
+    this.columns[column] = ['free', this.columns[column] ? (this.columns[column][1] + 1) : 0];
+  }
 }
