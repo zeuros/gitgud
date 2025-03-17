@@ -21,7 +21,7 @@
           "style": "scss"
         }
       },
-      "prefix": "app",
+      "prefix": "gitgud",
       "architect": {
         "build": {
           "builder": "@angular-builders/custom-webpack:browser",

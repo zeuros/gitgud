@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild} from '@angular/core';
 import {GitRepository} from '../../models/git-repository';
 import {TableModule} from 'primeng/table';
 import {DatePipe, JsonPipe, NgClass, NgForOf, NgIf, NgStyle} from '@angular/common';
@@ -9,7 +9,7 @@ import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
 import {byName} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
-import {max, uniqBy} from "lodash";
+import {max, sortBy, uniqBy} from "lodash";
 import {buildChildrenMap, buildShaMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit, isStash, ShaMap, stashParentCommitSha} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
 import {first, interval, map} from "rxjs";
@@ -17,6 +17,7 @@ import {IntervalTree} from "node-interval-tree";
 import {Edge} from "../../models/edge";
 import {GitRepositoryService} from "../../services/git-repository.service";
 import {DragDropModule} from "primeng/dragdrop";
+import {SearchLogsComponent} from "../search-logs/search-logs.component";
 
 @Component({
   selector: 'gitgud-logs',
@@ -30,6 +31,7 @@ import {DragDropModule} from "primeng/dragdrop";
     NgClass,
     NgStyle,
     DragDropModule,
+    SearchLogsComponent,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -45,12 +47,15 @@ export class LogsComponent implements AfterViewInit {
 
   protected displayLog: DisplayRef[] = []; // Commits ready for display
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
+  protected showSearchBar = false;
+  protected hasMatch?: DisplayRef;
   protected graphColumnCount?: number;
   private treeLockedColumn?: number;
   private columns: ['taken' | 'free', count: number][] = []; // keep track of the states of the columns when drawing commits from top to bottom
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
   private edges?: IntervalTree<Edge>;
+  protected searchBarFocus = {};
 
   constructor(
     private gitRepositoryService: GitRepositoryService,
@@ -90,6 +95,17 @@ export class LogsComponent implements AfterViewInit {
 
     this.displayLog = displayLog;
     this.edges = edges;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardEvent({ctrlKey, code, key}: KeyboardEvent) {
+    if (ctrlKey && code == 'KeyF') {
+      this.showSearchBar = true;
+      this.searchBarFocus = {}; // Triggers change detection on search bar component
+    } else if (code == 'Escape') {
+      this.showSearchBar = false;
+      this.search('');
+    }
   }
 
   get logTable() {
@@ -450,4 +466,19 @@ export class LogsComponent implements AfterViewInit {
       stash.indent = this.findFreeColumnForStash(stashInsertionRow, parentCommitRow, parentCommitCol, displayLog, childrenMap);
     })
   };
+
+  protected search = (searchString = '') => {
+    if (searchString == '') // Clear search
+      return this.displayLog.forEach(commit => commit.highlight = undefined);
+
+
+    this.displayLog.forEach(commit => commit.highlight = undefined);
+
+    const searchStringL = searchString.toLowerCase();
+    this.displayLog
+      .filter(({sha, summary, author}) => !(sha.includes(searchStringL) || summary.toLowerCase().includes(searchStringL) || author.name.toLowerCase().includes(searchStringL)))
+      .forEach(commit => commit.highlight = 'not-matched');
+
+    // TODO: focus on first matched commit if out of screen
+  }
 }

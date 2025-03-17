@@ -125,6 +125,12 @@ $primeng-purple-line: rgba(66, 48, 69, 0.9);
           position: absolute;
         }
       }
+
+      &.not-matched {
+        td.summary, td.author, td.date {
+          color: rgba(253, 247, 255, 0.17);
+        }
+      }
     }
   }
 }

@@ -1,3 +1,4 @@
+<gitgud-search-logs *ngIf="showSearchBar" [focus]="searchBarFocus" (onSearch)="search($event)"/>
 <p-table
         #logTable
         [value]="displayLog"
@@ -19,7 +20,7 @@
         </tr>
     </ng-template>
     <ng-template pTemplate="body" let-rowIndex="rowIndex">
-        <tr class="commit-row" [pSelectableRow]="displayLog[rowIndex]" [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2">
+        <tr class="commit-row {{ displayLog[rowIndex].highlight }}" [pSelectableRow]="displayLog[rowIndex]" [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2">
             <td class="branch-tag-td">
                 <div class="branch-tag" *ngFor="let branch of branchesAndRef(displayLog[rowIndex]); let i = index">
                     <div class="commit-branch" [ngStyle]="{top: i * 30 + 'px', filter: indentColorFilter(displayLog[rowIndex].indent)}" pDraggable>
