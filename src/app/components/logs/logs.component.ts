@@ -267,9 +267,12 @@ export class LogsComponent implements AfterViewInit {
   };
 
   // Indent will be reused for future commits
-  private computeCommitsIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
+  private computeCommitsIndents = (displayLog: DisplayRef[], shaMap: ShaMap, childrenMap: ChildrenMap) => {
     displayLog.forEach(commit => {
-      commit.indent = this.computeCommitIndent(commit, childrenMap);
+      commit.indent = this.computeCommitIndent(commit, shaMap, childrenMap);
+
+      this.columns = this.columns.map(([status, count]) => [status, count + 1]);
+
     });
   };
 
@@ -329,12 +332,31 @@ export class LogsComponent implements AfterViewInit {
     return undefined;
   }
 
-  private computeCommitIndent = (commit: DisplayRef, childrenMap: ChildrenMap) => {
+  private computeCommitIndent = (commit: DisplayRef, shaMap: ShaMap, childrenMap: ChildrenMap) => {
 
     const children = (childrenMap[commit.sha] ?? []).filter(isCommit);
+    // const parents = commit.parentSHAs.map(sha => shaMap[sha]).filter(notUndefined);
+    // const firstParent = parents[0]; // Parent that should be aligned to this (of the same branch)
 
-    if (!children.length) { // Top of a branch, has no children
-      return this.findFreeColumnOrPushNewColumn(); // we return a free column from left to right (add one otherwise)
+    // If commit has a child having current commit as first parent, we align with this commit
+    const childrenOfSameBranch = children.filter(child => child.parentSHAs[0] == commit.sha);
+    const leftChildOfSameBranch = childrenOfSameBranch.find(isMergeCommit) ?? childrenOfSameBranch[0];
+    let hasMergeChild = children.some(isMergeCommit);
+    let distanceToNextMergeCommit = 0;
+    let indent = -1;
+
+    if (commit.summary.includes(`better commit log`)) debugger
+
+    if (hasMergeChild) {
+      const farthestMergeChild = children
+        .filter(isMergeCommit)
+        .sort((c1, c2) => c1.row! > c2.row! ? 1 : -1)[0];
+
+      distanceToNextMergeCommit = commit.row! - farthestMergeChild.row!;
+    }
+
+    if (childrenOfSameBranch.length == 0) {
+      return this.findFreeColumnOrPushNewColumn(hasMergeChild ? distanceToNextMergeCommit : 0);
     }
 
     // If the commit has no parentSha => It is a tree root commit ! => It means that the following commits belong to another tree.
@@ -349,38 +371,59 @@ export class LogsComponent implements AfterViewInit {
       return children[0].indent!; // The column of a root commit will remain taken since it doesn't have a parent to free the column
     }
 
-    // If commit has a child having current commit as first parent, we align with this commit
-    const childToAlignWith = children.filter(child => child.parentSHAs[0] == commit.sha);
-
-    if (childToAlignWith.length == 0) {
-      return this.findFreeColumnOrPushNewColumn();
+    // We can stack merge commits one of top of others if they're the same branch
+    if (isMergeCommit(leftChildOfSameBranch) && !isMergeCommit(commit)) {
+      // TODO: refactor
+      indent = this.findFreeColumnOrPushNewColumn(distanceToNextMergeCommit);
+      this.freeChildrenColumns(childrenOfSameBranch, leftChildOfSameBranch.indent!);
+      return indent;
     }
 
-    // Indent the commit with one if its children, on the leftest possible
-    const indent = childToAlignWith[0].indent!;
+    // We have one merge commit as child, we cannot align to other normal commits, since we have a merge line on top of this commit.
+    if (hasMergeChild && !isMergeCommit(leftChildOfSameBranch)) {
+
+      // Try to align with child commit
+      const childColumn = this.columns[leftChildOfSameBranch.indent!];
+      if (childColumn[0] == 'free' || childColumn[1] >= (commit.row! - childColumn[1])) {
+        // Free all child columns that are not this commit's column, and have only one parent
+        this.freeChildrenColumns(childrenOfSameBranch, leftChildOfSameBranch.indent!);
+        return leftChildOfSameBranch.indent!;
+      }
+      indent = this.findFreeColumnOrPushNewColumn(hasMergeChild ? distanceToNextMergeCommit : 0); // Make sure the column we find allow the line to reach merge commit
+
+      // Since we don't align with the child of same branch, we free the children branches we don't align with
+      this.setColumnFree(leftChildOfSameBranch.indent!);
+      return indent;
+    }
+
+    // TODO: try to book the column if no merge commit below, it'll help pack things on the left
 
     // Free all child columns that are not this commit's column, and have only one parent
-    childrenMap[commit.sha]
-      .filter(child => child.indent! != indent && child.parentSHAs[0] == commit.sha)
-      .forEach(child => {
-        this.setColumnFree(child.indent!);
-      });
+    this.freeChildrenColumns(children, leftChildOfSameBranch.indent!);
 
-    return indent;
+    return leftChildOfSameBranch.indent!;
 
   }
 
-  // keep track of the states of the columns when drawing commits from top to bottom
-  private findFreeColumnOrPushNewColumn = () => {
-    const freeColumn = this.columns.findIndex(c => c[0] == 'free');
+  private freeChildrenColumns(childrenOfSameBranch: DisplayRef[], excludeThisColumn: number) {
+    childrenOfSameBranch
+      .filter(child => child.indent! != excludeThisColumn)
+      .forEach(child => this.setColumnFree(child.indent!));
+  }
+
+// keep track of the states of the columns when drawing commits from top to bottom
+  private findFreeColumnOrPushNewColumn = (neededFreeSpaceAbove = 0) => {
+    const freeColumn = this.columns.findIndex(this.isColumnFree(neededFreeSpaceAbove));
+
     if (freeColumn != -1) {
-      this.columns[freeColumn] = ['taken', 1];
+      this.columns[freeColumn] = ['taken', 0];
       return freeColumn;
     } else {
-      this.columns.push(['taken', 1]);
-      return this.columns.length - 1;
+      return this.pushNewColumn();
     }
   }
+
+  private isColumnFree = (neededFreeSpaceAbove: number) => ([status, spaceCount]: Column) => status == 'free' && spaceCount >= neededFreeSpaceAbove;
 
   private drawNode(canvas: CanvasRenderingContext2D, commitCoordinates: Coordinates, ref: DisplayRef) {
     const [x, y] = [this.xPosition(commitCoordinates.col), this.yPosition(commitCoordinates.row)];
@@ -442,13 +485,14 @@ export class LogsComponent implements AfterViewInit {
   });
 
   private setColumnFree = (column: number) => {
-    this.columns[column] = ['free', this.columns[column] ? (this.columns[column][1] + 1) : 0];
+    this.columns[column] = ['free', 0];
   };
 
   private insertStashesIntoCommits = (commits: DisplayRef[], stashes: DisplayRef[], shaMap: ShaMap) => {
     stashes.forEach(s => this.insertStashIntoCommits(s, commits, shaMap))
     return commits;
   };
+  private pushNewColumn = () => this.columns.push(['taken', 0]) - 1;
 
   private computeStashesIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
     displayLog.filter(isStash).forEach(stash => {
