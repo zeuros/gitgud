@@ -9,7 +9,7 @@ import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
 import {byName} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
-import {max, sortBy, uniqBy} from "lodash";
+import {max, uniqBy} from "lodash";
 import {buildChildrenMap, buildShaMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit, isStash, ShaMap, stashParentCommitSha} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
 import {first, interval, map} from "rxjs";
@@ -18,6 +18,8 @@ import {Edge} from "../../models/edge";
 import {GitRepositoryService} from "../../services/git-repository.service";
 import {DragDropModule} from "primeng/dragdrop";
 import {SearchLogsComponent} from "../search-logs/search-logs.component";
+
+type Column = ['taken' | 'free', rowCount: number];
 
 @Component({
   selector: 'gitgud-logs',
@@ -48,14 +50,13 @@ export class LogsComponent implements AfterViewInit {
   protected displayLog: DisplayRef[] = []; // Commits ready for display
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected showSearchBar = false;
-  protected hasMatch?: DisplayRef;
   protected graphColumnCount?: number;
+  protected searchBarFocus = {};
   private treeLockedColumn?: number;
-  private columns: ['taken' | 'free', count: number][] = []; // keep track of the states of the columns when drawing commits from top to bottom
+  private columns: Column[] = []; // keep track of the states of the columns when drawing commits from top to bottom
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
   private edges?: IntervalTree<Edge>;
-  protected searchBarFocus = {};
 
   constructor(
     private gitRepositoryService: GitRepositoryService,
@@ -77,7 +78,7 @@ export class LogsComponent implements AfterViewInit {
 
     const displayLog = this.saveRowIndexIntoDisplayRef(this.insertStashesIntoCommits(commits, stashes, shaMap));
 
-    this.computeCommitsIndents(displayLog, childrenMap);
+    this.computeCommitsIndents(displayLog, shaMap, childrenMap);
     // this.computeStashesIndents(displayLog, childrenMap);
 
     // const displayLog = this.saveRowIndexIntoDisplayRef(this.appendStashes(commits, stashes, childrenMap));
@@ -97,8 +98,12 @@ export class LogsComponent implements AfterViewInit {
     this.edges = edges;
   }
 
+  get logTable() {
+    return this.logTableRef!.nativeElement.querySelector(".p-datatable-wrapper")!
+  }
+
   @HostListener('document:keydown', ['$event'])
-  handleKeyboardEvent({ctrlKey, code, key}: KeyboardEvent) {
+  handleKeyboardEvent({ctrlKey, code}: KeyboardEvent) {
     if (ctrlKey && code == 'KeyF') {
       this.showSearchBar = true;
       this.searchBarFocus = {}; // Triggers change detection on search bar component
@@ -106,10 +111,6 @@ export class LogsComponent implements AfterViewInit {
       this.showSearchBar = false;
       this.search('');
     }
-  }
-
-  get logTable() {
-    return this.logTableRef!.nativeElement.querySelector(".p-datatable-wrapper")!
   }
 
   ngAfterViewInit() {
@@ -131,6 +132,22 @@ export class LogsComponent implements AfterViewInit {
   // TODO: show ghost branch on the left of commit if merged
   protected branchesAndRef = (displayLogElement: DisplayRef) =>
     uniqBy([...displayLogElement.branchesDetails/*, this.findBranchByRef(displayLogElement.ref)*/], 'branchesDetails.name');
+
+  protected search = (searchString = '') => {
+    if (searchString == '') // Clear search
+      return this.displayLog.forEach(commit => commit.highlight = undefined);
+
+
+    this.displayLog.forEach(commit => commit.highlight = undefined);
+
+    const searchStringL = searchString.toLowerCase();
+    this.displayLog
+      .filter(({sha, summary, author}) => !(sha.includes(searchStringL) || summary.toLowerCase().includes(searchStringL) || author.name.toLowerCase().includes(searchStringL)))
+      .forEach(commit => commit.highlight = 'not-matched');
+
+    // TODO: focus on first matched commit if out of screen
+    // TODO: Apply this filter on the displayed elements only
+  }
 
   // Stashes are like commit => stash => stash
   private insertStashIntoCommits = (stash: DisplayRef, commits: DisplayRef[], shaMap: ShaMap) => {
@@ -270,9 +287,7 @@ export class LogsComponent implements AfterViewInit {
   private computeCommitsIndents = (displayLog: DisplayRef[], shaMap: ShaMap, childrenMap: ChildrenMap) => {
     displayLog.forEach(commit => {
       commit.indent = this.computeCommitIndent(commit, shaMap, childrenMap);
-
       this.columns = this.columns.map(([status, count]) => [status, count + 1]);
-
     });
   };
 
@@ -510,19 +525,4 @@ export class LogsComponent implements AfterViewInit {
       stash.indent = this.findFreeColumnForStash(stashInsertionRow, parentCommitRow, parentCommitCol, displayLog, childrenMap);
     })
   };
-
-  protected search = (searchString = '') => {
-    if (searchString == '') // Clear search
-      return this.displayLog.forEach(commit => commit.highlight = undefined);
-
-
-    this.displayLog.forEach(commit => commit.highlight = undefined);
-
-    const searchStringL = searchString.toLowerCase();
-    this.displayLog
-      .filter(({sha, summary, author}) => !(sha.includes(searchStringL) || summary.toLowerCase().includes(searchStringL) || author.name.toLowerCase().includes(searchStringL)))
-      .forEach(commit => commit.highlight = 'not-matched');
-
-    // TODO: focus on first matched commit if out of screen
-  }
 }
