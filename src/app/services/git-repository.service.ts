@@ -13,6 +13,8 @@ import {LogService} from "./log.service";
 import {StashService} from "./stash.service";
 import {BranchService} from "./branch.service";
 
+const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 400;
+
 /**
  * Holds repositories and their states
  */
@@ -138,7 +140,7 @@ export class GitRepositoryService {
 
   private updateLogsAndBranches = (gitRepository: GitRepository): Observable<GitRepository> =>
     forkJoin({
-      logs: this.logService.getCommitLog(gitRepository.directory, '--branches', 2000, 0, ['--remotes', '--tags', '--source']), // Source will show which branch the commit is in
+      logs: this.logService.getCommitLog(gitRepository.directory, '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source']), // Source will show which branch the commit is in
       branches: this.branchService.getBranches(gitRepository.directory), // Source will show which branch the  commit is in
       stashes: this.stashService.getStashes(gitRepository.directory), // Source will show which branch commit is in
     })
