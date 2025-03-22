@@ -347,20 +347,16 @@ export class LogsComponent implements AfterViewInit {
     return undefined;
   }
 
+  // Every commit from top (index=0) to bottom will be chosen a column (indent)
   private computeCommitIndent = (commit: DisplayRef, shaMap: ShaMap, childrenMap: ChildrenMap) => {
 
     const children = (childrenMap[commit.sha] ?? []).filter(isCommit);
-    // const parents = commit.parentSHAs.map(sha => shaMap[sha]).filter(notUndefined);
-    // const firstParent = parents[0]; // Parent that should be aligned to this (of the same branch)
-
     // If commit has a child having current commit as first parent, we align with this commit
     const childrenOfSameBranch = children.filter(child => child.parentSHAs[0] == commit.sha);
-    const leftChildOfSameBranch = childrenOfSameBranch.find(isMergeCommit) ?? childrenOfSameBranch[0];
+    const leftChildOfSameBranch = childrenOfSameBranch.find(isMergeCommit) ?? childrenOfSameBranch[0]; // The children we align with
     let hasMergeChild = children.some(isMergeCommit);
     let distanceToNextMergeCommit = 0;
     let indent = -1;
-
-    if (commit.summary.includes(`better commit log`)) debugger
 
     if (hasMergeChild) {
       const farthestMergeChild = children
@@ -368,10 +364,6 @@ export class LogsComponent implements AfterViewInit {
         .sort((c1, c2) => c1.row! > c2.row! ? 1 : -1)[0];
 
       distanceToNextMergeCommit = commit.row! - farthestMergeChild.row!;
-    }
-
-    if (childrenOfSameBranch.length == 0) {
-      return this.findFreeColumnOrPushNewColumn(hasMergeChild ? distanceToNextMergeCommit : 0);
     }
 
     // If the commit has no parentSha => It is a tree root commit ! => It means that the following commits belong to another tree.
@@ -386,38 +378,49 @@ export class LogsComponent implements AfterViewInit {
       return children[0].indent!; // The column of a root commit will remain taken since it doesn't have a parent to free the column
     }
 
-    // We can stack merge commits one of top of others if they're the same branch
-    if (isMergeCommit(leftChildOfSameBranch) && !isMergeCommit(commit)) {
-      // TODO: refactor
-      indent = this.findFreeColumnOrPushNewColumn(distanceToNextMergeCommit);
-      this.freeChildrenColumns(childrenOfSameBranch, leftChildOfSameBranch.indent!);
+    if (children.length > 1 && leftChildOfSameBranch) {
+      // Free all the children we don't align with
+      this.freeChildrenColumns(children.filter(c => !isMergeCommit(c)), commit.indent ?? leftChildOfSameBranch.indent!);
+    }
+
+    if (isMergeCommit(commit)) {
+      // Parents of current commit
+      const parents = commit.parentSHAs.map(sha => shaMap[sha]).filter(notUndefined);
+
+      // if there's no parents (In the bottom of log, parents could not be available), we just align with child
+      if (!parents.length) return commit.indent ?? leftChildOfSameBranch?.indent ?? children[0].indent!;
+
+      const firstParent = parents[0];
+
+      // Skip the first parent because we will align the current commit with it !
+      const otherParentsHavingOneChild = parents.slice(1);
+
+      // For each parent we don't align with, we push a new column
+      // This helps to hold the column taken till we reach the parent commit. It helps to make a continuous column with related commits (of the same branch most times)
+      // It also helps to put all merge columns close to each other, [like this](docs/nice.png)
+      otherParentsHavingOneChild
+        .filter(otherParent => otherParent.indent == undefined)
+        .forEach(otherParent => otherParent.indent = this.findFreeColumnOrPushNewColumn(-1));
+
+      // Either the column of the commit has been determined by its parent ?? else, comes from his 'favorite' children (referencing this commit in parentSha[0]) ?? Else pushes a new column
+      indent = commit.indent ?? leftChildOfSameBranch?.indent ?? this.findFreeColumnOrPushNewColumn(distanceToNextMergeCommit);
+
+      firstParent.indent = indent;
+
       return indent;
     }
 
-    // We have one merge commit as child, we cannot align to other normal commits, since we have a merge line on top of this commit.
-    if (hasMergeChild && !isMergeCommit(leftChildOfSameBranch)) {
-
-      // Try to align with child commit
-      const childColumn = this.columns[leftChildOfSameBranch.indent!];
-      if (childColumn[0] == 'free' || childColumn[1] >= (commit.row! - childColumn[1])) {
-        // Free all child columns that are not this commit's column, and have only one parent
-        this.freeChildrenColumns(childrenOfSameBranch, leftChildOfSameBranch.indent!);
-        return leftChildOfSameBranch.indent!;
-      }
-      indent = this.findFreeColumnOrPushNewColumn(hasMergeChild ? distanceToNextMergeCommit : 0); // Make sure the column we find allow the line to reach merge commit
-
-      // Since we don't align with the child of same branch, we free the children branches we don't align with
-      this.setColumnFree(leftChildOfSameBranch.indent!);
-      return indent;
+    // This commit have been positioned in a column by its merge children. We have to mark this column taken because the child didn't do it
+    if (commit.indent) {
+      this.columns[commit.indent] = ['taken', 0];
+      return commit.indent;
     }
 
-    // TODO: try to book the column if no merge commit below, it'll help pack things on the left
+    // We have a parent to align to, column already taken
+    if (leftChildOfSameBranch?.indent) return leftChildOfSameBranch?.indent;
 
-    // Free all child columns that are not this commit's column, and have only one parent
-    this.freeChildrenColumns(children, leftChildOfSameBranch.indent!);
-
-    return leftChildOfSameBranch.indent!;
-
+    // We don't have child to align to => push a new column
+    return this.findFreeColumnOrPushNewColumn(distanceToNextMergeCommit);
   }
 
   private freeChildrenColumns(childrenOfSameBranch: DisplayRef[], excludeThisColumn: number) {
@@ -428,7 +431,7 @@ export class LogsComponent implements AfterViewInit {
 
 // keep track of the states of the columns when drawing commits from top to bottom
   private findFreeColumnOrPushNewColumn = (neededFreeSpaceAbove = 0) => {
-    const freeColumn = this.columns.findIndex(this.isColumnFree(neededFreeSpaceAbove));
+    const freeColumn = this.columns.findIndex(this.isColumnFree(neededFreeSpaceAbove + 1));
 
     if (freeColumn != -1) {
       this.columns[freeColumn] = ['taken', 0];
