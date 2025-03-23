@@ -35,7 +35,7 @@ export class CloneOrOpenDirectoryDialogComponent {
 
   }
 
-  protected clone = () => this.gitApiService.clone('https://github.com/isomorphic-git/lightning-fs', 'C:/test-repo')
+  protected clone = () => this.gitApiService.clone()
     .subscribe(() => this.popupService.info('Repository cloned'));
 
 }
