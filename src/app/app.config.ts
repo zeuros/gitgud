@@ -1,6 +1,5 @@
 import {ApplicationConfig, importProvidersFrom} from "@angular/core";
 import {provideRouter} from "@angular/router";
-
 import {routes} from "./app.routes";
 import {provideAnimations} from "@angular/platform-browser/animations";
 import {MessageService} from "primeng/api";
@@ -17,13 +16,14 @@ export const appConfig: ApplicationConfig = {
     DialogService,
     provideHttpClient(),
     importProvidersFrom(
-    TranslateModule.forRoot({ // TODO: use translation in app (see
-      defaultLanguage: 'en',
-      loader: {
-        provide: TranslateLoader,
-        useFactory: (http: HttpClient) => new TranslateHttpLoader(http, './assets/i18n/', '.json'),
-        deps: [HttpClient],
-      },
-    })
-  ),],
+      TranslateModule.forRoot({ // TODO: use translation in app (see
+        defaultLanguage: 'en',
+        loader: {
+          provide: TranslateLoader,
+          useFactory: (http: HttpClient) => new TranslateHttpLoader(http, './assets/i18n/', '.json'),
+          deps: [HttpClient],
+        },
+      })
+    ),
+  ],
 };

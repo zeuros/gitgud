@@ -5,7 +5,7 @@ import {Injectable} from '@angular/core';
 import * as childProcess from 'child_process';
 import {ExecOptions} from 'child_process';
 import * as util from 'util';
-import {from, map, Observable, tap} from "rxjs";
+import {from, map, Observable} from "rxjs";
 import {omitUndefined} from "../utils/utils";
 import * as electron from "@electron/remote";
 import * as path from 'path';
@@ -19,10 +19,10 @@ import * as path from 'path';
 export class GitApiService {
 
   childProcess: typeof childProcess = (window as any).require('child_process');
-  util: typeof util = (window as any).require('util');
-  electron: typeof electron = (window as any).require('@electron/remote')
-  promisedExec = this.util.promisify(this.childProcess.execFile);
-  path: typeof path = (window as any).require('path');
+  private util: typeof util = (window as any).require('util');
+  private electron: typeof electron = (window as any).require('@electron/remote')
+  private promisedExec = this.util.promisify(this.childProcess.execFile);
+  private path: typeof path = (window as any).require('path');
 
   constructor() {
     // Notes :
@@ -42,6 +42,10 @@ export class GitApiService {
       .subscribe(console.log);
   }
 
+  get isElectron() {
+    return !!window?.process?.type;
+  }
+
   /**
    * @param args
    * @param cwd Which folder to execute git from
@@ -51,12 +55,7 @@ export class GitApiService {
     return this.exec('git', args, {cwd, env: process.env});
   }
 
-
-  get isElectron() {
-    return !!window?.process?.type;
-  }
-
-  clone = (comIsomorphicGitLightningFs: string, cTestRepo: string): Observable<void> => {
+  clone = (): Observable<void> => {
     // TODO
     return new Observable<void>();
   }
@@ -64,6 +63,5 @@ export class GitApiService {
   exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
     from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
       .pipe(map(({stdout}) => stdout));
-
 
 }
