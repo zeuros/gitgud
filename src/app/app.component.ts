@@ -9,6 +9,7 @@ import {RouterOutlet} from '@angular/router';
 import {ToastModule} from "primeng/toast";
 import {GitRepositoryService} from "./services/git-repository.service";
 import {GitApiService} from "./services/git-api.service";
+import {AutoFetchService} from "./services/auto-fetch.service";
 
 @Component({
   standalone: true,
@@ -22,6 +23,7 @@ export class AppComponent {
     private gitApiService: GitApiService,
     private translate: TranslateService,
     protected gitRepositoryService: GitRepositoryService,
+    autoFetchService: AutoFetchService,
   ) {
     this.translate.setDefaultLang('en');
     console.log('APP_CONFIG', APP_CONFIG);
@@ -33,5 +35,7 @@ export class AppComponent {
     } else {
       console.log('Run in browser');
     }
+
+    autoFetchService.startAutoFetch();
   }
 }
