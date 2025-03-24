@@ -1,9 +1,9 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, forkJoin, map, Observable, tap} from "rxjs";
+import {BehaviorSubject, forkJoin, Observable, tap} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
-import {byDirectory, byIndex, isRootDirectory, throwEx} from "../utils/utils";
+import {byDirectory, isRootDirectory, throwEx} from "../utils/utils";
 import {createRepository} from "../utils/repository-utils";
 
 import * as fs from 'fs';
@@ -36,8 +36,13 @@ export class GitRepositoryService {
     private logService: LogService,
     private branchService: BranchService,
     private stashService: StashService,
+    private gitApiService: GitApiService,
   ) {
     (settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? []).forEach(this.addToRepos);
+  }
+
+  get currentRepository(): GitRepository | undefined {
+    return this.repositories$[this.currentRepositoryIndex]?.value;
   }
 
   get repositories() {
@@ -48,11 +53,12 @@ export class GitRepositoryService {
   saveAllRepos = (repos: GitRepository[]) => this.settingsService.store(StorageName.GitRepositories, repos)
 
   selectRepositoryByIndex = (repositoryIndex: number) => {
-    // Deselect all repos
-    this.updateRepo(this.repositories$[this.currentRepositoryIndex], {selected: false});
+    // Deselect current repo
+    this.updateCurrentRepository({selected: false});
+
     // Select the good one
-    this.updateRepo(this.repositories$[repositoryIndex], {selected: true});
     this.currentRepositoryIndex = repositoryIndex;
+    this.updateCurrentRepository({selected: true});
   }
 
   /**
@@ -99,10 +105,13 @@ export class GitRepositoryService {
   removeRepository = (repoIndex: number) => {
     const repoToRemoveWascurrent = this.repositories$[repoIndex].value.selected;
 
-    delete this.repositories$[repoIndex];
+    const toRemove = this.repositories$[repoIndex];
+    toRemove.unsubscribe();
+
+    this.repositories$ = this.repositories$.filter((r, i) => i !== repoIndex);
 
     // Selects the next repository in next tab (if available)
-    if (repoToRemoveWascurrent) {
+    if (repoToRemoveWascurrent && this.repositories.length) {
       if (this.repositories.length >= repoIndex)
         this.selectRepositoryByIndex(repoIndex);
       else if (repoIndex - 1 >= 0)
@@ -113,9 +122,16 @@ export class GitRepositoryService {
 
   }
 
-  private updateRepo = (repository$: BehaviorSubject<GitRepository>, updates: Partial<GitRepository>) =>
-    repository$.next({...repository$.value, ...updates});
+  fetchCurrentRepository = () => {
+    console.log('fetch')
+    if (this.currentRepositoryIndex) {
+      this.gitApiService.git(['fetch'], this.currentRepository!.directory);
+      this.updateLogsAndBranches(this.currentRepository!).pipe(tap(this.updateCurrentRepository))
+    }
+  }
 
+  private updateRepo = (repository$: BehaviorSubject<GitRepository> | undefined, updates: Partial<GitRepository>) =>
+    repository$?.next({...repository$.value, ...updates});
 
   private addToRepos = (repo: GitRepository) => {
     const repo$ = new BehaviorSubject(repo);
@@ -128,13 +144,12 @@ export class GitRepositoryService {
     return repo$;
   }
 
-  private updateLogsAndBranches = (gitRepository: GitRepository): Observable<GitRepository> =>
+  private updateLogsAndBranches = (gitRepository: GitRepository): Observable<Partial<GitRepository>> =>
     forkJoin({
       logs: this.logService.getCommitLog(gitRepository.directory, '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source']), // Source will show which branch the commit is in
       branches: this.branchService.getBranches(gitRepository.directory), // Source will show which branch the  commit is in
       stashes: this.stashService.getStashes(gitRepository.directory), // Source will show which branch commit is in
-    })
-      .pipe(map(updates => ({...gitRepository, ...updates})));
+    });
 
   updateCurrentRepository = (updates: Partial<GitRepository>) => this.updateRepo(this.repositories$[this.currentRepositoryIndex], updates);
 
