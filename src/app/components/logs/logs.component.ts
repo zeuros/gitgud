@@ -166,7 +166,7 @@ export class LogsComponent implements AfterViewInit {
 
   private onTableScroll: EventListener = ({target}) => {
     const startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
-    this.gitRepositoryService.modifyCurrentRepository({startCommit}, false);
+    this.gitRepositoryService.saveCurrentRepository({startCommit}); // saveCurrentRepository doesn't trigger observers (whole panel refresh)
     this.moveCanvasDown(startCommit);
     this.drawLog(this.canvasContext(), this.displayLog, startCommit, this.edges!);
   }
