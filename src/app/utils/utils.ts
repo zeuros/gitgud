@@ -1,6 +1,7 @@
 import {TreeNode} from "primeng/api";
 import {GitRepository} from "../models/git-repository";
 import {isUndefined, omitBy} from "lodash";
+import {BehaviorSubject} from "rxjs";
 
 export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
 
@@ -18,7 +19,7 @@ export const errorMessage = (message: Error | string) => {
   return message;
 }
 
-export const byDirectory = (directory: string) => (repo: GitRepository) => directory === repo.directory;
+export const byDirectory = (directory: string) => (repo: BehaviorSubject<GitRepository>) => directory === repo.value.directory;
 
 export const byIndex = (repoIndex: number) => (_: GitRepository, i: number) => i === repoIndex;
 

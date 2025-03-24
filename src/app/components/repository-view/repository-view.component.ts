@@ -22,5 +22,5 @@ export class RepositoryViewComponent {
     ) {
     }
 
-    savePanelSizes = (sizes: number[]) => this.gitRepositoryService.modifyCurrentRepository({sizes});
+    savePanelSizes = (sizes: number[]) => this.gitRepositoryService.updateCurrentRepository({sizes});
 }
