@@ -7,12 +7,12 @@ import {RefType} from '../../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../../utils/utils';
 import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
-import {byName} from "../../utils/log-utils";
+import {byName, logsAreEqual} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
-import {max, uniqBy} from "lodash";
+import {isUndefined, max, uniqBy} from "lodash";
 import {buildChildrenMap, buildShaMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit, isStash, ShaMap, stashParentCommitSha} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
-import {first, interval, map} from "rxjs";
+import {BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, filter, first, interval, map, Observable} from "rxjs";
 import {IntervalTree} from "node-interval-tree";
 import {Edge} from "../../models/edge";
 import {GitRepositoryService} from "../../services/git-repository.service";
@@ -20,6 +20,7 @@ import {DragDropModule} from "primeng/dragdrop";
 import {SearchLogsComponent} from "../search-logs/search-logs.component";
 
 type Column = ['taken' | 'free', rowCount: number];
+
 
 @Component({
   selector: 'gitgud-logs',
@@ -47,7 +48,7 @@ export class LogsComponent implements AfterViewInit {
   protected readonly ROW_HEIGHT = this.NODE_DIAMETER + this.NODES_VERTICAL_SPACING;
   protected readonly COMMITS_SHOWN_ON_CANVAS = 37; // TODO: change it on screen resize depending table row count
 
-  protected displayLog: DisplayRef[] = []; // Commits ready for display
+  protected displayLog$ = new BehaviorSubject<DisplayRef[]>([]); // Commits ready for display
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected showSearchBar = false;
   protected graphColumnCount?: number;
@@ -56,46 +57,36 @@ export class LogsComponent implements AfterViewInit {
   private columns: Column[] = []; // keep track of the states of the columns when drawing commits from top to bottom
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
-  private edges?: IntervalTree<Edge>;
+  private edges$ = new BehaviorSubject<IntervalTree<Edge>>(undefined as any);
 
   constructor(
     private gitRepositoryService: GitRepositoryService,
   ) {
   }
 
-  @Input() set gitRepository(gitRepository: GitRepository) {
+  // We pass an observable in order to filter its data and listen to changes for parts of it. It could be done using ngOnChanges, but I prefer Observables
+  @Input() set gitRepository$(gitRepository$: Observable<GitRepository>) {
 
-    if (!gitRepository.logs.length) return;
+    gitRepository$.subscribe(this.onEveryRepositoryChanges)
 
-    // Sort branches by last commit date put on it => first branch is the one pointing to the last commit in date
-    this.branches = gitRepository.branches;
+    gitRepository$
+      .pipe(filter(gitRepository => gitRepository.logs.length > 0), distinctUntilChanged(logsAreEqual))
+      .subscribe(this.onLogChanges)
 
-    const commits = gitRepository.logs.map(this.commitToDisplayRef);
-    const stashes: DisplayRef[] = []//gitRepository.stashes.map(this.stashToDisplayRef);
-
-    const shaMap = buildShaMap([...commits, ...stashes]);
-    const childrenMap = buildChildrenMap([...commits, ...stashes]);
-
-    const displayLog = this.saveRowIndexIntoDisplayRef(this.insertStashesIntoCommits(commits, stashes, shaMap));
-
-    this.computeCommitsIndents(displayLog, shaMap, childrenMap);
-    // this.computeStashesIndents(displayLog, childrenMap);
-
-    // const displayLog = this.saveRowIndexIntoDisplayRef(this.appendStashes(commits, stashes, childrenMap));
-
-    this.graphColumnCount = max(displayLog.map(c => c.indent!))! + 1;
-
-    const edges = this.updateEdgeIntervals(displayLog, childrenMap);
-
-    this.waitForCanvasToAppear
-      .subscribe(canvasContext => {
+    combineLatest([gitRepository$, this.waitForCanvasToAppear, this.displayLog$, this.edges$])
+      .pipe(
+        debounceTime(70), // Avoid too many redraws (if canvas made available the same time edges are computed for example)
+        filter((o) => !Object.values(o).some(isUndefined))
+      )
+      .subscribe(([gitRepository, canvasContext, displayLog, edges]) => {
         this.logTable.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT});
         this.moveCanvasDown(gitRepository.startCommit);
-        this.drawLog(canvasContext, displayLog, gitRepository.startCommit, edges)
-      })
+        this.drawLog(canvasContext, displayLog, gitRepository.startCommit, edges);
+      });
+  }
 
-    this.displayLog = displayLog;
-    this.edges = edges;
+  get displayLog() {
+    return this.displayLog$.value;
   }
 
   get logTable() {
@@ -137,7 +128,6 @@ export class LogsComponent implements AfterViewInit {
     if (searchString == '') // Clear search
       return this.displayLog.forEach(commit => commit.highlight = undefined);
 
-
     this.displayLog.forEach(commit => commit.highlight = undefined);
 
     const searchStringL = searchString.toLowerCase();
@@ -148,6 +138,32 @@ export class LogsComponent implements AfterViewInit {
     // TODO: focus on first matched commit if out of screen
     // TODO: Apply this filter on the displayed elements only
   }
+
+  private onLogChanges = (gitRepository: GitRepository) => {
+    const commits = gitRepository.logs.map(this.commitToDisplayRef);
+    // TODO: Finish
+    const stashes: DisplayRef[] = []; // gitRepository.stashes.map(this.stashToDisplayRef);
+
+    const shaMap = buildShaMap([...commits, ...stashes]);
+    const childrenMap = buildChildrenMap([...commits, ...stashes]);
+
+    const displayLog = this.saveRowIndexIntoDisplayRef(this.insertStashesIntoCommits(commits, stashes, shaMap));
+
+    this.computeCommitsIndents(displayLog, shaMap, childrenMap);
+    // this.computeStashesIndents(displayLog, childrenMap);
+
+    // const displayLog = this.saveRowIndexIntoDisplayRef(this.appendStashes(commits, stashes, childrenMap));
+
+    this.graphColumnCount = max(displayLog.map(c => c.indent!))! + 1;
+
+    this.displayLog$.next(displayLog);
+    this.edges$.next(this.updateEdgeIntervals(displayLog, childrenMap));
+  }
+
+  private onEveryRepositoryChanges = (gitRepository: GitRepository) => {
+    // Sort branches by last commit date put on it => first branch is the one pointing to the last commit in date
+    this.branches = gitRepository.branches;
+  };
 
   // Stashes are like commit => stash => stash
   private insertStashIntoCommits = (stash: DisplayRef, commits: DisplayRef[], shaMap: ShaMap) => {
@@ -166,9 +182,9 @@ export class LogsComponent implements AfterViewInit {
 
   private onTableScroll: EventListener = ({target}) => {
     const startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
-    this.gitRepositoryService.saveCurrentRepository({startCommit}); // saveCurrentRepository doesn't trigger observers (whole panel refresh)
+    this.gitRepositoryService.updateCurrentRepository({startCommit}); // saveCurrentRepository doesn't trigger observers (whole panel refresh)
     this.moveCanvasDown(startCommit);
-    this.drawLog(this.canvasContext(), this.displayLog, startCommit, this.edges!);
+    this.drawLog(this.canvasContext(), this.displayLog$.value, startCommit, this.edges$.value);
   }
 
   /**
@@ -528,4 +544,5 @@ export class LogsComponent implements AfterViewInit {
       stash.indent = this.findFreeColumnForStash(stashInsertionRow, parentCommitRow, parentCommitCol, displayLog, childrenMap);
     })
   };
+
 }
