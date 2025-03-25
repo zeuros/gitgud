@@ -1,5 +1,5 @@
 import {Branch} from "../models/branch";
-import {DisplayRef} from "../models/display-ref";
+import {GitRepository} from "../models/git-repository";
 
 export const formatArg = (fields: Object) => {
   const format = Object.values(fields).join('%x00');
@@ -7,4 +7,10 @@ export const formatArg = (fields: Object) => {
 }
 
 export const byName = (branchName: string) => (branch: Branch) => branch.name == branchName;
-export const bySha = (sha: string) => (commit: DisplayRef) => commit.sha == sha;
+
+export const logsAreEqual = (a: GitRepository, b: GitRepository) => hasSameShas(a.logs, b.logs) && hasSameShas(a.stashes, b.stashes);
+
+const hasSameShas = (logsA: ReadonlyArray<{ sha: string }>, logsB: ReadonlyArray<{ sha: string }>) => {
+  const aShas = logsA.map(c => c.sha);
+  return logsA.length == logsB.length && logsB.every(c => aShas.includes(c.sha));
+}

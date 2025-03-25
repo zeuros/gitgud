@@ -1,16 +1,16 @@
 <gitgud-top-bar class="float-left"/>
 
 <p-tabView
-        [activeIndex]="gitRepositoryService.currentRepositoryIndex"
+        [activeIndex]="gitRepositoryService.currentRepositoryIndex ?? 0"
         (activeIndexChange)="gitRepositoryService.selectRepositoryByIndex($event)"
         [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings"
         (onClose)="gitRepositoryService.removeRepository($event.index)">
     <p-tabPanel
-            *ngFor="let repository of gitRepositoryService.repositories"
+            *ngFor="let repository$ of gitRepositoryService.repositories"
             [leftIcon]="'fa fa-code-fork'"
-            [header]="repository.name"
+            [header]="(repository$ | async)!.name"
             [closable]="true">
-        <gitgud-repository-view [gitRepository]="repository"/>
+        <gitgud-repository-view [gitRepository$]="repository$"/>
     </p-tabPanel>
 
 </p-tabView>
