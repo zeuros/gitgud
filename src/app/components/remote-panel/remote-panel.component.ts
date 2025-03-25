@@ -9,6 +9,8 @@ import {ContextMenuModule} from "primeng/contextmenu";
 import {MenuItem, TreeNode} from "primeng/api";
 import {leaves} from "../../utils/utils";
 import {PopupService} from "../../services/popup.service";
+import {map, Observable} from "rxjs";
+import {BranchType} from "../../models/branch";
 
 
 @Component({
@@ -26,7 +28,7 @@ import {PopupService} from "../../services/popup.service";
 })
 export class RemotePanelComponent implements OnInit {
 
-  @Input() gitRepository!: GitRepository;
+  @Input() gitRepository$!: Observable<GitRepository>;
   contextMenu: MenuItem[] = [
     {label: 'Pull (fast-forward if possible)', icon: 'pi pi-cloud-download', command: () => this.popupService.info('Pull (fast-forward if possible) selected')},
     {label: 'Push (Set Upstream)', icon: 'pi pi-cloud-upload', command: () => this.popupService.info('Push (Set Upstream) selected')},
@@ -53,8 +55,12 @@ export class RemotePanelComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // this.localBranches = Object.keys(this.gitRepository.branchesAndLogs).map(b => branchToTreeNode(b));
-    this.remoteBranches = this.gitRepository.remoteBranches?.filter(b => b != 'HEAD').map(b => branchToTreeNode(b));
+    this.gitRepository$
+      .pipe(map(r => r.branches))
+      .subscribe(branches => {
+        this.localBranches = branches.filter(b => b.type == BranchType.Local).map(b => branchToTreeNode(b.name));
+        this.remoteBranches = branches.filter(b => b.type == BranchType.Remote).map(b => branchToTreeNode(b.name.split('/').slice(1).join('/')));
+      });
   }
 
   checkoutBranch(branch: TreeNode<string>, allBranches: TreeNode<string>[]) {
