@@ -136,7 +136,7 @@ export class GitRepositoryService {
 
     // Always stores repositories changes into localstorage
     repo$
-      .pipe(debounceTime(5000)) // Skip fast edits
+      .pipe(debounceTime(500)) // Skip fast edits
       .subscribe(() => this.saveAllRepos(this.repositories.map(repo$ => repo$.value)));
 
     return repo$;

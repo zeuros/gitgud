@@ -71,17 +71,18 @@ export class LogsComponent implements AfterViewInit {
 
     gitRepository$
       .pipe(filter(gitRepository => gitRepository.logs.length > 0), distinctUntilChanged(logsAreEqual))
-      .subscribe(this.onLogChanges)
+      .subscribe(this.onLogChanges);
 
     combineLatest([gitRepository$, this.waitForCanvasToAppear, this.displayLog$, this.edges$])
       .pipe(
-        debounceTime(70), // Avoid too many redraws (if canvas made available the same time edges are computed for example)
-        filter((o) => !Object.values(o).some(isUndefined))
+        filter(([repo, canvas, log, edges]) => ![repo, canvas, log, edges].some(isUndefined) && log.length > 0),
+        debounceTime(70),
+        first(),
       )
       .subscribe(([gitRepository, canvasContext, displayLog, edges]) => {
-        this.logTable.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT});
-        this.moveCanvasDown(gitRepository.startCommit);
         this.drawLog(canvasContext, displayLog, gitRepository.startCommit, edges);
+        this.moveCanvasDown(gitRepository.startCommit);
+        this.logTable.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT})
       });
   }
 
@@ -106,6 +107,7 @@ export class LogsComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.logTable.addEventListener("scroll", this.onTableScroll);
+    this.logTable.addEventListener("scrollend", this.onTableScrollEnd);
   }
 
   protected branchName = (b: Branch) => b.name.replace('origin/', '');
@@ -182,9 +184,13 @@ export class LogsComponent implements AfterViewInit {
 
   private onTableScroll: EventListener = ({target}) => {
     const startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
-    this.gitRepositoryService.updateCurrentRepository({startCommit}); // saveCurrentRepository doesn't trigger observers (whole panel refresh)
     this.moveCanvasDown(startCommit);
     this.drawLog(this.canvasContext(), this.displayLog$.value, startCommit, this.edges$.value);
+  }
+
+  private onTableScrollEnd: EventListener = ({target}) => {
+    const startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
+    this.gitRepositoryService.updateCurrentRepository({startCommit}); // saveCurrentRepository doesn't trigger observers (whole panel refresh)
   }
 
   /**
