@@ -28,7 +28,7 @@ export class GitRepositoryService {
   path: typeof path = (window as any).require('path');
   electron: typeof electron = (window as any).require('@electron/remote')
   dialog = this.electron.dialog;
-  repositories: BehaviorSubject<GitRepository>[] = [];
+  repositories$: BehaviorSubject<GitRepository>[] = [];
   currentRepositoryIndex?: number;
 
   constructor(
@@ -42,7 +42,7 @@ export class GitRepositoryService {
   }
 
   private get currentRepository(): GitRepository | undefined {
-    return this.repositories[this.currentRepositoryIndex!]?.value;
+    return this.repositories$[this.currentRepositoryIndex!]?.value;
   }
 
   // Just saves changes of current repo, doesn't trigger subscribers
@@ -63,8 +63,8 @@ export class GitRepositoryService {
   openRepository = () => {
     const repoDirectory = this.pickGitFolder();
 
-    const repo$ = this.repositories.find(byDirectory(repoDirectory)) ?? this.addToRepos(createRepository(repoDirectory));
-    this.currentRepositoryIndex = this.repositories.indexOf(repo$);
+    const repo$ = this.repositories$.find(byDirectory(repoDirectory)) ?? this.addToRepos(createRepository(repoDirectory));
+    this.currentRepositoryIndex = this.repositories$.indexOf(repo$);
 
     this.updateRepo(repo$, {selected: true});
 
@@ -99,16 +99,16 @@ export class GitRepositoryService {
   }
 
   removeRepository = (repoIndex: number) => {
-    const repoToRemoveWascurrent = this.repositories[repoIndex].value.selected;
+    const repoToRemoveWascurrent = this.repositories$[repoIndex].value.selected;
 
-    const toRemove = this.repositories[repoIndex];
+    const toRemove = this.repositories$[repoIndex];
     toRemove.unsubscribe();
 
-    this.repositories = this.repositories.filter((_, i) => i !== repoIndex);
+    this.repositories$ = this.repositories$.filter((_, i) => i !== repoIndex);
 
     // Selects the next repository in next tab (if available)
-    if (repoToRemoveWascurrent && this.repositories.length) {
-      if (this.repositories.length >= repoIndex)
+    if (repoToRemoveWascurrent && this.repositories$.length) {
+      if (this.repositories$.length >= repoIndex)
         this.selectRepositoryByIndex(repoIndex);
       else if (repoIndex - 1 >= 0)
         this.selectRepositoryByIndex(repoIndex - 1);
@@ -131,13 +131,13 @@ export class GitRepositoryService {
   private addToRepos = (repo: GitRepository) => {
     const repo$ = new BehaviorSubject(repo);
 
-    const insertedIndex = this.repositories.push(repo$) - 1;
+    const insertedIndex = this.repositories$.push(repo$) - 1;
     if (repo.selected) this.currentRepositoryIndex = insertedIndex;
 
     // Always stores repositories changes into localstorage
     repo$
       .pipe(debounceTime(500)) // Skip fast edits
-      .subscribe(() => this.saveAllRepos(this.repositories.map(repo$ => repo$.value)));
+      .subscribe(() => this.saveAllRepos(this.repositories$.map(repo$ => repo$.value)));
 
     return repo$;
   }
@@ -150,7 +150,7 @@ export class GitRepositoryService {
     });
 
   updateCurrentRepository = (updates: Partial<GitRepository>) => {
-    if (this.currentRepositoryIndex != undefined) this.updateRepo(this.repositories[this.currentRepositoryIndex], updates);
+    if (this.currentRepositoryIndex != undefined) this.updateRepo(this.repositories$[this.currentRepositoryIndex], updates);
   }
 
 }

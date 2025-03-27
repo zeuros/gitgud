@@ -1,8 +1,8 @@
 <gitgud-search-logs *ngIf="showSearchBar" [focus]="searchBarFocus" (onSearch)="search($event)"/>
 <p-table
         #logTable
-        [value]="displayLog"
-        [selection]="[displayLog.find(isPointedByHead)]"
+        [value]="computedDisplayLog"
+        [selection]="[computedDisplayLog.find(isPointedByHead)]"
         [rowHover]="true"
         [scrollable]="true"
         scrollHeight="calc(100vh - 58px)"
@@ -20,11 +20,11 @@
         </tr>
     </ng-template>
     <ng-template pTemplate="body" let-rowIndex="rowIndex">
-        <tr class="commit-row {{ displayLog[rowIndex].highlight }}" [pSelectableRow]="displayLog[rowIndex]" [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2">
+        <tr class="commit-row {{ computedDisplayLog[rowIndex].highlight }}" [pSelectableRow]="computedDisplayLog[rowIndex]" [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2">
             <td class="branch-tag-td">
-                <div class="branch-tag" *ngFor="let branch of branchesAndRef(displayLog[rowIndex]); let i = index">
-                    <div class="commit-branch" [ngStyle]="{top: i * 30 + 'px', filter: indentColorFilter(displayLog[rowIndex].indent)}" pDraggable>
-                        <i *ngIf="displayLog[rowIndex].isPointedByLocalHead" class="fa fa-check mr-2"></i>
+                <div class="branch-tag" *ngFor="let branch of branchesAndRef(computedDisplayLog[rowIndex]); let i = index">
+                    <div class="commit-branch" [ngStyle]="{top: i * 30 + 'px', filter: indentColorFilter(computedDisplayLog[rowIndex].indent)}" pDraggable>
+                        <i *ngIf="computedDisplayLog[rowIndex].isPointedByLocalHead" class="fa fa-check mr-2"></i>
                         <span class="branch-name">{{ branchName(branch) }}</span>
                         <span class="float-icons">
                             <i *ngIf="branch?.remote" class="fa fa-github mr-2"></i>
@@ -42,11 +42,11 @@
                         [style.left.px]="CANVAS_MARGIN[0]"
                         [style.top.px]="CANVAS_MARGIN[1]"
                 ></canvas>
-                <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN[0] + xPosition(displayLog[rowIndex].indent)"></div>
+                <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN[0] + xPosition(computedDisplayLog[rowIndex].indent)"></div>
             </td>
-            <td class="summary">{{ displayLog[rowIndex].summary }}</td>
-            <td class="author text-gray">{{ displayLog[rowIndex].author.name }}</td>
-            <td class="date text-gray">{{ displayLog[rowIndex].author.date | date: 'd/M/YYYY @ HH:mm' }}</td>
+            <td class="summary">{{ computedDisplayLog[rowIndex].summary }}</td>
+            <td class="author text-gray">{{ computedDisplayLog[rowIndex].author.name }}</td>
+            <td class="date text-gray">{{ computedDisplayLog[rowIndex].author.date | date: 'd/M/YYYY @ HH:mm' }}</td>
         </tr>
     </ng-template>
 </p-table>

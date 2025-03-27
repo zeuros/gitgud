@@ -6,11 +6,11 @@
         [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings"
         (onClose)="gitRepositoryService.removeRepository($event.index)">
     <p-tabPanel
-            *ngFor="let repository$ of gitRepositoryService.repositories"
+            *ngFor="let repository$ of gitRepositoryService.repositories$"
             [leftIcon]="'fa fa-code-fork'"
             [header]="(repository$ | async)!.name"
             [closable]="true">
-        <gitgud-repository-view [gitRepository$]="repository$"/>
+        <gitgud-repository-view [gitRepository]="(repository$ | async)!"/>
     </p-tabPanel>
 
 </p-tabView>
