@@ -9,10 +9,10 @@ import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
 import {byName, logsAreEqual} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
-import {isUndefined, max, uniqBy} from "lodash";
+import {max, once, uniqBy} from "lodash";
 import {buildChildrenMap, buildShaMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit, isStash, ShaMap, stashParentCommitSha} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
-import {BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, filter, first, interval, map, Observable} from "rxjs";
+import {BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, filter, first, interval, map, Subject} from "rxjs";
 import {IntervalTree} from "node-interval-tree";
 import {Edge} from "../../models/edge";
 import {GitRepositoryService} from "../../services/git-repository.service";
@@ -48,7 +48,6 @@ export class LogsComponent implements AfterViewInit {
   protected readonly ROW_HEIGHT = this.NODE_DIAMETER + this.NODES_VERTICAL_SPACING;
   protected readonly COMMITS_SHOWN_ON_CANVAS = 37; // TODO: change it on screen resize depending table row count
 
-  protected displayLog$ = new BehaviorSubject<DisplayRef[]>([]); // Commits ready for display
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected showSearchBar = false;
   protected graphColumnCount?: number;
@@ -57,40 +56,29 @@ export class LogsComponent implements AfterViewInit {
   private columns: Column[] = []; // keep track of the states of the columns when drawing commits from top to bottom
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
-  private edges$ = new BehaviorSubject<IntervalTree<Edge>>(undefined as any);
+  protected computedDisplayLog: DisplayRef[] = []; // Commits ready for display
+  private edges?: IntervalTree<Edge>; // Edges are updated after computedDisplayLog is set
+  private gitRepository$ = new Subject<GitRepository>();
+  private startCommit = 0;
 
   constructor(
     private gitRepositoryService: GitRepositoryService,
   ) {
+    this.gitRepository$
+      .subscribe(this.onEveryRepositoryChanges)
+
+    // When repository changes its logs
+    this.gitRepository$
+      .pipe(filter(gitRepository => gitRepository?.logs.length > 0), distinctUntilChanged(logsAreEqual))
+      .subscribe(this.onRepositoryLogChanges);
   }
 
   // We pass an observable in order to filter its data and listen to changes for parts of it. It could be done using ngOnChanges, but I prefer Observables
-  @Input() set gitRepository$(gitRepository$: Observable<GitRepository>) {
-
-    gitRepository$.subscribe(this.onEveryRepositoryChanges)
-
-    gitRepository$
-      .pipe(filter(gitRepository => gitRepository.logs.length > 0), distinctUntilChanged(logsAreEqual))
-      .subscribe(this.onLogChanges);
-
-    combineLatest([gitRepository$, this.waitForCanvasToAppear, this.displayLog$, this.edges$])
-      .pipe(
-        filter(([repo, canvas, log, edges]) => ![repo, canvas, log, edges].some(isUndefined) && log.length > 0),
-        debounceTime(70),
-        first(),
-      )
-      .subscribe(([gitRepository, canvasContext, displayLog, edges]) => {
-        this.drawLog(canvasContext, displayLog, gitRepository.startCommit, edges);
-        this.moveCanvasDown(gitRepository.startCommit);
-        this.logTable.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT})
-      });
+  @Input() set gitRepository(gitRepository: GitRepository) {
+    this.gitRepository$.next(gitRepository);
   }
 
-  get displayLog() {
-    return this.displayLog$.value;
-  }
-
-  get logTable() {
+  get logTableElement() {
     return this.logTableRef!.nativeElement.querySelector(".p-datatable-wrapper")!
   }
 
@@ -106,8 +94,8 @@ export class LogsComponent implements AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.logTable.addEventListener("scroll", this.onTableScroll);
-    this.logTable.addEventListener("scrollend", this.onTableScrollEnd);
+    this.logTableElement.addEventListener("scroll", this.onTableScroll);
+    this.logTableElement.addEventListener("scrollend", this.onTableScrollEnd);
   }
 
   protected branchName = (b: Branch) => b.name.replace('origin/', '');
@@ -128,12 +116,12 @@ export class LogsComponent implements AfterViewInit {
 
   protected search = (searchString = '') => {
     if (searchString == '') // Clear search
-      return this.displayLog.forEach(commit => commit.highlight = undefined);
+      return this.computedDisplayLog!.forEach(commit => commit.highlight = undefined);
 
-    this.displayLog.forEach(commit => commit.highlight = undefined);
+    this.computedDisplayLog!.forEach(commit => commit.highlight = undefined);
 
     const searchStringL = searchString.toLowerCase();
-    this.displayLog
+    this.computedDisplayLog!
       .filter(({sha, summary, author}) => !(sha.includes(searchStringL) || summary.toLowerCase().includes(searchStringL) || author.name.toLowerCase().includes(searchStringL)))
       .forEach(commit => commit.highlight = 'not-matched');
 
@@ -141,7 +129,7 @@ export class LogsComponent implements AfterViewInit {
     // TODO: Apply this filter on the displayed elements only
   }
 
-  private onLogChanges = (gitRepository: GitRepository) => {
+  private onRepositoryLogChanges = (gitRepository: GitRepository) => {
     const commits = gitRepository.logs.map(this.commitToDisplayRef);
     // TODO: Finish
     const stashes: DisplayRef[] = []; // gitRepository.stashes.map(this.stashToDisplayRef);
@@ -150,6 +138,7 @@ export class LogsComponent implements AfterViewInit {
     const childrenMap = buildChildrenMap([...commits, ...stashes]);
 
     const displayLog = this.saveRowIndexIntoDisplayRef(this.insertStashesIntoCommits(commits, stashes, shaMap));
+    this.computedDisplayLog = displayLog;
 
     this.computeCommitsIndents(displayLog, shaMap, childrenMap);
     // this.computeStashesIndents(displayLog, childrenMap);
@@ -158,14 +147,33 @@ export class LogsComponent implements AfterViewInit {
 
     this.graphColumnCount = max(displayLog.map(c => c.indent!))! + 1;
 
-    this.displayLog$.next(displayLog);
-    this.edges$.next(this.updateEdgeIntervals(displayLog, childrenMap));
+    const edges = this.updateEdgeIntervals(displayLog, childrenMap);
+    this.edges = edges;
+
+    this.onLogsComputed(gitRepository, displayLog, edges);
   }
 
   private onEveryRepositoryChanges = (gitRepository: GitRepository) => {
     // Sort branches by last commit date put on it => first branch is the one pointing to the last commit in date
     this.branches = gitRepository.branches;
   };
+
+  private onLogsComputed = (gitRepository: GitRepository, displayLog: DisplayRef[], edges: IntervalTree<Edge>) => {
+    this.waitForCanvasToAppear.subscribe(canvasContext => {
+      this.drawLog(canvasContext, displayLog, this.startCommit, edges);
+      this.moveCanvasDown(this.startCommit);
+    })
+
+    // When log is computed for the first time
+    this.onFirstLogDisplay(gitRepository);
+  }
+
+  // Called after log is computed and computedDisplayLog is set (runs once)
+  private onFirstLogDisplay = once((gitRepository: GitRepository) => {
+    console.log('once ?')
+    // On first load, scroll down to last saved position
+    this.logTableElement.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT});
+  });
 
   // Stashes are like commit => stash => stash
   private insertStashIntoCommits = (stash: DisplayRef, commits: DisplayRef[], shaMap: ShaMap) => {
@@ -183,14 +191,14 @@ export class LogsComponent implements AfterViewInit {
   }
 
   private onTableScroll: EventListener = ({target}) => {
-    const startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
-    this.moveCanvasDown(startCommit);
-    this.drawLog(this.canvasContext(), this.displayLog$.value, startCommit, this.edges$.value);
+    this.startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
+    this.moveCanvasDown(this.startCommit);
+    this.drawLog(this.canvasContext(), this.computedDisplayLog!, this.startCommit, this.edges!);
   }
 
   private onTableScrollEnd: EventListener = ({target}) => {
-    const startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
-    this.gitRepositoryService.updateCurrentRepository({startCommit}); // saveCurrentRepository doesn't trigger observers (whole panel refresh)
+    this.startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
+    this.gitRepositoryService.updateCurrentRepository({startCommit: this.startCommit}); // saveCurrentRepository doesn't trigger observers (whole panel refresh)
   }
 
   /**
@@ -439,7 +447,7 @@ export class LogsComponent implements AfterViewInit {
     }
 
     // We have a parent to align to, column already taken
-    if (leftChildOfSameBranch?.indent) return leftChildOfSameBranch?.indent;
+    if (leftChildOfSameBranch?.indent != undefined) return leftChildOfSameBranch?.indent;
 
     // We don't have child to align to => push a new column
     return this.findFreeColumnOrPushNewColumn(distanceToNextMergeCommit);
