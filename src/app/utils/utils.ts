@@ -21,8 +21,6 @@ export const errorMessage = (message: Error | string) => {
 
 export const byDirectory = (directory: string) => (repo: BehaviorSubject<GitRepository>) => directory === repo.value.directory;
 
-export const byIndex = (repoIndex: number) => (_: GitRepository, i: number) => i === repoIndex;
-
 export const omitUndefined = <T extends object>(o: T | undefined) => {
   return omitBy<T>(o, isUndefined);
 }

@@ -2,7 +2,6 @@ import {GitAuthor} from "./git-author";
 import {CommitIdentity} from "./commit-identity";
 import {isCoAuthoredByTrailer, ITrailer} from "./interpret-trailers";
 import {LogObject} from "./log-object";
-import {DisplayRef} from "./display-ref";
 
 /**
  * Extract any Co-Authored-By trailers from an array of arbitrary
@@ -65,47 +64,47 @@ const parseSingleUnfoldedTrailer = (
   return null
 }
 
+/**
+ * @param sha
+ * @param shortSha
+ * @param summary The first line of the commit message.
+ * @param body The commit message without the first line and CR.
+ * @param branches Branches the commit is pointed by, separated by comma. e.g: origin/HEAD, origin/develop
+ * @param ref Almost always present, tells which branch commit comes from.
+ * @param refLogSubject TODO: remove ?
+ * @param author Information about the author of this commit.
+ *               Includes name, email and date.
+ * @param committer Information about the committer of this commit.
+ *                  Includes name, email and date.
+ * @param parentSHAs The SHAs for the parents of the commit.
+ * @param trailers Parsed, unfolded trailers from the commit message body,
+ *                 if any, as interpreted by `git interpret-trailers`
+ * @param tags Tags associated with this commit.
+ */
 export class Commit implements LogObject {
   /**
    * A list of co-authors parsed from the commit message
    * trailers.
    */
-  public readonly coAuthors: ReadonlyArray<GitAuthor>
+  readonly coAuthors: ReadonlyArray<GitAuthor>
 
   /**
    * The commit body after removing coauthors
    */
-  public readonly bodyNoCoAuthors: string
+  readonly bodyNoCoAuthors: string
 
   /**
    * A value indicating whether the author and the committer
    * are the same person.
    */
-  public readonly authoredByCommitter: boolean
+  readonly authoredByCommitter: boolean
 
   /**
    * Whether the commit is a merge commit (i.e. has at least 2 parents)
    */
-  public readonly isMergeCommit: boolean
+  readonly isMergeCommit: boolean
 
-  /**
-   * @param sha
-   * @param shortSha
-   * @param summary The first line of the commit message.
-   * @param body The commit message without the first line and CR.
-   * @param branches Branches the commit is pointed by, separated by comma. e.g: origin/HEAD, origin/develop
-   * @param ref Almost always present, tells which branch commit comes from.
-   * @param refLogSubject TODO: remove ?
-   * @param author Information about the author of this commit.
-   *               Includes name, email and date.
-   * @param committer Information about the committer of this commit.
-   *                  Includes name, email and date.
-   * @param parentSHAs The SHAs for the parents of the commit.
-   * @param trailers Parsed, unfolded trailers from the commit message body,
-   *                 if any, as interpreted by `git interpret-trailers`
-   * @param tags Tags associated with this commit.
-   */
-  public constructor(
+  constructor(
     public readonly sha: string,
     public readonly shortSha: string,
     public readonly summary: string,

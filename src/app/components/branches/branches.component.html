@@ -8,14 +8,17 @@
         </ng-template>
 
         <p-tree
+                [filter]="true"
                 [value]="localBranches"
-                (onNodeSelect)="selectedLocalBranch = $event.node || selectedLocalBranch"
+                (onNodeSelect)="selectedBranch = $event.node || selectedBranch"
                 selectionMode="single"
-                (dblclick)="checkoutBranch(selectedLocalBranch, localBranches)"
+                (click)="selectBranchCommit(selectedBranch, localBranches)"
+                (dblclick)="checkoutBranch(selectedBranch, localBranches)"
                 [contextMenu]="branchesContextMenu">
         </p-tree>
 
     </p-accordionTab>
+
     <p-accordionTab>
         <ng-template pTemplate="header">
             <span class="flex align-items-center gap-2 w-full">
@@ -24,9 +27,10 @@
         </ng-template>
         <p-tree
                 [value]="remoteBranches"
-                (onNodeSelect)="selectedRemoteBranch = $event.node || selectedRemoteBranch"
+                [filter]="true"
+                (onNodeSelect)="selectedBranch = $event.node || selectedBranch"
                 selectionMode="single"
-                (dblclick)="checkoutBranch(selectedRemoteBranch, remoteBranches)"
+                (dblclick)="checkoutBranch(selectedBranch, remoteBranches)"
                 [contextMenu]="branchesContextMenu">
         </p-tree>
     </p-accordionTab>

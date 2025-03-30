@@ -10,9 +10,8 @@ export class GitRepository {
     public logs: ReadonlyArray<Commit> = [],
     public stashes: ReadonlyArray<Commit> = [],
     public branches: ReadonlyArray<Branch> = [],
+    public currentBranch?: Branch,
     public startCommit = 0,
-    public currentBranch?: string,
-    public remoteBranches: string[] = [],
     public remotes: { remote: string; url: string }[] = [],
   ) {
   }

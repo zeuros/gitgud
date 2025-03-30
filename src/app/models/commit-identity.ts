@@ -49,7 +49,7 @@ export class CommitIdentity {
     return new CommitIdentity(name, email, date, tzOffset)
   }
 
-  public constructor(
+  constructor(
     public readonly name: string,
     public readonly email: string,
     public readonly date: Date,

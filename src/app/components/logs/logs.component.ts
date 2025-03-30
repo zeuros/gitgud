@@ -12,7 +12,7 @@ import {DisplayRef} from "../../models/display-ref";
 import {max, once, uniqBy} from "lodash";
 import {buildChildrenMap, buildShaMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit, isStash, ShaMap, stashParentCommitSha} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
-import {BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, filter, first, interval, map, Subject} from "rxjs";
+import {distinctUntilChanged, filter, first, interval, map, Subject} from "rxjs";
 import {IntervalTree} from "node-interval-tree";
 import {Edge} from "../../models/edge";
 import {GitRepositoryService} from "../../services/git-repository.service";

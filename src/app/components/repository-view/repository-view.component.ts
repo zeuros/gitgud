@@ -1,5 +1,5 @@
 import {Component, Input} from '@angular/core';
-import {RemotePanelComponent} from "../remote-panel/remote-panel.component";
+import {BranchesComponent} from "../branches/branches.component";
 import {SplitterModule} from "primeng/splitter";
 import {GitRepositoryService} from "../../services/git-repository.service";
 import {CommitSectionComponent} from "../commit-section/commit-section.component";
@@ -10,7 +10,7 @@ import {AsyncPipe} from "@angular/common";
 @Component({
   selector: 'gitgud-repository-view',
   standalone: true,
-  imports: [RemotePanelComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe],
+  imports: [BranchesComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe],
   templateUrl: './repository-view.component.html',
   styleUrl: './repository-view.component.scss'
 })
