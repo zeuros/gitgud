@@ -2,8 +2,8 @@ import {RefType} from "../enums/ref-type.enum";
 
 export class Edge {
 
-  public low: number;
-  public high: number;
+  low: number;
+  high: number;
 
   constructor(
     public childRow: number,

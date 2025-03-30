@@ -4,16 +4,16 @@ import {BadgeModule} from "primeng/badge";
 import {TerminalService} from "primeng/terminal";
 import {GitRepository} from "../../models/git-repository";
 import {TreeModule} from "primeng/tree";
-import {branchToTreeNode} from "../../utils/repository-utils";
 import {ContextMenuModule} from "primeng/contextmenu";
 import {MenuItem, TreeNode} from "primeng/api";
 import {leaves} from "../../utils/utils";
 import {PopupService} from "../../services/popup.service";
 import {BranchType} from "../../models/branch";
+import {branchToTreeNode} from "../../utils/repository-utils";
 
 
 @Component({
-  selector: 'gitgud-remote-panel',
+  selector: 'gitgud-branches',
   standalone: true,
   imports: [
     AccordionModule,
@@ -22,10 +22,10 @@ import {BranchType} from "../../models/branch";
     ContextMenuModule,
   ],
   providers: [TerminalService],
-  templateUrl: './remote-panel.component.html',
-  styleUrl: './remote-panel.component.scss'
+  templateUrl: './branches.component.html',
+  styleUrl: './branches.component.scss'
 })
-export class RemotePanelComponent {
+export class BranchesComponent {
 
   contextMenu: MenuItem[] = [
     {label: 'Pull (fast-forward if possible)', icon: 'pi pi-cloud-download', command: () => this.popupService.info('Pull (fast-forward if possible) selected')},
