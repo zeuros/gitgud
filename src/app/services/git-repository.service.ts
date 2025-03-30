@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, debounceTime, forkJoin, Observable, tap} from "rxjs";
+import {BehaviorSubject, debounceTime, forkJoin, Observable, switchMap, tap} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
@@ -38,7 +38,11 @@ export class GitRepositoryService {
     private stashService: StashService,
     private gitApiService: GitApiService,
   ) {
+
     (settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? []).forEach(this.addToRepos);
+
+    this.electron.getCurrentWindow().on('focus', () => this.updateLogsAndBranches(this.currentRepository!).subscribe(this.updateCurrentRepository));
+
   }
 
   private get currentRepository(): GitRepository | undefined {
