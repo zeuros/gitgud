@@ -1,8 +1,8 @@
 import {Injectable} from '@angular/core';
-import {Message, MessageService} from "primeng/api";
+import {MessageService, ToastMessageOptions} from "primeng/api";
 import {errorMessage} from "../utils/utils";
 
-const defaultMessageConfig: Message = {styleClass: 'headLess', summary: '', life: 5000};
+const defaultMessageConfig: ToastMessageOptions = {styleClass: 'headLess', text: '', life: 5000};
 
 @Injectable({
   providedIn: 'root'

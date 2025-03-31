@@ -1,6 +1,7 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "moduleResolution": "bundler",
     "outDir": "../out-tsc/app",
     "baseUrl": "",
     "types": [

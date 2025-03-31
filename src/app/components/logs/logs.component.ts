@@ -1,7 +1,5 @@
-import {AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild} from '@angular/core';
 import {GitRepository} from '../../models/git-repository';
 import {TableModule} from 'primeng/table';
-import {DatePipe, JsonPipe, NgClass, NgForOf, NgIf, NgStyle} from '@angular/common';
 import {Commit} from '../../models/commit';
 import {RefType} from '../../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../../utils/utils';
@@ -18,6 +16,8 @@ import {Edge} from "../../models/edge";
 import {GitRepositoryService} from "../../services/git-repository.service";
 import {DragDropModule} from "primeng/dragdrop";
 import {SearchLogsComponent} from "../search-logs/search-logs.component";
+import {AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild} from '@angular/core';
+import {DatePipe, NgForOf, NgIf, NgStyle} from "@angular/common";
 
 type Column = ['taken' | 'free', rowCount: number];
 
@@ -27,14 +27,12 @@ type Column = ['taken' | 'free', rowCount: number];
   standalone: true,
   imports: [
     TableModule,
-    NgIf,
-    DatePipe,
-    NgForOf,
-    JsonPipe,
-    NgClass,
-    NgStyle,
     DragDropModule,
     SearchLogsComponent,
+    NgStyle,
+    DatePipe,
+    NgIf,
+    NgForOf,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -85,7 +83,7 @@ export class LogsComponent implements AfterViewInit {
   }
 
   get logTableElement() {
-    return this.logTableRef!.nativeElement.querySelector(".p-datatable-wrapper")!
+    return this.logTableRef?.nativeElement.querySelector(".p-datatable-table-container")!
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -154,7 +152,7 @@ export class LogsComponent implements AfterViewInit {
     const edges = this.updateEdgeIntervals(displayLog, childrenMap);
     this.edges = edges;
 
-    this.onLogsComputed(gitRepository, displayLog, edges);
+    this.afterLogsComputed(gitRepository, displayLog, edges);
   }
 
   private onEveryRepositoryChanges = (gitRepository: GitRepository) => {
@@ -162,23 +160,23 @@ export class LogsComponent implements AfterViewInit {
     this.branches = gitRepository.branches;
   };
 
-  private onLogsComputed = (gitRepository: GitRepository, displayLog: DisplayRef[], edges: IntervalTree<Edge>) => {
+  private afterLogsComputed = (gitRepository: GitRepository, displayLog: DisplayRef[], edges: IntervalTree<Edge>) => {
     this.waitForCanvasToAppear.subscribe(canvasContext => {
       this.drawLog(canvasContext, displayLog, this.startCommit, edges);
       this.moveCanvasDown(this.startCommit);
-    })
 
-    // When log is computed for the first time
-    this.afterFirstLogDisplay(gitRepository);
+      this.afterLogFirstDisplay(gitRepository);
+    });
   }
 
   // Called after log is computed and computedDisplayLog is set (runs once)
-  private afterFirstLogDisplay = once((gitRepository: GitRepository) => {
-
-    this.selectCommit(this.branches.find(b => b.isHeadPointed)?.tip.sha);
+  private afterLogFirstDisplay = once((gitRepository: GitRepository) => {
 
     // On first load, scroll down to last saved position
     this.logTableElement.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT});
+
+    this.selectCommit(this.branches.find(b => b.isHeadPointed)?.tip.sha);
+
   });
 
   // Stashes are like commit => stash => stash
@@ -199,7 +197,7 @@ export class LogsComponent implements AfterViewInit {
   private onTableScroll: EventListener = ({target}) => {
     this.startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
     this.moveCanvasDown(this.startCommit);
-    this.drawLog(this.canvasContext(), this.computedDisplayLog!, this.startCommit, this.edges!);
+    this.drawLog(this.canvasContext(), this.computedDisplayLog, this.startCommit, this.edges!);
   }
 
   private onTableScrollEnd: EventListener = ({target}) => {
