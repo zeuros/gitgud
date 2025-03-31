@@ -1,5 +1,11 @@
 :host {
 
+  ::ng-deep {
+    .p-tree .p-tree-container .p-treenode .p-treenode-content {
+      padding: 0;
+    }
+  }
+
   display: flex;
   flex-direction: column;
   gap: 8px;

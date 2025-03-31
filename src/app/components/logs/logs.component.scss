@@ -35,6 +35,7 @@ $primeng-purple-line: rgba(66, 48, 69, 0.9);
         &.p-highlight, &.p-highlight:hover {
           td.summary, td.author, td.date, .commit-highlight-background {
             background: #755a975c;
+            color: #e5e5e5;
           }
         }
       }
