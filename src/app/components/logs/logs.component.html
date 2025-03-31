@@ -2,7 +2,7 @@
 <p-table
         #logTable
         [value]="computedDisplayLog"
-        [selection]="[computedDisplayLog.find(isPointedByHead)]"
+        [selection]="selectedCommits"
         [rowHover]="true"
         [scrollable]="true"
         scrollHeight="calc(100vh - 58px)"

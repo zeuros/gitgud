@@ -8,14 +8,13 @@
         </ng-template>
 
         <p-tree
-                [filter]="true"
-                [value]="localBranches"
-                (onNodeSelect)="selectedBranch = $event.node || selectedBranch"
                 selectionMode="single"
-                (click)="selectBranchCommit(selectedBranch, localBranches)"
-                (dblclick)="checkoutBranch(selectedBranch, localBranches)"
-                [contextMenu]="branchesContextMenu">
-        </p-tree>
+                [value]="localBranches"
+                [selection]="selectedNode"
+                (selectionChange)="selectedNode = $branchNode($event)"
+                (onNodeSelect)="selectBranchCommit($event.node)"
+                [contextMenu]="branchesContextMenu"
+        ></p-tree>
 
     </p-accordionTab>
 
@@ -26,13 +25,14 @@
             </span>
         </ng-template>
         <p-tree
-                [value]="remoteBranches"
-                [filter]="true"
-                (onNodeSelect)="selectedBranch = $event.node || selectedBranch"
                 selectionMode="single"
-                (dblclick)="checkoutBranch(selectedBranch, remoteBranches)"
-                [contextMenu]="branchesContextMenu">
-        </p-tree>
+                [value]="remoteBranches"
+                [selection]="selectedNode"
+                (selectionChange)="selectedNode = $branchNode($event)"
+                (onNodeSelect)="selectBranchCommit($event.node)"
+                [contextMenu]="branchesContextMenu"
+        ></p-tree>
     </p-accordionTab>
 </p-accordion>
+
 <p-contextMenu #branchesContextMenu [model]="contextMenu" appendTo="body" styleClass="context-menu"/>

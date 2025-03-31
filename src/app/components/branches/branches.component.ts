@@ -6,10 +6,10 @@ import {GitRepository} from "../../models/git-repository";
 import {TreeModule} from "primeng/tree";
 import {ContextMenuModule} from "primeng/contextmenu";
 import {MenuItem, TreeNode} from "primeng/api";
-import {leaves} from "../../utils/utils";
 import {PopupService} from "../../services/popup.service";
-import {BranchType} from "../../models/branch";
-import {branchToTreeNode} from "../../utils/repository-utils";
+import {Branch} from "../../models/branch";
+import {GitRepositoryService} from "../../services/git-repository.service";
+import {branchesToTree, local, remote} from "../../utils/branch-utils";
 
 
 @Component({
@@ -42,24 +42,36 @@ export class BranchesComponent {
     {label: 'Copy branch name', icon: 'pi pi-copy', command: () => this.popupService.info('Copy branch name selected')},
     {label: 'Copy commit sha', icon: 'pi pi-receipt', command: () => this.popupService.info('Copy commit sha selected')},
   ];
-  protected selectedLocalBranch: any;
-  protected selectedRemoteBranch: any;
-  protected localBranches: TreeNode<string>[] = [];
-  protected remoteBranches: TreeNode<string>[] = [];
+
+  protected localBranches: TreeNode<Branch>[] = [];
+  protected remoteBranches: TreeNode<Branch>[] = [];
+  protected selectedNode?: TreeNode<Branch>;
 
   constructor(
     private popupService: PopupService,
+    private gitRepositoryService: GitRepositoryService,
   ) {
   }
 
   @Input() set gitRepository(gitRepository: GitRepository) {
-    this.localBranches = gitRepository.branches.filter(b => b.type == BranchType.Local).map(b => branchToTreeNode(b.name));
-    this.remoteBranches = gitRepository.branches.filter(b => b.type == BranchType.Remote).map(b => branchToTreeNode(b.name.split('/').slice(1).join('/')));
+    this.localBranches = branchesToTree(gitRepository.branches.filter(local));
+    this.remoteBranches = branchesToTree(gitRepository.branches.filter(remote));
   }
 
-  checkoutBranch(branch: TreeNode<string>, allBranches: TreeNode<string>[]) {
-    leaves(allBranches).forEach(b => delete b.styleClass);
-    branch.styleClass = 'selected-branch';
-    this.popupService.info(`Branch ${branch.data} checked out`);
-  }
+
+  selectBranchCommit = (branch: TreeNode<Branch>) =>
+    this.gitRepositoryService.updateCurrentRepository({highlightedCommitSha: branch?.data?.tip.sha});
+
+
+  // checkoutBranch = (branch: TreeNode<Branch>) => {
+  //   this.gitRepositoryService.updateCurrentRepository({checkedOutBranch: branch.data})
+  //
+  //   leaves(this.allBranchNodes).forEach(b => b.styleClass?.replace('selected-branch', ''));
+  //   branch.styleClass = 'selected-branch';
+  //
+  //   this.popupService.info(`Branch ${branch.data?.upstream} checked out`);
+  // };
+
+  protected $branchNode = (branchNode: any): TreeNode<Branch> => branchNode;
+
 }

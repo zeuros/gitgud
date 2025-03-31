@@ -5,7 +5,7 @@ import {BehaviorSubject} from "rxjs";
 
 export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
 
-export const leaves = (treeNodes: TreeNode<string>[]): TreeNode<string>[] => treeNodes.flatMap(treeNode => treeNode.leaf ? [treeNode] : leaves(treeNode.children!));
+export const leaves = <T>(treeNodes: TreeNode<T>[]): TreeNode<T>[] => treeNodes.flatMap(treeNode => treeNode.leaf ? [treeNode] : leaves(treeNode.children!));
 
 export const isRootDirectory = (path: string) => ['C:\\', '/'].includes(path);
 

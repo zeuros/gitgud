@@ -52,20 +52,26 @@ export class LogsComponent implements AfterViewInit {
   protected showSearchBar = false;
   protected graphColumnCount?: number;
   protected searchBarFocus = {};
+  protected computedDisplayLog: DisplayRef[] = []; // Commits ready for display
   private treeLockedColumn?: number;
   private columns: Column[] = []; // keep track of the states of the columns when drawing commits from top to bottom
-  @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
-  @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
-  protected computedDisplayLog: DisplayRef[] = []; // Commits ready for display
   private edges?: IntervalTree<Edge>; // Edges are updated after computedDisplayLog is set
   private gitRepository$ = new Subject<GitRepository>();
   private startCommit = 0;
+  protected selectedCommits: DisplayRef[] = [];
+  @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
+  @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
 
   constructor(
     private gitRepositoryService: GitRepositoryService,
   ) {
     this.gitRepository$
       .subscribe(this.onEveryRepositoryChanges)
+
+    // Listen to commit selection
+    this.gitRepository$
+      .pipe(map(gitRepository => gitRepository.highlightedCommitSha), distinctUntilChanged())
+      .subscribe(this.selectCommit);
 
     // When repository changes its logs
     this.gitRepository$
@@ -99,8 +105,6 @@ export class LogsComponent implements AfterViewInit {
   }
 
   protected branchName = (b: Branch) => b.name.replace('origin/', '');
-
-  protected isPointedByHead = (d: DisplayRef) => d.isPointedByLocalHead;
 
   protected initials = (ref: DisplayRef) => ref.author.name.split(' ').slice(0, 2).map(e => e[0]).join('');
 
@@ -165,12 +169,14 @@ export class LogsComponent implements AfterViewInit {
     })
 
     // When log is computed for the first time
-    this.onFirstLogDisplay(gitRepository);
+    this.afterFirstLogDisplay(gitRepository);
   }
 
   // Called after log is computed and computedDisplayLog is set (runs once)
-  private onFirstLogDisplay = once((gitRepository: GitRepository) => {
-    console.log('once ?')
+  private afterFirstLogDisplay = once((gitRepository: GitRepository) => {
+
+    this.selectCommit(this.branches.find(b => b.isHeadPointed)?.tip.sha);
+
     // On first load, scroll down to last saved position
     this.logTableElement.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT});
   });
@@ -559,4 +565,6 @@ export class LogsComponent implements AfterViewInit {
     })
   };
 
+  private selectCommit = (sha?: string) =>
+    this.selectedCommits = [this.computedDisplayLog.find(c => c.sha == sha)].filter(notUndefined);
 }
