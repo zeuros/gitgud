@@ -3,12 +3,8 @@
 
 @import "font-awesome/css/font-awesome.min.css";
 
-@import "primeng/resources/themes/md-dark-deeppurple/theme.css";
+@import "styles/variables";
 
-@import "styles/primeng-theme-custom/my-md-dark-deeppurple.css";
-
-@import "primeicons/primeicons.css";
-
-@import "primeflex/primeflex.min.css";
+@import "styles/primeng-theme-custom/theme-custom-dark-deeppurple.css";
 
 @import "./styles/global";

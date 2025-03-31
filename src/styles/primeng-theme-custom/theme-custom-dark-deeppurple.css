@@ -1,0 +1,31 @@
+@layer theme {
+    :root {
+        /* Primeng variables overrides */
+
+        /* Override zinc palette (TODO: make one using primeng ? / use one ?)*/
+        --background: #1c1e23;
+        --p-surface-0: #ffffff;
+        --p-zinc-50: #d1ddfb;
+        --p-zinc-100: #c8d1e6;
+        --p-zinc-200: #bbc5e4;
+        --p-zinc-300: #b0bee1;
+        --p-zinc-400: #9ea9c8;
+        --p-zinc-500: #585e6e;
+        --p-zinc-600: #4b515e;
+        --p-zinc-700: #3a3d47;
+        --p-zinc-800: #2c2d37;
+        --p-zinc-900: var(--background);
+        --p-zinc-950: #131517;
+
+        --font-family: 'Nunito', Roboto, "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+        --p-text-color: rgba(255, 255, 255, 0.87);
+        --p-text-color-secondary: rgba(255, 255, 255, 0.6);
+        --p-primary-color: #ce93d8;
+        --p-highlight-text-color: var(--p-primary-color);
+
+        --p-primary-400: rgba(226, 138, 219, 0.84);
+
+        --p-tabs-tabpanel-padding: 0;
+    }
+
+}
