@@ -33,6 +33,10 @@ html, body, app-root {
   height: auto;
 }
 
+*:focus {
+  outline: none;
+}
+
 ::-webkit-scrollbar {
   transition: all 1s;
   width: 10px;
