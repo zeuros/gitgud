@@ -8,7 +8,19 @@ import {Branch, BranchType} from "../../models/branch";
 import {byName, bySha, logsAreEqual} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
 import {max, once, uniqBy} from "lodash";
-import {buildChildrenMap, buildShaMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit, isStash, ShaMap, stashParentCommitSha} from "../../utils/commit-utils";
+import {
+  buildChildrenMap,
+  buildShaMap,
+  ChildrenMap,
+  edgeType,
+  isCommit,
+  isIndex,
+  isMergeCommit,
+  isRootCommit,
+  isStash,
+  ShaMap,
+  stashParentCommitSha
+} from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
 import {distinctUntilChanged, filter, first, interval, map, Subject} from "rxjs";
 import {IntervalTree} from "node-interval-tree";
@@ -18,9 +30,20 @@ import {DragDropModule} from "primeng/dragdrop";
 import {SearchLogsComponent} from "../search-logs/search-logs.component";
 import {AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild} from '@angular/core';
 import {DatePipe, NgForOf, NgIf, NgStyle} from "@angular/common";
+import {local, remote} from "../../utils/branch-utils";
 
 type Column = ['taken' | 'free', rowCount: number];
-
+const indexCommit = (parentCommit: DisplayRef) => ({
+  summary: 'WIP',
+  ref: parentCommit.ref,
+  sha: 'index',
+  parentSHAs: [parentCommit.sha] as ReadonlyArray<string>,
+  branchesDetails: [] as Branch[],
+  refType: RefType.INDEX,
+  isPointedByLocalHead: false,
+  author: {},
+  committer: {},
+} as DisplayRef);
 
 @Component({
   selector: 'gitgud-logs',
@@ -118,12 +141,12 @@ export class LogsComponent implements AfterViewInit {
 
   protected search = (searchString = '') => {
     if (searchString == '') // Clear search
-      return this.computedDisplayLog!.forEach(commit => commit.highlight = undefined);
+      return this.computedDisplayLog.forEach(commit => commit.highlight = undefined);
 
-    this.computedDisplayLog!.forEach(commit => commit.highlight = undefined);
+    this.computedDisplayLog.forEach(commit => commit.highlight = undefined);
 
     const searchStringL = searchString.toLowerCase();
-    this.computedDisplayLog!
+    this.computedDisplayLog
       .filter(({sha, summary, author}) => !(sha.includes(searchStringL) || summary.toLowerCase().includes(searchStringL) || author.name.toLowerCase().includes(searchStringL)))
       .forEach(commit => commit.highlight = 'not-matched');
 
@@ -133,7 +156,12 @@ export class LogsComponent implements AfterViewInit {
 
   private onRepositoryLogChanges = (gitRepository: GitRepository) => {
     const commits = gitRepository.logs.map(this.commitToDisplayRef);
-    // TODO: Finish
+
+    // Index commit
+    const indexParent = commits.find(c => c.isPointedByLocalHead);
+    if (indexParent) commits.unshift(indexCommit(indexParent));
+
+    // TODO: Finish stashes
     const stashes: DisplayRef[] = []; // gitRepository.stashes.map(this.stashToDisplayRef);
 
     const shaMap = buildShaMap([...commits, ...stashes]);
@@ -224,7 +252,7 @@ export class LogsComponent implements AfterViewInit {
 
       childrenMap[commit.sha]?.forEach(child => {
         const [childRow, childCol] = [child.row!, child.indent!];
-        edges.insert(new Edge(childRow, childCol, parentRow, parentCol, child.summary, isMergeCommit(child) ? RefType.MERGE_COMMIT : RefType.COMMIT));
+        edges.insert(new Edge(childRow, childCol, parentRow, parentCol, child.summary, edgeType(child)));
       });
     });
 
@@ -274,6 +302,8 @@ export class LogsComponent implements AfterViewInit {
         }
       }
     }
+
+    canvas.setLineDash(edge.type == RefType.INDEX ? [3] : []);
     canvas.stroke();
   };
 
@@ -288,11 +318,7 @@ export class LogsComponent implements AfterViewInit {
       ...commit,
       refType: RefType.COMMIT,
       isPointedByLocalHead: !!commitBranches.find(b => !b.name.includes('origin/') && b.isHeadPointed),
-      branchesDetails: commitBranches.map(b => ({
-        ...b,
-        remote: !!commitBranches.find(b => b.name.includes('origin/')), // TODO: do it in view if short enough
-        local: !!commitBranches.find(b => !b.name.includes('origin/')),
-      })),
+      branchesDetails: commitBranches,
     };
   };
 
@@ -394,6 +420,12 @@ export class LogsComponent implements AfterViewInit {
 
   // Every commit from top (index=0) to bottom will be chosen a column (indent)
   private computeCommitIndent = (commit: DisplayRef, shaMap: ShaMap, childrenMap: ChildrenMap) => {
+
+    if (commit.refType == RefType.INDEX) {
+      const indent = this.pushNewColumn();
+      shaMap[commit.parentSHAs[0]].indent = indent;
+      return indent;
+    }
 
     const children = (childrenMap[commit.sha] ?? []).filter(isCommit);
     // If commit has a child having current commit as first parent, we align with this commit
@@ -499,7 +531,6 @@ export class LogsComponent implements AfterViewInit {
 
       canvas.beginPath();
       canvas.arc(x, y, this.NODE_RADIUS / 1.4, 0, 2 * Math.PI, true);
-      canvas.lineWidth = 2;
       canvas.stroke();
     } else if (isCommit(ref)) {
       canvas.arc(x, y, this.NODE_RADIUS, 0, 2 * Math.PI, true);
@@ -508,6 +539,12 @@ export class LogsComponent implements AfterViewInit {
       this.prepareForCommitTextDraw(canvas);
       canvas.fillText(this.initials(ref).toUpperCase(), x, y + 1);
       canvas.fill();
+    } else if (isIndex(ref)) {
+      canvas.arc(x, y, this.NODE_RADIUS - 1, 0, 2 * Math.PI, true);
+      canvas.fillStyle = '#1c1e23';
+      canvas.fill();
+      canvas.setLineDash([3]);
+      canvas.stroke();
     } else { // Stash
       const img = new Image();
       img.src = "/assets/images/chest.svg";
@@ -529,6 +566,8 @@ export class LogsComponent implements AfterViewInit {
 
   private prepareStyleForDrawingCommit(canvas: CanvasRenderingContext2D, indent: number) {
     canvas.beginPath();
+    canvas.lineWidth = 2;
+    canvas.setLineDash([]);
     canvas.fillStyle = canvas.strokeStyle = 'rgba(206, 147, 216, 0.9)';
     canvas.filter = this.indentColorFilter(indent);
     canvas.shadowColor = 'rgba(0, 0, 0, 0.8)';
@@ -593,4 +632,6 @@ export class LogsComponent implements AfterViewInit {
   private isOnView = (commitIndex: number) =>
     commitIndex > this.startCommit && commitIndex < this.startCommit + this.COMMITS_SHOWN_ON_CANVAS;
 
+  protected readonly remote = remote;
+  protected readonly local = local;
 }

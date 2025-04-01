@@ -27,8 +27,8 @@
                         <i *ngIf="computedDisplayLog[rowIndex].isPointedByLocalHead" class="fa fa-check mr-2"></i>
                         <span class="branch-name">{{ branchName(branch) }}</span>
                         <span class="float-icons">
-                            <i *ngIf="branch?.remote" class="fa fa-github mr-2"></i>
-                            <i *ngIf="branch?.local" class="fa fa-laptop mr-2"></i>
+                            <i *ngIf="remote(branch)" class="fa fa-github mr-2"></i>
+                            <i *ngIf="local(branch)" class="fa fa-laptop mr-2"></i>
                         </span>
                     </div>
                 </div>
