@@ -5,7 +5,7 @@ import {RefType} from '../../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../../utils/utils';
 import {Stash} from '../../models/stash';
 import {Branch, BranchType} from "../../models/branch";
-import {byName, logsAreEqual} from "../../utils/log-utils";
+import {byName, bySha, logsAreEqual} from "../../utils/log-utils";
 import {DisplayRef} from "../../models/display-ref";
 import {max, once, uniqBy} from "lodash";
 import {buildChildrenMap, buildShaMap, ChildrenMap, isCommit, isMergeCommit, isRootCommit, isStash, ShaMap, stashParentCommitSha} from "../../utils/commit-utils";
@@ -66,10 +66,10 @@ export class LogsComponent implements AfterViewInit {
     this.gitRepository$
       .subscribe(this.onEveryRepositoryChanges)
 
-    // Listen to commit selection
+    // Listen to commit selection (click on a branch for example)
     this.gitRepository$
-      .pipe(map(gitRepository => gitRepository.highlightedCommitSha), distinctUntilChanged())
-      .subscribe(this.selectCommit);
+      .pipe(map(gitRepository => gitRepository.highlightedCommitSha), distinctUntilChanged(), filter(notUndefined))
+      .subscribe(this.selectAndScrollToCommit);
 
     // When repository changes its logs
     this.gitRepository$
@@ -164,6 +164,7 @@ export class LogsComponent implements AfterViewInit {
     this.waitForCanvasToAppear.subscribe(canvasContext => {
       this.drawLog(canvasContext, displayLog, this.startCommit, edges);
       this.moveCanvasDown(this.startCommit);
+      this.moveCommitWindow(canvasContext, this.startCommit);
 
       this.afterLogFirstDisplay(gitRepository);
     });
@@ -175,7 +176,8 @@ export class LogsComponent implements AfterViewInit {
     // On first load, scroll down to last saved position
     this.logTableElement.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT});
 
-    this.selectCommit(this.branches.find(b => b.isHeadPointed)?.tip.sha);
+    const headPointedBranch = this.branches.find(b => b.isHeadPointed);
+    if (headPointedBranch) this.selectAndScrollToCommit(headPointedBranch.tip.sha);
 
   });
 
@@ -196,8 +198,13 @@ export class LogsComponent implements AfterViewInit {
 
   private onTableScroll: EventListener = ({target}) => {
     this.startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
-    this.moveCanvasDown(this.startCommit);
-    this.drawLog(this.canvasContext(), this.computedDisplayLog, this.startCommit, this.edges!);
+    this.moveCommitWindow(this.canvasContext(), this.startCommit);
+  }
+
+  // Redraw the window of commits to display into log
+  private moveCommitWindow = (canvas: CanvasRenderingContext2D, startCommit: number) => {
+    this.moveCanvasDown(startCommit);
+    this.drawLog(canvas, this.computedDisplayLog, startCommit, this.edges!);
   }
 
   private onTableScrollEnd: EventListener = ({target}) => {
@@ -544,6 +551,7 @@ export class LogsComponent implements AfterViewInit {
     stashes.forEach(s => this.insertStashIntoCommits(s, commits, shaMap))
     return commits;
   };
+
   private pushNewColumn = () => this.columns.push(['taken', 0]) - 1;
 
   private computeStashesIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
@@ -563,6 +571,22 @@ export class LogsComponent implements AfterViewInit {
     })
   };
 
-  private selectCommit = (sha?: string) =>
-    this.selectedCommits = [this.computedDisplayLog.find(c => c.sha == sha)].filter(notUndefined);
+  // Scroll view to display the selected commit
+  private selectAndScrollToCommit = (sha: string) => {
+    const indexCommitToSelect = this.computedDisplayLog.findIndex(bySha(sha));
+
+    this.selectedCommits = [this.computedDisplayLog[indexCommitToSelect]];
+
+    if (!this.isOnView(indexCommitToSelect)) {
+      this.waitForCanvasToAppear.subscribe(canvas => {
+        const scrollToCommit = Math.max(Math.ceil(indexCommitToSelect - this.COMMITS_SHOWN_ON_CANVAS / 2), 0);
+        this.moveCommitWindow(canvas, scrollToCommit);
+        this.logTableElement.scrollTo({top: scrollToCommit * this.ROW_HEIGHT});
+      });
+    }
+  }
+
+  private isOnView = (commitIndex: number) =>
+    commitIndex > this.startCommit && commitIndex < this.startCommit + this.COMMITS_SHOWN_ON_CANVAS;
+
 }
