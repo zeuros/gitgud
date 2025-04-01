@@ -326,6 +326,10 @@ export class LogsComponent implements AfterViewInit {
 
   // Indent will be reused for future commits
   private computeCommitsIndents = (displayLog: DisplayRef[], shaMap: ShaMap, childrenMap: ChildrenMap) => {
+
+    this.treeLockedColumn = undefined;
+    this.columns = [];
+
     displayLog.forEach(commit => {
       commit.indent = this.computeCommitIndent(commit, shaMap, childrenMap);
       this.columns = this.columns.map(([status, count]) => [status, count + 1]);
