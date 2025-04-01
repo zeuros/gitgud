@@ -456,7 +456,7 @@ export class LogsComponent implements AfterViewInit {
     }
 
     // This commit have been positioned in a column by its merge children. We have to mark this column taken because the child didn't do it
-    if (commit.indent) {
+    if (commit.indent != undefined) {
       this.columns[commit.indent] = ['taken', 0];
       return commit.indent;
     }
