@@ -8,9 +8,17 @@ export type ShaMap = { [sha: string]: DisplayRef };
 
 
 export const isCommit = (displayRef: DisplayRef) => displayRef.refType == RefType.COMMIT;
+export const isIndex = (displayRef: DisplayRef) => displayRef.refType == RefType.INDEX;
 export const isStash = (displayRef: DisplayRef) => displayRef.refType == RefType.STASH;
 export const isMergeCommit = (displayRef: DisplayRef) => isCommit(displayRef) && displayRef.parentSHAs.length > 1;
 export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0
+
+// TODO move somewhere
+export const edgeType = (childCommit: DisplayRef) => {
+  if (childCommit.refType == RefType.INDEX) return RefType.INDEX;
+  else if (isMergeCommit(childCommit)) return RefType.MERGE_COMMIT;
+  else return RefType.COMMIT;
+}
 
 /**
  *                                                                                       (c)
