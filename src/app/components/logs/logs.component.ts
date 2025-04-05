@@ -22,15 +22,16 @@ import {
   stashParentCommitSha
 } from "../../utils/commit-utils";
 import {Coordinates} from "../../models/coordinates";
-import {distinctUntilChanged, filter, first, interval, map, Subject} from "rxjs";
+import {distinctUntilChanged, filter, first, interval, map} from "rxjs";
 import {IntervalTree} from "node-interval-tree";
 import {Edge} from "../../models/edge";
 import {GitRepositoryService} from "../../services/git-repository.service";
 import {DragDropModule} from "primeng/dragdrop";
 import {SearchLogsComponent} from "../search-logs/search-logs.component";
-import {AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, input, ViewChild} from '@angular/core';
 import {DatePipe, NgForOf, NgIf, NgStyle} from "@angular/common";
 import {local, remote} from "../../utils/branch-utils";
+import {toObservable} from "@angular/core/rxjs-interop";
 
 type Column = ['taken' | 'free', rowCount: number];
 const indexCommit = (parentCommit: DisplayRef) => ({
@@ -69,6 +70,7 @@ export class LogsComponent implements AfterViewInit {
   protected readonly ROW_HEIGHT = this.NODE_DIAMETER + this.NODES_VERTICAL_SPACING;
   protected readonly COMMITS_SHOWN_ON_CANVAS = 37; // TODO: change it on screen resize depending table row count
 
+  gitRepository = input<GitRepository>();
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected showSearchBar = false;
   protected graphColumnCount?: number;
@@ -77,7 +79,7 @@ export class LogsComponent implements AfterViewInit {
   private treeLockedColumn?: number;
   private columns: Column[] = []; // keep track of the states of the columns when drawing commits from top to bottom
   private edges?: IntervalTree<Edge>; // Edges are updated after computedDisplayLog is set
-  private gitRepository$ = new Subject<GitRepository>();
+  private gitRepository$ = toObservable(this.gitRepository).pipe(filter(notUndefined));
   private startCommit = 0;
   protected selectedCommits: DisplayRef[] = [];
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
@@ -98,11 +100,6 @@ export class LogsComponent implements AfterViewInit {
     this.gitRepository$
       .pipe(filter(gitRepository => gitRepository?.logs.length > 0), distinctUntilChanged(logsAreEqual))
       .subscribe(this.onRepositoryLogChanges);
-  }
-
-  // We pass an observable in order to filter its data and listen to changes for parts of it. It could be done using ngOnChanges, but I prefer Observables
-  @Input() set gitRepository(gitRepository: GitRepository) {
-    this.gitRepository$.next(gitRepository);
   }
 
   get logTableElement() {

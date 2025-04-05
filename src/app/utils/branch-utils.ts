@@ -1,34 +1,62 @@
 import {Branch, BranchType} from "../models/branch";
 import {TreeNode} from "primeng/api";
-import {uniqBy} from "lodash";
 
 export const local = (branch: Branch) => branch.type == BranchType.Local;
 export const remote = (branch: Branch) => branch.type == BranchType.Remote;
 
-export const branchesToTree = (branches: Branch[]) =>
-  uniqBy(branches.reduce((acc, b) => [...acc, branchToTreeNode(b, b.name, acc)], [] as TreeNode<Branch>[]), 'key');
+const byKey = (key: string) => (treeNode: TreeNode<Branch>) => treeNode.key == key;
 
-const branchToTreeNode = (branch: Branch, subBranchName?: string, nodes: TreeNode<Branch>[] = []): TreeNode<Branch> => {
+// 'a/b/c' => ['a', 'a/b', 'a/b/c']
+const toSubPaths = (path: string) => path.split("/").map((_, i) => path.split("/").slice(0, i + 1).join("/"));
 
-  subBranchName = subBranchName ?? branch.name;
-  const subBranches = subBranchName.split('/');
-  const parentBranchPart = subBranches[0];
-  const isLeaf = subBranches?.length == 1;
+const allNodes = (rootNodes: TreeNode<Branch>[]): TreeNode<Branch>[] =>
+  [...rootNodes, ...rootNodes.flatMap(node => allNodes(node.children ?? []))];
 
-  const branchNode = nodes.find(n => n.key == parentBranchPart) ?? {
-    key: parentBranchPart,
-    icon: isLeaf ? 'fa fa-code-fork' : 'pi pi-fw pi-folder',
-    label: parentBranchPart,
-    data: branch,
-    leaf: isLeaf,
-    expanded: true,
-    selectable: isLeaf,
-  };
+export const toBranchTree = (branches: Branch[], branchNameTransform?: (n: string) => string) => {
+  const nodes: TreeNode<Branch>[] = [];
+  branches.forEach(b => addBranchToTree(b, nodes, branchNameTransform));
+  return nodes;
+}
 
-  branchNode.children = isLeaf ? undefined : [...(branchNode.children ?? []), branchToTreeNode(branch, subBranches.slice(1).join('/'), nodes)];
+// Add branch as branch in tree (heh)
+export const addBranchToTree = (branch: Branch, rootNodes: TreeNode<Branch>[], branchNameTransform = (n: string) => n) => {
 
-  return branchNode;
-};
+  const allTreeNodes = allNodes(rootNodes);
+
+  const parts = [
+    ...toSubPaths(branchNameTransform(branch.name)).slice(0, -1).map(key => allTreeNodes.find(byKey(key)) ?? pathBitToTreeNode(key)),
+    branchToTreeNode(branch)
+  ];
+
+  parts.forEach((part, i) => {
+    if (i < parts.length - 1 && !part.children?.some(c => c.key == parts[i + 1].key))
+      part.children = [...(part.children ?? []), parts[i + 1]];
+  });
+
+  // Only add root nodes (if not duplicate)
+  if (!rootNodes.find(byKey(parts[0].key!)))
+    rootNodes.push(parts[0]);
+}
+
+const pathBitToTreeNode = (pathBit: string): TreeNode<Branch> => ({
+  key: pathBit,
+  icon: 'pi pi-fw pi-folder',
+  label: pathBit.split('/').pop(),
+  leaf: false,
+  expanded: true,
+  selectable: false,
+});
+
+
+const branchToTreeNode = (branch: Branch): TreeNode<Branch> => ({
+  key: branch.name,
+  icon: 'fa fa-code-fork',
+  label: branch.name.split('/').pop(),
+  data: branch,
+  leaf: true,
+  expanded: true,
+  selectable: true,
+});
 
 /**
  * Remove the remote prefix from the string. If there is no prefix, returns
