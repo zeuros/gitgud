@@ -1,15 +1,17 @@
-import {Component, Input} from '@angular/core';
+import {Component, input} from '@angular/core';
+import {toObservable} from '@angular/core/rxjs-interop';
 import {AccordionModule} from "primeng/accordion";
 import {BadgeModule} from "primeng/badge";
 import {TerminalService} from "primeng/terminal";
-import {GitRepository} from "../../models/git-repository";
 import {TreeModule} from "primeng/tree";
 import {ContextMenuModule} from "primeng/contextmenu";
 import {MenuItem, TreeNode} from "primeng/api";
 import {PopupService} from "../../services/popup.service";
 import {Branch} from "../../models/branch";
 import {GitRepositoryService} from "../../services/git-repository.service";
-import {branchesToTree, local, remote} from "../../utils/branch-utils";
+import {filter} from "rxjs";
+import {local, remote, removeRemotePrefix, toBranchTree} from "../../utils/branch-utils";
+import {notUndefined} from "../../utils/utils";
 
 
 @Component({
@@ -43,6 +45,7 @@ export class BranchesComponent {
     {label: 'Copy commit sha', icon: 'pi pi-receipt', command: () => this.popupService.info('Copy commit sha selected')},
   ];
 
+  branches = input<Branch[]>();
   protected localBranches: TreeNode<Branch>[] = [];
   protected remoteBranches: TreeNode<Branch>[] = [];
   protected selectedNode?: TreeNode<Branch>;
@@ -51,11 +54,14 @@ export class BranchesComponent {
     private popupService: PopupService,
     private gitRepositoryService: GitRepositoryService,
   ) {
+    toObservable(this.branches)
+      .pipe(filter(notUndefined))
+      .subscribe(this.updateBranches);
   }
 
-  @Input() set gitRepository(gitRepository: GitRepository) {
-    this.localBranches = branchesToTree(gitRepository.branches.filter(local));
-    this.remoteBranches = branchesToTree(gitRepository.branches.filter(remote));
+  private updateBranches = (branches: Branch[]) => {
+    this.localBranches = toBranchTree(branches.filter(local));
+    this.remoteBranches = toBranchTree(branches.filter(remote), removeRemotePrefix);
   }
 
 

@@ -1,6 +1,6 @@
 <p-splitter [panelSizes]="gitRepository.sizes" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event.sizes)" styleClass="auto-wh">
     <ng-template pTemplate>
-        <gitgud-branches [gitRepository]="gitRepository" class="col flex"/>
+        <gitgud-branches [branches]="gitRepository.branches" class="col flex"/>
     </ng-template>
     <ng-template pTemplate>
         <gitgud-logs [gitRepository]="gitRepository"/>
