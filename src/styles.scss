@@ -1,10 +1,10 @@
 
-@import "styles/custom-fonts";
+@forward "styles/custom-fonts";
 
-@import "font-awesome/css/font-awesome.min.css";
+@forward "font-awesome/css/font-awesome.min.css";
 
-@import "styles/variables";
+@forward "styles/variables";
 
-@import "styles/primeng-theme-custom/theme-custom-dark-deeppurple.css";
+@forward "styles/primeng-theme-custom/theme-custom-dark-deeppurple.css";
 
-@import "./styles/global";
+@forward "./styles/global";
