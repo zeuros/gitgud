@@ -1,11 +1,10 @@
 import {Injectable} from '@angular/core';
-import {GitApiService} from "./git-api.service";
-import {ParserService} from "./parser.service";
-import {CommitIdentity} from "../models/commit-identity";
-import {Branch, BranchType, IBranchTip} from "../models/branch";
+import {ParserService} from "../parser.service";
+import {CommitIdentity} from "../../models/commit-identity";
+import {Branch, BranchType, IBranchTip} from "../../models/branch";
 import {map, Observable} from "rxjs";
-import {PREFIXES} from "../utils/constants";
-import {formatArg} from "../utils/log-utils";
+import {PREFIXES} from "../../utils/constants";
+import {formatArg} from "../../utils/log-utils";
 
 @Injectable({
   providedIn: 'root'
@@ -26,14 +25,13 @@ export class BranchService {
   remoteHeadPointer?: string;
 
   constructor(
-    private gitApiService: GitApiService,
     parserService: ParserService,
   ) {
     this.branchParser = parserService.createForEachRefParser(this.fields);
   }
 
-  getBranches = (repositoryPath: string): Observable<ReadonlyArray<Branch>> =>
-    this.gitApiService.git(['for-each-ref', ...PREFIXES, formatArg(this.fields)], repositoryPath)
+  getBranches = (git: (args?: string[]) => Observable<any>): Observable<ReadonlyArray<Branch>> =>
+    git(['for-each-ref', ...PREFIXES, formatArg(this.fields)])
       .pipe(map(result =>
 
         this.branchParser(result)

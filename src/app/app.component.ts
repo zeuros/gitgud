@@ -6,7 +6,7 @@ import {TopBarComponent} from "./components/top-bar/top-bar.component";
 import {CommonModule} from '@angular/common';
 import {ToastModule} from "primeng/toast";
 import {GitRepositoryService} from "./services/git-repository.service";
-import {GitApiService} from "./services/git-api.service";
+import {GitApiService} from "./services/electron-cmd-parser-layer/git-api.service";
 import {AutoFetchService} from "./services/auto-fetch.service";
 import {TabViewModule} from "primeng/tabview";
 

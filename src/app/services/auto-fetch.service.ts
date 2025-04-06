@@ -25,5 +25,6 @@ export class AutoFetchService {
     setTimeout(this.autoFetch, this.autoFetchInterval());
   };
 
+  // TODO: make settings observable
   private autoFetchInterval = () => Number(this.settingsService.get<string>(StorageName.AutoFetchInterval) ?? DEFAULT_AUTO_FETCH_INTERVAL)
 }
