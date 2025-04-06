@@ -7,7 +7,7 @@ import {InputTextModule} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {PanelModule} from "primeng/panel";
 import {CardModule} from "primeng/card";
-import {GitApiService} from "../../../services/git-api.service";
+import {GitApiService} from "../../../services/electron-cmd-parser-layer/git-api.service";
 
 @Component({
   selector: 'gitgud-clone-or-open-directory-dialog',

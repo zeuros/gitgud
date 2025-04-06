@@ -1,5 +1,5 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, debounceTime, forkJoin, Observable, switchMap, tap} from "rxjs";
+import {inject, Injectable} from '@angular/core';
+import {BehaviorSubject, debounceTime, forkJoin, Observable, tap} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
@@ -9,10 +9,10 @@ import {createRepository} from "../utils/repository-utils";
 import * as fs from 'fs';
 import * as path from 'path';
 import * as electron from "@electron/remote";
-import {LogService} from "./log.service";
-import {StashService} from "./stash.service";
-import {BranchService} from "./branch.service";
-import {GitApiService} from "./git-api.service";
+import {LogService} from "./electron-cmd-parser-layer/log.service";
+import {StashService} from "./electron-cmd-parser-layer/stash.service";
+import {BranchService} from "./electron-cmd-parser-layer/branch.service";
+import {GitApiService} from "./electron-cmd-parser-layer/git-api.service";
 
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 400;
 
@@ -24,24 +24,24 @@ const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 400;
 })
 export class GitRepositoryService {
 
-  fs: typeof fs = (window as any).require('fs');
-  path: typeof path = (window as any).require('path');
-  electron: typeof electron = (window as any).require('@electron/remote')
-  dialog = this.electron.dialog;
-  repositories$: BehaviorSubject<GitRepository>[] = [];
+  private fs: typeof fs = (window as any).require('fs');
+  private path: typeof path = (window as any).require('path');
+  private electron: typeof electron = (window as any).require('@electron/remote')
+  private dialog = this.electron.dialog;
+  private repositories$: BehaviorSubject<GitRepository>[] = [];
   currentRepositoryIndex?: number;
 
-  constructor(
-    private settingsService: SettingsService,
-    private logService: LogService,
-    private branchService: BranchService,
-    private stashService: StashService,
-    private gitApiService: GitApiService,
-  ) {
+  private settingsService = inject(SettingsService);
+  private logService = inject(LogService);
+  private branchService = inject(BranchService);
+  private stashService = inject(StashService);
+  private gitApiService = inject(GitApiService);
 
-    (settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? []).forEach(this.addToRepos);
+  constructor() {
 
-    this.electron.getCurrentWindow().on('focus', () => this.updateLogsAndBranches(this.currentRepository!).subscribe(this.updateCurrentRepository));
+    (this.settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? []).forEach(this.addToRepos);
+
+    this.electron.getCurrentWindow().on('focus', () => this.updateLogsAndBranches().subscribe(this.updateCurrentRepository));
 
   }
 
@@ -73,7 +73,7 @@ export class GitRepositoryService {
     this.updateRepo(repo$, {selected: true});
 
     // Git log and update current repo
-    return this.updateLogsAndBranches(repo$.value).pipe(tap(this.updateCurrentRepository));
+    return this.updateLogsAndBranches().pipe(tap(this.updateCurrentRepository));
   }
 
   pickGitFolder = () => {
@@ -124,8 +124,8 @@ export class GitRepositoryService {
 
   fetchCurrentRepository = () => {
     if (this.currentRepositoryIndex != undefined) {
-      this.gitApiService.git(['fetch'], this.currentRepository!.directory);
-      this.updateLogsAndBranches(this.currentRepository!).subscribe(this.updateCurrentRepository);
+      this.git(['fetch']);
+      this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
     }
   }
 
@@ -146,15 +146,16 @@ export class GitRepositoryService {
     return repo$;
   }
 
-  private updateLogsAndBranches = (gitRepository: GitRepository): Observable<Partial<GitRepository>> =>
+  private updateLogsAndBranches = (): Observable<Partial<GitRepository>> =>
     forkJoin({
-      logs: this.logService.getCommitLog(gitRepository.directory, '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source']), // Source will show which branch the commit is in
-      branches: this.branchService.getBranches(gitRepository.directory), // Source will show which branch the  commit is in
-      stashes: this.stashService.getStashes(gitRepository.directory), // Source will show which branch commit is in
+      logs: this.logService.getCommitLog(this.git, '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source']), // Source will show which branch the commit is in
+      branches: this.branchService.getBranches(this.git), // Source will show which branch the  commit is in
+      stashes: this.stashService.getStashes(this.git), // Source will show which branch commit is in
     });
 
   updateCurrentRepository = (updates: Partial<GitRepository>) => {
     if (this.currentRepositoryIndex != undefined) this.updateRepo(this.repositories$[this.currentRepositoryIndex], updates);
   }
 
+  git = (args: string[] = []) => this.gitApiService.git(args, this.currentRepository?.directory);
 }

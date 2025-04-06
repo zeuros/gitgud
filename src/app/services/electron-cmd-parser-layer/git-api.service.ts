@@ -6,7 +6,7 @@ import * as childProcess from 'child_process';
 import {ExecOptions} from 'child_process';
 import * as util from 'util';
 import {from, map, Observable} from "rxjs";
-import {omitUndefined} from "../utils/utils";
+import {omitUndefined} from "../../utils/utils";
 import * as electron from "@electron/remote";
 import * as path from 'path';
 
@@ -50,7 +50,7 @@ export class GitApiService {
    * @param args
    * @param cwd Which folder to execute git from
    */
-  git = (args: string[] = [], cwd?: string) => {
+  git = (args: string[], cwd?: string) => {
     console.log(`git ${args.join(' ')}`);
     return this.exec('git', args, {cwd, env: process.env});
   }
