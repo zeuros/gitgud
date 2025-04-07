@@ -2,7 +2,6 @@ import {Component} from '@angular/core';
 import {PopupService} from "../../../services/popup.service";
 import {FieldsetModule} from "primeng/fieldset";
 import {ButtonModule} from "primeng/button";
-import {FloatLabelModule} from "primeng/floatlabel";
 import {InputTextModule} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {PanelModule} from "primeng/panel";
@@ -15,7 +14,6 @@ import {GitApiService} from "../../../services/electron-cmd-parser-layer/git-api
   imports: [
     FieldsetModule,
     ButtonModule,
-    FloatLabelModule,
     InputTextModule,
     FormsModule,
     PanelModule,

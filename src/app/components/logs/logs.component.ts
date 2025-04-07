@@ -1,5 +1,5 @@
 import {GitRepository} from '../../models/git-repository';
-import {TableModule} from 'primeng/table';
+import {TableModule, TableRowSelectEvent} from 'primeng/table';
 import {Commit} from '../../models/commit';
 import {RefType} from '../../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../../utils/utils';
@@ -28,7 +28,7 @@ import {Edge} from "../../models/edge";
 import {GitRepositoryService} from "../../services/git-repository.service";
 import {DragDropModule} from "primeng/dragdrop";
 import {SearchLogsComponent} from "../search-logs/search-logs.component";
-import {AfterViewInit, Component, ElementRef, HostListener, input, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, input, signal, ViewChild} from '@angular/core';
 import {DatePipe, NgForOf, NgIf, NgStyle} from "@angular/common";
 import {local, remote} from "../../utils/branch-utils";
 import {toObservable} from "@angular/core/rxjs-interop";
@@ -81,7 +81,7 @@ export class LogsComponent implements AfterViewInit {
   private edges?: IntervalTree<Edge>; // Edges are updated after computedDisplayLog is set
   private gitRepository$ = toObservable(this.gitRepository).pipe(filter(notUndefined));
   private startCommit = 0;
-  protected selectedCommits: DisplayRef[] = [];
+  protected selectedCommits = signal<DisplayRef[]>([]);
   @ViewChild("canvas", {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild("logTable", {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
 
@@ -100,6 +100,8 @@ export class LogsComponent implements AfterViewInit {
     this.gitRepository$
       .pipe(filter(gitRepository => gitRepository?.logs.length > 0), distinctUntilChanged(logsAreEqual))
       .subscribe(this.onRepositoryLogChanges);
+
+    toObservable(this.selectedCommits).subscribe(selectedCommits => this.gitRepositoryService.updateCurrentRepository({selectedCommits: selectedCommits.map(c => c.sha)}))
   }
 
   get logTableElement() {
@@ -615,7 +617,7 @@ export class LogsComponent implements AfterViewInit {
   private selectAndScrollToCommit = (sha: string) => {
     const indexCommitToSelect = this.computedDisplayLog.findIndex(bySha(sha));
 
-    this.selectedCommits = [this.computedDisplayLog[indexCommitToSelect]];
+    this.selectedCommits.set([this.computedDisplayLog[indexCommitToSelect]]);
 
     if (!this.isOnView(indexCommitToSelect)) {
       this.waitForCanvasToAppear.subscribe(canvas => {
@@ -631,4 +633,8 @@ export class LogsComponent implements AfterViewInit {
 
   protected readonly remote = remote;
   protected readonly local = local;
+
+  rowSelect({data}: TableRowSelectEvent<DisplayRef>) {
+    this.selectedCommits.set(Array.isArray(data) ? data : [data!]);
+  }
 }

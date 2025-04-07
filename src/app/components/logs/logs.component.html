@@ -2,7 +2,8 @@
 <p-table
         #logTable
         [value]="computedDisplayLog"
-        [selection]="selectedCommits"
+        [selection]="selectedCommits()"
+        (selectionChange)="selectedCommits.set($event)"
         [rowHover]="true"
         [scrollable]="true"
         scrollHeight="calc(100vh - 51px)"
