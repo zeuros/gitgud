@@ -1,31 +1,58 @@
-@layer theme {
-    :root {
-        /* Primeng variables overrides */
+:root {
+    /* Primeng variables overrides */
 
-        /* Override zinc palette (TODO: make one using primeng ? / use one ?)*/
-        --background: #1c1e23;
-        --p-surface-0: #ffffff;
-        --p-zinc-50: #d1ddfb;
-        --p-zinc-100: #c8d1e6;
-        --p-zinc-200: #bbc5e4;
-        --p-zinc-300: #b0bee1;
-        --p-zinc-400: #9ea9c8;
-        --p-zinc-500: #585e6e;
-        --p-zinc-600: #4b515e;
-        --p-zinc-700: #3a3d47;
-        --p-zinc-800: #2c2d37;
-        --p-zinc-900: var(--background);
-        --p-zinc-950: #131517;
+    /* Override zinc palette (TODO: make one using primeng ? / use one ?)*/
+    --background: #1c1e23;
+    --p-surface-0: #ffffff;
+    --p-zinc-50: #d1ddfb;
+    --p-zinc-100: #c8d1e6;
+    --p-zinc-200: #bbc5e4;
+    --p-zinc-300: #b0bee1;
+    --p-zinc-400: #9ea9c8;
+    --p-zinc-500: #585e6e;
+    --p-zinc-600: #4b515e;
+    --p-zinc-700: #3a3d47;
+    --p-zinc-800: #2c2d37;
+    --p-zinc-900: var(--background);
+    --p-zinc-950: rgba(31, 32, 37, 0.92);
 
-        --font-family: 'Nunito', Roboto, "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
-        --p-text-color: rgba(255, 255, 255, 0.87);
-        --p-text-color-secondary: rgba(255, 255, 255, 0.6);
-        --p-primary-color: #ce93d8;
-        --p-highlight-text-color: var(--p-primary-color);
 
-        --p-primary-400: rgba(226, 138, 219, 0.84);
+    --p-primary-color: #ce93d8;
 
-        --p-tabs-tabpanel-padding: 0;
-    }
+    /* TODO: make a better palette / choice ? ... https://coolors.co/gradient-palette/cb4288-1c1e23?number=11 */
+    --violet-web-color: #FF7DF4ff;
+    --orchid: #E874DFff;
+    --french-mauve: #D26ACAff;
+    --sky-magenta: #BB61B5ff;
+    --purpureus: #A457A0ff;
+    --plum: #8E4E8Cff;
+    --plum-2: #774477ff;
+    --violet-jtc: #603A62ff;
+    --english-violet: #49314Dff;
+    --dark-purple: #332838ff;
+    --raisin-black: #1C1E23ff;
 
+    --p-primary-50: var(--violet-web-color);
+    --p-primary-100: var(--orchid);
+    --p-primary-200: var(--french-mauve);
+    --p-primary-300: var(--sky-magenta);
+    --p-primary-400: var(--p-primary-color);
+    --p-primary-500: var(--plum);
+    --p-primary-600: var(--plum-2);
+    --p-primary-700: var(--violet-jtc);
+    --p-primary-800: var(--english-violet);
+    --p-primary-900: var(--dark-purple);
+    --p-primary-950: var(--raisin-black);
+
+    --font-family: 'Nunito', Roboto, "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    --p-text-color: rgba(255, 255, 255, 0.87);
+    --p-text-color-secondary: rgba(255, 255, 255, 0.6);
+    --p-highlight-text-color: var(--p-primary-color);
+
+    /*--p-primary-400: rgba(226, 138, 219, 0.84);*/
+    --p-tabs-tabpanel-padding: 0;
+
+
+    /* Layout stuff*/
+    --p-divider-horizontal-margin: 0.5rem 0;
 }
