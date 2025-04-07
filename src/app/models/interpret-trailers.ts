@@ -12,6 +12,5 @@ export interface ITrailer {
  * Gets a value indicating whether the trailer token is
  * Co-Authored-By. Does not validate the token value.
  */
-export function isCoAuthoredByTrailer(trailer: ITrailer) {
-  return trailer.token.toLowerCase() === 'co-authored-by'
-}
+export const isCoAuthoredByTrailer = ({token}: ITrailer) => token.toLowerCase() === 'co-authored-by';
+

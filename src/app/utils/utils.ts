@@ -24,5 +24,5 @@ export const omitUndefined = <T extends object>(o: T | undefined) => {
 
 // Filters
 export const removeDuplicates = <T>(item: T, index: number, array: T[]): boolean => array.indexOf(item) === index
-export const notUndefined = <T>(v: T | undefined): v is T => !!v
+export const notUndefined = <T>(v: T | undefined | null): v is T => !!v
 

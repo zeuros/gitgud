@@ -6,6 +6,6 @@
         <gitgud-logs [gitRepository]="gitRepository"/>
     </ng-template>
     <ng-template pTemplate>
-        <gitgud-commit-section class="col flex align-items-center justify-content-center"/>
+        <gitgud-commit-section class="col flex align-items-center justify-content-center" [selectedCommits]="gitRepository.selectedCommits"/>
     </ng-template>
 </p-splitter>

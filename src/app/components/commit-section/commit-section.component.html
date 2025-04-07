@@ -1,1 +1,38 @@
-<p>commit-section works!</p>
+<div class="statistics">
+    <h4>Statistics</h4>
+</div>
+<div class="display-options">
+    <h4>Display options</h4>
+</div>
+<p-splitter layout="vertical" [panelSizes]="[40, 40, 20]" [minSizes]="[20, 20, 10]">
+    <ng-template #panel>
+        <div style="flex-grow: 1;" class="flex-column items-center justify-center">
+            <h4>Unstaged files</h4>
+            <p-divider type="solid"/>
+        </div>
+    </ng-template>
+    <ng-template #panel>
+        <div style="flex-grow: 1;" class="flex-column items-center justify-center">
+            <h4>Staged files</h4>
+            <p-divider type="solid"/>
+        </div>
+    </ng-template>
+    <ng-template #panel>
+        <div style="flex-grow: 1;" class="flex-column items-center justify-center">
+            <div class="p-2">
+                Commit message
+            </div>
+            <form class="flex-column flex-1" [formGroup]="commitForm">
+
+                <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
+
+                <textarea pTextarea placeholder="Description" rows="3" class="flex-1 commit-description" formControlName="description"></textarea>
+
+                <button pButton [disabled]="!commitForm.value.summary?.length" class="commit-button">
+                    Stage files / changes to commit
+                </button>
+
+            </form>
+        </div>
+    </ng-template>
+</p-splitter>
