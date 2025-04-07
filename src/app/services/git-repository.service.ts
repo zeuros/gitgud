@@ -28,7 +28,7 @@ export class GitRepositoryService {
   private path: typeof path = (window as any).require('path');
   private electron: typeof electron = (window as any).require('@electron/remote')
   private dialog = this.electron.dialog;
-  private repositories$: BehaviorSubject<GitRepository>[] = [];
+  repositories$: BehaviorSubject<GitRepository>[] = [];
   currentRepositoryIndex?: number;
 
   private settingsService = inject(SettingsService);

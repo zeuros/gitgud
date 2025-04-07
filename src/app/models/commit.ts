@@ -2,25 +2,14 @@ import {GitAuthor} from "./git-author";
 import {CommitIdentity} from "./commit-identity";
 import {isCoAuthoredByTrailer, ITrailer} from "./interpret-trailers";
 import {LogObject} from "./log-object";
+import {notUndefined} from "../utils/utils";
 
 /**
  * Extract any Co-Authored-By trailers from an array of arbitrary
  * trailers.
  */
-const extractCoAuthors = (trailers: ReadonlyArray<ITrailer>) => {
-  const coAuthors = []
-
-  for (const trailer of trailers) {
-    if (isCoAuthoredByTrailer(trailer)) {
-      const author = GitAuthor.parse(trailer.value)
-      if (author) {
-        coAuthors.push(author)
-      }
-    }
-  }
-
-  return coAuthors
-}
+const extractCoAuthors = (trailers: ReadonlyArray<ITrailer>): GitAuthor[] =>
+  trailers.filter(isCoAuthoredByTrailer).map(({value}) => GitAuthor.parse(value)).filter(notUndefined);
 
 const trimCoAuthorsTrailers = (trailers: ReadonlyArray<ITrailer>, body: string) => {
   let trimmedCoAuthors = body
@@ -32,25 +21,10 @@ const trimCoAuthorsTrailers = (trailers: ReadonlyArray<ITrailer>, body: string) 
   return trimmedCoAuthors
 }
 
-export const parseRawUnfoldedTrailers = (trailers: string, separators: string) => {
-  const lines = trailers.split('\n')
-  const parsedTrailers = new Array<ITrailer>()
+export const parseRawUnfoldedTrailers = (trailers: string, separators: string): ITrailer[] =>
+  trailers.split('\n').map(line => parseSingleUnfoldedTrailer(line, separators)).filter(notUndefined);
 
-  for (const line of lines) {
-    const trailer = parseSingleUnfoldedTrailer(line, separators)
-
-    if (trailer) {
-      parsedTrailers.push(trailer)
-    }
-  }
-
-  return parsedTrailers
-}
-
-const parseSingleUnfoldedTrailer = (
-  line: string,
-  separators: string
-): ITrailer | null => {
+const parseSingleUnfoldedTrailer = (line: string, separators: string): ITrailer | null => {
   for (const separator of separators) {
     const ix = line.indexOf(separator)
     if (ix > 0) {
