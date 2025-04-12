@@ -1,0 +1,52 @@
+
+:host {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 12px;
+
+  & > * {
+    width: 100%;
+  }
+
+  ::ng-deep {
+    .commit-summary {
+      border-radius: 2px 2px 0 0;
+    }
+
+    .commit-description {
+      border-radius: 0 0 2px 2px;
+    }
+
+    .commit-button {
+      margin-top: 12px;
+      border-radius: 2px;
+    }
+
+    .min-sizes .p-splitterpanel {
+      min-height: 230px;
+    }
+
+    .max-size-bottom .p-splitterpanel:last-child {
+      max-height: 400px;
+    }
+  }
+
+}
+
+h4 {
+  margin: 4px;
+}
+
+textarea {
+  resize: none;
+}
+
+.commit-summary {
+  margin-bottom: -1px;
+
+  &:focus {
+    // By default, the summary border (-1px) is behind the textarea
+    z-index: 10;
+  }
+}

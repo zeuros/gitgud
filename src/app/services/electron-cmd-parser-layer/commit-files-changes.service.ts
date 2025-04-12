@@ -36,5 +36,14 @@ export class CommitFilesChangesService {
     this.gitRepositoryService.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
       .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, sha)));
 
+
+  /**
+   * Get a list of files which have recorded changes in the index as compared to
+   * HEAD along with the type of change.
+   */
+  getIndexChanges = () =>
+    this.gitRepositoryService.git(['diff-index', '--cached', '--name-status', '--no-renames', '-z', 'HEAD', '--'])
+      .pipe(map(parseIndexChanges));
+
 }
 

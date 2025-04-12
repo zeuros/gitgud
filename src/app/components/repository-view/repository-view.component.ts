@@ -5,12 +5,11 @@ import {GitRepositoryService} from "../../services/git-repository.service";
 import {CommitSectionComponent} from "../commit-section/commit-section.component";
 import {LogsComponent} from "../logs/logs.component";
 import {GitRepository} from "../../models/git-repository";
-import {AsyncPipe} from "@angular/common";
 
 @Component({
   selector: 'gitgud-repository-view',
   standalone: true,
-  imports: [BranchesComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe],
+  imports: [BranchesComponent, LogsComponent, CommitSectionComponent, SplitterModule],
   templateUrl: './repository-view.component.html',
   styleUrl: './repository-view.component.scss'
 })
