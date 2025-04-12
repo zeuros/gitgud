@@ -6,5 +6,5 @@
 @forward "styles/layout";
 @forward "styles/variables";
 
-@import 'primeflex/primeflex.scss';
+@forward 'primeflex/primeflex.scss';
 @import "styles/primeng-theme-custom/theme-custom-dark-deeppurple.css" layer(my-theme);
