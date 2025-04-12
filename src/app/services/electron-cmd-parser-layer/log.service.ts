@@ -1,8 +1,8 @@
 import {inject, Injectable} from '@angular/core';
-import {Commit, parseRawUnfoldedTrailers} from "../../models/commit";
+import {Commit, parseRawUnfoldedTrailers} from "../../lib/github-desktop/model/commit";
 import {ParserService} from "../parser.service";
 import {map, Observable} from "rxjs";
-import {CommitIdentity} from "../../models/commit-identity";
+import {CommitIdentity} from "../../lib/github-desktop/model/commit-identity";
 import {formatArg} from "../../utils/log-utils";
 
 @Injectable({
@@ -34,7 +34,7 @@ export class LogService {
    * Get the repository's commits using `revisionRange` and limited to `limit`
    */
   getCommitLog = (
-    git: (args?: string[]) => Observable<any>,
+    git: (args?: string[]) => Observable<string>,
     revisionRange?: string,
     limit?: number,
     skip?: number,

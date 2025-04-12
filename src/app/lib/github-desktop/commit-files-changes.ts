@@ -27,9 +27,11 @@
  *    file_two_new_path
  */
 
-import {CommittedFileChange} from "../../models/change-set";
-import {forceUnwrap} from "./fatal-error";
+import {CommittedFileChange} from "./model/change-set";
+import {forceUnwrap} from "./throw-ex";
 import {isCopyOrRename, mapStatus} from "./log";
+import {getNoRenameIndexStatus, NoRenameIndexStatus} from "./model/diff-index";
+import {AppFileStatus} from "./model/status";
 
 export const parseRawLogWithNumstat = (rawFileChanges: string, sha: string) => {
   const files = new Array<CommittedFileChange>()
@@ -49,7 +51,7 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, sha: string) => {
 
       const path = forceUnwrap('Missing path', lines.at(++i));
 
-      files.push(new CommittedFileChange(path, {kind: mapStatus(status, oldPath), oldPath}, sha));
+      files.push(new CommittedFileChange(path, {kind: mapStatus(status, oldPath), oldPath} as AppFileStatus, sha));
     } else {
       const match = /^(\d+|-)\t(\d+|-)\t/.exec(line)
       const [, added, deleted] = forceUnwrap('Invalid numstat line', match)
@@ -67,4 +69,21 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, sha: string) => {
   }
 
   return {files, linesAdded, linesDeleted}
+}
+
+export const parseIndexChanges = (indexChangesRawResult: string) => {
+
+  const map = new Map<string, NoRenameIndexStatus>()
+
+  const pieces = indexChangesRawResult.split('\0')
+
+  for (let i = 0; i < pieces.length - 1; i += 2) {
+    const status = getNoRenameIndexStatus(pieces[i])
+    const path = pieces[i + 1]
+
+    if (status)
+      map.set(path, status)
+  }
+
+  return map
 }

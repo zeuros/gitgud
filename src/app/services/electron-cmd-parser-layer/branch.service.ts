@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {ParserService} from "../parser.service";
-import {CommitIdentity} from "../../models/commit-identity";
-import {Branch, BranchType, IBranchTip} from "../../models/branch";
+import {CommitIdentity} from "../../lib/github-desktop/model/commit-identity";
+import {Branch, BranchType, IBranchTip} from "../../lib/github-desktop/model/branch";
 import {map, Observable} from "rxjs";
 import {PREFIXES} from "../../utils/constants";
 import {formatArg} from "../../utils/log-utils";
@@ -30,7 +30,7 @@ export class BranchService {
     this.branchParser = parserService.createForEachRefParser(this.fields);
   }
 
-  getBranches = (git: (args?: string[]) => Observable<any>): Observable<ReadonlyArray<Branch>> =>
+  getBranches = (git: (args?: string[]) => Observable<string>): Observable<ReadonlyArray<Branch>> =>
     git(['for-each-ref', ...PREFIXES, formatArg(this.fields)])
       .pipe(map(result =>
 

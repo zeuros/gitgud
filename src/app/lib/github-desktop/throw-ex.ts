@@ -1,7 +1,4 @@
-/** Throw an error. */
-export const fatalError = (msg: string): never => {
-  throw new Error(msg)
-}
+import {throwEx} from "../../utils/utils";
 
 /**
  * Unwrap a value that, according to the type system, could be null or
@@ -11,7 +8,7 @@ export const fatalError = (msg: string): never => {
  */
 export const forceUnwrap = <T>(message: string, x: T | null | undefined): T => {
   if (x == null) {
-    return fatalError(message)
+    return throwEx(message)
   } else {
     return x
   }

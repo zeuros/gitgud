@@ -1,4 +1,5 @@
-import {AppFileStatus, AppFileStatusKind} from "./file-status"
+import {AppFileStatus, AppFileStatusKind} from "./model/status";
+
 
 /**
  * Map the raw status text from Git to an app-friendly value

@@ -1,8 +1,8 @@
 import {inject, Injectable} from '@angular/core';
-import {GitApiService} from "./git-api.service";
 import {ParserService} from "../parser.service";
-import {map, Observable} from 'rxjs';
-import {parseRawLogWithNumstat} from "../../lib/github-desktop/commit-files-changes";
+import {map} from 'rxjs';
+import {parseIndexChanges, parseRawLogWithNumstat} from "../../lib/github-desktop/commit-files-changes";
+import {GitRepositoryService} from "../git-repository.service";
 
 @Injectable({
   providedIn: 'root'
@@ -22,7 +22,7 @@ export class CommitFilesChangesService {
   logParser;
   remoteHeadPointer?: string;
 
-  private gitRepositoryService = inject(GitApiService);
+  private gitRepositoryService = inject(GitRepositoryService);
 
   constructor(
     parserService: ParserService,

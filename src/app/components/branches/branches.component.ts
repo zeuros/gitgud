@@ -7,7 +7,7 @@ import {TreeModule} from "primeng/tree";
 import {ContextMenuModule} from "primeng/contextmenu";
 import {MenuItem, TreeNode} from "primeng/api";
 import {PopupService} from "../../services/popup.service";
-import {Branch} from "../../models/branch";
+import {Branch} from "../../lib/github-desktop/model/branch";
 import {GitRepositoryService} from "../../services/git-repository.service";
 import {filter} from "rxjs";
 import {local, remote, removeRemotePrefix, toBranchTree} from "../../utils/branch-utils";

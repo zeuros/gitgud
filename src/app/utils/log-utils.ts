@@ -1,6 +1,6 @@
-import {Branch} from "../models/branch";
+import {Branch} from "../lib/github-desktop/model/branch";
 import {GitRepository} from "../models/git-repository";
-import {DisplayRef} from "../models/display-ref";
+import {DisplayRef} from "../lib/github-desktop/model/display-ref";
 
 export const formatArg = (fields: Object) => {
   const format = Object.values(fields).join('%x00');
