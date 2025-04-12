@@ -1,4 +1,4 @@
-import {Branch, BranchType} from "../models/branch";
+import {Branch, BranchType} from "../lib/github-desktop/model/branch";
 import {TreeNode} from "primeng/api";
 
 export const local = (branch: Branch) => branch.type == BranchType.Local;

@@ -1,5 +1,5 @@
-import {Commit} from "./commit";
-import {Branch} from "./branch";
+import {Commit} from "../lib/github-desktop/model/commit";
+import {Branch} from "../lib/github-desktop/model/branch";
 
 export class GitRepository {
   constructor(

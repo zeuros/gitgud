@@ -1,4 +1,4 @@
-import {AppFileStatus, AppFileStatusKind} from "../lib/github-desktop/file-status";
+import {AppFileStatus, AppFileStatusKind} from "./status";
 
 export interface ChangeSet {
   /** Files changed in the changeset. */
@@ -25,11 +25,10 @@ export class FileChange {
     public readonly path: string,
     public readonly status: AppFileStatus
   ) {
-    if ([AppFileStatusKind.Renamed, AppFileStatusKind.Copied].includes(status.kind)) {
+    if (status.kind === AppFileStatusKind.Renamed || status.kind === AppFileStatusKind.Copied)
       this.id = `${status.kind}+${path}+${status.oldPath}`
-    } else {
+    else
       this.id = `${status.kind}+${path}`
-    }
   }
 }
 

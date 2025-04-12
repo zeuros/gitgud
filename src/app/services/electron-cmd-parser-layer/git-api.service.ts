@@ -60,7 +60,7 @@ export class GitApiService {
     return new Observable<void>();
   }
 
-  exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
+  exec = (cmd: string, args: string[] = [], options?: ExecOptions): Observable<string> =>
     from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
       .pipe(map(({stdout}) => stdout));
 

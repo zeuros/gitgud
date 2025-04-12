@@ -1,5 +1,5 @@
-import {Commit} from "../models/commit";
-import {DisplayRef} from "../models/display-ref";
+import {Commit} from "../lib/github-desktop/model/commit";
+import {DisplayRef} from "../lib/github-desktop/model/display-ref";
 import {RefType} from "../enums/ref-type.enum";
 
 

@@ -1,8 +1,8 @@
 import {GitAuthor} from "./git-author";
 import {CommitIdentity} from "./commit-identity";
-import {isCoAuthoredByTrailer, ITrailer} from "./interpret-trailers";
-import {LogObject} from "./log-object";
-import {notUndefined} from "../utils/utils";
+import {isCoAuthoredByTrailer, ITrailer} from "../../../models/interpret-trailers";
+import {LogObject} from "../../../models/log-object";
+import {notUndefined} from "../../../utils/utils";
 
 /**
  * Extract any Co-Authored-By trailers from an array of arbitrary
@@ -102,4 +102,18 @@ export class Commit implements LogObject {
 
     this.isMergeCommit = parentSHAs.length > 1
   }
+}
+
+/**
+ * A minimal shape of data to represent a commit, for situations where the
+ * application does not require the full commit metadata.
+ *
+ * Equivalent to the output where Git command support the
+ * `--oneline --no-abbrev-commit` arguments to format a commit.
+ */
+export type CommitOneLine = {
+  /** The full commit id associated with the commit */
+  readonly sha: string
+  /** The first line of the commit message */
+  readonly summary: string
 }

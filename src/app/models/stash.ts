@@ -1,4 +1,4 @@
-import {CommitIdentity} from "./commit-identity";
+import {CommitIdentity} from "../lib/github-desktop/model/commit-identity";
 import {ITrailer} from "./interpret-trailers";
 import {LogObject} from "./log-object";
 

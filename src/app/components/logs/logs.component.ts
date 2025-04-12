@@ -1,12 +1,12 @@
 import {GitRepository} from '../../models/git-repository';
 import {TableModule, TableRowSelectEvent} from 'primeng/table';
-import {Commit} from '../../models/commit';
+import {Commit} from '../../lib/github-desktop/model/commit';
 import {RefType} from '../../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../../utils/utils';
 import {Stash} from '../../models/stash';
-import {Branch, BranchType} from "../../models/branch";
+import {Branch, BranchType} from "../../lib/github-desktop/model/branch";
 import {byName, bySha, logsAreEqual} from "../../utils/log-utils";
-import {DisplayRef} from "../../models/display-ref";
+import {DisplayRef} from "../../lib/github-desktop/model/display-ref";
 import {max, once, uniqBy} from "lodash";
 import {
   buildChildrenMap,

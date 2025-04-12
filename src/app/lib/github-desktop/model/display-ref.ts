@@ -1,5 +1,5 @@
-import {LogObject} from "./log-object";
-import {RefType} from "../enums/ref-type.enum";
+import {LogObject} from "../../../models/log-object";
+import {RefType} from "../../../enums/ref-type.enum";
 import {Branch} from "./branch";
 
 export interface LogObjectDisplayInfo {
