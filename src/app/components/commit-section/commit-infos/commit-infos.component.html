@@ -1,1 +1,32 @@
-<h4 *ngIf="selectedCommits()?.length == 1">Commit: <span class="border-white">{{ selectedCommits() }}</span></h4>
+@if (selectedCommits().length == 1) {
+    @let selectedCommit = selectedCommits()[0];
+    <h4>Commit: <span class="border-white">{{ selectedCommit.shortSha }}</span></h4>
+
+    <div class="flex-column items-center justify-center">
+        <div class="p-2">
+            Amend commit message
+        </div>
+        <form class="flex-column flex-1" [formGroup]="editCommitForm">
+
+            <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
+
+            <textarea pTextarea placeholder="Description" rows="3" class="flex-1 commit-description" formControlName="description"></textarea>
+
+            <div class="flex gap-2">
+                <button pButton [disabled]="isEqual(editCommitForm.value, initialValue)" class="my-2 border-round-xs flex-1">
+                    Update message
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="flex-column items-center justify-center">
+        <div *ngFor="let author of [selectedCommit.author, selectedCommit.committer].filter(hasName)">
+            <p-avatar [label]="initials(author)" styleClass="mr-2" size="xlarge" [style.background]="'red'" />
+            {{ author.name }}
+        </div>
+    </div>
+} @else {
+    <!-- Multiple commits selected -->
+}

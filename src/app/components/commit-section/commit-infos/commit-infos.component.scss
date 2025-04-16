@@ -1,0 +1,8 @@
+@forward "../make-a-commit/commit-section";
+
+
+:host {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
