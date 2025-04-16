@@ -50,7 +50,7 @@
             </td>
             <td class="summary">{{ computedDisplayLog[rowIndex].summary }}</td>
             <td class="author text-gray">{{ computedDisplayLog[rowIndex].author.name }}</td>
-            <td class="date text-gray">{{ computedDisplayLog[rowIndex].author.date | date: 'd/M/YYYY @ HH:mm' }}</td>
+            <td class="date text-gray">{{ computedDisplayLog[rowIndex].author.date | date: DATE_FORMAT }}</td>
         </tr>
     </ng-template>
 </p-table>

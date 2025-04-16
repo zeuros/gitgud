@@ -6,3 +6,17 @@
   flex-direction: column;
   width: 100%;
 }
+
+.author-icon {
+
+  color: var(--huaaaaaGray);
+
+  p-avatar {
+    background-color: var(--p-primary-color);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+  }
+
+  &:first-child {
+    margin-bottom: 0.5rem;
+  }
+}
