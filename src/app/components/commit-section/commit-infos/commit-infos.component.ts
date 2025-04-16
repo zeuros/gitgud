@@ -5,10 +5,12 @@ import {FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {InputText} from "primeng/inputtext";
 import {Textarea} from "primeng/textarea";
 import {ButtonDirective} from "primeng/button";
-import {JsonPipe, NgForOf} from "@angular/common";
+import {DatePipe, NgIf} from "@angular/common";
 import {isEqual} from "lodash";
 import {Avatar} from "primeng/avatar";
-import {hasName, initials} from "../../../utils/commit-utils";
+import {commitColor, hasName, initials} from "../../../utils/commit-utils";
+import {CommitIdentity} from "../../../lib/github-desktop/model/commit-identity";
+import {DATE_FORMAT} from "../../../utils/constants";
 
 @Component({
   selector: 'gitgud-commit-infos',
@@ -17,9 +19,9 @@ import {hasName, initials} from "../../../utils/commit-utils";
     InputText,
     Textarea,
     ButtonDirective,
-    JsonPipe,
-    NgForOf,
-    Avatar
+    Avatar,
+    NgIf,
+    DatePipe
   ],
   templateUrl: './commit-infos.component.html',
   styleUrl: './commit-infos.component.scss'
@@ -54,5 +56,14 @@ export class CommitInfosComponent {
 
   protected readonly isEqual = isEqual;
   protected readonly initials = initials;
-  protected readonly hasName = hasName;
+  protected readonly commitColor = commitColor;
+
+  protected isDifferent = (author: CommitIdentity, committer: CommitIdentity): CommitIdentity[] => {
+    console.log(author, committer)
+    if (author.date == committer.date || author.email == committer.email)
+      return [author];
+
+    return [author, committer].filter(hasName);
+  }
+  protected readonly DATE_FORMAT = DATE_FORMAT;
 }

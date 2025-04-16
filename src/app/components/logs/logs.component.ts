@@ -35,6 +35,7 @@ import {AfterViewInit, Component, ElementRef, HostListener, input, signal, ViewC
 import {DatePipe, NgForOf, NgIf, NgStyle} from "@angular/common";
 import {local, remote} from "../../utils/branch-utils";
 import {toObservable} from "@angular/core/rxjs-interop";
+import {DATE_FORMAT} from '../../utils/constants';
 
 type Column = ['taken' | 'free', rowCount: number];
 const indexCommit = (parentCommit: DisplayRef) => ({
@@ -637,5 +638,6 @@ export class LogsComponent implements AfterViewInit {
   protected readonly remote = remote;
   protected readonly local = local;
   protected readonly commitColor = commitColor;
+  protected readonly DATE_FORMAT = DATE_FORMAT;
 
 }
