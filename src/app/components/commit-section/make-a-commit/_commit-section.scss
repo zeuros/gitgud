@@ -1,0 +1,25 @@
+
+.commit-summary {
+  border-radius: 2px 2px 0 0;
+}
+
+.commit-description {
+  border-radius: 0 0 2px 2px;
+}
+
+h4 {
+  margin: 4px;
+}
+
+textarea {
+  resize: none;
+}
+
+.commit-summary {
+  margin-bottom: -1px;
+
+  &:focus {
+    // By default, the summary border (-1px) is behind the textarea
+    z-index: 10;
+  }
+}

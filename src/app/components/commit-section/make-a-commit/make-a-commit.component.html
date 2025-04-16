@@ -1,18 +1,18 @@
-<p-splitter layout="vertical" [panelSizes]="[40, 40, 20]" [minSizes]="[20, 20, 10]">
+<p-splitter layout="vertical" [panelSizes]="[40, 40, 25]" [minSizes]="[25, 25, 20]">
     <ng-template #panel>
-        <div style="flex-grow: 1;" class="flex-column items-center justify-center">
+        <div class="flex-column flex-1">
             <h4>Unstaged files</h4>
             <p-divider type="solid"/>
         </div>
     </ng-template>
     <ng-template #panel>
-        <div style="flex-grow: 1;" class="flex-column items-center justify-center">
+        <div class="flex-column flex-1">
             <h4>Staged files</h4>
             <p-divider type="solid"/>
         </div>
     </ng-template>
     <ng-template #panel>
-        <div style="flex-grow: 1;" class="flex-column items-center justify-center">
+        <div class="flex-column flex-1">
             <div class="p-2">
                 Commit message
             </div>
@@ -22,7 +22,7 @@
 
                 <textarea pTextarea placeholder="Description" rows="3" class="flex-1 commit-description" formControlName="description"></textarea>
 
-                <button pButton [disabled]="!commitForm.value.summary?.length" class="commit-button">
+                <button pButton [disabled]="!commitForm.value.summary?.length" class="mt-2 border-round-xs">
                     Stage files / changes to commit
                 </button>
 

@@ -1,7 +1,9 @@
-<ng-container *ngIf="selectedCommits()?.length">
-
-    <gitgud-make-a-commit *ngIf="selectedCommits()![0] == 'index'"/>
-
-    <gitgud-commit-infos [selectedCommits]="selectedCommits()" *ngIf="selectedCommits()![0] != 'index'"/>
-
-</ng-container>
+@if (selectedCommits()?.length) {
+    @if (selectedCommits()[0].sha == 'index') {
+        <gitgud-make-a-commit/>
+    } @else {
+        <gitgud-commit-infos [selectedCommits]="selectedCommits()"/>
+    }
+} @else {
+    <h2>No commit selected</h2>
+}
