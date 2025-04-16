@@ -1,30 +1,12 @@
-import {GitAuthor} from "./git-author";
 import {CommitIdentity} from "./commit-identity";
-import {isCoAuthoredByTrailer, ITrailer} from "../../../models/interpret-trailers";
+import {Trailer} from "../../../models/interpret-trailers";
 import {LogObject} from "../../../models/log-object";
 import {notUndefined} from "../../../utils/utils";
 
-/**
- * Extract any Co-Authored-By trailers from an array of arbitrary
- * trailers.
- */
-const extractCoAuthors = (trailers: ReadonlyArray<ITrailer>): GitAuthor[] =>
-  trailers.filter(isCoAuthoredByTrailer).map(({value}) => GitAuthor.parse(value)).filter(notUndefined);
-
-const trimCoAuthorsTrailers = (trailers: ReadonlyArray<ITrailer>, body: string) => {
-  let trimmedCoAuthors = body
-
-  trailers.filter(isCoAuthoredByTrailer).forEach(({token, value}) => {
-    trimmedCoAuthors = trimmedCoAuthors.replace(`${token}: ${value}`, '')
-  })
-
-  return trimmedCoAuthors
-}
-
-export const parseRawUnfoldedTrailers = (trailers: string, separators: string): ITrailer[] =>
+export const parseRawUnfoldedTrailers = (trailers: string, separators: string): Trailer[] =>
   trailers.split('\n').map(line => parseSingleUnfoldedTrailer(line, separators)).filter(notUndefined);
 
-const parseSingleUnfoldedTrailer = (line: string, separators: string): ITrailer | null => {
+const parseSingleUnfoldedTrailer = (line: string, separators: string): Trailer | null => {
   for (const separator of separators) {
     const ix = line.indexOf(separator)
     if (ix > 0) {
@@ -56,27 +38,12 @@ const parseSingleUnfoldedTrailer = (line: string, separators: string): ITrailer 
  * @param tags Tags associated with this commit.
  */
 export class Commit implements LogObject {
-  /**
-   * A list of co-authors parsed from the commit message
-   * trailers.
-   */
-  readonly coAuthors: ReadonlyArray<GitAuthor>
-
-  /**
-   * The commit body after removing coauthors
-   */
-  readonly bodyNoCoAuthors: string
 
   /**
    * A value indicating whether the author and the committer
    * are the same person.
    */
   readonly authoredByCommitter: boolean
-
-  /**
-   * Whether the commit is a merge commit (i.e. has at least 2 parents)
-   */
-  readonly isMergeCommit: boolean
 
   constructor(
     public readonly sha: string,
@@ -89,18 +56,12 @@ export class Commit implements LogObject {
     public readonly author: CommitIdentity,
     public readonly committer: CommitIdentity,
     public readonly parentSHAs: ReadonlyArray<string>,
-    public readonly trailers: ReadonlyArray<ITrailer>,
+    public readonly trailers: ReadonlyArray<Trailer>,
     public readonly tags: ReadonlyArray<string>
   ) {
-    this.coAuthors = extractCoAuthors(trailers)
-
     this.authoredByCommitter =
       this.author.name === this.committer.name &&
       this.author.email === this.committer.email
-
-    this.bodyNoCoAuthors = trimCoAuthorsTrailers(trailers, body)
-
-    this.isMergeCommit = parentSHAs.length > 1
   }
 }
 

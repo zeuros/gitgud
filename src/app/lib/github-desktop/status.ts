@@ -66,7 +66,7 @@ interface IStatusHeadersData {
 }
 
 type ConflictFilesDetails = {
-  conflictCountsByPath: ReadonlyMap<string, number>
+  conflictCountsByPath: Record<string, number>
   binaryFilePaths: ReadonlyArray<string>
 }
 
@@ -266,35 +266,33 @@ function parseStatusHeader(results: IStatusHeadersData, header: StatusHeader) {
   }
 }
 
-const getMergeConflictDetails = (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: ReadonlyArray<IStatusEntry>) =>
-  forkJoin({
-    conflictCountsByPath: getFilesWithConflictMarkers(git),
-    binaryFilePaths: getBinaryPaths(git, 'MERGE_HEAD', conflictedFilesInIndex)
-  });
+const getMergeConflictDetails =
+  (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: ReadonlyArray<IStatusEntry>): Observable<ConflictFilesDetails> =>
+    forkJoin({
+      conflictCountsByPath: getFilesWithConflictMarkers(git),
+      binaryFilePaths: getBinaryPaths(git, 'MERGE_HEAD', conflictedFilesInIndex)
+    });
 
-async function getRebaseConflictDetails(git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: ReadonlyArray<IStatusEntry>) {
-
-  const conflictCountsByPath = await getFilesWithConflictMarkers(git)
-  const binaryFilePaths = await getBinaryPaths('REBASE_HEAD', conflictedFilesInIndex)
-
-  return {
-    conflictCountsByPath,
-    binaryFilePaths,
-  }
-}
+const getRebaseConflictDetails =
+  (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: ReadonlyArray<IStatusEntry>): Observable<ConflictFilesDetails> =>
+    forkJoin({
+      conflictCountsByPath: getFilesWithConflictMarkers(git),
+      binaryFilePaths: getBinaryPaths(git, 'REBASE_HEAD', conflictedFilesInIndex)
+    });
 
 /**
  * We need to do these operations to detect conflicts that were the result
  * of popping a stash into the index
  */
-const getWorkingDirectoryConflictDetails = (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: ReadonlyArray<IStatusEntry>) =>
-  forkJoin({
-    conflictCountsByPath: getBinaryPaths(git, 'HEAD', conflictedFilesInIndex),
-    binaryFilePaths: getFilesWithConflictMarkers(git)
-  })
-    .pipe(catchError((e, caught) => {
-      console.warn(e); // its totally fine if HEAD doesn't exist, which throws an error
-      return caught
+const getWorkingDirectoryConflictDetails =
+  (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: ReadonlyArray<IStatusEntry>): Observable<ConflictFilesDetails> =>
+    forkJoin({
+      conflictCountsByPath: getFilesWithConflictMarkers(git),
+      binaryFilePaths: getBinaryPaths(git, 'HEAD', conflictedFilesInIndex),
+    })
+      .pipe(catchError((e, caught) => {
+        console.warn(e); // its totally fine if HEAD doesn't exist, which throws an error
+        return caught
     }))
 
 /**
@@ -310,39 +308,27 @@ const getWorkingDirectoryConflictDetails = (git: (args?: string[]) => Observable
  * @param rebaseInternalState details about the current rebase operation (if
  * found)
  */
-export async function getConflictDetails(
+export const getConflictDetails = (
   git: (args?: string[]) => Observable<string>,
   mergeHeadFound: boolean,
   conflictedFilesInIndex: ReadonlyArray<IStatusEntry>,
   rebaseInternalState: RebaseInternalState | null
-): Promise<ConflictFilesDetails> {
-  try {
-    if (mergeHeadFound) {
-      return await getMergeConflictDetails(repository, conflictedFilesInIndex)
-    }
-
-    if (rebaseInternalState !== null) {
-      return await getRebaseConflictDetails(repository, conflictedFilesInIndex)
-    }
-
-    // If there's conflicted files in the index but we don't have a merge head
-    // or a rebase internal state, then we're likely in a situation where a
-    // stash has introduced conflicts
-    if (conflictedFilesInIndex.length > 0) {
-      return await getWorkingDirectoryConflictDetails(
-        repository,
-        conflictedFilesInIndex
-      )
-    }
-  } catch (error) {
-    console.error(
-      'Unexpected error from git operations in getConflictDetails',
-      error
-    )
+) => {
+  if (mergeHeadFound) {
+    return getMergeConflictDetails(git, conflictedFilesInIndex)
   }
-  return {
-    conflictCountsByPath: new Map<string, number>(),
-    binaryFilePaths: new Array<string>(),
+
+  if (rebaseInternalState !== null) {
+    return getRebaseConflictDetails(git, conflictedFilesInIndex)
   }
+
+  // If there's conflicted files in the index but we don't have a merge head
+  // or a rebase internal state, then we're likely in a situation where a
+  // stash has introduced conflicts
+  if (conflictedFilesInIndex.length > 0) {
+    return getWorkingDirectoryConflictDetails(git, conflictedFilesInIndex)
+  }
+
+  throw new Error('')
 }
 

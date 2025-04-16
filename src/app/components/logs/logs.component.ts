@@ -1,5 +1,5 @@
 import {GitRepository} from '../../models/git-repository';
-import {TableModule, TableRowSelectEvent} from 'primeng/table';
+import {TableModule} from 'primeng/table';
 import {Commit} from '../../lib/github-desktop/model/commit';
 import {RefType} from '../../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../../utils/utils';
@@ -12,7 +12,10 @@ import {
   buildChildrenMap,
   buildShaMap,
   ChildrenMap,
+  commitColor,
   edgeType,
+  hasName,
+  initials,
   isCommit,
   isIndex,
   isMergeCommit,
@@ -101,7 +104,7 @@ export class LogsComponent implements AfterViewInit {
       .pipe(filter(gitRepository => gitRepository?.logs.length > 0), distinctUntilChanged(logsAreEqual))
       .subscribe(this.onRepositoryLogChanges);
 
-    toObservable(this.selectedCommits).subscribe(selectedCommits => this.gitRepositoryService.updateCurrentRepository({selectedCommits: selectedCommits.map(c => c.sha)}))
+    toObservable(this.selectedCommits).subscribe(selectedCommits => this.gitRepositoryService.updateCurrentRepository({selectedCommits}))
   }
 
   get logTableElement() {
@@ -126,13 +129,9 @@ export class LogsComponent implements AfterViewInit {
 
   protected branchName = (b: Branch) => b.name.replace('origin/', '');
 
-  protected initials = (ref: DisplayRef) => ref.author.name.split(' ').slice(0, 2).map(e => e[0]).join('');
-
   protected xPosition = (col?: number) => this.NODE_RADIUS + (col ?? 0) * this.NODE_DIAMETER;
 
   protected yPosition = (row?: number) => this.NODE_RADIUS + (row ?? 0) * this.ROW_HEIGHT;
-
-  protected indentColorFilter = (indent: number) => `hue-rotate(${indent * 360 / 7}deg)`;
 
   // TODO: show ghost branch on the left of commit if merged
   protected branchesAndRef = (displayLogElement: DisplayRef) =>
@@ -146,10 +145,14 @@ export class LogsComponent implements AfterViewInit {
 
     const searchStringL = searchString.toLowerCase();
     this.computedDisplayLog
-      .filter(({sha, summary, author}) => !(sha.includes(searchStringL) || summary.toLowerCase().includes(searchStringL) || author.name.toLowerCase().includes(searchStringL)))
+      .filter(({sha, summary, author, committer}) => !(
+        sha.includes(searchStringL)
+        || summary.toLowerCase().includes(searchStringL)
+        || author?.name?.toLowerCase().includes(searchStringL)
+        || committer?.name?.toLowerCase().includes(searchStringL)
+      ))
       .forEach(commit => commit.highlight = 'not-matched');
 
-    // TODO: focus on first matched commit if out of screen
     // TODO: Apply this filter on the displayed elements only
   }
 
@@ -536,7 +539,7 @@ export class LogsComponent implements AfterViewInit {
       canvas.fill();
 
       this.prepareForCommitTextDraw(canvas);
-      canvas.fillText(this.initials(ref).toUpperCase(), x, y + 1);
+      canvas.fillText(initials(hasName(ref.author) ? ref.author : ref.committer), x, y + 1);
       canvas.fill();
     } else if (isIndex(ref)) {
       canvas.arc(x, y, this.NODE_RADIUS - 1, 0, 2 * Math.PI, true);
@@ -568,7 +571,7 @@ export class LogsComponent implements AfterViewInit {
     canvas.lineWidth = 2;
     canvas.setLineDash([]);
     canvas.fillStyle = canvas.strokeStyle = 'rgba(206, 147, 216, 0.9)';
-    canvas.filter = this.indentColorFilter(indent);
+    canvas.filter = commitColor(indent);
     canvas.shadowColor = 'rgba(0, 0, 0, 0.8)';
     canvas.shadowBlur = 10;
   };
@@ -633,8 +636,6 @@ export class LogsComponent implements AfterViewInit {
 
   protected readonly remote = remote;
   protected readonly local = local;
+  protected readonly commitColor = commitColor;
 
-  rowSelect({data}: TableRowSelectEvent<DisplayRef>) {
-    this.selectedCommits.set(Array.isArray(data) ? data : [data!]);
-  }
 }

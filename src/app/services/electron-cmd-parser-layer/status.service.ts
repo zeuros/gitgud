@@ -1,10 +1,10 @@
 import {inject, Injectable} from '@angular/core';
-import {IStatusResult} from '../../lib/github-desktop/status';
-import {map, Observable} from 'rxjs';
+import {map} from 'rxjs';
 import {GitRepositoryService} from "../git-repository.service";
-import {isStatusEntry, isStatusHeader, parsePorcelainStatus } from '../../lib/github-desktop/status-parser';
-import { isMergeHeadSet } from '../../lib/github-desktop/merge';
-import { conflictStatusCodes } from '../../lib/github-desktop/model/status';
+import {isStatusEntry, isStatusHeader, parsePorcelainStatus} from '../../lib/github-desktop/status-parser';
+import {isMergeHeadSet} from '../../lib/github-desktop/merge';
+import {conflictStatusCodes, WorkingDirectoryFileChange, WorkingDirectoryStatus} from '../../lib/github-desktop/model/status';
+import {getConflictDetails} from "../../lib/github-desktop/status";
 
 @Injectable({
   providedIn: 'root'

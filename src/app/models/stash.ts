@@ -1,5 +1,5 @@
 import {CommitIdentity} from "../lib/github-desktop/model/commit-identity";
-import {ITrailer} from "./interpret-trailers";
+import {Trailer} from "./interpret-trailers";
 import {LogObject} from "./log-object";
 
 
@@ -16,7 +16,7 @@ export class Stash implements LogObject {
     public readonly author: CommitIdentity,
     public readonly committer: CommitIdentity,
     public readonly parentSHAs: ReadonlyArray<string>,
-    public readonly trailers: ReadonlyArray<ITrailer>,
+    public readonly trailers: ReadonlyArray<Trailer>,
     public readonly tags: ReadonlyArray<string>,
   ) {
   }
