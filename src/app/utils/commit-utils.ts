@@ -1,6 +1,7 @@
 import {Commit} from "../lib/github-desktop/model/commit";
 import {DisplayRef} from "../lib/github-desktop/model/display-ref";
 import {RefType} from "../enums/ref-type.enum";
+import {CommitIdentity} from "../lib/github-desktop/model/commit-identity";
 
 
 export type ChildrenMap = { [parentSha: string]: DisplayRef[] };
@@ -12,6 +13,10 @@ export const isIndex = (displayRef: DisplayRef) => displayRef.refType == RefType
 export const isStash = (displayRef: DisplayRef) => displayRef.refType == RefType.STASH;
 export const isMergeCommit = (displayRef: DisplayRef) => isCommit(displayRef) && displayRef.parentSHAs.length > 1;
 export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0
+
+export const initials = (author: CommitIdentity) => author.name.split(' ').slice(0, 2).map(e => e[0]).join('').toUpperCase();
+export const hasName = (author: CommitIdentity) => author.name.length > 0;
+export const commitColor = (indent: number) => `hue-rotate(${indent * 360 / 7}deg)`;
 
 // TODO move somewhere
 export const edgeType = (childCommit: DisplayRef) => {

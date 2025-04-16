@@ -1,5 +1,6 @@
 import {Commit} from "../lib/github-desktop/model/commit";
 import {Branch} from "../lib/github-desktop/model/branch";
+import {DisplayRef} from "../lib/github-desktop/model/display-ref";
 
 export class GitRepository {
   constructor(
@@ -10,7 +11,7 @@ export class GitRepository {
     public logs: ReadonlyArray<Commit> = [],
     public stashes: ReadonlyArray<Commit> = [],
     public branches: ReadonlyArray<Branch> = [],
-    public selectedCommits?: string[],
+    public selectedCommits: ReadonlyArray<DisplayRef> = [],
     public highlightedCommitSha?: string,
     public checkedOutBranch?: Branch,
     public startCommit = 0,

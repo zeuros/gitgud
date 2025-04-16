@@ -1,5 +1,5 @@
 import {CommitIdentity} from "../lib/github-desktop/model/commit-identity";
-import {ITrailer} from "./interpret-trailers";
+import {Trailer} from "./interpret-trailers";
 
 export interface LogObject {
   sha: string
@@ -12,6 +12,6 @@ export interface LogObject {
   author: CommitIdentity
   committer: CommitIdentity
   parentSHAs: ReadonlyArray<string>
-  trailers: ReadonlyArray<ITrailer>
+  trailers: ReadonlyArray<Trailer>
   tags: ReadonlyArray<string>
 }

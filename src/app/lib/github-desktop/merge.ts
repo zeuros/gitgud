@@ -1,7 +1,3 @@
-import * as Path from 'path'
-import {GitRepository} from "../../models/git-repository";
-
-
 export enum MergeResult {
   /** The merge completed successfully */
   Success,
@@ -100,7 +96,7 @@ export enum MergeResult {
  * that it is in a conflicted state.
  */
 // export async function isMergeHeadSet(repository: GitRepository): Promise<boolean> {
-export async function isMergeHeadSet() {
+export const isMergeHeadSet = () => {
   return true
   // const path = Path.join(repository.path, '.git', 'MERGE_HEAD')
   // return await pathExists(path)
