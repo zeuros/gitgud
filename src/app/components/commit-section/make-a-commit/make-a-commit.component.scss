@@ -1,4 +1,3 @@
-
 @forward "commit-section";
 
 :host {
@@ -12,12 +11,12 @@
 
   ::ng-deep {
 
-    .min-sizes .p-splitterpanel {
-      min-height: 230px;
-    }
-
     .max-size-bottom .p-splitterpanel:last-child {
       max-height: 400px;
+    }
+
+    .p-splitterpanel.p-splitterpanel-nested.ng-star-inserted {
+      min-height: 210px;
     }
   }
 }
