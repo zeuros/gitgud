@@ -7,10 +7,9 @@ import {Textarea} from "primeng/textarea";
 import {ButtonDirective} from "primeng/button";
 import {DatePipe, NgIf} from "@angular/common";
 import {isEqual} from "lodash";
-import {Avatar} from "primeng/avatar";
-import {commitColor, hasName, initials} from "../../../utils/commit-utils";
-import {CommitIdentity} from "../../../lib/github-desktop/model/commit-identity";
 import {DATE_FORMAT} from "../../../utils/constants";
+import {Tooltip} from "primeng/tooltip";
+import {AvatarComponent} from "./avatar/avatar.component";
 
 @Component({
   selector: 'gitgud-commit-infos',
@@ -19,9 +18,10 @@ import {DATE_FORMAT} from "../../../utils/constants";
     InputText,
     Textarea,
     ButtonDirective,
-    Avatar,
     NgIf,
-    DatePipe
+    DatePipe,
+    Tooltip,
+    AvatarComponent
   ],
   templateUrl: './commit-infos.component.html',
   styleUrl: './commit-infos.component.scss'
@@ -55,15 +55,6 @@ export class CommitInfosComponent {
   }
 
   protected readonly isEqual = isEqual;
-  protected readonly initials = initials;
-  protected readonly commitColor = commitColor;
 
-  protected isDifferent = (author: CommitIdentity, committer: CommitIdentity): CommitIdentity[] => {
-    console.log(author, committer)
-    if (author.date == committer.date || author.email == committer.email)
-      return [author];
-
-    return [author, committer].filter(hasName);
-  }
   protected readonly DATE_FORMAT = DATE_FORMAT;
 }
