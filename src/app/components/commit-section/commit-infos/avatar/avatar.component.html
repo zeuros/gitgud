@@ -1,0 +1,8 @@
+<img [class.hidden]="!avatarLoaded"
+     [ngSrc]="identity.email | gravatarUrl"
+     (load)="avatarLoaded = true"
+     (error)="avatarLoaded = false"
+     class="avatar-size"
+     alt="user avatar" fill/>
+
+<p-avatar *ngIf="!avatarLoaded" [label]="initials(identity)" size="large" [style.filter]="commitColor(indent!)"/>

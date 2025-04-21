@@ -22,15 +22,18 @@
     </div>
 
     <div class="flex-column items-center justify-center">
-        <div class="flex align-items-center gap-2 author-icon">
-            <p-avatar [label]="initials(selectedCommit.author)" size="large" [style.filter]="commitColor(selectedCommit.indent!)" />
+        <div class="flex align-items-center gap-2 author-icon"
+             [pTooltip]="selectedCommit.author.email">
+            <gitgud-avatar [identity]="selectedCommit.author" [indent]="selectedCommit.indent!"/>
             <div class="flex-column">
                 <span>{{ selectedCommit.author.name }}</span>
                 <span>authored {{ selectedCommit.author.date | date: DATE_FORMAT }}</span>
             </div>
         </div>
-        <div *ngIf="isDifferent(selectedCommit.author, selectedCommit.committer)" class="flex align-items-center gap-2 author-icon">
-            <p-avatar [label]="initials(selectedCommit.committer)" size="large" [style.filter]="commitColor(selectedCommit.indent!)" />
+        <div class="flex align-items-center gap-2 author-icon"
+             *ngIf="selectedCommit.author.email != selectedCommit.committer.email"
+             [pTooltip]="selectedCommit.committer.email">
+            <gitgud-avatar [identity]="selectedCommit.committer" [indent]="selectedCommit.indent!"/>
             <div class="flex-column">
                 <span>{{ selectedCommit.committer.name }}</span>
                 <span>committed {{ selectedCommit.committer.date | date: DATE_FORMAT }}</span>
