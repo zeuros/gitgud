@@ -55,4 +55,5 @@
 
     /* Layout stuff*/
     --p-divider-horizontal-margin: 0.5rem 0;
+    --p-form-field-border-radius: var(--p-border-radius-xs);
 }

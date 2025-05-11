@@ -84,7 +84,6 @@
             align-items: center;
 
             .branch-name {
-              @extend .ellipsis;
               font-size: 13px;
               margin-right: 4px;
             }
@@ -101,7 +100,6 @@
       }
 
       td.summary, td.author, td.date {
-        @extend .ellipsis;
         color: var(--huaaaaaGray);
         min-width: 100px;
         max-width: 300px;
@@ -133,12 +131,6 @@
       }
     }
   }
-}
-
-.ellipsis {
-  white-space: nowrap;
-  overflow-x: hidden;
-  text-overflow: ellipsis;
 }
 
 .text-gray {

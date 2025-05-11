@@ -45,7 +45,7 @@ export class BranchesComponent {
     {label: 'Copy commit sha', icon: 'pi pi-receipt', command: () => this.popupService.info('Copy commit sha selected')},
   ];
 
-  branches = input<Branch[]>();
+  readonly branches = input<Branch[]>();
   protected localBranches: TreeNode<Branch>[] = [];
   protected remoteBranches: TreeNode<Branch>[] = [];
   protected selectedNode?: TreeNode<Branch>;

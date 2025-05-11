@@ -26,3 +26,6 @@ export const omitUndefined = <T extends object>(o: T | undefined) => {
 export const removeDuplicates = <T>(item: T, index: number, array: T[]): boolean => array.indexOf(item) === index
 export const notUndefined = <T>(v: T | undefined | null): v is T => !!v
 
+
+export const directory = (path: string) => path.split('/').slice(0, -1).join('/');
+export const fileName = (path: string) => path.split('/').pop();

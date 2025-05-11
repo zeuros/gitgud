@@ -64,3 +64,14 @@ html, body, app-root {
 .hidden {
   display: none;
 }
+
+hr {
+  width: 100%;
+  border-color: var(--p-accordion-panel-border-color);
+}
+
+.ellipsis {
+  white-space: nowrap;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+}

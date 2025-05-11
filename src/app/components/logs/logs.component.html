@@ -27,9 +27,9 @@
             [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2">
             <td class="branch-tag-td">
                 <div class="branch-tag" *ngFor="let branch of branchesAndRef(computedDisplayLog[rowIndex]); let i = index">
-                    <div class="commit-branch" [ngStyle]="{top: i * 30 + 'px', filter: commitColor(computedDisplayLog[rowIndex].indent)}" pDraggable>
+                    <div class="commit-branch" [ngStyle]="{top: i * 30 + 'px', filter: commitColor(computedDisplayLog[rowIndex].indent!)}" pDraggable>
                         <i *ngIf="computedDisplayLog[rowIndex].isPointedByLocalHead" class="fa fa-check mr-2"></i>
-                        <span class="branch-name">{{ branchName(branch) }}</span>
+                        <span class="ellipsis branch-name">{{ branchName(branch) }}</span>
                         <span class="float-icons">
                             <i *ngIf="remote(branch)" class="fa fa-github mr-2"></i>
                             <i *ngIf="local(branch)" class="fa fa-laptop mr-2"></i>
@@ -48,8 +48,8 @@
                 ></canvas>
                 <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN[0] + xPosition(computedDisplayLog[rowIndex].indent)"></div>
             </td>
-            <td class="summary">{{ computedDisplayLog[rowIndex].summary }}</td>
-            <td class="author text-gray">{{ computedDisplayLog[rowIndex].author.name }}</td>
+            <td class="summary ellipsis">{{ computedDisplayLog[rowIndex].summary }}</td>
+            <td class="author text-gray ellipsis">{{ computedDisplayLog[rowIndex].author.name }}</td>
             <td class="date text-gray">{{ computedDisplayLog[rowIndex].author.date | date: DATE_FORMAT }}</td>
         </tr>
     </ng-template>
