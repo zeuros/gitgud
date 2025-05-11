@@ -3,8 +3,9 @@
      (load)="avatarLoaded = true"
      (error)="avatarLoaded = false"
      class="avatar-size"
-     alt="user avatar"/>
+     alt="user avatar from gravatar"/>
 
 <img *ngIf="!avatarLoaded"
+     @fadeSlideIn
      [src]="identity.email | identicon"
-     alt="user avatar"/>
+     alt="user avatar identicon"/>
