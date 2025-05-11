@@ -11,7 +11,7 @@
 
   color: var(--huaaaaaGray);
 
-  &:first-child {
-    margin-bottom: 0.5rem;
+  & + .author-icon {
+    margin-top: 0.5rem;
   }
 }

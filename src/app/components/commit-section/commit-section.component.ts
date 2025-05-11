@@ -17,6 +17,6 @@ import {DisplayRef} from "../../lib/github-desktop/model/display-ref";
 })
 export class CommitSectionComponent {
 
-  selectedCommits = input<DisplayRef[]>([]);
+  readonly selectedCommits = input<DisplayRef[]>([]);
 
 }
