@@ -1,6 +1,8 @@
-@if (selectedCommits().length == 1) {
+@if (selectedCommits()[0]) {
     @let selectedCommit = selectedCommits()[0];
     <h4>Commit: <span class="border-white">{{ selectedCommit.shortSha }}</span></h4>
+
+    <hr>
 
     <div class="flex-column items-center justify-center">
         <div class="p-2">
@@ -21,6 +23,8 @@
         </form>
     </div>
 
+    <hr>
+
     <div class="flex-column items-center justify-center">
         <div class="flex align-items-center gap-2 author-icon"
              [pTooltip]="selectedCommit.author.email">
@@ -40,6 +44,14 @@
             </div>
         </div>
     </div>
+
+    <p-listbox [options]="editedFiles?.files ?? []" [(ngModel)]="selectedEditedFile" optionLabel="path" [scrollHeight]="undefined">
+        <ng-template #item let-file>
+            @let dir = directory(file.path);
+            <span *ngIf="dir.length" class="ellipsis" [style.min-width.rem]="1.3">{{ dir }}</span>
+            <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(file.path) }}</span>
+        </ng-template>
+    </p-listbox>
 } @else {
     <!-- Multiple commits selected -->
 }

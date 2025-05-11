@@ -621,7 +621,8 @@ export class LogsComponent implements AfterViewInit {
   private selectAndScrollToCommit = (sha: string) => {
     const indexCommitToSelect = this.computedDisplayLog.findIndex(bySha(sha));
 
-    this.selectedCommits.set([this.computedDisplayLog[indexCommitToSelect]]);
+    if (this.computedDisplayLog[indexCommitToSelect])
+      this.selectedCommits.set([this.computedDisplayLog[indexCommitToSelect]]);
 
     if (!this.isOnView(indexCommitToSelect)) {
       this.waitForCanvasToAppear.subscribe(canvas => {
