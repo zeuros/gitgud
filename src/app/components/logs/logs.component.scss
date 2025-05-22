@@ -30,7 +30,7 @@
         &.p-datatable-row-selected, &.p-highlight:hover {
           td.summary, td.author, td.date, .commit-highlight-background {
             background: var(--row-selected-background-color);
-            color: #e5e5e5;
+            color: var(--babedouGray);
           }
         }
       }
@@ -131,10 +131,6 @@
       }
     }
   }
-}
-
-.text-gray {
-  color: var(--hmmmmmmGray);
 }
 
 .graph {

@@ -1,18 +1,19 @@
 import {Component, effect, inject, input} from '@angular/core';
-import {CommitFilesChangesService} from "../../../services/electron-cmd-parser-layer/commit-files-changes.service";
-import {DisplayRef} from "../../../lib/github-desktop/model/display-ref";
-import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {InputText} from "primeng/inputtext";
-import {Textarea} from "primeng/textarea";
-import {ButtonDirective} from "primeng/button";
-import {DatePipe, NgIf} from "@angular/common";
-import {isEqual} from "lodash";
-import {DATE_FORMAT} from "../../../utils/constants";
-import {directory, fileName} from "../../../utils/utils";
-import {Tooltip} from "primeng/tooltip";
-import {AvatarComponent} from "./avatar/avatar.component";
-import {Listbox} from "primeng/listbox";
-import {ChangeSet, CommittedFileChange} from "../../../lib/github-desktop/model/change-set";
+import {CommitFilesChangesService} from '../../../services/electron-cmd-parser-layer/commit-files-changes.service';
+import {DisplayRef} from '../../../lib/github-desktop/model/display-ref';
+import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {InputText} from 'primeng/inputtext';
+import {Textarea} from 'primeng/textarea';
+import {ButtonDirective} from 'primeng/button';
+import {DatePipe, NgIf} from '@angular/common';
+import {isEqual} from 'lodash';
+import {DATE_FORMAT} from '../../../utils/constants';
+import {directory, fileName} from '../../../utils/utils';
+import {Tooltip} from 'primeng/tooltip';
+import {AvatarComponent} from './avatar/avatar.component';
+import {Listbox} from 'primeng/listbox';
+import {ChangeSet, CommittedFileChange} from '../../../lib/github-desktop/model/change-set';
+import {ChangeStatusIcon} from '../../../lib/github-desktop/model/status';
 
 @Component({
   selector: 'gitgud-commit-infos',
@@ -26,10 +27,10 @@ import {ChangeSet, CommittedFileChange} from "../../../lib/github-desktop/model/
     Tooltip,
     AvatarComponent,
     Listbox,
-    FormsModule
+    FormsModule,
   ],
   templateUrl: './commit-infos.component.html',
-  styleUrl: './commit-infos.component.scss'
+  styleUrl: './commit-infos.component.scss',
 })
 export class CommitInfosComponent {
 
@@ -45,6 +46,7 @@ export class CommitInfosComponent {
   protected readonly DATE_FORMAT = DATE_FORMAT;
   protected readonly directory = directory;
   protected readonly fileName = fileName;
+  protected readonly ChangeStatusIcon = ChangeStatusIcon;
   private readonly commitFilesChangesService = inject(CommitFilesChangesService);
 
   constructor() {
@@ -54,7 +56,7 @@ export class CommitInfosComponent {
           .subscribe(editedFiles => this.editedFiles = editedFiles);
         this.editCommitForm.setValue({
           summary: this.selectedCommits()[0].summary,
-          description: this.selectedCommits()[0].body
+          description: this.selectedCommits()[0].body,
         });
         this.initialValue = this.editCommitForm.value;
 
@@ -62,4 +64,6 @@ export class CommitInfosComponent {
         console.warn('TODO');
     });
   }
+
+  protected readonly file$ = (f: CommittedFileChange) => f;
 }
