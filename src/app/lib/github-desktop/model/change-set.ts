@@ -1,21 +1,21 @@
-import {AppFileStatus, AppFileStatusKind} from "./status";
+import {AppFileStatus, AppFileStatusKind} from './status';
 
 export interface ChangeSet {
   /** Files changed in the changeset. */
-  readonly files: ReadonlyArray<CommittedFileChange>
+  readonly files: ReadonlyArray<CommittedFileChange>;
 
   /** Number of lines added in the changeset. */
-  readonly linesAdded: number
+  readonly linesAdded: number;
 
   /** Number of lines deleted in the changeset. */
-  readonly linesDeleted: number
+  readonly linesDeleted: number;
 }
 
 
 /** encapsulate changes to a file associated with a commit */
 export class FileChange {
 
-  public readonly id: string
+  public readonly id: string;
 
   /**
    * @param path The relative path to the file in the repository.
@@ -23,12 +23,12 @@ export class FileChange {
    */
   public constructor(
     public readonly path: string,
-    public readonly status: AppFileStatus
+    public readonly status: AppFileStatus,
   ) {
     if (status.kind === AppFileStatusKind.Renamed || status.kind === AppFileStatusKind.Copied)
-      this.id = `${status.kind}+${path}+${status.oldPath}`
+      this.id = `${status.kind}+${path}+${status.oldPath}`;
     else
-      this.id = `${status.kind}+${path}`
+      this.id = `${status.kind}+${path}`;
   }
 }
 
@@ -45,10 +45,10 @@ export class CommittedFileChange extends FileChange {
   public constructor(
     path: string,
     status: AppFileStatus,
-    public readonly commitish: string
+    public readonly commitish: string,
   ) {
-    super(path, status)
+    super(path, status);
 
-    this.commitish = commitish
+    this.commitish = commitish;
   }
 }

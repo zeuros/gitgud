@@ -1,4 +1,4 @@
-import {DiffSelection, DiffSelectionType} from "./diff/diff-selection"
+import {DiffSelection, DiffSelectionType} from './diff/diff-selection';
 
 
 /**
@@ -26,6 +26,16 @@ export enum AppFileStatusKind {
   Conflicted = 'Conflicted',
   Untracked = 'Untracked',
 }
+
+export const ChangeStatusIcon: Record<AppFileStatusKind, { icon: string, color: string }> = {
+  [AppFileStatusKind.New]: {icon: 'fa-plus', color: '#20e88e'},
+  [AppFileStatusKind.Modified]: {icon: 'fa-pencil', color: '#26beec'},
+  [AppFileStatusKind.Deleted]: {icon: 'fa-trash', color: '#e8206d'},
+  [AppFileStatusKind.Copied]: {icon: 'fa-clone', color: '#7a20e8'},
+  [AppFileStatusKind.Renamed]: {icon: 'fa-arrow-right', color: '#e1e820'},
+  [AppFileStatusKind.Conflicted]: {icon: 'fa-exclamation-triangle', color: '#e87a20'},
+  [AppFileStatusKind.Untracked]: {icon: 'fa-user-secret', color: '#aaaaaa'},
+};
 
 /**
  * Normal changes to a repository detected by GitHub Desktop
@@ -77,23 +87,23 @@ export type ConflictedFileStatus = ConflictsWithMarkers | ManualConflict
 
 /** Custom typeguard to differentiate Conflict files from other types */
 export function isConflictedFileStatus(
-  appFileStatus: AppFileStatus
+  appFileStatus: AppFileStatus,
 ): appFileStatus is ConflictedFileStatus {
-  return appFileStatus.kind === AppFileStatusKind.Conflicted
+  return appFileStatus.kind === AppFileStatusKind.Conflicted;
 }
 
 /** Custom typeguard to differentiate ConflictsWithMarkers from other Conflict types */
 export function isConflictWithMarkers(
-  conflictedFileStatus: ConflictedFileStatus
+  conflictedFileStatus: ConflictedFileStatus,
 ): conflictedFileStatus is ConflictsWithMarkers {
-  return conflictedFileStatus.hasOwnProperty('conflictMarkerCount')
+  return conflictedFileStatus.hasOwnProperty('conflictMarkerCount');
 }
 
 /** Custom typeguard to differentiate ManualConflict from other Conflict types */
 export function isManualConflict(
-  conflictedFileStatus: ConflictedFileStatus
+  conflictedFileStatus: ConflictedFileStatus,
 ): conflictedFileStatus is ManualConflict {
-  return !conflictedFileStatus.hasOwnProperty('conflictMarkerCount')
+  return !conflictedFileStatus.hasOwnProperty('conflictMarkerCount');
 }
 
 /** Denotes an untracked file in the working directory) */
@@ -165,15 +175,15 @@ export enum UnmergedEntrySummary {
  */
 type TextConflictDetails =
   | {
-      readonly action: UnmergedEntrySummary.BothAdded
-      readonly us: GitStatusEntry.Added
-      readonly them: GitStatusEntry.Added
-    }
+  readonly action: UnmergedEntrySummary.BothAdded
+  readonly us: GitStatusEntry.Added
+  readonly them: GitStatusEntry.Added
+}
   | {
-      readonly action: UnmergedEntrySummary.BothModified
-      readonly us: GitStatusEntry.UpdatedButUnmerged
-      readonly them: GitStatusEntry.UpdatedButUnmerged
-    }
+  readonly action: UnmergedEntrySummary.BothModified
+  readonly us: GitStatusEntry.UpdatedButUnmerged
+  readonly them: GitStatusEntry.UpdatedButUnmerged
+}
 
 type TextConflictEntry = {
   readonly kind: 'conflicted'
@@ -190,41 +200,41 @@ type ManualConflictDetails = {
   readonly submoduleStatus?: SubmoduleStatus
 } & (
   | {
-      readonly action: UnmergedEntrySummary.BothAdded
-      readonly us: GitStatusEntry.Added
-      readonly them: GitStatusEntry.Added
-    }
+  readonly action: UnmergedEntrySummary.BothAdded
+  readonly us: GitStatusEntry.Added
+  readonly them: GitStatusEntry.Added
+}
   | {
-      readonly action: UnmergedEntrySummary.BothModified
-      readonly us: GitStatusEntry.UpdatedButUnmerged
-      readonly them: GitStatusEntry.UpdatedButUnmerged
-    }
+  readonly action: UnmergedEntrySummary.BothModified
+  readonly us: GitStatusEntry.UpdatedButUnmerged
+  readonly them: GitStatusEntry.UpdatedButUnmerged
+}
   | {
-      readonly action: UnmergedEntrySummary.AddedByUs
-      readonly us: GitStatusEntry.Added
-      readonly them: GitStatusEntry.UpdatedButUnmerged
-    }
+  readonly action: UnmergedEntrySummary.AddedByUs
+  readonly us: GitStatusEntry.Added
+  readonly them: GitStatusEntry.UpdatedButUnmerged
+}
   | {
-      readonly action: UnmergedEntrySummary.DeletedByThem
-      readonly us: GitStatusEntry.UpdatedButUnmerged
-      readonly them: GitStatusEntry.Deleted
-    }
+  readonly action: UnmergedEntrySummary.DeletedByThem
+  readonly us: GitStatusEntry.UpdatedButUnmerged
+  readonly them: GitStatusEntry.Deleted
+}
   | {
-      readonly action: UnmergedEntrySummary.AddedByThem
-      readonly us: GitStatusEntry.UpdatedButUnmerged
-      readonly them: GitStatusEntry.Added
-    }
+  readonly action: UnmergedEntrySummary.AddedByThem
+  readonly us: GitStatusEntry.UpdatedButUnmerged
+  readonly them: GitStatusEntry.Added
+}
   | {
-      readonly action: UnmergedEntrySummary.DeletedByUs
-      readonly us: GitStatusEntry.Deleted
-      readonly them: GitStatusEntry.UpdatedButUnmerged
-    }
+  readonly action: UnmergedEntrySummary.DeletedByUs
+  readonly us: GitStatusEntry.Deleted
+  readonly them: GitStatusEntry.UpdatedButUnmerged
+}
   | {
-      readonly action: UnmergedEntrySummary.BothDeleted
-      readonly us: GitStatusEntry.Deleted
-      readonly them: GitStatusEntry.Deleted
-    }
-)
+  readonly action: UnmergedEntrySummary.BothDeleted
+  readonly us: GitStatusEntry.Deleted
+  readonly them: GitStatusEntry.Deleted
+}
+  )
 
 type ManualConflictEntry = {
   readonly kind: 'conflicted'
@@ -252,7 +262,7 @@ export type FileEntry =
 /** encapsulate changes to a file associated with a commit */
 export class FileChange {
   /** An ID for the file change. */
-  public readonly id: string
+  public readonly id: string;
 
   /**
    * @param path The relative path to the file in the repository.
@@ -260,15 +270,15 @@ export class FileChange {
    */
   public constructor(
     public readonly path: string,
-    public readonly status: AppFileStatus
+    public readonly status: AppFileStatus,
   ) {
     if (
       status.kind === AppFileStatusKind.Renamed ||
       status.kind === AppFileStatusKind.Copied
     ) {
-      this.id = `${status.kind}+${path}+${status.oldPath}`
+      this.id = `${status.kind}+${path}+${status.oldPath}`;
     } else {
-      this.id = `${status.kind}+${path}`
+      this.id = `${status.kind}+${path}`;
     }
   }
 }
@@ -284,23 +294,23 @@ export class WorkingDirectoryFileChange extends FileChange {
   public constructor(
     path: string,
     status: AppFileStatus,
-    public readonly selection: DiffSelection
+    public readonly selection: DiffSelection,
   ) {
-    super(path, status)
+    super(path, status);
   }
 
   /** Create a new WorkingDirectoryFileChange with the given includedness. */
   public withIncludeAll(include: boolean): WorkingDirectoryFileChange {
     const newSelection = include
       ? this.selection.withSelectAll()
-      : this.selection.withSelectNone()
+      : this.selection.withSelectNone();
 
-    return this.withSelection(newSelection)
+    return this.withSelection(newSelection);
   }
 
   /** Create a new WorkingDirectoryFileChange with the given diff selection. */
   public withSelection(selection: DiffSelection): WorkingDirectoryFileChange {
-    return new WorkingDirectoryFileChange(this.path, this.status, selection)
+    return new WorkingDirectoryFileChange(this.path, this.status, selection);
   }
 }
 
@@ -318,11 +328,11 @@ export class CommittedFileChange extends FileChange {
     path: string,
     status: AppFileStatus,
     public readonly commitish: string,
-    public readonly parentCommitish: string
+    public readonly parentCommitish: string,
   ) {
-    super(path, status)
+    super(path, status);
 
-    this.commitish = commitish
+    this.commitish = commitish;
   }
 }
 
@@ -330,12 +340,13 @@ export class CommittedFileChange extends FileChange {
 export class WorkingDirectoryStatus {
   /** Create a new status with the given files. */
   public static fromFiles(
-    files: ReadonlyArray<WorkingDirectoryFileChange>
+    files: ReadonlyArray<WorkingDirectoryFileChange>,
   ): WorkingDirectoryStatus {
-    return new WorkingDirectoryStatus(files, getIncludeAllState(files))
+    return new WorkingDirectoryStatus(files, getIncludeAllState(files));
   }
 
-  private readonly fileIxById = new Map<string, number>()
+  private readonly fileIxById = new Map<string, number>();
+
   /**
    * @param files The list of changes in the repository's working directory.
    * @param includeAll Update the include checkbox state of the form.
@@ -344,56 +355,56 @@ export class WorkingDirectoryStatus {
    */
   private constructor(
     public readonly files: ReadonlyArray<WorkingDirectoryFileChange>,
-    public readonly includeAll: boolean | null = true
+    public readonly includeAll: boolean | null = true,
   ) {
-    files.forEach((f, ix) => this.fileIxById.set(f.id, ix))
+    files.forEach((f, ix) => this.fileIxById.set(f.id, ix));
   }
 
   /**
    * Update the include state of all files in the working directory
    */
   public withIncludeAllFiles(includeAll: boolean): WorkingDirectoryStatus {
-    const newFiles = this.files.map(f => f.withIncludeAll(includeAll))
-    return new WorkingDirectoryStatus(newFiles, includeAll)
+    const newFiles = this.files.map(f => f.withIncludeAll(includeAll));
+    return new WorkingDirectoryStatus(newFiles, includeAll);
   }
 
   /** Find the file with the given ID. */
   public findFileWithID(id: string): WorkingDirectoryFileChange | null {
-    const ix = this.fileIxById.get(id)
-    return ix !== undefined ? this.files[ix] || null : null
+    const ix = this.fileIxById.get(id);
+    return ix !== undefined ? this.files[ix] || null : null;
   }
 
   /** Find the index of the file with the given ID. Returns -1 if not found */
   public findFileIndexByID(id: string): number {
-    const ix = this.fileIxById.get(id)
-    return ix !== undefined ? ix : -1
+    const ix = this.fileIxById.get(id);
+    return ix !== undefined ? ix : -1;
   }
 }
 
 function getIncludeAllState(
-  files: ReadonlyArray<WorkingDirectoryFileChange>
+  files: ReadonlyArray<WorkingDirectoryFileChange>,
 ): boolean | null {
   if (!files.length) {
-    return true
+    return true;
   }
 
   const allSelected = files.every(
-    f => f.selection.getSelectionType() === DiffSelectionType.All
-  )
+    f => f.selection.getSelectionType() === DiffSelectionType.All,
+  );
   const noneSelected = files.every(
-    f => f.selection.getSelectionType() === DiffSelectionType.None
-  )
+    f => f.selection.getSelectionType() === DiffSelectionType.None,
+  );
 
-  let includeAll: boolean | null = null
+  let includeAll: boolean | null = null;
   if (allSelected) {
-    includeAll = true
+    includeAll = true;
   } else if (noneSelected) {
-    includeAll = false
+    includeAll = false;
   }
 
-  return includeAll
+  return includeAll;
 }
 
 // List of known conflicted index entries for a file, extracted from mapStatus
 // inside `app/src/lib/status-parser.ts` for convenience
-export const conflictStatusCodes = ['DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU']
+export const conflictStatusCodes = ['DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU'];
