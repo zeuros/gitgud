@@ -9,3 +9,8 @@
         <gitgud-commit-section [selectedCommits]="gitRepository.selectedCommits" class="col flex"/>
     </ng-template>
 </p-splitter>
+
+<gitgud-monaco-editor-view *ngIf="fileDiffPanelService.committedFileClicked | async"
+        class="absolute left-0 bottom-0 wuuuu"
+     style="right: calc( 100vw * {{ gitRepository.sizes[2] / sum(gitRepository.sizes) }} + 3px )">
+</gitgud-monaco-editor-view>

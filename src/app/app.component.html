@@ -9,6 +9,7 @@
             *ngFor="let repository$ of gitRepositoryService.repositories$"
             [leftIcon]="'fa fa-code-fork'"
             [header]="(repository$ | async)!.name"
+            class="relative"
             [closable]="true">
         <gitgud-repository-view [gitRepository]="(repository$ | async)!"/>
     </p-tabPanel>
