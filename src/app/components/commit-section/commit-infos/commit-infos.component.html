@@ -45,7 +45,7 @@
         </div>
     </div>
 
-    <p-listbox [options]="editedFiles?.files ?? []" [(ngModel)]="selectedEditedFile" optionLabel="path" [scrollHeight]="undefined">
+    <p-listbox [options]="editedFiles?.files ?? []" (onChange)="fileDiffPanelService.committedFileClicked.next($event.value)" optionLabel="path" [scrollHeight]="undefined">
         <ng-template #item let-f>
             @let file = file$(f);
             @let dir = directory(file.path);
