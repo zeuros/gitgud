@@ -1,16 +1,16 @@
-import {DiffHunk, DiffHunkExpansionType, DiffHunkHeader, IRawDiff} from "./model/diff/raw-diff"
-import {GitRepository} from "../../models/git-repository";
-import {AppFileStatusKind, CommittedFileChange, FileChange, WorkingDirectoryFileChange} from "./model/status";
-import {DiffType, IImageDiff, ILargeTextDiff, LineEndingsChange} from "./model/diff/diff-data";
-import {GitRepositoryService} from "../../services/git-repository.service";
-import {forkJoin, map, Observable} from "rxjs";
-import {DiffParser} from "./diff-parser";
-import {forceUnwrap} from "./throw-ex";
-import * as Path from "node:path";
-import {getBlobContents} from "./show";
-import {Image} from "./model/diff/image";
-import {IStatusEntry} from "./status-parser";
-import {createLogParser} from "./git-delimiter-parser";
+import {DiffHunk, DiffHunkExpansionType, DiffHunkHeader, IRawDiff} from './model/diff/raw-diff';
+import {GitRepository} from '../../models/git-repository';
+import {AppFileStatusKind, CommittedFileChange, FileChange, WorkingDirectoryFileChange} from './model/status';
+import {DiffType, IImageDiff, ILargeTextDiff, LineEndingsChange} from './model/diff/diff-data';
+import {GitRepositoryService} from '../../services/git-repository.service';
+import {forkJoin, map, Observable} from 'rxjs';
+import {DiffParser} from './diff-parser';
+import {forceUnwrap} from './throw-ex';
+import * as Path from 'node:path';
+import {getBlobContents} from './show';
+import {Image} from './model/diff/image';
+import {IStatusEntry} from './status-parser';
+import {createLogParser} from './git-delimiter-parser';
 
 /**
  * V8 has a limit on the size of string it can create (~256MB), and unless we want to
@@ -19,19 +19,19 @@ import {createLogParser} from "./git-delimiter-parser";
  * This is a hard limit on how big a buffer can be and still be converted into
  * a string.
  */
-const MaxDiffBufferSize = 70e6 // 70MB in decimal
+const MaxDiffBufferSize = 70e6; // 70MB in decimal
 
 /**
  * Where `MaxDiffBufferSize` is a hard limit, this is a suggested limit. Diffs
  * bigger than this _could_ be displayed but it might cause some slowness.
  */
-const MaxReasonableDiffSize = MaxDiffBufferSize / 16 // ~4.375MB in decimal
+const MaxReasonableDiffSize = MaxDiffBufferSize / 16; // ~4.375MB in decimal
 
 /**
  * The longest line length we should try to display. If a diff has a line longer
  * than this, we probably shouldn't attempt it
  */
-const MaxCharactersPerLine = 5000
+const MaxCharactersPerLine = 5000;
 
 /**
  * Utility function to check whether parsing this buffer is going to cause
@@ -40,12 +40,12 @@ const MaxCharactersPerLine = 5000
  * @param buffer A buffer of binary text from a spawned process
  */
 function isValidBuffer(buffer: Buffer) {
-  return buffer.length <= MaxDiffBufferSize
+  return buffer.length <= MaxDiffBufferSize;
 }
 
 /** Is the buffer too large for us to reasonably represent? */
 function isBufferTooLarge(buffer: Buffer) {
-  return buffer.length >= MaxReasonableDiffSize
+  return buffer.length >= MaxReasonableDiffSize;
 }
 
 /** Is the diff too large for us to reasonably represent? */
@@ -53,12 +53,12 @@ function isDiffTooLarge(diff: IRawDiff) {
   for (const hunk of diff.hunks) {
     for (const line of hunk.lines) {
       if (line.text.length > MaxCharactersPerLine) {
-        return true
+        return true;
       }
     }
   }
 
-  return false
+  return false;
 }
 
 /**
@@ -73,45 +73,31 @@ const imageFileExtensions = new Set([
   '.webp',
   '.bmp',
   '.avif',
-])
+]);
 
+export const getCommitDiff = (gitRepositoryService: GitRepositoryService) =>
 
 /**
  * Render the difference between a file in the given commit and its parent
  *
  * @param commitish A commit SHA or some other identifier that ultimately dereferences to a commit.
  */
-export async function getCommitDiff(
-  gitRepositoryService: GitRepositoryService,
-  file: FileChange,
-  commitish: string,
-  hideWhitespaceInDiff: boolean = false
-) {
-  const args = [
-    'log',
-    commitish,
-    ...(hideWhitespaceInDiff ? ['-w'] : []),
-    '-m',
-    '-1',
-    '--first-parent',
-    '--patch-with-raw',
-    '--format=',
-    '-z',
-    '--no-color',
-    '--',
-    file.path,
-  ]
-
-  if (
-    file.status.kind === AppFileStatusKind.Renamed ||
-    file.status.kind === AppFileStatusKind.Copied
-  ) {
-    args.push(file.status.oldPath)
-  }
-
-
-  return gitRepositoryService.git(args).pipe(map(r => buildDiff(new Buffer(r), gitRepositoryService, file, commitish)))
-}
+  async (file: FileChange, commitish: string, hideWhitespaceInDiff = false) =>
+    gitRepositoryService.git([
+      'log',
+      commitish,
+      hideWhitespaceInDiff ? '-w' : undefined,
+      '-m',
+      '-1',
+      '--first-parent',
+      '--patch-with-raw',
+      '--format=',
+      '-z',
+      '--no-color',
+      '--',
+      file.path,
+      file.status.kind === AppFileStatusKind.Renamed || file.status.kind === AppFileStatusKind.Copied ? file.status?.oldPath : undefined,
+    ]).pipe(map(r => buildDiff(Buffer.from(r), file, commitish)));
 
 /**
  * Render the diff between two branches with --merge-base for a file
@@ -124,7 +110,7 @@ export async function getBranchMergeBaseDiff(
   baseBranchName: string,
   comparisonBranchName: string,
   hideWhitespaceInDiff: boolean = false,
-  latestCommit: string
+  latestCommit: string,
 ) {
   const args = [
     'diff',
@@ -137,16 +123,16 @@ export async function getBranchMergeBaseDiff(
     '--no-color',
     '--',
     file.path,
-  ]
+  ];
 
   if (
     file.status.kind === AppFileStatusKind.Renamed ||
     file.status.kind === AppFileStatusKind.Copied
   ) {
-    args.push(file.status.oldPath)
+    args.push(file.status.oldPath);
   }
 
-  return gitRepositoryService.git(args).pipe(map(result => buildDiff(new Buffer(result), gitRepositoryService, file, latestCommit)));
+  return gitRepositoryService.git(args).pipe(map(result => buildDiff(Buffer.from(result), file, latestCommit)));
 }
 
 /**
@@ -347,10 +333,10 @@ export async function getBranchMergeBaseDiff(
 //
 async function getImageDiff(
   file: FileChange,
-  oldestCommitish: string
+  oldestCommitish: string,
 ): Promise<IImageDiff> {
-  let current: Image | undefined = undefined
-  let previous: Image | undefined = undefined
+  let current: Image | undefined = undefined;
+  let previous: Image | undefined = undefined;
 
   // Are we looking at a file in the working directory or a file in a commit?
   if (file instanceof WorkingDirectoryFileChange) {
@@ -358,7 +344,7 @@ async function getImageDiff(
     // Ideally we'd show all three versions and let the user pick but that's
     // a bit out of scope for now.
     if (file.status.kind === AppFileStatusKind.Conflicted) {
-      return {kind: DiffType.Image}
+      return {kind: DiffType.Image};
     }
 
     // Does it even exist in the working directory?
@@ -418,25 +404,25 @@ async function getImageDiff(
     kind: DiffType.Image,
     previous: previous,
     current: current,
-  }
+  };
 }
 
 export async function convertDiff(
   file: FileChange,
   diff: IRawDiff,
   oldestCommitish: string,
-  lineEndingsChange?: LineEndingsChange
+  lineEndingsChange?: LineEndingsChange,
 ) {
-  const extension = Path.extname(file.path).toLowerCase()
+  const extension = Path.extname(file.path).toLowerCase();
 
   if (diff.isBinary) {
     // some extension we don't know how to parse, never mind
     if (!imageFileExtensions.has(extension)) {
       return {
         kind: DiffType.Binary,
-      }
+      };
     } else {
-      return getImageDiff(file, oldestCommitish)
+      return getImageDiff(file, oldestCommitish);
     }
   }
 
@@ -447,7 +433,7 @@ export async function convertDiff(
     lineEndingsChange,
     maxLineNumber: diff.maxLineNumber,
     hasHiddenBidiChars: diff.hasHiddenBidiChars,
-  }
+  };
 }
 
 
@@ -456,32 +442,32 @@ export async function convertDiff(
  */
 function getMediaType(extension: string) {
   if (extension === '.png') {
-    return 'image/png'
+    return 'image/png';
   }
   if (extension === '.jpg' || extension === '.jpeg') {
-    return 'image/jpg'
+    return 'image/jpg';
   }
   if (extension === '.gif') {
-    return 'image/gif'
+    return 'image/gif';
   }
   if (extension === '.ico') {
-    return 'image/x-icon'
+    return 'image/x-icon';
   }
   if (extension === '.webp') {
-    return 'image/webp'
+    return 'image/webp';
   }
   if (extension === '.bmp') {
-    return 'image/bmp'
+    return 'image/bmp';
   }
   if (extension === '.avif') {
-    return 'image/avif'
+    return 'image/avif';
   }
   if (extension === '.dds') {
-    return 'image/vnd-ms.dds'
+    return 'image/vnd-ms.dds';
   }
 
   // fallback value as per the spec
-  return 'text/plain'
+  return 'text/plain';
 }
 
 // /**
@@ -524,19 +510,18 @@ function getMediaType(extension: string) {
 function diffFromRawDiffOutput(output: Buffer): IRawDiff {
   // for now we just assume the diff is UTF-8, but given we have the raw buffer
   // we can try and convert this into other encodings in the future
-  const result = output.toString('utf-8')
+  const result = output.toString('utf-8');
 
-  const pieces = result.split('\0')
-  const parser = new DiffParser()
-  return parser.parse(forceUnwrap(`Invalid diff output`, pieces.at(-1)))
+  const pieces = result.split('\0');
+  const parser = new DiffParser();
+  return parser.parse(forceUnwrap(`Invalid diff output`, pieces.at(-1)));
 }
 
 async function buildDiff(
   buffer: Buffer,
-  gitRepositoryService: GitRepositoryService,
   file: FileChange,
   oldestCommitish: string,
-  lineEndingsChange?: LineEndingsChange
+  lineEndingsChange?: LineEndingsChange,
 ) {
   // if (file.status.submoduleStatus !== undefined) {
   //   return buildSubmoduleDiff(
@@ -549,10 +534,10 @@ async function buildDiff(
 
   if (!isValidBuffer(buffer)) {
     // the buffer's diff is too large to be renderable in the UI
-    return {kind: DiffType.Unrenderable}
+    return {kind: DiffType.Unrenderable};
   }
 
-  const diff = diffFromRawDiffOutput(buffer)
+  const diff = diffFromRawDiffOutput(buffer);
 
   if (isBufferTooLarge(buffer) || isDiffTooLarge(diff)) {
     // we don't want to render by default
@@ -565,12 +550,12 @@ async function buildDiff(
       lineEndingsChange,
       maxLineNumber: diff.maxLineNumber,
       hasHiddenBidiChars: diff.hasHiddenBidiChars,
-    }
+    };
 
-    return largeTextDiff
+    return largeTextDiff;
   }
 
-  return convertDiff(file, diff, oldestCommitish, lineEndingsChange)
+  return convertDiff(file, diff, oldestCommitish, lineEndingsChange);
 }
 
 //
@@ -587,16 +572,16 @@ export async function getBlobImage(
   gitRepositoryService: GitRepositoryService,
   git: (args?: string[]) => Observable<string>,
   path: string,
-  commitish: string
+  commitish: string,
 ) {
-  const extension = Path.extname(path)
+  const extension = Path.extname(path);
   return getBlobContents(gitRepositoryService, commitish, path)
     .pipe(map(contents => new Buffer(contents)), map(contents => new Image(
       contents.buffer,
       contents.toString('base64'),
       getMediaType(extension),
-      contents.length
-    )))
+      contents.length,
+    )));
 }
 
 //
@@ -634,7 +619,7 @@ export async function getBlobImage(
  */
 export const getBinaryPaths = (git: (args?: string[]) => Observable<string>, ref: string, conflictedFilesInIndex?: ReadonlyArray<IStatusEntry>) =>
   forkJoin([getDetectedBinaryFiles(git, ref), getFilesUsingBinaryMergeDriver(git)])
-    .pipe(map(([detectedBinaryFiles, conflictedFilesUsingBinaryMergeDriver]) => [...new Set([...detectedBinaryFiles, ...conflictedFilesUsingBinaryMergeDriver])]))
+    .pipe(map(([detectedBinaryFiles, conflictedFilesUsingBinaryMergeDriver]) => [...new Set([...detectedBinaryFiles, ...conflictedFilesUsingBinaryMergeDriver])]));
 
 /**
  * Runs diff --numstat to get the list of files that have changed and which
@@ -644,9 +629,9 @@ const getDetectedBinaryFiles = (git: (args?: string[]) => Observable<string>, re
   git(['diff', '--numstat', '-z', ref])
     .pipe(map(diff => Array.from(diff.matchAll(binaryListRegex), m => m[1])));
 
-const binaryListRegex = /-\t-\t(?:\0.+\0)?([^\0]*)/gi
+const binaryListRegex = /-\t-\t(?:\0.+\0)?([^\0]*)/gi;
 
-const logParser = createLogParser({path: '', attr: '', value: ''})
+const logParser = createLogParser({path: '', attr: '', value: ''});
 
 const getFilesUsingBinaryMergeDriver = (git: (args?: string[]) => Observable<string>): Observable<string[]> =>
   git(['check-attr', '--stdin', '-z', 'merge'])
@@ -656,7 +641,7 @@ const getFilesUsingBinaryMergeDriver = (git: (args?: string[]) => Observable<str
         .map(x => x.path)));
 
 /** How many new lines will be added to a diff hunk by default. */
-export const DefaultDiffExpansionStep = 20
+export const DefaultDiffExpansionStep = 20;
 
 /**
  * Calculates whether or not a hunk header can be expanded up, down, both, or if
@@ -671,14 +656,14 @@ export const DefaultDiffExpansionStep = 20
 export function getHunkHeaderExpansionType(
   hunkIndex: number,
   hunkHeader: DiffHunkHeader,
-  previousHunk: DiffHunk | null
+  previousHunk: DiffHunk | null,
 ): DiffHunkExpansionType {
   const distanceToPrevious =
     previousHunk === null
       ? Infinity
       : hunkHeader.oldStartLine -
       previousHunk.header.oldStartLine -
-      previousHunk.header.oldLineCount
+      previousHunk.header.oldLineCount;
 
   // In order to simplify the whole logic around expansion, only the hunk at the
   // top can be expanded up exclusively, and only the hunk at the bottom (the
@@ -689,18 +674,18 @@ export function getHunkHeaderExpansionType(
   if (hunkIndex === 0) {
     // The top hunk can only be expanded if there is content above it
     if (hunkHeader.oldStartLine > 1 && hunkHeader.newStartLine > 1) {
-      return DiffHunkExpansionType.Up
+      return DiffHunkExpansionType.Up;
     } else {
-      return DiffHunkExpansionType.None
+      return DiffHunkExpansionType.None;
     }
   } else if (distanceToPrevious <= DefaultDiffExpansionStep) {
-    return DiffHunkExpansionType.Short
+    return DiffHunkExpansionType.Short;
   } else {
-    return DiffHunkExpansionType.Both
+    return DiffHunkExpansionType.Both;
   }
 }
 
 function getOldPathOrDefault(file: FileChange): string {
-  throw new Error("Function not implemented.");
+  throw new Error('Function not implemented.');
 }
 

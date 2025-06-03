@@ -1,1 +1,6 @@
-<ngx-monaco-diff-editor [options]="options" [originalModel]="originalModel" [modifiedModel]="modifiedModel"/>
+<ngx-monaco-diff-editor
+        [options]="options"
+        [originalModel]="initialModel"
+        [modifiedModel]="modifiedModel"
+        (onInit)="onMonacoDiffEditorInit($event)"
+/>
