@@ -1,1 +1,20 @@
-<ngx-monaco-diff-editor [options]="options" [originalModel]="originalModel" [modifiedModel]="modifiedModel"/>
+{{ diffs() | json }}
+<p-toolbar>
+    <ng-template #start/>
+    <ng-template #center/>
+    <ng-template #end>
+        <p-button-group>
+            <p-button label="Hunk View" (onClick)="viewType$.next('hunk')" tooltipPosition="top" pTooltip="Hunk View"><i class="fa fa-pencil"></i></p-button>
+            <p-button label="Inline View" (onClick)="viewType$.next('inline')" tooltipPosition="top" pTooltip="Inline View"/>
+            <p-button label="Split View" (onClick)="viewType$.next('split')" tooltipPosition="top" pTooltip="Split View"/>
+        </p-button-group>
+    </ng-template>
+</p-toolbar>
+
+<ngx-monaco-diff-editor
+        *ngIf="initialModel() && modifiedModel()"
+        [options]="options"
+        [originalModel]="initialModel()"
+        [modifiedModel]="modifiedModel()"
+        (onInit)="onMonacoDiffEditorInit($event)"
+/>
