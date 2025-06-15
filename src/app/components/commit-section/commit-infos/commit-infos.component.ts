@@ -1,4 +1,4 @@
-import {Component, effect, inject, input, output} from '@angular/core';
+import {Component, effect, inject, input} from '@angular/core';
 import {CommitFilesChangesService} from '../../../services/electron-cmd-parser-layer/commit-files-changes.service';
 import {DisplayRef} from '../../../lib/github-desktop/model/display-ref';
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -11,7 +11,7 @@ import {DATE_FORMAT} from '../../../utils/constants';
 import {directory, fileName} from '../../../utils/utils';
 import {Tooltip} from 'primeng/tooltip';
 import {AvatarComponent} from './avatar/avatar.component';
-import {Listbox, ListboxChangeEvent} from 'primeng/listbox';
+import {Listbox} from 'primeng/listbox';
 import {ChangeSet, CommittedFileChange} from '../../../lib/github-desktop/model/change-set';
 import {ChangeStatusIcon} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';

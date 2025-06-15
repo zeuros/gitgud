@@ -122,7 +122,4 @@ export interface IRawDiff {
 
   /** The largest line number in the diff */
   readonly maxLineNumber: number
-
-  /** Whether or not the diff has invisible bidi characters */
-  readonly hasHiddenBidiChars: boolean
 }

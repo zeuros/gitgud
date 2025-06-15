@@ -325,7 +325,7 @@ export class WorkingDirectoryFileChange extends FileChange {
  */
 export class CommittedFileChange extends FileChange {
   public constructor(
-    path: string,
+    public readonly path: string,
     status: AppFileStatus,
     public readonly commitish: string,
     public readonly parentCommitish: string,
