@@ -1,11 +1,11 @@
 import {inject, Injectable} from '@angular/core';
-import {ParserService} from "../parser.service";
+import {ParserService} from '../parser.service';
 import {map} from 'rxjs';
-import {parseIndexChanges, parseRawLogWithNumstat} from "../../lib/github-desktop/commit-files-changes";
-import {GitRepositoryService} from "../git-repository.service";
+import {parseIndexChanges, parseRawLogWithNumstat} from '../../lib/github-desktop/commit-files-changes';
+import {GitRepositoryService} from '../git-repository.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CommitFilesChangesService {
 
@@ -20,7 +20,6 @@ export class CommitFilesChangesService {
   };
 
   logParser;
-  remoteHeadPointer?: string;
 
   private gitRepositoryService = inject(GitRepositoryService);
 
@@ -36,6 +35,9 @@ export class CommitFilesChangesService {
     this.gitRepositoryService.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
       .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, sha)));
 
+
+  // FIXME: browken
+  // getCommitDiff = getCommitDiff(this.gitRepositoryService);
 
   /**
    * Get a list of files which have recorded changes in the index as compared to

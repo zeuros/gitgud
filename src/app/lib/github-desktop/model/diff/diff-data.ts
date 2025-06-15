@@ -7,6 +7,11 @@ import { SubmoduleStatus } from '../status'
  */
 export const maximumDiffStringSize = 268435441
 
+export interface FileDiff {
+  before: string;
+  after: string;
+}
+
 export enum DiffType {
   /** Changes to a text file, which may be partially selected for commit */
   Text,
@@ -51,13 +56,13 @@ interface ITextDiffData {
   /** The unified text diff - including headers and context */
   readonly text: string
   /** The diff contents organized by hunk - how the git CLI outputs to the caller */
+  readonly beforeAfter: FileDiff
+  /** The diff contents organized by hunk - how the git CLI outputs to the caller */
   readonly hunks: ReadonlyArray<DiffHunk>
   /** A warning from Git that the line endings have changed in this file and will affect the commit */
   readonly lineEndingsChange?: LineEndingsChange
   /** The largest line number in the diff  */
   readonly maxLineNumber: number
-  /** Whether or not the diff has invisible bidi characters */
-  readonly hasHiddenBidiChars: boolean
 }
 
 export interface ITextDiff extends ITextDiffData {

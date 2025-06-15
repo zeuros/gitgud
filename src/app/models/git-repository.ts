@@ -1,6 +1,6 @@
-import {Commit} from "../lib/github-desktop/model/commit";
-import {Branch} from "../lib/github-desktop/model/branch";
-import {DisplayRef} from "../lib/github-desktop/model/display-ref";
+import {Commit} from '../lib/github-desktop/model/commit';
+import {Branch} from '../lib/github-desktop/model/branch';
+import {DisplayRef} from '../lib/github-desktop/model/display-ref';
 
 export class GitRepository {
   constructor(
@@ -16,6 +16,8 @@ export class GitRepository {
     public checkedOutBranch?: Branch,
     public startCommit = 0,
     public remotes: { remote: string; url: string }[] = [],
+    // Editor config
+    public editorConfig: { viewType: 'split' | 'hunk' } = {viewType: 'split'},
   ) {
   }
 }
