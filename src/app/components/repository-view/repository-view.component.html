@@ -10,7 +10,10 @@
     </ng-template>
 </p-splitter>
 
-<gitgud-monaco-editor-view *ngIf="fileDiffPanelService.committedFileClicked | async"
+@let committedFileClicked = fileDiffPanelService.committedFileClicked | async;
+<gitgud-monaco-editor-view
+        *ngIf="committedFileClicked"
+        [committedFileClicked]="committedFileClicked"
         class="absolute left-0 bottom-0 wuuuu"
-     style="right: calc( 100vw * {{ gitRepository.sizes[2] / sum(gitRepository.sizes) }} + 3px )">
-</gitgud-monaco-editor-view>
+        style="right: calc( 100vw * {{ gitRepository.sizes[2] / sum(gitRepository.sizes) }} + 3px )"
+/>

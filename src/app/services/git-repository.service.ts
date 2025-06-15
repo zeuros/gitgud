@@ -3,7 +3,7 @@ import {BehaviorSubject, debounceTime, forkJoin, Observable, tap} from "rxjs";
 import {GitRepository} from "../models/git-repository";
 import {StorageName} from "../enums/storage-name.enum";
 import {SettingsService} from "./settings.service";
-import {byDirectory, isRootDirectory, throwEx} from "../utils/utils";
+import {byDirectory, isRootDirectory, notUndefined, throwEx} from '../utils/utils';
 import {createRepository} from "../utils/repository-utils";
 
 import * as fs from 'fs';
@@ -45,7 +45,7 @@ export class GitRepositoryService {
 
   }
 
-  private get currentRepository(): GitRepository | undefined {
+  get currentRepository(): GitRepository | undefined {
     return this.repositories$[this.currentRepositoryIndex!]?.value;
   }
 
@@ -157,5 +157,5 @@ export class GitRepositoryService {
     if (this.currentRepositoryIndex != undefined) this.updateRepo(this.repositories$[this.currentRepositoryIndex], updates);
   }
 
-  git = (args: string[] = []) => this.gitApiService.git(args, this.currentRepository?.directory);
+  git = (args: (string | undefined)[] = []) => this.gitApiService.git(args.filter(notUndefined), this.currentRepository?.directory);
 }

@@ -15,9 +15,9 @@ import {IStatusEntry, mapStatus, StatusHeader} from "./status-parser"
 import {IAheadBehind} from "./model/branch"
 import {throwEx} from "../../utils/utils";
 import {GitRepository} from "../../models/git-repository";
-import {getFilesWithConflictMarkers} from "./diff-check";
+import {getFilesWithConflictMarkers} from "./diff/diff-check";
 import {catchError, forkJoin, Observable} from "rxjs"
-import {getBinaryPaths} from "./diff"
+import {getBinaryPaths} from "./diff/diff"
 
 /** The encapsulation of the result from 'git status' */
 export interface IStatusResult {
