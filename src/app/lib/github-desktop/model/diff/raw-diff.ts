@@ -112,7 +112,7 @@ export interface IRawDiff {
    * Each hunk in the diff with information about start, and end
    * positions, lines and line statuses.
    */
-  readonly hunks: ReadonlyArray<DiffHunk>
+  readonly hunks: DiffHunk[]
 
   /**
    * Whether or not the unified diff indicates that the contents

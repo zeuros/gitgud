@@ -1,6 +1,7 @@
 import {Commit} from '../lib/github-desktop/model/commit';
 import {Branch} from '../lib/github-desktop/model/branch';
 import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {ViewType} from '../components/monaco-editor-view/monaco-editor-view.component';
 
 export class GitRepository {
   constructor(
@@ -17,7 +18,7 @@ export class GitRepository {
     public startCommit = 0,
     public remotes: { remote: string; url: string }[] = [],
     // Editor config
-    public editorConfig: { viewType: 'split' | 'hunk' } = {viewType: 'split'},
+    public editorConfig: { viewType: ViewType } = {viewType: 'split'},
   ) {
   }
 }
