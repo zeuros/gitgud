@@ -4,15 +4,17 @@
     <ng-template #end>
         <p-button-group>
             <p-button label="Hunk View" (onClick)="viewType.set('hunk')" tooltipPosition="top" pTooltip="Hunk View"><i class="fa fa-pencil"></i></p-button>
+            <p-button label="Inline View" (onClick)="viewType.set('inline')" tooltipPosition="top" pTooltip="Inline View"/>
             <p-button label="Split View" (onClick)="viewType.set('split')" tooltipPosition="top" pTooltip="Split View"/>
         </p-button-group>
     </ng-template>
 </p-toolbar>
 
 <ngx-monaco-diff-editor
-        *ngIf="viewType() == 'split' && before && after"
+        #monacoEditor
+        *ngIf="before && after"
         class="monaco-diff-editor"
-        [options]="editorOptions"
+        [options]="editorInitOptions"
         [originalModel]="before"
         [modifiedModel]="after"
         (onInit)="onMonacoDiffEditorInit($event)"

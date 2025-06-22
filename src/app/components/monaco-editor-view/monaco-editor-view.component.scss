@@ -2,3 +2,54 @@
 .monaco-diff-editor {
   height: 100%;
 }
+
+:host {
+
+  ::ng-deep {
+
+    .action-button {
+      position: absolute;
+      right: 10px;
+      z-index: 10;
+      padding: 2px 5px;
+      cursor: pointer;
+    }
+
+    //.accept {
+    //  background-color: green;
+    //  color: white;
+    //}
+    //
+    //.reject {
+    //  background-color: red;
+    //  color: white;
+    //  margin-right: 30px;
+    //}
+    //
+    //.added-line {
+    //  background-color: lightblue;
+    //}
+    //
+    //.deleted-line {
+    //  background-color: rgba(255, 0, 0, 0.2);
+    //}
+    //
+    //.added-line-inline {
+    //  background-color: rgba(0, 255, 0, 0.2);
+    //}
+    //
+    //.deleted-line-inline {
+    //  background-color: orange;
+    //}
+    //
+    //.added-line-margin {
+    //  background-color: rgba(0, 255, 0, 0.5);
+    //  width: 5px !important;
+    //}
+    //
+    //.deleted-line-margin {
+    //  background-color: rgba(255, 0, 0, 0.5);
+    //  width: 5px !important;
+    //}
+  }
+}
