@@ -1,9 +1,12 @@
 
 .monaco-diff-editor {
   height: 100%;
+  overflow: hidden;
 }
 
 :host {
+  display: flex;
+  flex-direction: column;
 
   ::ng-deep {
 
