@@ -27,15 +27,43 @@ export enum AppFileStatusKind {
   Untracked = 'Untracked',
 }
 
-export const ChangeStatusIcon: Record<AppFileStatusKind, { icon: string, color: string }> = {
-  [AppFileStatusKind.New]: {icon: 'fa-plus', color: '#20e88e'},
-  [AppFileStatusKind.Modified]: {icon: 'fa-pencil', color: '#26beec'},
-  [AppFileStatusKind.Deleted]: {icon: 'fa-trash', color: '#e8206d'},
-  [AppFileStatusKind.Copied]: {icon: 'fa-clone', color: '#7a20e8'},
-  [AppFileStatusKind.Renamed]: {icon: 'fa-arrow-right', color: '#e1e820'},
-  [AppFileStatusKind.Conflicted]: {icon: 'fa-exclamation-triangle', color: '#e87a20'},
-  [AppFileStatusKind.Untracked]: {icon: 'fa-user-secret', color: '#aaaaaa'},
+export type Icon = {icon: string; color: string};
+
+export const Icons: {[key: string]: Icon} = {
+  New: {icon: 'fa-plus', color: '#20e88e'},
+  Modified: {icon: 'fa-pencil', color: '#26beec'},
+  Deleted: {icon: 'fa-trash', color: '#e8206d'},
+  Copied: {icon: 'fa-clone', color: '#7a20e8'},
+  Renamed: {icon: 'fa-arrow-right', color: '#e1e820'},
+  Conflicted: {icon: 'fa-exclamation-triangle', color: '#e87a20'},
+  Unchanged: {icon: 'fa-check-circle', color: '#aaaaaa'},
+  Untracked: {icon: 'fa-user-secret', color: '#aaaaaa'},
+  Ignored: {icon: 'fa-ban', color: '#666666'},
+  UpdatedButUnmerged: {icon: 'fa-code-branch', color: '#f39c12'},
 };
+
+export const IndexFileStatusIcon: Record<GitStatusEntry, Icon> = {
+  [GitStatusEntry.Modified]: Icons.Modified,
+  [GitStatusEntry.Added]: Icons.New,
+  [GitStatusEntry.Deleted]: Icons.Deleted,
+  [GitStatusEntry.Renamed]: Icons.Renamed,
+  [GitStatusEntry.Copied]: Icons.Copied,
+  [GitStatusEntry.Unchanged]: Icons.Unchanged,
+  [GitStatusEntry.Untracked]: Icons.Untracked,
+  [GitStatusEntry.Ignored]: Icons.Ignored,
+  [GitStatusEntry.UpdatedButUnmerged]: Icons.UpdatedButUnmerged,
+};
+
+export const CommitFileStatusIcon: Record<AppFileStatusKind, Icon> = {
+  [AppFileStatusKind.New]: Icons.New,
+  [AppFileStatusKind.Modified]: Icons.Modified,
+  [AppFileStatusKind.Deleted]: Icons.Deleted,
+  [AppFileStatusKind.Copied]: Icons.Copied,
+  [AppFileStatusKind.Renamed]: Icons.Renamed,
+  [AppFileStatusKind.Conflicted]: Icons.Conflicted,
+  [AppFileStatusKind.Untracked]: Icons.Untracked,
+};
+
 
 /**
  * Normal changes to a repository detected by GitHub Desktop
