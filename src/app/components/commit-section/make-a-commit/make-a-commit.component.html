@@ -1,32 +1,48 @@
-<p-splitter layout="vertical" [panelSizes]="[35, 35, 30]" [minSizes]="[25, 25, 30]">
-    <ng-template #panel>
-        <div class="flex-column flex-1">
-            <h4>Unstaged files</h4>
-            <p-divider type="solid"/>
-        </div>
+<h4>Unstaged files</h4>
+
+<p-divider type="solid"/>
+
+@let unstagedFiles = unstagedFiles$ | async;
+<p-listbox [options]="keys(unstagedFiles ?? {})" optionLabel="path" [scrollHeight]="undefined">
+    <ng-template #item let-filePath>
+        <i class="text-gray mr-2 fa {{ IndexFileStatusIcon[unstagedFiles[filePath]].icon }}"
+           style="color: {{ IndexFileStatusIcon[unstagedFiles[filePath]].color }};filter: drop-shadow(0 0 5px {{IndexFileStatusIcon[unstagedFiles[filePath]].color}} );"></i>
+        @let dir = directory(filePath);
+        @if (dir.length) {
+            <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+        }
+        <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(filePath) }}</span>
     </ng-template>
-    <ng-template #panel>
-        <div class="flex-column flex-1">
-            <h4>Staged files</h4>
-            <p-divider type="solid"/>
-        </div>
+</p-listbox>
+
+<h4>Staged files</h4>
+
+<p-divider type="solid"/>
+
+@let stagedFiles = stagedFiles$ | async;
+<p-listbox [options]="keys(stagedFiles ?? {})" optionLabel="path" [scrollHeight]="undefined">
+    <ng-template #item let-filePath>
+        <i class="text-gray mr-2 fa {{ IndexFileStatusIcon[stagedFiles[filePath]].icon }}"
+           style="color: {{ IndexFileStatusIcon[stagedFiles[filePath]].color }};filter: drop-shadow(0 0 5px {{IndexFileStatusIcon[stagedFiles[filePath]].color}} );"></i>
+        @let dir = directory(filePath);
+        @if (dir.length) {
+            <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+        }
+        <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(filePath) }}</span>
     </ng-template>
-    <ng-template #panel>
-        <div class="flex-column flex-1">
-            <div class="p-2">
-                Commit message
-            </div>
-            <form class="flex-column flex-1" [formGroup]="commitForm">
+</p-listbox>
 
-                <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
+<div class="p-2">
+    Commit message
+</div>
+<form class="flex-column flex-1" [formGroup]="commitForm">
 
-                <textarea pTextarea placeholder="Description" rows="3" class="flex-1 commit-description" formControlName="description"></textarea>
+    <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
 
-                <button pButton [disabled]="!commitForm.value.summary?.length" class="mt-2 border-round-xs">
-                    Stage files / changes to commit
-                </button>
+    <textarea pTextarea placeholder="Description" rows="3" class="flex-1 commit-description" formControlName="description"></textarea>
 
-            </form>
-        </div>
-    </ng-template>
-</p-splitter>
+    <button pButton [disabled]="!commitForm.value.summary?.length" class="mt-2 border-round-xs">
+        Stage files / changes to commit
+    </button>
+
+</form>

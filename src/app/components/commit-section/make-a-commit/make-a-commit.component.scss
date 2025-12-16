@@ -5,10 +5,6 @@
   flex-direction: column;
   width: 100%;
 
-  & > * {
-    width: 100%;
-  }
-
   ::ng-deep {
 
     .max-size-bottom .p-splitterpanel:last-child {

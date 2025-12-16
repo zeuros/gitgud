@@ -49,8 +49,8 @@
         <ng-template #item let-f>
             @let file = file$(f);
             @let dir = directory(file.path);
-            <i class="text-gray mr-2 fa {{ ChangeStatusIcon[file.status.kind].icon }}"
-               style="color: {{ChangeStatusIcon[file.status.kind].color}};filter: drop-shadow(0 0 5px {{ChangeStatusIcon[file.status.kind].color}}88);"></i>
+            <i class="text-gray mr-2 fa {{ CommitFileStatusIcon[file.status.kind].icon }}"
+               style="color: {{CommitFileStatusIcon[file.status.kind].color}};filter: drop-shadow(0 0 5px {{CommitFileStatusIcon[file.status.kind].color}}88);"></i>
             <span *ngIf="dir.length" class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
             <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(file.path) }}</span>
         </ng-template>
