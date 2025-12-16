@@ -115,13 +115,25 @@ export class MonacoEditorViewComponent {
   protected onMonacoDiffEditorInit = (editor: IDiffEditor) => {
     this.editor$.next(editor);
 
-    this.addDecorationsActionButtons(editor);
-    let line = editor.getPosition();
-    console.log(line);
-  };
+  ngOnDestroy(): void {
+    this.diffEditor?.getModel()?.original.dispose();
+    this.diffEditor?.getModel()?.modified.dispose();
+  }
 
-  private editorContents(diffs: IDiff) {
-    if ('beforeAfter' in diffs) return diffs; // ITextDiff | ILargeTextDiff
+  private updateDiffEditor({before, after}: DiffModels) {
+
+    // TODO: dispose old models?
+
+    // Model(s) already set
+    const beforeFile = Uri.parse(`before-${before.fileName}`);
+    const afterFile = Uri.parse(`after-${after.fileName}`);
+
+    const original = editor.getModel(beforeFile) ?? editor.createModel(before.code, undefined, beforeFile);
+    const modified = editor.getModel(afterFile) ?? editor.createModel(after.code, undefined, afterFile);
+
+    // Create new models
+    this.diffEditor!.setModel({original, modified});
+  }
 
     throw new Error('This type of diff cannot be displayed yet');
   }

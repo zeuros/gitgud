@@ -43,8 +43,8 @@ export class CommitFilesChangesService {
    * Get a list of files which have recorded changes in the index as compared to
    * HEAD along with the type of change.
    */
-  getIndexChanges = () =>
-    this.gitRepositoryService.git(['diff-index', '--cached', '--name-status', '--no-renames', '-z', 'HEAD', '--'])
+  indexChanges = (stagedFiles = false) =>
+    this.gitRepositoryService.git(['diff-index', '--name-status', stagedFiles ? '--cached' : '', '-z', 'HEAD', '--'])
       .pipe(map(parseIndexChanges));
 
 }
