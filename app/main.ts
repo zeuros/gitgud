@@ -21,6 +21,7 @@ function createWindow() {
       nodeIntegration: true,
       allowRunningInsecureContent: (serve),
       contextIsolation: false,
+      webSecurity: false,
     }
   });
 
