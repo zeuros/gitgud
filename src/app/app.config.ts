@@ -9,7 +9,6 @@ import {DialogService} from 'primeng/dynamicdialog';
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import {providePrimeNG} from 'primeng/config';
 import Aura from '@primeng/themes/aura';
-import {MonacoEditorModule} from 'ngx-monaco-editor-v2';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,8 +26,7 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     importProvidersFrom(
-      MonacoEditorModule.forRoot({baseUrl: window.location.origin + '/assets/monaco/min/vs', requireConfig: {preferScriptTags: true}}),
-      TranslateModule.forRoot({ // TODO: use translation in app (see
+      TranslateModule.forRoot({
         defaultLanguage: 'en',
         loader: {
           provide: TranslateLoader,

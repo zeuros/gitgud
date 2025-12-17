@@ -32,6 +32,12 @@
             "tsConfig": "src/tsconfig.app.json",
             "polyfills": "src/polyfills.ts",
             "inlineStyleLanguage": "scss",
+            "customWebpackConfig": {
+              "path": "./webpack.config.cjs",
+              "mergeStrategies": {
+                "module.rules": "prepend"
+              }
+            },
             "assets": [
               "src/favicon.ico",
               "src/assets",

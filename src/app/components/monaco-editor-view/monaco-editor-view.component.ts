@@ -1,10 +1,8 @@
-import {Component, effect, ElementRef, inject, input, signal, ViewChild} from '@angular/core';
-import {DiffEditorComponent, DiffEditorModel} from 'ngx-monaco-editor-v2';
+import {AfterViewInit, Component, effect, ElementRef, inject, input, OnDestroy, signal, ViewChild} from '@angular/core';
 import {CommittedFileChange} from '../../lib/github-desktop/model/status';
 import {GitRepositoryService} from '../../services/git-repository.service';
-import {filter, map, ReplaySubject, switchMap, tap} from 'rxjs';
-import {editor} from 'monaco-editor';
-import {NgIf} from '@angular/common';
+import {filter, map, switchMap} from 'rxjs';
+import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
 import {toObservable} from '@angular/core/rxjs-interop';
 import {notUndefined} from '../../utils/utils';
@@ -15,7 +13,6 @@ import {Tooltip} from 'primeng/tooltip';
 import {Toolbar} from 'primeng/toolbar';
 import {buildDiff} from '../../lib/github-desktop/diff/diff-builder';
 import {FormsModule} from '@angular/forms';
-import IEditor = editor.IEditor;
 import IEditorOptions = editor.IEditorOptions;
 import IDiffEditor = editor.IDiffEditor;
 
@@ -23,97 +20,93 @@ import IDiffEditor = editor.IDiffEditor;
 export type ViewType = 'hunk' | 'inline' | 'split';
 
 
+interface DiffModel {
+  code: string;
+  fileName: string;
+}
+
+interface DiffModels {
+  before: DiffModel,
+  after: DiffModel
+}
+
 @Component({
   standalone: true,
   selector: 'gitgud-monaco-editor-view',
-  imports: [
-    DiffEditorComponent,
-    NgIf,
-    Button,
-    ButtonGroup,
-    Tooltip,
-    Toolbar,
-    FormsModule,
-  ],
+  imports: [Button, ButtonGroup, Tooltip, Toolbar, FormsModule],
   templateUrl: './monaco-editor-view.component.html',
   styleUrl: './monaco-editor-view.component.scss',
 })
-export class MonacoEditorViewComponent {
-
+export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   committedFileClicked = input<CommittedFileChange>();
-  editorInitOptions = {
+  @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
+  diffModels = signal<DiffModels | undefined>(undefined);
+
+  private readonly gitRepositoryService = inject(GitRepositoryService);
+  viewType = signal<ViewType>(this.gitRepositoryService.currentRepository?.editorConfig?.viewType ?? 'split');
+
+  private fileDiffService = inject(FileDiffService);
+  private diffEditor?: IDiffEditor;
+  private readonly editorOptions: IEditorOptions & { theme: string } = {
     theme: 'vs-dark',
     readOnly: true,
-    standalone: true,
+    // standalone: true,
     automaticLayout: true,
     cursorBlinking: 'smooth',
     cursorSmoothCaretAnimation: 'on',
     definitionLinkOpensInPeek: false,
-    experimental: {
-      useTrueInlineView: true,
-    },
-    experimentalInlineEdit: {
-      showToolbar: 'always',
-    },
-    inlineSuggest: {
-      enabled: false,
-    },
+    // experimental: {useTrueInlineView: true},
+    // experimentalInlineEdit: {showToolbar: 'always'},
+    inlineSuggest: {enabled: false},
     smoothScrolling: true,
     snippetSuggestions: 'none',
-    inlayHints: {
-      enabled: 'off',
-    },
-    parameterHints: {
-      enabled: false,
-    },
-    hover: {
-      enabled: false,
-    },
-  } as IEditorOptions;
-
-  before?: DiffEditorModel;
-  after?: DiffEditorModel;
-  private gitRepositoryService = inject(GitRepositoryService);
-  viewType = signal<ViewType>(this.gitRepositoryService.currentRepository?.editorConfig?.viewType ?? 'split');
-  private fileDiffService = inject(FileDiffService);
-  private editor$ = new ReplaySubject<IEditor>(1);
-
-  @ViewChild('monacoEditor', {static: false}) monacoEditor?: ElementRef<DiffEditorComponent>;
+    inlayHints: {enabled: 'off'},
+    parameterHints: {enabled: false},
+    hover: {enabled: false},
+  };
 
   constructor() {
     toObservable(this.committedFileClicked)
       .pipe(
-        // If file is changed, refreshing model crashes any existing editor, better reset them first ...
-        tap(() => this.before = this.after = undefined),
         filter(notUndefined),
         switchMap(file => this.fileDiffService.getCommitDiff(file, file.commitish)
-          .pipe(map(r => this.editorContents(buildDiff(r, file, file.commitish))))),
+          .pipe(map(r => ({diff: this.editorContents(buildDiff(r, file, file.commitish)), file})))),
       )
-      .subscribe(({beforeAfter}) => {
-        this.before = this.toModel(beforeAfter.before);
-        this.after = this.toModel(beforeAfter.after);
+      .subscribe(({diff, file}) => {
+        this.diffModels.set({
+          before: {code: diff.beforeAfter.before, fileName: file.path},
+          after: {code: diff.beforeAfter.after, fileName: file.path},
+        });
       });
 
-    // Synchronizes view type with settings (TODO: can be more simple ?)
     effect(() => {
       this.gitRepositoryService.updateCurrentRepository({
-        editorConfig: {
-          ...this.gitRepositoryService.currentRepository?.editorConfig,
-          viewType: this.viewType(),
-        },
+        editorConfig: {...this.gitRepositoryService.currentRepository?.editorConfig, viewType: this.viewType()},
       });
 
-      this.editor$.subscribe(e => e.updateOptions({
-        renderSideBySide: this.viewType() == 'split',
-        hideUnchangedRegions: this.viewType() == 'hunk' ? {enabled: true, revealLineCount: 15, minimumLineCount: 5, contextLineCount: 3} : {enabled: false},
-      } as IEditorOptions));
+      if (this.diffEditor) {
+        this.diffEditor.updateOptions({
+          renderSideBySide: this.viewType() === 'split',
+          hideUnchangedRegions: this.viewType() === 'hunk'
+            ? {enabled: true, revealLineCount: 15, minimumLineCount: 5, contextLineCount: 3}
+            : {enabled: false},
+        } as IEditorOptions);
+      }
+    });
+
+    // Update editor models when data changes
+    effect(() => {
+      if (this.diffModels() && this.diffEditor)
+        this.updateDiffEditor(this.diffModels()!);
     });
   }
 
-  toModel = (code: string): DiffEditorModel => ({code, language: 'typescript'});
+  ngAfterViewInit(): void {
+    if (this.diffEditorContainer) {
+      this.diffEditor = editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions);
+    }
+  }
 
-  protected onMonacoDiffEditorInit = (editor: IDiffEditor) => {
-    this.editor$.next(editor);
 
   ngOnDestroy(): void {
     this.diffEditor?.getModel()?.original.dispose();
@@ -135,9 +128,8 @@ export class MonacoEditorViewComponent {
     this.diffEditor!.setModel({original, modified});
   }
 
+  private editorContents(diffs: IDiff) {
+    if ('beforeAfter' in diffs) return diffs;
     throw new Error('This type of diff cannot be displayed yet');
-  }
-
-  addDecorationsActionButtons(editor: IDiffEditor): void {
   }
 }
