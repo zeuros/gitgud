@@ -1,7 +1,8 @@
 
-.monaco-diff-editor {
+.diff-editor-container {
   height: 100%;
   overflow: hidden;
+  flex: 1;
 }
 
 :host {

@@ -10,12 +10,4 @@
     </ng-template>
 </p-toolbar>
 
-<ngx-monaco-diff-editor
-        #monacoEditor
-        *ngIf="before && after"
-        class="monaco-diff-editor"
-        [options]="editorInitOptions"
-        [originalModel]="before"
-        [modifiedModel]="after"
-        (onInit)="onMonacoDiffEditorInit($event)"
-/>
+<div #diffEditor class="diff-editor-container"></div>
