@@ -109,13 +109,15 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
 
   ngOnDestroy(): void {
-    this.diffEditor?.getModel()?.original.dispose();
-    this.diffEditor?.getModel()?.modified.dispose();
+    // TODO: dispose old models?
+    //   Note: disposing models here causes issues when switching between files, as the models are shared/reused
+    //   For now we let monaco handle the disposal when the editor is disposed; otherwise we get "Model is disposed" errors
+    //   this.diffEditor?.getModel()?.original.dispose();
+    //   this.diffEditor?.getModel()?.modified.dispose();
+    this.diffEditor?.dispose();
   }
 
   private updateDiffEditor({before, after}: DiffModels) {
-
-    // TODO: dispose old models?
 
     // Model(s) already set
     const beforeFile = Uri.parse(`before-${before.fileName}`);
