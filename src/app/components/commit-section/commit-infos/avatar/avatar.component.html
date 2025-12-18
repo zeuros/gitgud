@@ -1,4 +1,5 @@
-<img [class.hidden]="!avatarLoaded"
+<img @fadeSlideIn
+     [class.hidden]="!avatarLoaded"
      [src]="identity.email | gravatarUrl"
      (load)="avatarLoaded = true"
      (error)="avatarLoaded = false"
