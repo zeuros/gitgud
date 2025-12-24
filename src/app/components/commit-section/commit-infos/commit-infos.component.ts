@@ -15,6 +15,7 @@ import {Listbox} from 'primeng/listbox';
 import {ChangeSet, CommittedFileChange} from '../../../lib/github-desktop/model/change-set';
 import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
+import {slightSlideIn} from '../../../shared/animations';
 
 @Component({
   selector: 'gitgud-commit-infos',
@@ -32,6 +33,7 @@ import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
   ],
   templateUrl: './commit-infos.component.html',
   styleUrl: './commit-infos.component.scss',
+  animations: [slightSlideIn],
 })
 export class CommitInfosComponent {
 
