@@ -2,35 +2,43 @@
 
 <p-divider type="solid"/>
 
-@let unstagedFiles = unstagedFiles$ | async;
-<p-listbox [options]="keys(unstagedFiles ?? {})" optionLabel="path" [scrollHeight]="undefined">
-    <ng-template #item let-filePath>
-        <i class="text-gray mr-2 fa {{ IndexFileStatusIcon[unstagedFiles[filePath]].icon }}"
-           style="color: {{ IndexFileStatusIcon[unstagedFiles[filePath]].color }};filter: drop-shadow(0 0 5px {{IndexFileStatusIcon[unstagedFiles[filePath]].color}} );"></i>
-        @let dir = directory(filePath);
-        @if (dir.length) {
-            <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
-        }
-        <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(filePath) }}</span>
-    </ng-template>
-</p-listbox>
+@let workingDirFilesChanges = workDirChanges$ | async;
+
+@if (workingDirFilesChanges) {
+    <p-listbox [options]="workingDirFilesChanges.unstaged" optionLabel="path" (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)" [scrollHeight]="undefined">
+        <ng-template #item let-workingDirFileChanges>
+            @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
+            <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
+               [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
+               [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
+            @let dir = directory(fileChanges.path);
+            @if (dir.length) {
+                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+            }
+            <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+        </ng-template>
+    </p-listbox>
+}
 
 <h4>Staged files</h4>
 
 <p-divider type="solid"/>
 
-@let stagedFiles = stagedFiles$ | async;
-<p-listbox [options]="keys(stagedFiles ?? {})" optionLabel="path" [scrollHeight]="undefined">
-    <ng-template #item let-filePath>
-        <i class="text-gray mr-2 fa {{ IndexFileStatusIcon[stagedFiles[filePath]].icon }}"
-           style="color: {{ IndexFileStatusIcon[stagedFiles[filePath]].color }};filter: drop-shadow(0 0 5px {{IndexFileStatusIcon[stagedFiles[filePath]].color}} );"></i>
-        @let dir = directory(filePath);
-        @if (dir.length) {
-            <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
-        }
-        <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(filePath) }}</span>
-    </ng-template>
-</p-listbox>
+@if (workingDirFilesChanges) {
+    <p-listbox [options]="workingDirFilesChanges.staged" optionLabel="path" (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)" [scrollHeight]="undefined">
+        <ng-template #item let-workingDirFileChanges>
+            @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
+            <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
+               [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
+               [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
+            @let dir = directory(fileChanges.path);
+            @if (dir.length) {
+                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+            }
+            <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+        </ng-template>
+    </p-listbox>
+}
 
 <div class="p-2">
     Commit message

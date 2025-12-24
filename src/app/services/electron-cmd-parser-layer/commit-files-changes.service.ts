@@ -1,7 +1,7 @@
 import {inject, Injectable} from '@angular/core';
 import {ParserService} from '../parser.service';
-import {map} from 'rxjs';
-import {parseIndexChanges, parseRawLogWithNumstat} from '../../lib/github-desktop/commit-files-changes';
+import {map, of, switchMap} from 'rxjs';
+import {parseWorkingDirChanges, parseRawLogWithNumstat} from '../../lib/github-desktop/commit-files-changes';
 import {GitRepositoryService} from '../git-repository.service';
 
 @Injectable({
@@ -43,9 +43,14 @@ export class CommitFilesChangesService {
    * Get a list of files which have recorded changes in the index as compared to
    * HEAD along with the type of change.
    */
-  indexChanges = (stagedFiles = false) =>
-    this.gitRepositoryService.git(['diff-index', '--name-status', stagedFiles ? '--cached' : '', '-z', 'HEAD', '--'])
-      .pipe(map(parseIndexChanges));
+  workingDirChanges = (stagedFiles = false) =>
+    this.gitRepositoryService.git([
+      'status',
+      '--porcelain',
+      '-z',
+      '--',
+    ])
+      .pipe(map(parseWorkingDirChanges));
 
 }
 
