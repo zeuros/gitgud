@@ -1,11 +1,11 @@
 import {AfterViewInit, Component, effect, ElementRef, inject, input, OnDestroy, signal, ViewChild} from '@angular/core';
-import {CommittedFileChange} from '../../lib/github-desktop/model/status';
+import {CommittedFileChange, FileChange} from '../../lib/github-desktop/model/status';
 import {GitRepositoryService} from '../../services/git-repository.service';
-import {filter, map, switchMap} from 'rxjs';
+import {EMPTY, filter, map, switchMap} from 'rxjs';
 import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
 import {toObservable} from '@angular/core/rxjs-interop';
-import {notUndefined} from '../../utils/utils';
+import {instanceOf, notUndefined} from '../../utils/utils';
 import {Button} from 'primeng/button';
 import {ButtonGroup} from 'primeng/buttongroup';
 import {IDiff} from '../../lib/github-desktop/model/diff/diff-data';
@@ -38,7 +38,7 @@ interface DiffModels {
   styleUrl: './monaco-editor-view.component.scss',
 })
 export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
-  committedFileClicked = input<CommittedFileChange>();
+  fileToDiff = input<FileChange>();
   @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
   diffModels = signal<DiffModels | undefined>(undefined);
 
@@ -66,11 +66,18 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   };
 
   constructor() {
-    toObservable(this.committedFileClicked)
+    toObservable(this.fileToDiff)
       .pipe(
         filter(notUndefined),
-        switchMap(file => this.fileDiffService.getCommitDiff(file, file.commitish)
-          .pipe(map(r => ({diff: this.editorContents(buildDiff(r, file, file.commitish)), file})))),
+        switchMap(file => {
+          if (instanceOf(file, CommittedFileChange)) {
+            return this.fileDiffService.getCommitDiff(file, file.commitish)
+              .pipe(map(r => ({diff: this.editorContents(buildDiff(r, file, file.commitish)), file})));
+          } else { // instanceOf WorkingDirectoryFileChange
+            return this.fileDiffService.getWorkingDirectoryDiff(file)
+              .pipe(map(r => ({diff: this.editorContents(buildDiff(r, file)), file})));
+          }
+        }),
       )
       .subscribe(({diff, file}) => {
         this.diffModels.set({

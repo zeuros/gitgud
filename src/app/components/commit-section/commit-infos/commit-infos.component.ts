@@ -13,7 +13,7 @@ import {Tooltip} from 'primeng/tooltip';
 import {AvatarComponent} from './avatar/avatar.component';
 import {Listbox} from 'primeng/listbox';
 import {ChangeSet, CommittedFileChange} from '../../../lib/github-desktop/model/change-set';
-import {CommitFileStatusIcon} from '../../../lib/github-desktop/model/status';
+import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 
 @Component({
@@ -47,7 +47,7 @@ export class CommitInfosComponent {
   protected readonly DATE_FORMAT = DATE_FORMAT;
   protected readonly directory = directory;
   protected readonly fileName = fileName;
-  protected readonly CommitFileStatusIcon = CommitFileStatusIcon;
+  protected readonly FileStatusesIcons = FileStatusesIcons;
   private readonly commitFilesChangesService = inject(CommitFilesChangesService);
   protected readonly fileDiffPanelService = inject(FileDiffPanelService);
 

@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {CommittedFileChange} from '../lib/github-desktop/model/status';
+import {CommittedFileChange, FileChange, WorkingDirectoryFileChange} from '../lib/github-desktop/model/status';
 import {Subject} from 'rxjs';
 
 @Injectable({
@@ -7,6 +7,9 @@ import {Subject} from 'rxjs';
 })
 export class FileDiffPanelService {
 
-  committedFileClicked = new Subject<CommittedFileChange>();
+  showCommittedFileDiffs = (f: CommittedFileChange) => this.fileToDiff$.next(f);
+  showWorkingDirDiffs = (f: WorkingDirectoryFileChange) => this.fileToDiff$.next(f);
+
+  fileToDiff$ = new Subject<FileChange>();
 
 }

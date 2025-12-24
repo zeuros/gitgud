@@ -9,7 +9,7 @@ import {beforeAndAfterText, convertDiff} from './diff-binary-image';
 export function buildDiff(
   buffer: string,
   file: FileChange,
-  oldestCommitish: string,
+  oldestCommitish?: string,
   lineEndingsChange?: LineEndingsChange,
 ): IDiff {
   // if (file.status.submoduleStatus !== undefined) {

@@ -443,7 +443,7 @@ export class FileDiffService {
    *
    * @param commitish A commit SHA or some other identifier that ultimately dereferences to a commit.
    */
-  getCommitDiff = (file: FileChange, commitish: string, hideWhitespaceInDiff = false) =>
+   getCommitDiff = (file: FileChange, commitish: string, hideWhitespaceInDiff = false) =>
     this.gitRepositoryService
       .git([
         'log',
@@ -460,6 +460,24 @@ export class FileDiffService {
         '--',
         file.path,
         file.status.kind === AppFileStatusKind.Renamed || file.status.kind === AppFileStatusKind.Copied ? file.status?.oldPath : undefined,
+      ]);
+
+  /**
+   * Render the difference between a file in the given commit and its parent
+   *
+   * @param commitish A commit SHA or some other identifier that ultimately dereferences to a commit.
+   */
+  getWorkingDirectoryDiff = (file: FileChange, hideWhitespaceInDiff = false) =>
+    this.gitRepositoryService
+      .git([
+        'diff',
+        ...(hideWhitespaceInDiff ? ['-w'] : []),
+        '--no-ext-diff',
+        '--patch-with-raw',
+        '-z',
+        '--no-color',
+        '--',
+        file.path
       ]);
 
 }
