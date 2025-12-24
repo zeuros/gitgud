@@ -11,6 +11,7 @@ export enum IndexStatus {
   Renamed = 'R',
   TypeChanged = 'T',
   Unmerged = 'U',
+  Untracked = '?',
 }
 
 /**

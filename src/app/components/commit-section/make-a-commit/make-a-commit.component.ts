@@ -6,9 +6,10 @@ import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {CommitFilesChangesService} from '../../../services/electron-cmd-parser-layer/commit-files-changes.service';
 import {Listbox} from 'primeng/listbox';
-import {IndexFileStatusIcon} from '../../../lib/github-desktop/model/status';
+import {FileStatusesIcons, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/status';
 import {directory, fileName} from '../../../utils/utils';
 import {AsyncPipe} from '@angular/common';
+import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 
 @Component({
   selector: 'gitgud-make-a-commit',
@@ -26,19 +27,17 @@ import {AsyncPipe} from '@angular/common';
 })
 export class MakeACommitComponent {
 
-  private readonly commitFilesChangesService = inject(CommitFilesChangesService);
-  protected readonly unstagedFiles$ = this.commitFilesChangesService.indexChanges();
-  protected readonly stagedFiles$ = this.commitFilesChangesService.indexChanges(true);
   protected readonly directory = directory;
   protected readonly fileName = fileName;
-
-
   protected commitForm = new FormGroup({
     summary: new FormControl(''),
     description: new FormControl(''),
   });
-
   protected readonly keys = Object.keys;
-  protected readonly IndexFileStatusIcon = IndexFileStatusIcon;
+  protected readonly FileStatusesIcons = FileStatusesIcons;
+  protected readonly fileDiffPanelService = inject(FileDiffPanelService);
+  private readonly commitFilesChangesService = inject(CommitFilesChangesService);
+  protected readonly workDirChanges$ = this.commitFilesChangesService.workingDirChanges();
 
+  protected readonly $WorkDirFileChanges = (w: WorkingDirectoryFileChange) => w;
 }

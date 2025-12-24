@@ -29,12 +29,11 @@
 
 import {CommittedFileChange} from './model/change-set';
 import {forceUnwrap} from './throw-ex';
-import {isCopyOrRename, mapStatus} from './log';
-import {IndexStatus} from './model/diff-index';
-import {AppFileStatus} from './model/status';
+import {isCopyOrRename, mapPorcelainStatus, mapStatus} from './log';
+import {AppFileStatus, WorkingDirectoryFileChange} from './model/status';
 
 export const parseRawLogWithNumstat = (rawFileChanges: string, sha: string) => {
-  const files = new Array<CommittedFileChange>();
+  const files: CommittedFileChange[] = [];
   let linesAdded = 0;
   let linesDeleted = 0;
   let numStatCount = 0;
@@ -55,8 +54,8 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, sha: string) => {
     } else {
       const match = /^(\d+|-)\t(\d+|-)\t/.exec(line);
       const [, added, deleted] = forceUnwrap('Invalid numstat line', match);
-      linesAdded += added === '-' ? 0 : parseInt(added, 10);
-      linesDeleted += deleted === '-' ? 0 : parseInt(deleted, 10);
+      linesAdded += added === '-' ? 0 : Number.parseInt(added);
+      linesDeleted += deleted === '-' ? 0 : Number.parseInt(deleted);
 
       // If this entry denotes a rename or copy the old and new paths are on
       // two separate fields (separated by \0). Otherwise, they're on the same
@@ -71,19 +70,40 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, sha: string) => {
   return {files, linesAdded, linesDeleted};
 };
 
-type FilesAndStatuses = { [key: string]: IndexStatus };
+//TODO: move
+export interface WorkDirStatus {
+  unstaged: WorkingDirectoryFileChange[];
+  staged: WorkingDirectoryFileChange[];
+}
 
-export const parseIndexChanges = (indexChangesRawResult: string): FilesAndStatuses => {
+/**
+ * Parses the output of `git status --porcelain -z` into staged and unstaged changes.
+ * @param workingDirectoryChanges The raw output from Git.
+ * @returns An object containing staged and unstaged changes.
+ */
+export const parseWorkingDirChanges = (workingDirectoryChanges: string): WorkDirStatus => {
+  const staged: WorkingDirectoryFileChange[] = [];
+  const unstaged: WorkingDirectoryFileChange[] = [];
 
-  const map: FilesAndStatuses = {};
+  workingDirectoryChanges
+    .split('\0')
+    .filter(Boolean) // Remove empty entries
+    .forEach((entry) => {
+      // Extract the two-character status (e.g., "M ", "MM", "??", "A ")
+      const rawStatus = entry.substring(0, 2);
+      const stagedStatus = rawStatus.charAt(0);
+      const unstagedStatus = rawStatus.charAt(1);
+      const path = entry.substring(2).trim();
 
-  const pieces = indexChangesRawResult.split('\0');
+      const fileChange = new WorkingDirectoryFileChange(
+        path,
+        {kind: mapPorcelainStatus(rawStatus)} as AppFileStatus,
+      );
 
-  for (let i = 0 ; i < pieces.length - 1 ; i += 2) {
-    const path = pieces[i + 1];
+      // Push to staged/unstaged arrays if the status is non-empty
+      if (['A', 'M', 'D', 'R', 'C'].includes(stagedStatus)) staged.push(fileChange);
+      if (['M', '?'].includes(unstagedStatus)) unstaged.push(fileChange);
+    });
 
-    if (pieces[i]) map[path] = pieces[i] as IndexStatus;
-  }
-
-  return map;
+  return {unstaged, staged};
 };

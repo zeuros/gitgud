@@ -23,8 +23,11 @@ export enum AppFileStatusKind {
   Deleted = 'Deleted',
   Copied = 'Copied',
   Renamed = 'Renamed',
+  Unchanged = 'Unchanged',
   Conflicted = 'Conflicted',
   Untracked = 'Untracked',
+  Ignored = 'Ignored',
+  UpdatedButUnmerged = 'UpdatedButUnmerged',
 }
 
 export type Icon = {icon: string; color: string};
@@ -42,28 +45,18 @@ export const Icons: {[key: string]: Icon} = {
   UpdatedButUnmerged: {icon: 'fa-code-branch', color: '#f39c12'},
 };
 
-export const IndexFileStatusIcon: Record<GitStatusEntry, Icon> = {
-  [GitStatusEntry.Modified]: Icons.Modified,
-  [GitStatusEntry.Added]: Icons.New,
-  [GitStatusEntry.Deleted]: Icons.Deleted,
-  [GitStatusEntry.Renamed]: Icons.Renamed,
-  [GitStatusEntry.Copied]: Icons.Copied,
-  [GitStatusEntry.Unchanged]: Icons.Unchanged,
-  [GitStatusEntry.Untracked]: Icons.Untracked,
-  [GitStatusEntry.Ignored]: Icons.Ignored,
-  [GitStatusEntry.UpdatedButUnmerged]: Icons.UpdatedButUnmerged,
-};
-
-export const CommitFileStatusIcon: Record<AppFileStatusKind, Icon> = {
+export const FileStatusesIcons: Record<AppFileStatusKind, Icon> = {
   [AppFileStatusKind.New]: Icons.New,
   [AppFileStatusKind.Modified]: Icons.Modified,
   [AppFileStatusKind.Deleted]: Icons.Deleted,
   [AppFileStatusKind.Copied]: Icons.Copied,
   [AppFileStatusKind.Renamed]: Icons.Renamed,
+  [AppFileStatusKind.Unchanged]: Icons.Unchanged,
+  [AppFileStatusKind.Untracked]: Icons.New, // TODO: manage better
   [AppFileStatusKind.Conflicted]: Icons.Conflicted,
-  [AppFileStatusKind.Untracked]: Icons.Untracked,
+  [AppFileStatusKind.Ignored]: Icons.Ignored,
+  [AppFileStatusKind.UpdatedButUnmerged]: Icons.UpdatedButUnmerged,
 };
-
 
 /**
  * Normal changes to a repository detected by GitHub Desktop
@@ -322,7 +315,7 @@ export class WorkingDirectoryFileChange extends FileChange {
   public constructor(
     path: string,
     status: AppFileStatus,
-    public readonly selection: DiffSelection,
+    public readonly selection?: DiffSelection,
   ) {
     super(path, status);
   }
@@ -330,14 +323,14 @@ export class WorkingDirectoryFileChange extends FileChange {
   /** Create a new WorkingDirectoryFileChange with the given includedness. */
   public withIncludeAll(include: boolean): WorkingDirectoryFileChange {
     const newSelection = include
-      ? this.selection.withSelectAll()
-      : this.selection.withSelectNone();
+      ? this.selection?.withSelectAll()
+      : this.selection?.withSelectNone();
 
     return this.withSelection(newSelection);
   }
 
   /** Create a new WorkingDirectoryFileChange with the given diff selection. */
-  public withSelection(selection: DiffSelection): WorkingDirectoryFileChange {
+  public withSelection(selection?: DiffSelection): WorkingDirectoryFileChange {
     return new WorkingDirectoryFileChange(this.path, this.status, selection);
   }
 }
@@ -417,10 +410,10 @@ function getIncludeAllState(
   }
 
   const allSelected = files.every(
-    f => f.selection.getSelectionType() === DiffSelectionType.All,
+    f => f.selection?.getSelectionType() === DiffSelectionType.All,
   );
   const noneSelected = files.every(
-    f => f.selection.getSelectionType() === DiffSelectionType.None,
+    f => f.selection?.getSelectionType() === DiffSelectionType.None,
   );
 
   let includeAll: boolean | null = null;

@@ -55,7 +55,7 @@ export const beforeAndAfterText = (contents: string, hunks: ReadonlyArray<DiffHu
 export function convertDiff(
   file: FileChange,
   diff: IRawDiff,
-  oldestCommitish: string,
+  oldestCommitish?: string,
   lineEndingsChange?: LineEndingsChange,
 ): IDiff {
   const extension = fileName(file.path)!.toLowerCase();
@@ -84,7 +84,7 @@ export function convertDiff(
 
 export function getImageDiff(
   file: FileChange,
-  oldestCommitish: string,
+  oldestCommitish?: string,
 ): IImageDiff {
   let current: Image | undefined = undefined;
   let previous: Image | undefined = undefined;
