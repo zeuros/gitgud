@@ -19,3 +19,11 @@ export const fadeSlideIn =
       animate('150ms', style({opacity: 1, transform: 'translateY(0)'})),
     ]),
   ]);
+
+export const slightSlideIn =
+  trigger('slightSlideIn', [
+    transition(':enter', [
+      style({opacity: 0, transform: 'translateY(-3px)'}),
+      animate('100ms', style({opacity: 1, transform: 'translateY(0)'})),
+    ]),
+  ]);

@@ -10,6 +10,7 @@ import {FileStatusesIcons, WorkingDirectoryFileChange} from '../../../lib/github
 import {directory, fileName} from '../../../utils/utils';
 import {AsyncPipe} from '@angular/common';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
+import {slightSlideIn} from '../../../shared/animations';
 
 @Component({
   selector: 'gitgud-make-a-commit',
@@ -24,6 +25,7 @@ import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
   ],
   templateUrl: './make-a-commit.component.html',
   styleUrl: './make-a-commit.component.scss',
+  animations: [slightSlideIn],
 })
 export class MakeACommitComponent {
 

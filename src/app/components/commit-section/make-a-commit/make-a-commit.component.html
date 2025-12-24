@@ -5,7 +5,7 @@
 @let workingDirFilesChanges = workDirChanges$ | async;
 
 @if (workingDirFilesChanges) {
-    <p-listbox [options]="workingDirFilesChanges.unstaged" optionLabel="path" (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)" [scrollHeight]="undefined">
+    <p-listbox @slightSlideIn [options]="workingDirFilesChanges.unstaged" optionLabel="path" (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)" [scrollHeight]="undefined">
         <ng-template #item let-workingDirFileChanges>
             @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
             <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
@@ -25,7 +25,7 @@
 <p-divider type="solid"/>
 
 @if (workingDirFilesChanges) {
-    <p-listbox [options]="workingDirFilesChanges.staged" optionLabel="path" (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)" [scrollHeight]="undefined">
+    <p-listbox @slightSlideIn [options]="workingDirFilesChanges.staged" optionLabel="path" (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)" [scrollHeight]="undefined">
         <ng-template #item let-workingDirFileChanges>
             @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
             <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
