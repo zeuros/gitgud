@@ -160,7 +160,7 @@ export class LogsComponent implements AfterViewInit {
   private onRepositoryLogChanges = (gitRepository: GitRepository) => {
     const commits = gitRepository.logs.map(this.commitToDisplayRef);
 
-    // Index commit
+    // "Index" commit (working directory)
     const indexParent = commits.find(c => c.isPointedByLocalHead);
     if (indexParent) commits.unshift(indexCommit(indexParent));
 

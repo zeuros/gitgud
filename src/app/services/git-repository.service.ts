@@ -14,7 +14,7 @@ import {StashService} from "./electron-cmd-parser-layer/stash.service";
 import {BranchService} from "./electron-cmd-parser-layer/branch.service";
 import {GitApiService} from "./electron-cmd-parser-layer/git-api.service";
 
-const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 400;
+const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 
 /**
  * Holds repositories and their states
