@@ -26,6 +26,7 @@
         </ng-template>
         <p-tree
                 selectionMode="single"
+                class="text-overflow-ellipsis"
                 [value]="remoteBranches"
                 [selection]="selectedNode"
                 (selectionChange)="selectedNode = $branchNode($event)"
