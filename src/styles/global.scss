@@ -78,6 +78,12 @@ hr {
   text-overflow: ellipsis;
 }
 
+p-tree.text-overflow-ellipsis span.p-tree-node-label {
+  white-space: nowrap;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+}
+
 .text-gray {
   color: var(--huaaaaaGray);
 }
