@@ -1,21 +1,18 @@
-import {Component, input} from '@angular/core';
-import {toObservable} from '@angular/core/rxjs-interop';
-import {AccordionModule} from "primeng/accordion";
-import {BadgeModule} from "primeng/badge";
-import {TerminalService} from "primeng/terminal";
-import {TreeModule} from "primeng/tree";
-import {ContextMenuModule} from "primeng/contextmenu";
-import {MenuItem, TreeNode} from "primeng/api";
-import {PopupService} from "../../services/popup.service";
-import {Branch} from "../../lib/github-desktop/model/branch";
-import {GitRepositoryService} from "../../services/git-repository.service";
-import {filter} from "rxjs";
-import {local, remote, removeRemotePrefix, toBranchTree} from "../../utils/branch-utils";
-import {notUndefined} from "../../utils/utils";
+import {Component, computed, input} from '@angular/core';
+import {AccordionModule} from 'primeng/accordion';
+import {BadgeModule} from 'primeng/badge';
+import {TerminalService} from 'primeng/terminal';
+import {TreeModule} from 'primeng/tree';
+import {ContextMenuModule} from 'primeng/contextmenu';
+import {MenuItem, TreeNode} from 'primeng/api';
+import {PopupService} from '../../services/popup.service';
+import {Branch} from '../../lib/github-desktop/model/branch';
+import {GitRepositoryService} from '../../services/git-repository.service';
+import {local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branch-utils';
 
 
 @Component({
-  selector: 'gitgud-branches',
+  selector: 'gitgud-left-panel',
   standalone: true,
   imports: [
     AccordionModule,
@@ -24,10 +21,10 @@ import {notUndefined} from "../../utils/utils";
     ContextMenuModule,
   ],
   providers: [TerminalService],
-  templateUrl: './branches.component.html',
-  styleUrl: './branches.component.scss'
+  templateUrl: './left-panel.component.html',
+  styleUrl: './left-panel.component.scss',
 })
-export class BranchesComponent {
+export class LeftPanelComponent {
 
   contextMenu: MenuItem[] = [
     {label: 'Pull (fast-forward if possible)', icon: 'pi pi-cloud-download', command: () => this.popupService.info('Pull (fast-forward if possible) selected')},
@@ -46,24 +43,15 @@ export class BranchesComponent {
   ];
 
   readonly branches = input<Branch[]>();
-  protected localBranches: TreeNode<Branch>[] = [];
-  protected remoteBranches: TreeNode<Branch>[] = [];
+  protected localBranches = computed(() => toBranchTree((this.branches() ?? []).filter(local)));
+  protected remoteBranches = computed(() => toBranchTree((this.branches() ?? []).filter(remote), removeRemotePrefix));
   protected selectedNode?: TreeNode<Branch>;
 
   constructor(
     private popupService: PopupService,
     private gitRepositoryService: GitRepositoryService,
   ) {
-    toObservable(this.branches)
-      .pipe(filter(notUndefined))
-      .subscribe(this.updateBranches);
   }
-
-  private updateBranches = (branches: Branch[]) => {
-    this.localBranches = toBranchTree(branches.filter(local));
-    this.remoteBranches = toBranchTree(branches.filter(remote), removeRemotePrefix);
-  }
-
 
   selectBranchCommit = (branch: TreeNode<Branch>) =>
     this.gitRepositoryService.updateCurrentRepository({highlightedCommitSha: branch?.data?.tip.sha});

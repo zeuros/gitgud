@@ -1,5 +1,5 @@
 import {Component, inject, Input} from '@angular/core';
-import {BranchesComponent} from '../branches/branches.component';
+import {LeftPanelComponent} from '../left-panel/left-panel.component';
 import {SplitterModule} from 'primeng/splitter';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {CommitSectionComponent} from '../commit-section/commit-section.component';
@@ -13,7 +13,7 @@ import {MonacoEditorViewComponent} from '../monaco-editor-view/monaco-editor-vie
 @Component({
   selector: 'gitgud-repository-view',
   standalone: true,
-  imports: [BranchesComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe, NgIf, MonacoEditorViewComponent],
+  imports: [LeftPanelComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe, NgIf, MonacoEditorViewComponent],
   templateUrl: './repository-view.component.html',
   styleUrl: './repository-view.component.scss',
 })
