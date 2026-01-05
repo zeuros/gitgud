@@ -41,8 +41,19 @@
                 <span class="font-bold white-space-nowrap"><i class="fa fa-archive mr-2"></i> Stashes</span>
             </span>
         </ng-template>
-        STASHES HERE !
+
+        <p-listbox [options]="stashes() ?? []" (onChange)="selectStash($event.value)" [scrollHeight]="undefined">
+            <ng-template #item let-s>
+                @let stash = $stash(s);
+                <i class="fa fa-archive mr-2"></i>
+                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ stash.summary }}</span>
+            </ng-template>
+        </p-listbox>
     </p-accordionTab>
 </p-accordion>
 
-<p-contextMenu #branchesContextMenu [model]="contextMenu" appendTo="body" styleClass="context-menu"/>
+<p-contextMenu #branchesContextMenu [model]="contextMenu" appendTo="body" [group]="true" styleClass="context-menu">
+<!--    <ng-template #item let-i>-->
+<!--        <i class="{{ i.icon }} context-menu-icon"></i> {{ i.label }}-->
+<!--    </ng-template>-->
+</p-contextMenu>
