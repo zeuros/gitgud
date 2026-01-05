@@ -1,12 +1,12 @@
 import {inject, Injectable} from '@angular/core';
-import {Commit, parseRawUnfoldedTrailers} from "../../lib/github-desktop/model/commit";
-import {ParserService} from "../parser.service";
-import {map, Observable} from "rxjs";
-import {CommitIdentity} from "../../lib/github-desktop/model/commit-identity";
-import {formatArg} from "../../utils/log-utils";
+import {Commit, parseRawUnfoldedTrailers} from '../../lib/github-desktop/model/commit';
+import {ParserService} from '../parser.service';
+import {map, Observable} from 'rxjs';
+import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
+import {formatArg} from '../../utils/log-utils';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LogService {
   private fields = {
@@ -38,34 +38,36 @@ export class LogService {
     revisionRange?: string,
     limit?: number,
     skip?: number,
-    additionalArgs: ReadonlyArray<string> = []
+    additionalArgs: ReadonlyArray<string> = [],
   ): Observable<Commit[]> => {
 
-    const args = ['log']
+    const args = ['log'];
 
     if (revisionRange !== undefined) {
-      args.push(revisionRange)
+      args.push(revisionRange);
     }
 
-    args.push('--date=raw')
+    args.push('--date=raw');
 
     if (limit !== undefined) {
-      args.push(`--max-count=${limit}`)
+      args.push(`--max-count=${limit}`);
     }
 
     if (skip !== undefined) {
-      args.push(`--skip=${skip}`)
+      args.push(`--skip=${skip}`);
     }
 
 
     args.push(
+      // '--walk-reflogs', // Git log exclude stash namespace, we add reflogs to find everything (slow ?)
+      // '--glob=\'refs/stash\'', // Also includes stashes and commits leading to them
       '-z', // Separate lines with NUL character
       formatArg(this.fields),
       '--no-show-signature',
       '--no-color',
       ...additionalArgs,
-      '--'
-    )
+      '--',
+    );
     return git(args)
       .pipe(map(log => this.logParser(log).map(commit => {
         // Ref is of the format: (HEAD -> master, tag: some-tag-name, tag: some-other-tag,with-a-comma, origin/master, origin/HEAD)
@@ -73,7 +75,7 @@ export class LogService {
         // check each ref for the tag prefix. We used to use the regex /tag: ([^\s,]+)/g)`, but will clip a tag with a comma short.
         const tags = commit.refs
           .split(', ')
-          .flatMap(ref => (ref.startsWith('tag: ') ? ref.substring(5) : []))
+          .flatMap(ref => (ref.startsWith('tag: ') ? ref.substring(5) : []));
 
         return new Commit(
           commit.sha,
@@ -89,13 +91,13 @@ export class LogService {
           // We know for sure that the trailer separator will be ':' since we got
           // them from %(trailers:unfold) above, see `git help log`:
           //
-          //   "key_value_separator=<SEP>: specify a separator inserted between
+          //   key_value_separator=<SEP>: specify a separator inserted between
           //    trailer lines. When this option is not given each trailer key-value
           //    pair is separated by ": ". Otherwise, it shares the same semantics as
           //    separator=<SEP> above."
           parseRawUnfoldedTrailers(commit.trailers, ':'),
-          tags
-        )
+          tags,
+        );
       })));
-  }
+  };
 }
