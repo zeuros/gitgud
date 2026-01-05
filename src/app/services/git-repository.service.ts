@@ -124,7 +124,7 @@ export class GitRepositoryService {
 
   fetchCurrentRepository = () => {
     if (this.currentRepositoryIndex != undefined) {
-      this.git(['fetch']);
+      this.git(['fetch']); // fixme: subscribe this ?
       this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
     }
   }
