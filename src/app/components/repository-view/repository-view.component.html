@@ -1,18 +1,21 @@
-<p-splitter [panelSizes]="gitRepository.sizes" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event.sizes)" styleClass="auto-wh">
-    <ng-template pTemplate>
-        <gitgud-left-panel [branches]="gitRepository.branches" class="col flex"/>
-    </ng-template>
-    <ng-template pTemplate>
-        <gitgud-logs [gitRepository]="gitRepository"/>
-    </ng-template>
-    <ng-template pTemplate>
-        <gitgud-commit-section [selectedCommits]="gitRepository.selectedCommits" class="col flex"/>
-    </ng-template>
-</p-splitter>
+@let repo = gitRepository();
+@if (repo) {
+    <p-splitter [panelSizes]="repo.sizes" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event.sizes)" styleClass="auto-wh">
+        <ng-template pTemplate>
+            <gitgud-left-panel [branches]="repo.branches" [stashes]="repo.stashes" class="col flex"/>
+        </ng-template>
+        <ng-template pTemplate>
+            <gitgud-logs [gitRepository]="repo"/>
+        </ng-template>
+        <ng-template pTemplate>
+            <gitgud-commit-section [selectedCommits]="repo.selectedCommits" class="col flex"/>
+        </ng-template>
+    </p-splitter>
 
-<gitgud-monaco-editor-view
-        *ngIf="fileDiffPanelService.fileToDiff$ | async as fileToDiff"
-        [fileToDiff]="fileToDiff"
-        class="absolute left-0 bottom-0 wuuuu"
-        style="right: calc( 100vw * {{ gitRepository.sizes[2] / sum(gitRepository.sizes) }} + 3px )"
-/>
+    <gitgud-monaco-editor-view
+            *ngIf="fileDiffPanelService.fileToDiff$ | async as fileToDiff"
+            [fileToDiff]="fileToDiff"
+            class="absolute left-0 bottom-0 wuuuu"
+            style="right: calc( 100vw * {{ repo.sizes[2] / sum(repo.sizes) }} + 3px )"
+    />
+}

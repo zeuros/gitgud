@@ -9,6 +9,9 @@ import {PopupService} from '../../services/popup.service';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branch-utils';
+import {Listbox} from 'primeng/listbox';
+import {Commit} from '../../lib/github-desktop/model/commit';
+import {JsonPipe} from '@angular/common';
 
 
 @Component({
@@ -19,6 +22,8 @@ import {local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branc
     BadgeModule,
     TreeModule,
     ContextMenuModule,
+    Listbox,
+    JsonPipe,
   ],
   providers: [TerminalService],
   templateUrl: './left-panel.component.html',
@@ -43,6 +48,7 @@ export class LeftPanelComponent {
   ];
 
   readonly branches = input<Branch[]>();
+  readonly stashes = input<Commit[]>();
   protected localBranches = computed(() => toBranchTree((this.branches() ?? []).filter(local)));
   protected remoteBranches = computed(() => toBranchTree((this.branches() ?? []).filter(remote), removeRemotePrefix));
   protected selectedNode?: TreeNode<Branch>;
@@ -56,6 +62,9 @@ export class LeftPanelComponent {
   selectBranchCommit = (branch: TreeNode<Branch>) =>
     this.gitRepositoryService.updateCurrentRepository({highlightedCommitSha: branch?.data?.tip.sha});
 
+  selectStash = (stash: Commit) =>
+    this.gitRepositoryService.updateCurrentRepository({highlightedCommitSha: stash?.sha});
+
 
   // checkoutBranch = (branch: TreeNode<Branch>) => {
   //   this.gitRepositoryService.updateCurrentRepository({checkedOutBranch: branch.data})
@@ -67,5 +76,6 @@ export class LeftPanelComponent {
   // };
 
   protected $branchNode = (branchNode: any): TreeNode<Branch> => branchNode;
+  protected $stash = (stash: any): Commit => stash;
 
 }

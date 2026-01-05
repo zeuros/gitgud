@@ -1,4 +1,4 @@
-import {Component, inject, Input} from '@angular/core';
+import {Component, inject, input, Input} from '@angular/core';
 import {LeftPanelComponent} from '../left-panel/left-panel.component';
 import {SplitterModule} from 'primeng/splitter';
 import {GitRepositoryService} from '../../services/git-repository.service';
@@ -19,7 +19,7 @@ import {MonacoEditorViewComponent} from '../monaco-editor-view/monaco-editor-vie
 })
 export class RepositoryViewComponent {
 
-  @Input() gitRepository!: GitRepository;
+  gitRepository = input<GitRepository>();
   protected readonly fileDiffPanelService = inject(FileDiffPanelService);
   protected readonly sum = sum;
   private readonly gitRepositoryService = inject(GitRepositoryService);
