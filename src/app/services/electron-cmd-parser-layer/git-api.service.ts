@@ -51,9 +51,10 @@ export class GitApiService {
    * @param cwd Which folder to execute git from
    */
   git = (args: string[], cwd?: string) => {
-    console.log(`git ${args.join(' ')}`);
-    return this.exec('git', args, {cwd, env: process.env});
-  }
+    const start = performance.now();
+    return this.exec('git', args, {cwd, env: process.env})
+      .pipe(tap(() => console.log(`git ${args.join(' ')} (${performance.now() - start}ms)`)));
+  };
 
   clone = (): Observable<void> => {
     // TODO
