@@ -29,9 +29,6 @@ export class StashService {
   private logParserService = inject(ParserService);
   private stashParse = this.logParserService.createParser(this.fields);
 
-  /**
-   * Get the repository's commits using `revisionRange` and limited to `limit`
-   */
   getStashes = (git: (args?: string[]) => Observable<any>, additionalArgs: ReadonlyArray<string> = []) => {
 
     // TODO: refactor with LogService

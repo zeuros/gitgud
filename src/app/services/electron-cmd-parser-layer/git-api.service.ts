@@ -5,22 +5,22 @@ import {Injectable} from '@angular/core';
 import * as childProcess from 'child_process';
 import {ExecOptions} from 'child_process';
 import * as util from 'util';
-import {from, map, Observable} from "rxjs";
-import {omitUndefined} from "../../utils/utils";
-import * as electron from "@electron/remote";
+import {from, map, Observable, tap} from 'rxjs';
+import {omitUndefined} from '../../utils/utils';
+import * as electron from '@electron/remote';
 import * as path from 'path';
 
 /**
  * This service helps manipulate git through @electron/remote
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GitApiService {
 
   childProcess: typeof childProcess = (window as any).require('child_process');
   private util: typeof util = (window as any).require('util');
-  private electron: typeof electron = (window as any).require('@electron/remote')
+  private electron: typeof electron = (window as any).require('@electron/remote');
   private promisedExec = this.util.promisify(this.childProcess.execFile);
   private path: typeof path = (window as any).require('path');
 
@@ -58,7 +58,7 @@ export class GitApiService {
   clone = (): Observable<void> => {
     // TODO
     return new Observable<void>();
-  }
+  };
 
   exec = (cmd: string, args: string[] = [], options?: ExecOptions): Observable<string> =>
     from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))

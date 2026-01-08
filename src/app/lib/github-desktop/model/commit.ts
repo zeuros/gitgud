@@ -1,24 +1,24 @@
-import {CommitIdentity} from "./commit-identity";
-import {Trailer} from "../../../models/interpret-trailers";
-import {LogObject} from "../../../models/log-object";
-import {notUndefined} from "../../../utils/utils";
+import {CommitIdentity} from './commit-identity';
+import {Trailer} from '../../../models/interpret-trailers';
+import {LogObject} from '../../../models/log-object';
+import {notUndefined} from '../../../utils/utils';
 
 export const parseRawUnfoldedTrailers = (trailers: string, separators: string): Trailer[] =>
   trailers.split('\n').map(line => parseSingleUnfoldedTrailer(line, separators)).filter(notUndefined);
 
 const parseSingleUnfoldedTrailer = (line: string, separators: string): Trailer | null => {
   for (const separator of separators) {
-    const ix = line.indexOf(separator)
+    const ix = line.indexOf(separator);
     if (ix > 0) {
       return {
         token: line.substring(0, ix).trim(),
         value: line.substring(ix + 1).trim(),
-      }
+      };
     }
   }
 
-  return null
-}
+  return null;
+};
 
 /**
  * @param sha
@@ -43,7 +43,7 @@ export class Commit implements LogObject {
    * A value indicating whether the author and the committer
    * are the same person.
    */
-  readonly authoredByCommitter: boolean
+  readonly authoredByCommitter: boolean;
 
   constructor(
     public readonly sha: string,
@@ -57,11 +57,11 @@ export class Commit implements LogObject {
     public readonly committer: CommitIdentity,
     public readonly parentSHAs: ReadonlyArray<string>,
     public readonly trailers: ReadonlyArray<Trailer>,
-    public readonly tags: ReadonlyArray<string>
+    public readonly tags: ReadonlyArray<string>,
   ) {
     this.authoredByCommitter =
       this.author.name === this.committer.name &&
-      this.author.email === this.committer.email
+      this.author.email === this.committer.email;
   }
 }
 
