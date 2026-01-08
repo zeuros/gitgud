@@ -47,8 +47,6 @@ export class LogService {
       args.push(revisionRange);
     }
 
-    args.push('--date=raw');
-
     if (limit !== undefined) {
       args.push(`--max-count=${limit}`);
     }
@@ -59,8 +57,8 @@ export class LogService {
 
 
     args.push(
-      // '--walk-reflogs', // Git log exclude stash namespace, we add reflogs to find everything (slow ?)
-      // '--glob=\'refs/stash\'', // Also includes stashes and commits leading to them
+      '--date=raw',
+      '--all',
       '-z', // Separate lines with NUL character
       formatArg(this.fields),
       '--no-show-signature',

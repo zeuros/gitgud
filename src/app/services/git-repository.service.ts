@@ -1,10 +1,10 @@
 import {inject, Injectable} from '@angular/core';
-import {BehaviorSubject, debounceTime, forkJoin, Observable, tap} from 'rxjs';
+import {BehaviorSubject, debounceTime, forkJoin, map, Observable, of, switchMap, tap} from 'rxjs';
 import {GitRepository} from '../models/git-repository';
 import {StorageName} from '../enums/storage-name.enum';
 import {SettingsService} from './settings.service';
 import {byDirectory, isRootDirectory, notUndefined, throwEx} from '../utils/utils';
-import {createRepository} from '../utils/repository-utils';
+import {createRepository, filterOutStashes} from '../utils/repository-utils';
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -124,7 +124,7 @@ export class GitRepositoryService {
 
   fetchCurrentRepository = () => {
     if (this.currentRepositoryIndex != undefined) {
-      this.git(['fetch']); // fixme: subscribe this ?
+      this.git(['fetch']);
       this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
     }
   };
@@ -147,11 +147,12 @@ export class GitRepositoryService {
   };
 
   private updateLogsAndBranches = (): Observable<Partial<GitRepository>> =>
-    forkJoin({
-      logs: this.logService.getCommitLog(this.git, '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source']), // Source will show which branch the commit is in
+    this.stashService.getStashes(this.git).pipe(switchMap(stashes => forkJoin({
+      logs: this.logService.getCommitLog(this.git, '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', ...stashes.map(s => s.sha)])
+        .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
       branches: this.branchService.getBranches(this.git), // Source will show which branch the  commit is in
-      stashes: this.stashService.getStashes(this.git), // Source will show which branch commit is in
-    });
+      stashes: of(stashes), // Source will show which branch commit is in
+    })));
 
   updateCurrentRepository = (updates: Partial<GitRepository>) => {
     if (this.currentRepositoryIndex != undefined) this.updateRepo(this.repositories$[this.currentRepositoryIndex], updates);
