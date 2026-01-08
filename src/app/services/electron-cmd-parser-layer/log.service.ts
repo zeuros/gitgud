@@ -1,7 +1,7 @@
 import {inject, Injectable} from '@angular/core';
 import {Commit, parseRawUnfoldedTrailers} from '../../lib/github-desktop/model/commit';
 import {ParserService} from '../parser.service';
-import {map, Observable} from 'rxjs';
+import {map, Observable, of, tap} from 'rxjs';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {formatArg} from '../../utils/log-utils';
 

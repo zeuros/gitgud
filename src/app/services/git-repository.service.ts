@@ -1,18 +1,18 @@
 import {inject, Injectable} from '@angular/core';
-import {BehaviorSubject, debounceTime, forkJoin, Observable, tap} from "rxjs";
-import {GitRepository} from "../models/git-repository";
-import {StorageName} from "../enums/storage-name.enum";
-import {SettingsService} from "./settings.service";
+import {BehaviorSubject, debounceTime, forkJoin, Observable, tap} from 'rxjs';
+import {GitRepository} from '../models/git-repository';
+import {StorageName} from '../enums/storage-name.enum';
+import {SettingsService} from './settings.service';
 import {byDirectory, isRootDirectory, notUndefined, throwEx} from '../utils/utils';
-import {createRepository} from "../utils/repository-utils";
+import {createRepository} from '../utils/repository-utils';
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as electron from "@electron/remote";
-import {LogService} from "./electron-cmd-parser-layer/log.service";
-import {StashService} from "./electron-cmd-parser-layer/stash.service";
-import {BranchService} from "./electron-cmd-parser-layer/branch.service";
-import {GitApiService} from "./electron-cmd-parser-layer/git-api.service";
+import * as electron from '@electron/remote';
+import {LogService} from './electron-cmd-parser-layer/log.service';
+import {StashService} from './electron-cmd-parser-layer/stash.service';
+import {BranchService} from './electron-cmd-parser-layer/branch.service';
+import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 
@@ -20,13 +20,13 @@ const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
  * Holds repositories and their states
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GitRepositoryService {
 
   private fs: typeof fs = (window as any).require('fs');
   private path: typeof path = (window as any).require('path');
-  private electron: typeof electron = (window as any).require('@electron/remote')
+  private electron: typeof electron = (window as any).require('@electron/remote');
   private dialog = this.electron.dialog;
   repositories$: BehaviorSubject<GitRepository>[] = [];
   currentRepositoryIndex?: number;
@@ -50,7 +50,7 @@ export class GitRepositoryService {
   }
 
   // Just saves changes of current repo, doesn't trigger subscribers
-  saveAllRepos = (repos: GitRepository[]) => this.settingsService.store(StorageName.GitRepositories, repos)
+  saveAllRepos = (repos: GitRepository[]) => this.settingsService.store(StorageName.GitRepositories, repos);
 
   selectRepositoryByIndex = (repositoryIndex: number) => {
     // Deselect current repo
@@ -59,7 +59,7 @@ export class GitRepositoryService {
     // Select the good one
     this.currentRepositoryIndex = repositoryIndex;
     this.updateCurrentRepository({selected: true});
-  }
+  };
 
   /**
    * Opens or retrieve repository after user picks a repo folder
@@ -74,7 +74,7 @@ export class GitRepositoryService {
 
     // Git log and update current repo
     return this.updateLogsAndBranches().pipe(tap(this.updateCurrentRepository));
-  }
+  };
 
   pickGitFolder = () => {
 
@@ -82,7 +82,7 @@ export class GitRepositoryService {
 
     return this.findGitDir(pickedGitFolder);
 
-  }
+  };
 
   /**
    * Lookup in parent folder, and check if path corresponds to a git repo
@@ -98,9 +98,9 @@ export class GitRepositoryService {
     else if (isRootDirectory(gitDir))
       return throwEx(`This folder is not a valid git repository`);
     else
-      return this.findGitDir(this.path.resolve(gitDir, '..'))
+      return this.findGitDir(this.path.resolve(gitDir, '..'));
 
-  }
+  };
 
   removeRepository = (repoIndex: number) => {
     const repoToRemoveWascurrent = this.repositories$[repoIndex].value.selected;
@@ -120,14 +120,14 @@ export class GitRepositoryService {
       // Else, no repos at all, nothing to select !
     }
 
-  }
+  };
 
   fetchCurrentRepository = () => {
     if (this.currentRepositoryIndex != undefined) {
       this.git(['fetch']); // fixme: subscribe this ?
       this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
     }
-  }
+  };
 
   private updateRepo = (repository$: BehaviorSubject<GitRepository>, updates: Partial<GitRepository>) =>
     repository$?.next({...repository$.value, ...updates});
@@ -144,7 +144,7 @@ export class GitRepositoryService {
       .subscribe(() => this.saveAllRepos(this.repositories$.map(repo$ => repo$.value)));
 
     return repo$;
-  }
+  };
 
   private updateLogsAndBranches = (): Observable<Partial<GitRepository>> =>
     forkJoin({
@@ -155,7 +155,7 @@ export class GitRepositoryService {
 
   updateCurrentRepository = (updates: Partial<GitRepository>) => {
     if (this.currentRepositoryIndex != undefined) this.updateRepo(this.repositories$[this.currentRepositoryIndex], updates);
-  }
+  };
 
   git = (args: (string | undefined)[] = []) => this.gitApiService.git(args.filter(notUndefined), this.currentRepository?.directory);
 }
