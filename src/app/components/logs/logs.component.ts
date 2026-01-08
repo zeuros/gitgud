@@ -157,25 +157,20 @@ export class LogsComponent implements AfterViewInit {
   };
 
   private onRepositoryLogChanges = (gitRepository: GitRepository) => {
-    const commits = gitRepository.logs.map(this.commitToDisplayRef);
+    const commits = gitRepository.logs.map(c => this.commitToDisplayRef(c, gitRepository.stashes.find(s => s.parentSHAs[1] == c.sha)));
 
     // "Index" commit (working directory)
     const indexParent = commits.find(c => c.isPointedByLocalHead);
     if (indexParent) commits.unshift(indexCommit(indexParent));
 
-    // TODO: Finish stashes
-    const stashes: DisplayRef[] = []; // gitRepository.stashes.map(this.stashToDisplayRef);
+    const shaMap = buildShaMap(commits);
+    const childrenMap = buildChildrenMap(commits);
 
-    const shaMap = buildShaMap([...commits, ...stashes]);
-    const childrenMap = buildChildrenMap([...commits, ...stashes]);
+    const displayLog = this.saveRowIndexIntoDisplayRef(commits);
 
-    const displayLog = this.saveRowIndexIntoDisplayRef(this.insertStashesIntoCommits(commits, stashes, shaMap));
     this.computedDisplayLog = displayLog;
 
     this.computeCommitsIndents(displayLog, shaMap, childrenMap);
-    // this.computeStashesIndents(displayLog, childrenMap);
-
-    // const displayLog = this.saveRowIndexIntoDisplayRef(this.appendStashes(commits, stashes, childrenMap));
 
     this.graphColumnCount = max(displayLog.map(c => c.indent!))! + 1;
 
@@ -313,12 +308,13 @@ export class LogsComponent implements AfterViewInit {
    * Read commits top to bottom and style them (indentation & connections)
    * TODO: Cleanup this branch mess and use basic types provided by github-desktop, also clean the uniqBy
    */
-  private commitToDisplayRef = (commit: Commit): DisplayRef => {
+  private commitToDisplayRef = (commit: Commit, stashChild?: Commit): DisplayRef => {
     const commitBranches = this.findCommitBranches(commit.branches) ?? [];
 
     return {
       ...commit,
-      refType: RefType.COMMIT,
+      summary: stashChild?.summary ?? commit.summary,
+      refType: stashChild ? RefType.STASH : RefType.COMMIT,
       isPointedByLocalHead: !!commitBranches.find(b => !b.name.includes('origin/') && b.isHeadPointed),
       branchesDetails: commitBranches,
     };
@@ -420,7 +416,7 @@ export class LogsComponent implements AfterViewInit {
       return indent;
     }
 
-    const children = (childrenMap[commit.sha] ?? []).filter(isCommit);
+    const children = (childrenMap[commit.sha] ?? []).filter(c => isCommit(c) || isStash(c));
     // If commit has a child having current commit as first parent, we align with this commit
     const childrenOfSameBranch = children.filter(child => child.parentSHAs[0] == commit.sha);
     const leftChildOfSameBranch = childrenOfSameBranch.find(isMergeCommit) ?? childrenOfSameBranch[0]; // The children we align with

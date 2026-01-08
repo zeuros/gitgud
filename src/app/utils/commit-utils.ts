@@ -42,7 +42,7 @@ export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: Childr
 
 export const hasChild = (stash: DisplayRef, childrenMap: ChildrenMap) => !!childrenMap[stash.sha];
 
-export const stashParentCommitSha = (stash: DisplayRef, shaMap: ShaMap) => stash.parentSHAs.find(parentSha => isCommit(shaMap[parentSha]))!;
+export const stashParentCommitSha = (stash: DisplayRef, shaMap: ShaMap) => stash.parentSHAs.find(parentSha => shaMap[parentSha] && isCommit(shaMap[parentSha]));
 
 // Build the opposite of the Commit.parentShas => Commit.childShas
 export const buildChildrenMap = (commitLog: DisplayRef[]) => {
