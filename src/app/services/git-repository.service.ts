@@ -13,6 +13,7 @@ import {LogService} from './electron-cmd-parser-layer/log.service';
 import {StashService} from './electron-cmd-parser-layer/stash.service';
 import {BranchService} from './electron-cmd-parser-layer/branch.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {FileWatcherService} from './file-watcher.service';
 
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 
@@ -43,6 +44,7 @@ export class GitRepositoryService {
   private branchService = inject(BranchService);
   private stashService = inject(StashService);
   private gitApiService = inject(GitApiService);
+  private fileWatcher = inject(FileWatcherService);
   readonly windowFocused$ = new Subject();
 
   constructor() {
@@ -56,7 +58,13 @@ export class GitRepositoryService {
       this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
     });
 
+    // React to repository selection changes (hook for future side effects)
+    this.currentRepositoryIndex$
+      .pipe(map(() => this.currentRepository!))
+      .subscribe(this.onRepositorySelected);
   }
+
+  private onRepositorySelected = (gitRepository: GitRepository) => this.fileWatcher.setWatcher(gitRepository.directory);
 
   get currentRepository(): GitRepository | undefined {
     return this.currentRepositoryIndex$.value >= 0
