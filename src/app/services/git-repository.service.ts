@@ -1,5 +1,5 @@
 import {inject, Injectable} from '@angular/core';
-import {BehaviorSubject, debounceTime, forkJoin, map, Observable, of, switchMap, tap} from 'rxjs';
+import {BehaviorSubject, debounceTime, forkJoin, map, Observable, of, Subject, switchMap, tap} from 'rxjs';
 import {GitRepository} from '../models/git-repository';
 import {StorageName} from '../enums/storage-name.enum';
 import {SettingsService} from './settings.service';
@@ -43,13 +43,18 @@ export class GitRepositoryService {
   private branchService = inject(BranchService);
   private stashService = inject(StashService);
   private gitApiService = inject(GitApiService);
+  readonly windowFocused$ = new Subject();
 
   constructor() {
 
     // Restore persisted repositories
     (this.settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? []).forEach(this.addToRepos);
 
-    this.electron.getCurrentWindow().on('focus', () => this.updateLogsAndBranches().subscribe(this.updateCurrentRepository));
+    // Refresh data when window regains focus
+    this.electron.getCurrentWindow().on('focus', () => {
+      this.windowFocused$.next(true);
+      this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
+    });
 
   }
 

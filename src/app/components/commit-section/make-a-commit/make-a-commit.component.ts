@@ -38,8 +38,7 @@ export class MakeACommitComponent {
   protected readonly keys = Object.keys;
   protected readonly FileStatusesIcons = FileStatusesIcons;
   protected readonly fileDiffPanelService = inject(FileDiffPanelService);
-  private readonly commitFilesChangesService = inject(CommitFilesChangesService);
-  protected readonly workDirChanges$ = this.commitFilesChangesService.workingDirChanges();
+  protected readonly commitFilesChangesService = inject(CommitFilesChangesService);
 
   protected readonly $WorkDirFileChanges = (w: WorkingDirectoryFileChange) => w;
 }

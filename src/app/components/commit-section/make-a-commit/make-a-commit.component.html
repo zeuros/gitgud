@@ -2,7 +2,7 @@
 
 <p-divider type="solid"/>
 
-@let workingDirFilesChanges = workDirChanges$ | async;
+@let workingDirFilesChanges = commitFilesChangesService.workingDirChanges$ | async;
 
 @if (workingDirFilesChanges) {
     <p-listbox @slightSlideIn [options]="workingDirFilesChanges.unstaged" optionLabel="path" (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)" [scrollHeight]="undefined">

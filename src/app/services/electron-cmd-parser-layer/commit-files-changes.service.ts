@@ -1,6 +1,6 @@
 import {inject, Injectable} from '@angular/core';
-import {map} from 'rxjs';
-import {parseRawLogWithNumstat, parseWorkingDirChanges} from '../../lib/github-desktop/commit-files-changes';
+import {BehaviorSubject, map} from 'rxjs';
+import {parseRawLogWithNumstat, parseWorkingDirChanges, WorkDirStatus} from '../../lib/github-desktop/commit-files-changes';
 import {GitRepositoryService} from '../git-repository.service';
 
 @Injectable({
@@ -8,9 +8,16 @@ import {GitRepositoryService} from '../git-repository.service';
 })
 export class CommitFilesChangesService {
 
+  private readonly workingDirChangesSubject$ = new BehaviorSubject<WorkDirStatus>({unstaged: [], staged: []});
+
+  readonly workingDirChanges$ = this.workingDirChangesSubject$.asObservable();
+
   private gitRepositoryService = inject(GitRepositoryService);
 
-  // getChangedFilesForGivenCommit = (sha: string): Observable<ReadonlyArray<ChangeSet>> =>
+  constructor() {
+    this.gitRepositoryService.windowFocused$.subscribe(this.fetchWorkingDirChanges);
+  }
+
   /**
    * Retrieves the list of changed files for a specific commit.
    *
@@ -27,14 +34,15 @@ export class CommitFilesChangesService {
    * Get a list of files which have recorded changes in the index as compared to
    * HEAD along with the type of change.
    */
-  workingDirChanges = (stagedFiles = false) =>
+  fetchWorkingDirChanges = () =>
     this.gitRepositoryService.git([
       'status',
       '--porcelain',
       '-z',
       '--',
     ])
-      .pipe(map(parseWorkingDirChanges));
+      .pipe(map(parseWorkingDirChanges))
+      .subscribe(workDirChanges => this.workingDirChangesSubject$.next(workDirChanges));
 
 }
 
