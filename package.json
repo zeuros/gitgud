@@ -42,6 +42,7 @@
     "@angular/router": "19.2.17",
     "@electron/remote": "2.1.3",
     "@primeng/themes": "19.1.4",
+    "chokidar": "^4.0.3",
     "font-awesome": "4.7.0",
     "identicon.js": "^2.3.3",
     "lodash": "4.17.21",
