@@ -2,6 +2,7 @@ import {inject, Injectable} from '@angular/core';
 import {BehaviorSubject, map} from 'rxjs';
 import {parseRawLogWithNumstat, parseWorkingDirChanges, WorkDirStatus} from '../../lib/github-desktop/commit-files-changes';
 import {GitRepositoryService} from '../git-repository.service';
+import {FileWatcherService} from '../file-watcher.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,9 +14,12 @@ export class CommitFilesChangesService {
   readonly workingDirChanges$ = this.workingDirChangesSubject$.asObservable();
 
   private gitRepositoryService = inject(GitRepositoryService);
+  private fileWatcherService = inject(FileWatcherService);
 
   constructor() {
+    this.fetchWorkingDirChanges();
     this.gitRepositoryService.windowFocused$.subscribe(this.fetchWorkingDirChanges);
+    this.fileWatcherService.onWorkingDirFileChange$.subscribe(this.fetchWorkingDirChanges);
   }
 
   /**
