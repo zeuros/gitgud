@@ -23,7 +23,6 @@ import {JsonPipe} from '@angular/common';
     TreeModule,
     ContextMenuModule,
     Listbox,
-    JsonPipe,
   ],
   providers: [TerminalService],
   templateUrl: './left-panel.component.html',
