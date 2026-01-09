@@ -1,7 +1,6 @@
 import {inject, Injectable} from '@angular/core';
-import {ParserService} from '../parser.service';
-import {map, of, switchMap} from 'rxjs';
-import {parseWorkingDirChanges, parseRawLogWithNumstat} from '../../lib/github-desktop/commit-files-changes';
+import {map} from 'rxjs';
+import {parseRawLogWithNumstat, parseWorkingDirChanges} from '../../lib/github-desktop/commit-files-changes';
 import {GitRepositoryService} from '../git-repository.service';
 
 @Injectable({
@@ -9,35 +8,20 @@ import {GitRepositoryService} from '../git-repository.service';
 })
 export class CommitFilesChangesService {
 
-  readonly fields = {
-    fullName: '%(refname)',
-    shortName: '%(refname:short)',
-    upstreamShortName: '%(upstream:short)',
-    sha: '%(objectname)',
-    author: '%(author)',
-    symRef: '%(symref)',
-    head: '%(HEAD)',
-  };
-
-  logParser;
-
   private gitRepositoryService = inject(GitRepositoryService);
 
-  constructor(
-    parserService: ParserService,
-  ) {
-
-    this.logParser = parserService.createForEachRefParser(this.fields);
-  }
-
   // getChangedFilesForGivenCommit = (sha: string): Observable<ReadonlyArray<ChangeSet>> =>
+  /**
+   * Retrieves the list of changed files for a specific commit.
+   *
+   * @param sha commit hash
+   * @returns An Observable emitting an array of file changes: added, modified, and deleted files,
+   *          along with their statistics (e.g., lines added/removed).
+   */
   getChangedFilesForGivenCommit = (sha: string) =>
     this.gitRepositoryService.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
       .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, sha)));
 
-
-  // FIXME: browken
-  // getCommitDiff = getCommitDiff(this.gitRepositoryService);
 
   /**
    * Get a list of files which have recorded changes in the index as compared to

@@ -17,7 +17,14 @@ import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 
 /**
- * Holds repositories and their states
+ * State manager for Git repositories.
+ *
+ * - Tracks opened repositories and current selection
+ * - Persist repository state to local storage
+ * - Coordinate git/log/branch/stash services
+ * - React to window focus and filesystem changes
+ *
+ * FIXME: Too complicated
  */
 @Injectable({
   providedIn: 'root',
@@ -39,6 +46,7 @@ export class GitRepositoryService {
 
   constructor() {
 
+    // Restore persisted repositories
     (this.settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? []).forEach(this.addToRepos);
 
     this.electron.getCurrentWindow().on('focus', () => this.updateLogsAndBranches().subscribe(this.updateCurrentRepository));
@@ -65,6 +73,9 @@ export class GitRepositoryService {
 
   /**
    * Opens or retrieve repository after user picks a repo folder
+   * - Reuses an existing repo if already opened
+   * - Marks it as selected
+   * - Refreshes logs, branches, and stashes
    */
   openRepository = () => {
     const repoDirectory = this.pickGitFolder();
@@ -87,7 +98,8 @@ export class GitRepositoryService {
   };
 
   /**
-   * Lookup in parent folder, and check if path corresponds to a git repo
+   * Walks up the picked directory tree until a `.git` folder is found.
+   * Throws if no git repository exists.
    */
   findGitDir = (gitDir: string): string => {
 
@@ -104,6 +116,11 @@ export class GitRepositoryService {
 
   };
 
+  /**
+   * Removes a repository and updates selection:
+   * - If the removed repo was selected, selects the nearest neighbor
+   * - Persists updated repository list
+   */
   removeRepository = (repoIndex: number) => {
     const repoToRemoveWascurrent = this.repositories$[repoIndex].value.selected;
 
@@ -134,6 +151,10 @@ export class GitRepositoryService {
   private updateRepo = (repository$: BehaviorSubject<GitRepository>, updates: Partial<GitRepository>) =>
     repository$?.next({...repository$.value, ...updates});
 
+  /**
+   * Adds a repository to the internal list and wires persistence.
+   * Any change to the repo state is debounced and saved to storage.
+   */
   private addToRepos = (repo: GitRepository) => {
     const repo$ = new BehaviorSubject(repo);
 
@@ -148,6 +169,10 @@ export class GitRepositoryService {
     return repo$;
   };
 
+  /**
+   * Fetches logs, branches, and stashes for the current repository
+   * and returns a partial repository update.
+   */
   private updateLogsAndBranches = (): Observable<Partial<GitRepository>> =>
     this.stashService.getStashes(this.git).pipe(switchMap(stashes => forkJoin({
       logs: this.logService.getCommitLog(this.git, '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', ...stashes.map(s => s.sha)])

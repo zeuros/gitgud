@@ -66,25 +66,23 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   };
 
   constructor() {
-    toObservable(this.fileToDiff)
-      .pipe(
-        filter(notUndefined),
-        switchMap(file => {
-          if (instanceOf(file, CommittedFileChange)) {
-            return this.fileDiffService.getCommitDiff(file, file.commitish)
-              .pipe(map(r => ({diff: this.editorContents(buildDiff(r, file, file.commitish)), file})));
-          } else { // instanceOf WorkingDirectoryFileChange
-            return this.fileDiffService.getWorkingDirectoryDiff(file)
-              .pipe(map(r => ({diff: this.editorContents(buildDiff(r, file)), file})));
-          }
-        }),
-      )
-      .subscribe(({diff, file}) => {
+    effect(() => {
+      const file = this.fileToDiff();
+      if (!file) return;
+
+      const diff$ = instanceOf(file, CommittedFileChange)
+        ? this.fileDiffService.getCommitDiff(file, file.commitish)
+        : this.fileDiffService.getWorkingDirectoryDiff(file);
+
+      diff$.subscribe(r => {
+        const diff = this.editorContents(buildDiff(r, file));
+
         this.diffModels.set({
           before: {code: diff.beforeAfter.before, fileName: file.path},
           after: {code: diff.beforeAfter.after, fileName: file.path},
         });
       });
+    });
 
     effect(() => {
       this.gitRepositoryService.updateCurrentRepository({
