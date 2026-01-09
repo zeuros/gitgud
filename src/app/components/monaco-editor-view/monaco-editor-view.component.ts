@@ -1,11 +1,9 @@
 import {AfterViewInit, Component, effect, ElementRef, inject, input, OnDestroy, signal, ViewChild} from '@angular/core';
 import {CommittedFileChange, FileChange} from '../../lib/github-desktop/model/status';
 import {GitRepositoryService} from '../../services/git-repository.service';
-import {EMPTY, filter, map, switchMap} from 'rxjs';
 import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
-import {toObservable} from '@angular/core/rxjs-interop';
-import {instanceOf, notUndefined} from '../../utils/utils';
+import {instanceOf} from '../../utils/utils';
 import {Button} from 'primeng/button';
 import {ButtonGroup} from 'primeng/buttongroup';
 import {IDiff} from '../../lib/github-desktop/model/diff/diff-data';
@@ -123,15 +121,24 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateDiffEditor({before, after}: DiffModels) {
+    const beforeUri = Uri.parse(`before-${before.fileName}`);
+    const afterUri = Uri.parse(`after-${after.fileName}`);
 
-    // Model(s) already set
-    const beforeFile = Uri.parse(`before-${before.fileName}`);
-    const afterFile = Uri.parse(`after-${after.fileName}`);
+    let original = editor.getModel(beforeUri);
+    let modified = editor.getModel(afterUri);
 
-    const original = editor.getModel(beforeFile) ?? editor.createModel(before.code, undefined, beforeFile);
-    const modified = editor.getModel(afterFile) ?? editor.createModel(after.code, undefined, afterFile);
+    if (original) {
+      original.setValue(before.code);
+    } else {
+      original = editor.createModel(before.code, undefined, beforeUri);
+    }
 
-    // Create new models
+    if (modified) {
+      modified.setValue(after.code);
+    } else {
+      modified = editor.createModel(after.code, undefined, afterUri);
+    }
+
     this.diffEditor!.setModel({original, modified});
   }
 
