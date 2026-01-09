@@ -29,7 +29,7 @@ export class GitRepositoryService {
   private electron: typeof electron = (window as any).require('@electron/remote');
   private dialog = this.electron.dialog;
   repositories$: BehaviorSubject<GitRepository>[] = [];
-  currentRepositoryIndex?: number;
+  currentRepositoryIndex$ = new BehaviorSubject<number>(-1);
 
   private settingsService = inject(SettingsService);
   private logService = inject(LogService);
@@ -46,7 +46,9 @@ export class GitRepositoryService {
   }
 
   get currentRepository(): GitRepository | undefined {
-    return this.repositories$[this.currentRepositoryIndex!]?.value;
+    return this.currentRepositoryIndex$.value >= 0
+      ? this.repositories$[this.currentRepositoryIndex$.value]?.value
+      : undefined;
   }
 
   // Just saves changes of current repo, doesn't trigger subscribers
@@ -57,7 +59,7 @@ export class GitRepositoryService {
     this.updateCurrentRepository({selected: false});
 
     // Select the good one
-    this.currentRepositoryIndex = repositoryIndex;
+    this.currentRepositoryIndex$.next(repositoryIndex);
     this.updateCurrentRepository({selected: true});
   };
 
@@ -68,7 +70,7 @@ export class GitRepositoryService {
     const repoDirectory = this.pickGitFolder();
 
     const repo$ = this.repositories$.find(byDirectory(repoDirectory)) ?? this.addToRepos(createRepository(repoDirectory));
-    this.currentRepositoryIndex = this.repositories$.indexOf(repo$);
+    this.currentRepositoryIndex$.next(this.repositories$.indexOf(repo$));
 
     this.updateRepo(repo$, {selected: true});
 
@@ -123,10 +125,10 @@ export class GitRepositoryService {
   };
 
   fetchCurrentRepository = () => {
-    if (this.currentRepositoryIndex != undefined) {
-      this.git(['fetch']);
-      this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
-    }
+    if (this.currentRepositoryIndex$.value == -1) return;
+
+    this.git(['fetch']);
+    this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
   };
 
   private updateRepo = (repository$: BehaviorSubject<GitRepository>, updates: Partial<GitRepository>) =>
@@ -136,9 +138,9 @@ export class GitRepositoryService {
     const repo$ = new BehaviorSubject(repo);
 
     const insertedIndex = this.repositories$.push(repo$) - 1;
-    if (repo.selected) this.currentRepositoryIndex = insertedIndex;
+    if (repo.selected) this.currentRepositoryIndex$.next(insertedIndex);
 
-    // Always stores repositories changes into localstorage
+    // Stores repositories changes into localstorage
     repo$
       .pipe(debounceTime(500)) // Skip fast edits
       .subscribe(() => this.saveAllRepos(this.repositories$.map(repo$ => repo$.value)));
@@ -155,7 +157,7 @@ export class GitRepositoryService {
     })));
 
   updateCurrentRepository = (updates: Partial<GitRepository>) => {
-    if (this.currentRepositoryIndex != undefined) this.updateRepo(this.repositories$[this.currentRepositoryIndex], updates);
+    if (this.currentRepositoryIndex$.value != -1) this.updateRepo(this.repositories$[this.currentRepositoryIndex$.value], updates);
   };
 
   git = (args: (string | undefined)[] = []) => this.gitApiService.git(args.filter(notUndefined), this.currentRepository?.directory);
