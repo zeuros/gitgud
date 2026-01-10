@@ -39,7 +39,7 @@
             </td>
             <td class="graph">
                 <canvas #canvas
-                        *ngIf="rowIndex == 0"
+                        *ngIf="rowIndex == 0 && graphColumnCount"
                         id="commit-graph-canvas"
                         [height]="yPosition(COMMITS_SHOWN_ON_CANVAS)"
                         [width]="xPosition(graphColumnCount - 1) + NODE_RADIUS"
