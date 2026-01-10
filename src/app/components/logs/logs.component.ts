@@ -30,7 +30,8 @@ import {Edge} from '../../models/edge';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {DragDropModule} from 'primeng/dragdrop';
 import {SearchLogsComponent} from '../search-logs/search-logs.component';
-import {AfterViewInit, Component, ElementRef, HostListener, input, signal, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, effect, ElementRef, HostListener, input, signal, ViewChild} from '@angular/core';
+import {loadStashImage} from './log-draw-utils';
 import {DatePipe, NgForOf, NgIf, NgStyle} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
 import {toObservable} from '@angular/core/rxjs-interop';
@@ -85,6 +86,7 @@ export class LogsComponent implements AfterViewInit {
   private gitRepository$ = toObservable(this.gitRepository).pipe(filter(notUndefined));
   private startCommit = 0;
   protected selectedCommits = signal<DisplayRef[]>([]);
+  private stashImg?: HTMLImageElement;
   @ViewChild('canvas', {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('logTable', {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
 
@@ -99,12 +101,18 @@ export class LogsComponent implements AfterViewInit {
       .pipe(map(gitRepository => gitRepository.highlightedCommitSha), distinctUntilChanged(), filter(notUndefined))
       .subscribe(this.selectAndScrollToCommit);
 
-    // When repository changes its logs
-    this.gitRepository$
-      .pipe(filter(gitRepository => gitRepository?.logs.length > 0), distinctUntilChanged(logsAreEqual))
-      .subscribe(this.onRepositoryLogChanges);
+    // Load stash image for drawing stashes in the graph
+    loadStashImage().subscribe(stashImg => {
+      this.stashImg = stashImg;
 
-    toObservable(this.selectedCommits).subscribe(selectedCommits => this.gitRepositoryService.updateCurrentRepository({selectedCommits}));
+      // When repository changes its logs, compute the log graph and draw it
+      this.gitRepository$
+        .pipe(filter(gitRepository => gitRepository?.logs.length > 0), distinctUntilChanged(logsAreEqual))
+        .subscribe(this.onRepositoryLogChanges);
+    });
+
+    effect(() => this.gitRepositoryService.updateCurrentRepository({selectedCommits: this.selectedCommits()}));
+
   }
 
   get logTableElement() {
@@ -535,11 +543,8 @@ export class LogsComponent implements AfterViewInit {
       canvas.setLineDash([3]);
       canvas.stroke();
     } else { // Stash
-      const img = new Image();
-      img.src = '/assets/images/chest.svg';
-      img.onload = () => {
-        canvas.drawImage(img, x - this.NODE_RADIUS, y - this.NODE_RADIUS, this.NODE_DIAMETER, this.NODE_DIAMETER);
-      };
+      // We made sure to load stashImg before drawing the log
+      canvas.drawImage(this.stashImg!, x - this.NODE_RADIUS, y - this.NODE_RADIUS, this.NODE_DIAMETER, this.NODE_DIAMETER);
     }
   };
 
