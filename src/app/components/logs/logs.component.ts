@@ -579,29 +579,7 @@ export class LogsComponent implements AfterViewInit {
     this.columns[column] = ['free', 0];
   };
 
-  private insertStashesIntoCommits = (commits: DisplayRef[], stashes: DisplayRef[], shaMap: ShaMap) => {
-    stashes.forEach(s => this.insertStashIntoCommits(s, commits, shaMap));
-    return commits;
-  };
-
   private pushNewColumn = () => this.columns.push(['taken', 0]) - 1;
-
-  private computeStashesIndents = (displayLog: DisplayRef[], childrenMap: ChildrenMap) => {
-    displayLog.filter(isStash).forEach(stash => {
-
-      const parentCommitRow = displayLog.findIndex(c => stash.parentSHAs.includes(c.sha));
-      const parentCommitCol = displayLog[parentCommitRow].indent!;
-
-      // If we have merge commits above, we have a line starting from the parent commit, so we must move the stash upper
-      const countMergeCommitsAbove = this.countMergeCommitsAbove(parentCommitRow, displayLog);
-
-      const stashInsertionRow = parentCommitRow - countMergeCommitsAbove;
-      // And place the stash inside on parent's column
-
-      // Insert stash into displayLog, over its parent commit, and over merge commits
-      stash.indent = this.findFreeColumnForStash(stashInsertionRow, parentCommitRow, parentCommitCol, displayLog, childrenMap);
-    });
-  };
 
   // Scroll view to display the selected commit
   private selectAndScrollToCommit = (sha: string) => {
