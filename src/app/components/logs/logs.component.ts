@@ -424,7 +424,7 @@ export class LogsComponent implements AfterViewInit {
       return indent;
     }
 
-    const children = (childrenMap[commit.sha] ?? []).filter(c => isCommit(c) || isStash(c));
+    const children = (childrenMap[commit.sha] ?? []).filter(c => isCommit(c) || isStash(c) || isIndex(c));
     // If commit has a child having current commit as first parent, we align with this commit
     const childrenOfSameBranch = children.filter(child => child.parentSHAs[0] == commit.sha);
     const leftChildOfSameBranch = childrenOfSameBranch.find(isMergeCommit) ?? childrenOfSameBranch[0]; // The children we align with
