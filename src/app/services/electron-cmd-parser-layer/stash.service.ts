@@ -4,6 +4,7 @@ import {ParserService} from "../parser.service";
 import {map, Observable} from "rxjs";
 import {CommitIdentity} from "../../lib/github-desktop/model/commit-identity";
 import {formatArg} from "../../utils/log-utils";
+import {GitApiService} from './git-api.service';
 
 @Injectable({
   providedIn: 'root'
@@ -27,9 +28,10 @@ export class StashService {
     refs: '%D',
   };
   private logParserService = inject(ParserService);
+  private gitApiService = inject(GitApiService);
   private stashParse = this.logParserService.createParser(this.fields);
 
-  getStashes = (git: (args?: string[]) => Observable<any>, additionalArgs: ReadonlyArray<string> = []) => {
+  getStashes = () => {
 
     // TODO: refactor with LogService
     const args = [
@@ -40,11 +42,10 @@ export class StashService {
       formatArg(this.fields),
       '--no-show-signature',
       '--no-color',
-      ...additionalArgs,
       '--'
     ]
 
-    return git(args)
+    return this.gitApiService.git(args)
       .pipe(map(log => this.stashParse(log).map(stash => {
         // Ref is of the format: (HEAD -> master, tag: some-tag-name, tag: some-other-tag,with-a-comma, origin/master, origin/HEAD)
         // Refs are comma separated, but some like tags can also contain commas in the name, so we split on the pattern ", " and then

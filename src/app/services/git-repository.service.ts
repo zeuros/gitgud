@@ -64,7 +64,10 @@ export class GitRepositoryService {
       .subscribe(this.onRepositorySelected);
   }
 
-  private onRepositorySelected = (gitRepository: GitRepository) => this.fileWatcher.setWatcher(gitRepository.directory);
+  private onRepositorySelected = (gitRepository: GitRepository) => {
+    this.fileWatcher.setWatcher(gitRepository.directory);
+    this.gitApiService.setCwd(gitRepository.directory);
+  }
 
   get currentRepository(): GitRepository | undefined {
     return this.currentRepositoryIndex$.value >= 0
@@ -157,7 +160,7 @@ export class GitRepositoryService {
   fetchCurrentRepository = () => {
     if (this.currentRepositoryIndex$.value == -1) return;
 
-    this.git(['fetch']);
+    this.gitApiService.git(['fetch']);
     this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
   };
 
@@ -187,10 +190,10 @@ export class GitRepositoryService {
    * and returns a partial repository update.
    */
   private updateLogsAndBranches = (): Observable<Partial<GitRepository>> =>
-    this.stashService.getStashes(this.git).pipe(switchMap(stashes => forkJoin({
-      logs: this.logService.getCommitLog(this.git, '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', ...stashes.map(s => s.sha)])
+    this.stashService.getStashes().pipe(switchMap(stashes => forkJoin({
+      logs: this.logService.getCommitLog( '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', ...stashes.map(s => s.sha)])
         .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
-      branches: this.branchService.getBranches(this.git), // Source will show which branch the  commit is in
+      branches: this.branchService.getBranches(), // Source will show which branch the  commit is in
       stashes: of(stashes), // Source will show which branch commit is in
     })));
 
@@ -198,5 +201,4 @@ export class GitRepositoryService {
     if (this.currentRepositoryIndex$.value != -1) this.updateRepo(this.repositories$[this.currentRepositoryIndex$.value], updates);
   };
 
-  git = (args: (string | undefined)[] = []) => this.gitApiService.git(args.filter(notUndefined), this.currentRepository?.directory);
 }

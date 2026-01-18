@@ -1,4 +1,4 @@
-import {GitRepositoryService} from "../../services/git-repository.service";
+import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 
 
 /**
@@ -17,8 +17,8 @@ import {GitRepositoryService} from "../../services/git-repository.service";
  * @param path       - The file path, relative to the repository
  *                     root from where to read the blob contents
  */
-export const getBlobContents = (gitRepositoryService: GitRepositoryService, commitish: string, path: string) =>
-  gitRepositoryService.git(['show', `${commitish}:${path}`])
+export const getBlobContents = (gitApiService: GitApiService, commitish: string, path: string) =>
+  gitApiService.git(['show', `${commitish}:${path}`]);
 
 /**
  * Retrieve some or all binary contents of a blob from the repository
@@ -42,5 +42,5 @@ export const getBlobContents = (gitRepositoryService: GitRepositoryService, comm
  *                     the blob. Note that the number of bytes
  *                     returned may always be less than this number.
  */
-export const getPartialBlobContents = getBlobContents
-export const getPartialBlobContentsCatchPathNotInRef = getBlobContents
+export const getPartialBlobContents = getBlobContents;
+export const getPartialBlobContentsCatchPathNotInRef = getBlobContents;

@@ -3,6 +3,7 @@ import {BehaviorSubject, map} from 'rxjs';
 import {parseRawLogWithNumstat, parseWorkingDirChanges, WorkDirStatus} from '../../lib/github-desktop/commit-files-changes';
 import {GitRepositoryService} from '../git-repository.service';
 import {FileWatcherService} from '../file-watcher.service';
+import {GitApiService} from './git-api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,6 +15,7 @@ export class CommitFilesChangesService {
   readonly workingDirChanges$ = this.workingDirChangesSubject$.asObservable();
 
   private gitRepositoryService = inject(GitRepositoryService);
+  private gitApiService = inject(GitApiService);
   private fileWatcherService = inject(FileWatcherService);
 
   constructor() {
@@ -30,7 +32,7 @@ export class CommitFilesChangesService {
    *          along with their statistics (e.g., lines added/removed).
    */
   getChangedFilesForGivenCommit = (sha: string) =>
-    this.gitRepositoryService.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
+    this.gitApiService.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
       .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, sha)));
 
 
@@ -39,7 +41,7 @@ export class CommitFilesChangesService {
    * HEAD along with the type of change.
    */
   fetchWorkingDirChanges = () =>
-    this.gitRepositoryService.git([
+    this.gitApiService.git([
       'status',
       '--porcelain',
       '-z',

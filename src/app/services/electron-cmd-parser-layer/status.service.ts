@@ -1,24 +1,24 @@
 import {inject, Injectable} from '@angular/core';
 import {map} from 'rxjs';
-import {GitRepositoryService} from "../git-repository.service";
 import {isStatusEntry, isStatusHeader, parsePorcelainStatus} from '../../lib/github-desktop/status-parser';
 import {isMergeHeadSet} from '../../lib/github-desktop/merge';
 import {conflictStatusCodes, WorkingDirectoryFileChange, WorkingDirectoryStatus} from '../../lib/github-desktop/model/status';
-import {getConflictDetails} from "../../lib/github-desktop/status";
+import {getConflictDetails} from '../../lib/github-desktop/status';
+import {GitApiService} from './git-api.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class StatusService {
 
-  gitRepositoryService = inject(GitRepositoryService)
+  gitApiService = inject(GitApiService);
 
   /**
    *  Retrieve the status for a given repository,
    *  and fail gracefully if the location is not a Git repository
    */
   // getStatus = () =>
-  //   this.gitRepositoryService.git([
+  //   this.gitApiService.git([
   //     '--no-optional-locks',
   //     'status',
   //     '--untracked-files=all',
@@ -35,7 +35,7 @@ export class StatusService {
   //     // const rebaseInternalState = await getRebaseInternalState(repository)
   //
   //     const conflictDetails = getConflictDetails(
-  //       this.gitRepositoryService.git,
+  //       this.gitApiService.git,
   //       mergeHeadFound,
   //       conflictedFilesInIndex,
   //       rebaseInternalState

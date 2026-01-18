@@ -1,13 +1,14 @@
-import {Injectable} from '@angular/core';
-import {ParserService} from "../parser.service";
-import {CommitIdentity} from "../../lib/github-desktop/model/commit-identity";
-import {Branch, BranchType, IBranchTip} from "../../lib/github-desktop/model/branch";
-import {map, Observable} from "rxjs";
-import {PREFIXES} from "../../utils/constants";
-import {formatArg} from "../../utils/log-utils";
+import {inject, Injectable} from '@angular/core';
+import {ParserService} from '../parser.service';
+import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
+import {Branch, BranchType, IBranchTip} from '../../lib/github-desktop/model/branch';
+import {map, Observable} from 'rxjs';
+import {PREFIXES} from '../../utils/constants';
+import {formatArg} from '../../utils/log-utils';
+import {GitApiService} from './git-api.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class BranchService {
 
@@ -24,14 +25,16 @@ export class BranchService {
   branchParser;
   remoteHeadPointer?: string;
 
+  private gitApiService = inject(GitApiService);
+
   constructor(
     parserService: ParserService,
   ) {
     this.branchParser = parserService.createForEachRefParser(this.fields);
   }
 
-  getBranches = (git: (args?: string[]) => Observable<string>): Observable<ReadonlyArray<Branch>> =>
-    git(['for-each-ref', ...PREFIXES, formatArg(this.fields)])
+  getBranches = (): Observable<ReadonlyArray<Branch>> =>
+    this.gitApiService.git(['for-each-ref', ...PREFIXES, formatArg(this.fields)])
       .pipe(map(result =>
 
         this.branchParser(result)
@@ -49,11 +52,11 @@ export class BranchService {
             const author = CommitIdentity.parseIdentity(branch.author);
             const tip: IBranchTip = {sha: branch.sha, author};
 
-            const type = branch.fullName.startsWith('refs/heads') ? BranchType.Local : BranchType.Remote
+            const type = branch.fullName.startsWith('refs/heads') ? BranchType.Local : BranchType.Remote;
 
-            const upstream = branch.upstreamShortName.length > 0 ? branch.upstreamShortName : null
+            const upstream = branch.upstreamShortName.length > 0 ? branch.upstreamShortName : null;
 
-            return new Branch(branch.shortName, upstream, tip, type, branch.fullName, branch.head == '*')
+            return new Branch(branch.shortName, upstream, tip, type, branch.fullName, branch.head == '*');
           })
           .filter((v): v is Branch => !!v) // Clean symRef branch
           .map(branch => { // If a branch is pointed by origin/HEAD or HEAD, store the info into branch.
@@ -61,7 +64,7 @@ export class BranchService {
               return {...branch, isHeadPointed: true};
 
             return branch;
-          })
+          }),
       ));
 
 }
