@@ -1,9 +1,10 @@
 import {inject, Injectable} from '@angular/core';
 import {Commit, parseRawUnfoldedTrailers} from '../../lib/github-desktop/model/commit';
 import {ParserService} from '../parser.service';
-import {map, Observable, of, tap} from 'rxjs';
+import {map, Observable} from 'rxjs';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {formatArg} from '../../utils/log-utils';
+import {GitApiService} from './git-api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -27,6 +28,7 @@ export class LogService {
     refs: '%D',
   };
   private logParserService = inject(ParserService);
+  private gitApiService = inject(GitApiService);
   private logParser = this.logParserService.createParser(this.fields);
 
 
@@ -34,7 +36,6 @@ export class LogService {
    * Get the repository's commits using `revisionRange` and limited to `limit`
    */
   getCommitLog = (
-    git: (args?: string[]) => Observable<string>,
     revisionRange?: string,
     limit?: number,
     skip?: number,
@@ -66,7 +67,7 @@ export class LogService {
       ...additionalArgs,
       '--',
     );
-    return git(args)
+    return this.gitApiService.git(args)
       .pipe(map(log => this.logParser(log).map(commit => {
         // Ref is of the format: (HEAD -> master, tag: some-tag-name, tag: some-other-tag,with-a-comma, origin/master, origin/HEAD)
         // Refs are comma separated, but some like tags can also contain commas in the name, so we split on the pattern ", " and then

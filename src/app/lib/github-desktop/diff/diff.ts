@@ -14,13 +14,14 @@ import {forceUnwrap} from '../throw-ex';
 import {isDiffTooLarge, isStringTooLarge, isValidBuffer} from './diff-utils';
 import {convertDiff} from './diff-binary-image';
 import {buildDiff} from './diff-builder';
+import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
 
 /**
  * Render the diff between two branches with --merge-base for a file
  * (Show what would be the result of merge)
  */
 export async function getBranchMergeBaseDiff(
-  gitRepositoryService: GitRepositoryService,
+  gitApiService: GitApiService,
   file: FileChange,
   baseBranchName: string,
   comparisonBranchName: string,
@@ -47,7 +48,7 @@ export async function getBranchMergeBaseDiff(
     args.push(file.status.oldPath);
   }
 
-  return gitRepositoryService.git(args).pipe(map(result => buildDiff(result, file, latestCommit)));
+  return gitApiService.git(args).pipe(map(result => buildDiff(result, file, latestCommit)));
 }
 
 /**
@@ -88,7 +89,7 @@ export async function getBranchMergeBaseDiff(
 //     args.push(file.status.oldPath)
 //   }
 //
-//   return gitRepositoryService.git(args).pipe(map(rangeDiffRaw => buildDiff(rangeDiffRaw, repository, file, latestCommit)))
+//   return gitApiService.git(args).pipe(map(rangeDiffRaw => buildDiff(rangeDiffRaw, repository, file, latestCommit)))
 // }
 
 /**

@@ -6,6 +6,7 @@ import {DiffLine, DiffLineType} from '../lib/github-desktop/model/diff/diff-line
 import {throwEx} from '../utils/utils';
 import {getHunkHeaderExpansionType} from '../lib/github-desktop/diff/diff-hunks';
 import {getLargestLineNumber} from '../lib/github-desktop/diff/diff-parser';
+import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 
 // in which case s defaults to 1
 const diffHeaderRe = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
@@ -436,7 +437,7 @@ export class DiffParser {
 })
 export class FileDiffService {
 
-  private readonly gitRepositoryService = inject(GitRepositoryService);
+  private readonly gitApiService = inject(GitApiService);
 
   /**
    * Render the difference between a file in the given commit and its parent
@@ -444,7 +445,7 @@ export class FileDiffService {
    * @param commitish A commit SHA or some other identifier that ultimately dereferences to a commit.
    */
    getCommitDiff = (file: FileChange, commitish: string, hideWhitespaceInDiff = false) =>
-    this.gitRepositoryService
+    this.gitApiService
       .git([
         'log',
         commitish,
@@ -468,7 +469,7 @@ export class FileDiffService {
    * @param commitish A commit SHA or some other identifier that ultimately dereferences to a commit.
    */
   getWorkingDirectoryDiff = (file: FileChange, hideWhitespaceInDiff = false) =>
-    this.gitRepositoryService
+    this.gitApiService
       .git([
         'diff',
         ...(hideWhitespaceInDiff ? ['-w'] : []),

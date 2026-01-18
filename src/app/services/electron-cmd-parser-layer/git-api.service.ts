@@ -6,7 +6,7 @@ import * as childProcess from 'child_process';
 import {ExecOptions} from 'child_process';
 import * as util from 'util';
 import {from, map, Observable, tap} from 'rxjs';
-import {omitUndefined} from '../../utils/utils';
+import {notUndefined, omitUndefined} from '../../utils/utils';
 import * as electron from '@electron/remote';
 import * as path from 'path';
 
@@ -23,6 +23,7 @@ export class GitApiService {
   private electron: typeof electron = (window as any).require('@electron/remote');
   private promisedExec = this.util.promisify(this.childProcess.execFile);
   private path: typeof path = (window as any).require('path');
+  private cwd?: string;
 
   constructor() {
     // Notes :
@@ -50,10 +51,11 @@ export class GitApiService {
    * @param args
    * @param cwd Which folder to execute git from
    */
-  git = (args: string[], cwd?: string) => {
+  git = (args: (string | undefined)[] | undefined) => {
     const start = performance.now();
-    return this.exec('git', args, {cwd, env: process.env})
-      .pipe(tap(() => console.log(`git ${args.join(' ')} (${performance.now() - start}ms)`)));
+    const argsFiltered = args?.filter(notUndefined) ?? [];
+    return this.exec('git', argsFiltered, {cwd: this.cwd, env: process.env})
+      .pipe(tap(() => console.log(`git ${argsFiltered.join(' ')} (${performance.now() - start}ms)`)));
   };
 
   clone = (): Observable<void> => {
@@ -65,4 +67,6 @@ export class GitApiService {
     from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
       .pipe(map(({stdout}) => stdout));
 
+  // When a repository is opened / loaded, set the cwd for future git commands
+  setCwd = (cwd: string) => this.cwd = cwd;
 }
