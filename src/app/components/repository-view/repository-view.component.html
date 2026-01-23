@@ -16,6 +16,6 @@
             *ngIf="fileDiffPanelService.fileToDiff$ | async as fileToDiff"
             [fileToDiff]="fileToDiff"
             class="absolute left-0 bottom-0 wuuuu"
-            style="right: calc( 100vw * {{ repo.sizes[2] / sum(repo.sizes) }} + 3px )"
+            [style.right]="'calc(100vw * ' + (repo.sizes[2] / sum(repo.sizes)) + ' + 3px)'"
     />
 }
