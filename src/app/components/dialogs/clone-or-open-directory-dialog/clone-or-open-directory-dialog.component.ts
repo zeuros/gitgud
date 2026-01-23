@@ -1,12 +1,13 @@
 import {Component} from '@angular/core';
-import {PopupService} from "../../../services/popup.service";
-import {FieldsetModule} from "primeng/fieldset";
-import {ButtonModule} from "primeng/button";
-import {InputTextModule} from "primeng/inputtext";
-import {FormsModule} from "@angular/forms";
-import {PanelModule} from "primeng/panel";
-import {CardModule} from "primeng/card";
-import {GitApiService} from "../../../services/electron-cmd-parser-layer/git-api.service";
+import {PopupService} from '../../../services/popup.service';
+import {FieldsetModule} from 'primeng/fieldset';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {FormsModule} from '@angular/forms';
+import {PanelModule} from 'primeng/panel';
+import {CardModule} from 'primeng/card';
+import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
+import {FloatLabelModule} from 'primeng/floatlabel';
 
 @Component({
   selector: 'gitgud-clone-or-open-directory-dialog',
@@ -17,10 +18,11 @@ import {GitApiService} from "../../../services/electron-cmd-parser-layer/git-api
     InputTextModule,
     FormsModule,
     PanelModule,
-    CardModule
+    CardModule,
+    FloatLabelModule,
   ],
   templateUrl: './clone-or-open-directory-dialog.component.html',
-  styleUrl: './clone-or-open-directory-dialog.component.scss'
+  styleUrl: './clone-or-open-directory-dialog.component.scss',
 })
 export class CloneOrOpenDirectoryDialogComponent {
 
