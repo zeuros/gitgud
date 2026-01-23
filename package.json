@@ -95,5 +95,13 @@
     "typescript": "5.8.3",
     "wait-on": "8.0.5",
     "webdriver-manager": "12.1.9"
+  },
+  "build": {
+    "linux": {
+      "maintainer": "zeuros <13236310+zeuros@users.noreply.github.com>",
+      "target": [
+        "deb"
+      ]
+    }
   }
 }
