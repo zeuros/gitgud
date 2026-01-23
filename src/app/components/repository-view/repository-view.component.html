@@ -2,13 +2,13 @@
 @if (repo) {
     <p-splitter [panelSizes]="repo.sizes" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event.sizes)" styleClass="auto-wh">
         <ng-template pTemplate>
-            <gitgud-left-panel [branches]="repo.branches" [stashes]="repo.stashes" class="col flex"/>
+            <gitgud-left-panel [branches]="repo.branches.slice()" [stashes]="repo.stashes.slice()" class="col flex"/>
         </ng-template>
         <ng-template pTemplate>
             <gitgud-logs [gitRepository]="repo"/>
         </ng-template>
         <ng-template pTemplate>
-            <gitgud-commit-section [selectedCommits]="repo.selectedCommits" class="col flex"/>
+            <gitgud-commit-section [selectedCommits]="repo.selectedCommits.slice()" class="col flex"/>
         </ng-template>
     </p-splitter>
 
