@@ -1,6 +1,6 @@
 <gitgud-top-bar class="float-left"/>
 
-@let currentRepoIndex = (gitRepositoryService.currentRepositoryIndex$ | async);
+@let currentRepoIndex = (gitRepositoryService.currentRepositoryIndex$ | async) ?? -1;
 @if (currentRepoIndex != -1) {
     <p-tabView
             [activeIndex]="currentRepoIndex"

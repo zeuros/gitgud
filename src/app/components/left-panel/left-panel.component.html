@@ -42,7 +42,7 @@
             </span>
         </ng-template>
 
-        <p-listbox [options]="stashes() ?? []" (onChange)="selectStash($event.value)" [scrollHeight]="undefined">
+        <p-listbox [options]="(stashes() ?? []).slice()" (onChange)="selectStash($event.value)">
             <ng-template #item let-s>
                 @let stash = $stash(s);
                 <i class="fa fa-archive mr-2"></i>

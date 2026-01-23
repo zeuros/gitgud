@@ -45,7 +45,7 @@
         </div>
     </div>
 
-    <p-listbox @slightSlideIn [options]="editedFiles?.files ?? []" (onChange)="fileDiffPanelService.showCommittedFileDiffs($event.value)" optionLabel="path" [scrollHeight]="undefined">
+    <p-listbox @slightSlideIn [options]="(editedFiles?.files ?? []).slice()" (onChange)="fileDiffPanelService.showCommittedFileDiffs($event.value)" optionLabel="path">
         <ng-template #item let-f>
             @let file = file$(f);
             @let dir = directory(file.path);
