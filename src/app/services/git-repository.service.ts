@@ -3,7 +3,7 @@ import {BehaviorSubject, debounceTime, forkJoin, map, Observable, of, Subject, s
 import {GitRepository} from '../models/git-repository';
 import {StorageName} from '../enums/storage-name.enum';
 import {SettingsService} from './settings.service';
-import {byDirectory, isRootDirectory, notUndefined, throwEx} from '../utils/utils';
+import {byDirectory, isRootDirectory, throwEx} from '../utils/utils';
 import {createRepository, filterOutStashes} from '../utils/repository-utils';
 
 import * as fs from 'fs';

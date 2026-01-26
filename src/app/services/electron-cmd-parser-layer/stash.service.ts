@@ -1,9 +1,9 @@
 import {inject, Injectable} from '@angular/core';
-import {Commit, parseRawUnfoldedTrailers} from "../../lib/github-desktop/model/commit";
-import {ParserService} from "../parser.service";
-import {map, Observable} from "rxjs";
-import {CommitIdentity} from "../../lib/github-desktop/model/commit-identity";
-import {formatArg} from "../../utils/log-utils";
+import {Commit, parseRawUnfoldedTrailers} from '../../lib/github-desktop/model/commit';
+import {ParserService} from '../parser.service';
+import {map} from 'rxjs';
+import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
+import {formatArg} from '../../utils/log-utils';
 import {GitApiService} from './git-api.service';
 
 @Injectable({

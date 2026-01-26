@@ -1,4 +1,4 @@
-import {Component, inject, input, Input} from '@angular/core';
+import {Component, inject, input} from '@angular/core';
 import {LeftPanelComponent} from '../left-panel/left-panel.component';
 import {SplitterModule} from 'primeng/splitter';
 import {GitRepositoryService} from '../../services/git-repository.service';

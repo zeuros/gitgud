@@ -26,8 +26,6 @@ export const beforeAndAfterText = (contents: string, hunks: ReadonlyArray<DiffHu
   const beforeLines: string[] = [];
   const afterLines: string[] = [];
 
-  let inDiffContent = false;
-
   lines.forEach(line => {
     if (line.startsWith('diff --git') || line.startsWith('index') || line.startsWith('---') || line.startsWith('+++') || line.startsWith('@@')) {
       // Skip metadata and hunk headers
