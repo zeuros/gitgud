@@ -1,4 +1,4 @@
-@if (selectedCommits()?.length > 0) {
+@if (selectedCommits()!.length > 0) {
     @if (selectedCommits()[0]?.sha == 'index') {
         <gitgud-make-a-commit/>
     } @else {

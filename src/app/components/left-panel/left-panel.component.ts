@@ -11,7 +11,6 @@ import {GitRepositoryService} from '../../services/git-repository.service';
 import {local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branch-utils';
 import {Listbox} from 'primeng/listbox';
 import {Commit} from '../../lib/github-desktop/model/commit';
-import {JsonPipe} from '@angular/common';
 
 
 @Component({

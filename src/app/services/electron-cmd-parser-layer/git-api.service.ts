@@ -1,14 +1,12 @@
 import {Injectable} from '@angular/core';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
-// the resulting javascript file will look as if you never imported the module at all.
+// the resulting JavaScript file will look as if you never imported the module at all.
 import * as childProcess from 'child_process';
 import {ExecOptions} from 'child_process';
 import * as util from 'util';
 import {from, map, Observable, tap} from 'rxjs';
 import {notUndefined, omitUndefined} from '../../utils/utils';
-import * as electron from '@electron/remote';
-import * as path from 'path';
 
 /**
  * This service helps manipulate git through @electron/remote
@@ -20,9 +18,9 @@ export class GitApiService {
 
   childProcess: typeof childProcess = (window as any).require('child_process');
   private util: typeof util = (window as any).require('util');
-  private electron: typeof electron = (window as any).require('@electron/remote');
+  // private electron: typeof electron = (window as any).require('@electron/remote');
   private promisedExec = this.util.promisify(this.childProcess.execFile);
-  private path: typeof path = (window as any).require('path');
+  // private path: typeof path = (window as any).require('path');
   private cwd?: string;
 
   constructor() {

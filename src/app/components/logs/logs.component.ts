@@ -21,7 +21,6 @@ import {
   isRootCommit,
   isStash,
   ShaMap,
-  stashParentCommitSha,
 } from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
 import {distinctUntilChanged, filter, first, interval, map} from 'rxjs';
@@ -214,21 +213,6 @@ export class LogsComponent implements AfterViewInit {
 
   });
 
-  // Stashes are like commit => stash => stash
-  private insertStashIntoCommits = (stash: DisplayRef, commits: DisplayRef[], shaMap: ShaMap) => {
-    const parentSha = stashParentCommitSha(stash, shaMap);
-
-    const parentCommitRow = commits.findIndex(c => c.sha == parentSha);
-
-    // If we have merge commits above, we have a line starting from the parent commit, so we must move the stash upper
-    const countMergeCommitsAbove = this.countMergeCommitsAbove(parentCommitRow, commits);
-
-    const stashInsertionRow = parentCommitRow - countMergeCommitsAbove;
-
-    // Insert stash into commitsLog, over its parent commit, and over merge commits
-    commits.splice(stashInsertionRow, 0, stash);
-  };
-
   private onTableScroll: EventListener = ({target}) => {
     this.startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
     this.moveCommitWindow(this.canvasContext(), this.startCommit);
@@ -374,46 +358,6 @@ export class LogsComponent implements AfterViewInit {
 
     return canvas;
   };
-
-  private countMergeCommitsAbove(startRow: number, commitsLog: DisplayRef[]) {
-    for (let row = startRow - 1 ; row > 0 ; row--) {
-      if (isMergeCommit(commitsLog[row])) continue;
-      else return startRow - row - 1;
-    }
-    return 0;
-  }
-
-  private findFreeColumnForStash(stashInsertionRow: number, parentCommitRow: number, parentCommitCol: number, commitsLog: DisplayRef[], childrenMap: ChildrenMap) {
-    const stashParentHasChildren = childrenMap[commitsLog[parentCommitRow].sha]?.length > 0;
-
-    // Stash parent has no children, so there's room above it
-    if (!stashParentHasChildren) return parentCommitCol;
-
-    // Find another column to place our stash. Search on the left first for free space
-    for (let col = parentCommitCol - 1 ; col >= 0 ; col--) {
-      const commitAbove = this.findNextCommitAbove(stashInsertionRow, col, commitsLog);
-      // Search the parents of the commit above our parentCommitRow. If found, get the row of the lowest one, it'll give us our free-range
-      const parentOfCommitAbove = max(commitAbove?.parentSHAs.map(p => commitsLog.findIndex(c => c.sha == p))) ?? parentCommitRow;
-
-      // If we have free room in this column, between the stash and its parent it's ok !
-      if (stashInsertionRow > parentOfCommitAbove) return col;
-
-    }
-
-    // TODO: If no free columns are found on the left, then seek free columns on the right
-    //   Also push a new column if no free column is found ?
-
-    // No free column were found, we put the stash in the middle of a line.
-    return parentCommitCol;
-  }
-
-  // TODO: move in a service ?
-  private findNextCommitAbove(start: number, col: number, commitsLog: DisplayRef[]): DisplayRef | undefined {
-    for (let row = start - 1 ; row > 0 ; row--) {
-      if (commitsLog[row].indent == col) return commitsLog[row];
-    }
-    return undefined;
-  }
 
   // Every commit from top (index=0) to bottom will be chosen a column (indent)
   private computeCommitIndent = (commit: DisplayRef, shaMap: ShaMap, childrenMap: ChildrenMap) => {
