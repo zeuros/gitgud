@@ -1,5 +1,4 @@
 import {inject, Injectable} from '@angular/core';
-import {GitRepositoryService} from './git-repository.service';
 import {AppFileStatusKind, FileChange} from '../lib/github-desktop/model/status';
 import {DiffHunk, DiffHunkHeader, IRawDiff} from '../lib/github-desktop/model/diff/raw-diff';
 import {DiffLine, DiffLineType} from '../lib/github-desktop/model/diff/diff-line';
@@ -29,14 +28,14 @@ const DiffLinePrefixChars: Set<DiffLinePrefix> = new Set([
   DiffPrefixNoNewline,
 ]);
 
-interface IDiffHeaderInfo {
-  /**
-   * Whether or not the diff header contained a marker indicating
-   * that a diff couldn't be produced due to the contents of the
-   * new and/or old file was binary.
-   */
-  readonly isBinary: boolean;
-}
+// interface IDiffHeaderInfo {
+//   /**
+//    * Whether or not the diff header contained a marker indicating
+//    * that a diff couldn't be produced due to the contents of the
+//    * new and/or old file was binary.
+//    */
+//   readonly isBinary: boolean;
+// }
 
 export class DiffParser {
   /**

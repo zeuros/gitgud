@@ -18,5 +18,5 @@ export const filterOutStashes = (stashes: Commit[]) => {
   const stashesSHAs = new Set(stashes.map(s => s.sha));
 
   // Filter out stashes from the log, their parent is used instead
-  return (commit: Commit, i: number) => !stashesSHAs.has(commit.sha);
+  return (commit: Commit) => !stashesSHAs.has(commit.sha);
 };
