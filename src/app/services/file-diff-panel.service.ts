@@ -1,7 +1,7 @@
 import {inject, Injectable} from '@angular/core';
 import {CommittedFileChange, FileChange, WorkingDirectoryFileChange} from '../lib/github-desktop/model/status';
 import {EMPTY, map, of, Subject, switchMap} from 'rxjs';
-import {CommitFilesChangesService} from './electron-cmd-parser-layer/commit-files-changes.service';
+import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-directory.service';
 import {instanceOf} from '../utils/utils';
 
 @Injectable({
@@ -9,7 +9,7 @@ import {instanceOf} from '../utils/utils';
 })
 export class FileDiffPanelService {
 
-  private readonly commitFilesChangesService = inject(CommitFilesChangesService);
+  private readonly workingDirectoryService = inject(WorkingDirectoryService);
   private readonly fileToDiffSubject$ = new Subject<FileChange | null>();
 
   // Here we update monaco view for commit files (no live changes) or for working dir changes (live update on file change)
@@ -24,7 +24,7 @@ export class FileDiffPanelService {
 
       // Working directory file → re-emit on file diff update
       if (instanceOf(file, WorkingDirectoryFileChange))
-        return this.commitFilesChangesService.workingDirChanges$.pipe(map(() => ({...file}))); // force new reference to update editor on file change
+        return this.workingDirectoryService.workingDirChanges$.pipe(map(() => ({...file}))); // force new reference to update editor on file change
 
       return EMPTY;
     }),

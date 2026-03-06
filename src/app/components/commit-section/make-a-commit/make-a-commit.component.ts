@@ -4,7 +4,7 @@ import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
 import {Button, ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
-import {CommitFilesChangesService} from '../../../services/electron-cmd-parser-layer/commit-files-changes.service';
+import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
 import {Listbox} from 'primeng/listbox';
 import {FileStatusesIcons, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/status';
 import {directory, fileName} from '../../../utils/utils';
@@ -41,7 +41,7 @@ export class MakeACommitComponent {
   protected readonly keys = Object.keys;
   protected readonly FileStatusesIcons = FileStatusesIcons;
   protected readonly fileDiffPanelService = inject(FileDiffPanelService);
-  protected readonly commitFilesChangesService = inject(CommitFilesChangesService);
+  protected readonly workingDirectoryService = inject(WorkingDirectoryService);
 
   protected readonly $WorkDirFileChanges = (w: WorkingDirectoryFileChange) => w;
 }

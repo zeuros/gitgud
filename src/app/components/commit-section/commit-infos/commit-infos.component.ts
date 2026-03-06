@@ -1,5 +1,5 @@
 import {Component, effect, inject, input} from '@angular/core';
-import {CommitFilesChangesService} from '../../../services/electron-cmd-parser-layer/commit-files-changes.service';
+import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
 import {DisplayRef} from '../../../lib/github-desktop/model/display-ref';
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
@@ -50,13 +50,13 @@ export class CommitInfosComponent {
   protected readonly directory = directory;
   protected readonly fileName = fileName;
   protected readonly FileStatusesIcons = FileStatusesIcons;
-  private readonly commitFilesChangesService = inject(CommitFilesChangesService);
+  private readonly workingDirectoryService = inject(WorkingDirectoryService);
   protected readonly fileDiffPanelService = inject(FileDiffPanelService);
 
   constructor() {
     effect(() => {
       if (this.selectedCommits().length == 1) {
-        this.commitFilesChangesService.getChangedFilesForGivenCommit(this.selectedCommits()[0].sha)
+        this.workingDirectoryService.getChangedFilesForGivenCommit(this.selectedCommits()[0].sha)
           .subscribe(editedFiles => this.editedFiles = editedFiles);
         this.editCommitForm.setValue({
           summary: this.selectedCommits()[0].summary,
