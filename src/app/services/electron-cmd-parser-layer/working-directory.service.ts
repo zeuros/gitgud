@@ -14,12 +14,14 @@ export class WorkingDirectoryService {
   private readonly workingDirChangesSubject$ = new BehaviorSubject<WorkDirStatus>({unstaged: [], staged: []});
 
   readonly workingDirChanges$ = this.workingDirChangesSubject$.asObservable();
+  readonly hasChanges$ = this.workingDirChanges$.pipe(map(({unstaged, staged}) => !!(unstaged.length + staged.length)));
 
   private readonly gitRepositoryService = inject(GitRepositoryService);
   private readonly gitApiService = inject(GitApiService);
   private readonly fileWatcherService = inject(FileWatcherService);
 
   constructor() {
+    // Refresh working directory changes on app startup, window focus, or file system changes
     this.fetchWorkingDirChanges();
     this.gitRepositoryService.windowFocused$.subscribe(this.fetchWorkingDirChanges);
     this.fileWatcherService.onWorkingDirFileChange$.subscribe(this.fetchWorkingDirChanges);
