@@ -74,6 +74,9 @@ export class LogsComponent implements AfterViewInit {
   protected readonly COMMITS_SHOWN_ON_CANVAS = 37; // TODO: change it on screen resize depending table row count
 
   protected readonly gitRepository = input<GitRepository>();
+  protected readonly selectedCommits = signal<DisplayRef[]>([]);
+  private readonly gitRepository$ = toObservable(this.gitRepository).pipe(filter(notUndefined));
+
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected showSearchBar = false;
   protected graphColumnCount?: number;
@@ -82,13 +85,13 @@ export class LogsComponent implements AfterViewInit {
   private treeLockedColumn?: number;
   private columns: Column[] = []; // keep track of the states of the columns when drawing commits from top to bottom
   private edges?: IntervalTree<Edge>; // Edges are updated after computedDisplayLog is set
-  private readonly gitRepository$ = toObservable(this.gitRepository).pipe(filter(notUndefined));
   private startCommit = 0;
-  protected readonly selectedCommits = signal<DisplayRef[]>([]);
   private stashImg?: HTMLImageElement;
+
   @ViewChild('canvas', {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('logTable', {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
 
+  private readonly workingDirectoryService = inject(WorkingDirectoryService);
   private readonly gitRepositoryService = inject(GitRepositoryService);
 
   constructor() {
