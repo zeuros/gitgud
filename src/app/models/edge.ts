@@ -10,7 +10,6 @@ export class Edge {
     public childCol: number,
     public parentRow: number,
     public parentCol: number,
-    public summary: string,
     public type: RefType,
   ) {
     this.low = childRow;

@@ -10,10 +10,10 @@ import {instanceOf} from '../utils/utils';
 export class FileDiffPanelService {
 
   private readonly commitFilesChangesService = inject(CommitFilesChangesService);
-  private fileToDiffSubject$ = new Subject<FileChange | null>();
+  private readonly fileToDiffSubject$ = new Subject<FileChange | null>();
 
   // Here we update monaco view for commit files (no live changes) or for working dir changes (live update on file change)
-  fileToDiff$ = this.fileToDiffSubject$.pipe(
+  readonly fileToDiff$ = this.fileToDiffSubject$.pipe(
     switchMap(file => {
 
       // Explicit null → emit null

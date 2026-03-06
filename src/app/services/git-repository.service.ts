@@ -1,5 +1,5 @@
 import {inject, Injectable} from '@angular/core';
-import {BehaviorSubject, debounceTime, forkJoin, map, Observable, of, Subject, switchMap, tap} from 'rxjs';
+import {BehaviorSubject, debounceTime, forkJoin, fromEvent, map, Observable, of, switchMap, tap} from 'rxjs';
 import {GitRepository} from '../models/git-repository';
 import {StorageName} from '../enums/storage-name.enum';
 import {SettingsService} from './settings.service';
@@ -32,20 +32,25 @@ const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 })
 export class GitRepositoryService {
 
-  private fs: typeof fs = (window as any).require('fs');
-  private path: typeof path = (window as any).require('path');
-  private electron: typeof electron = (window as any).require('@electron/remote');
-  private dialog = this.electron.dialog;
-  repositories$: BehaviorSubject<GitRepository>[] = [];
-  currentRepositoryIndex$ = new BehaviorSubject<number>(-1);
+  // Electron imports (TODO: move electron remote things to dedicated service)
+  private readonly fs: typeof fs = (window as any).require('fs');
+  private readonly path: typeof path = (window as any).require('path');
+  private readonly electron: typeof electron = (window as any).require('@electron/remote');
+  private readonly dialog = this.electron.dialog;
+  // Electron events
+  readonly windowFocused$ = fromEvent(this.electron.getCurrentWindow(), 'focus');
 
-  private settingsService = inject(SettingsService);
-  private logService = inject(LogService);
-  private branchService = inject(BranchService);
-  private stashService = inject(StashService);
-  private gitApiService = inject(GitApiService);
-  private fileWatcher = inject(FileWatcherService);
-  readonly windowFocused$ = new Subject();
+  // Repositories state (TODO: move in dedicated repo service, split in different observables ?)
+  private repositories$: BehaviorSubject<GitRepository>[] = [];
+  private readonly currentRepositoryIndex$ = new BehaviorSubject<number>(-1);
+
+  // Services
+  private readonly settingsService = inject(SettingsService);
+  private readonly logService = inject(LogService);
+  private readonly branchService = inject(BranchService);
+  private readonly stashService = inject(StashService);
+  private readonly gitApiService = inject(GitApiService);
+  private readonly fileWatcher = inject(FileWatcherService);
 
   constructor() {
 
@@ -53,10 +58,9 @@ export class GitRepositoryService {
     (this.settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? []).forEach(this.addToRepos);
 
     // Refresh data when window regains focus
-    this.electron.getCurrentWindow().on('focus', () => {
-      this.windowFocused$.next(true);
-      this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
-    });
+    this.windowFocused$
+      .pipe(switchMap(this.updateLogsAndBranches))
+      .subscribe(this.updateCurrentRepository);
 
     // React to repository selection changes (hook for future side effects)
     this.currentRepositoryIndex$
@@ -67,7 +71,7 @@ export class GitRepositoryService {
   private onRepositorySelected = (gitRepository: GitRepository) => {
     this.fileWatcher.setWatcher(gitRepository.directory);
     this.gitApiService.setCwd(gitRepository.directory);
-  }
+  };
 
   get currentRepository(): GitRepository | undefined {
     return this.currentRepositoryIndex$.value >= 0
@@ -191,7 +195,7 @@ export class GitRepositoryService {
    */
   private updateLogsAndBranches = (): Observable<Partial<GitRepository>> =>
     this.stashService.getStashes().pipe(switchMap(stashes => forkJoin({
-      logs: this.logService.getCommitLog( '--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', ...stashes.map(s => s.sha)])
+      logs: this.logService.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', ...stashes.map(s => s.sha)])
         .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
       branches: this.branchService.getBranches(), // Source will show which branch the  commit is in
       stashes: of(stashes), // Source will show which branch commit is in

@@ -5,7 +5,7 @@ import {Injectable} from '@angular/core';
 import * as childProcess from 'child_process';
 import {ExecOptions} from 'child_process';
 import * as util from 'util';
-import {from, map, Observable, tap} from 'rxjs';
+import {from, map, Observable, switchMap, tap} from 'rxjs';
 import {notUndefined, omitUndefined} from '../../utils/utils';
 
 /**
@@ -16,10 +16,10 @@ import {notUndefined, omitUndefined} from '../../utils/utils';
 })
 export class GitApiService {
 
-  childProcess: typeof childProcess = (window as any).require('child_process');
-  private util: typeof util = (window as any).require('util');
+  readonly childProcess: typeof childProcess = (window as any).require('child_process');
+  private readonly util: typeof util = (window as any).require('util');
   // private electron: typeof electron = (window as any).require('@electron/remote');
-  private promisedExec = this.util.promisify(this.childProcess.execFile);
+  private readonly promisedExec = this.util.promisify(this.childProcess.execFile);
   // private path: typeof path = (window as any).require('path');
   private cwd?: string;
 
@@ -45,25 +45,26 @@ export class GitApiService {
     return !!window?.process?.type;
   }
 
-  /**
-   * @param args
-   * @param cwd Which folder to execute git from
-   */
-  git = (args: (string | undefined)[] | undefined) => {
+  git = (args: (string | undefined)[] | undefined) =>
+    this.exec('git', args?.filter(notUndefined) ?? [], {cwd: this.cwd, env: process.env});
+
+  clone = (url: string, repoName: string, dir: string) =>
+     this.cd(dir).pipe(
+      switchMap(() => this.git(['clone', url, repoName])),
+      switchMap(() => this.setCwd(`${dir}/${repoName}`)),
+    );
+
+
+  cd = (dir: string) => this.exec('cd', [dir]).pipe(tap(() => this.setCwd(dir)));
+
+  exec = (cmd: string, args: string[] = [], options?: ExecOptions): Observable<string> => {
     const start = performance.now();
-    const argsFiltered = args?.filter(notUndefined) ?? [];
-    return this.exec('git', argsFiltered, {cwd: this.cwd, env: process.env})
-      .pipe(tap(() => console.log(`git ${argsFiltered.join(' ')} (${performance.now() - start}ms)`)));
+    return from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
+      .pipe(
+        map(({stdout}) => stdout),
+        tap(() => console.log(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`)),
+      );
   };
-
-  clone = (): Observable<void> => {
-    // TODO
-    return new Observable<void>();
-  };
-
-  exec = (cmd: string, args: string[] = [], options?: ExecOptions): Observable<string> =>
-    from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
-      .pipe(map(({stdout}) => stdout));
 
   // When a repository is opened / loaded, set the cwd for future git commands
   setCwd = (cwd: string) => this.cwd = cwd;
