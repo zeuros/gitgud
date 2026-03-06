@@ -31,3 +31,8 @@ export const instanceOf = <T extends new (...args: any[]) => any>(o: any, theCla
 
 export const directory = (path: string) => path.split('/').slice(0, -1).join('/');
 export const fileName = (path: string) => path.split('/').pop();
+
+export const showPerf = (cmd: string, args: string[] = []) => {
+  const start = performance.now();
+  return () => console.log(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`);
+};

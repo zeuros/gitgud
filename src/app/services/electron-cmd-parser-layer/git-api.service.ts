@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, isDevMode} from '@angular/core';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting JavaScript file will look as if you never imported the module at all.
@@ -6,7 +6,7 @@ import * as childProcess from 'child_process';
 import {ExecOptions} from 'child_process';
 import * as util from 'util';
 import {from, map, Observable, switchMap, tap} from 'rxjs';
-import {notUndefined, omitUndefined} from '../../utils/utils';
+import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
 
 /**
  * This service helps manipulate git through @electron/remote
@@ -58,11 +58,10 @@ export class GitApiService {
   cd = (dir: string) => this.exec('cd', [dir]).pipe(tap(() => this.setCwd(dir)));
 
   exec = (cmd: string, args: string[] = [], options?: ExecOptions): Observable<string> => {
-    const start = performance.now();
     return from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
       .pipe(
         map(({stdout}) => stdout),
-        tap(() => console.log(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`)),
+        tap(isDevMode() ? showPerf(cmd, args) : () => 0),
       );
   };
 
