@@ -23,7 +23,7 @@ import {
   ShaMap,
 } from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
-import {distinctUntilChanged, filter, first, interval, map} from 'rxjs';
+import {combineLatest, distinctUntilChanged, filter, first, interval, map} from 'rxjs';
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
 import {GitRepositoryService} from '../../services/git-repository.service';
@@ -35,6 +35,7 @@ import {DatePipe, NgForOf, NgIf, NgStyle} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
 import {toObservable} from '@angular/core/rxjs-interop';
 import {DATE_FORMAT} from '../../utils/constants';
+import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
 
 type Column = ['taken' | 'free', rowCount: number];
 const indexCommit = (parentCommit: DisplayRef) => ({
@@ -108,9 +109,12 @@ export class LogsComponent implements AfterViewInit {
       this.stashImg = stashImg;
 
       // When repository changes its logs, compute the log graph and draw it
-      this.gitRepository$
-        .pipe(filter(gitRepository => gitRepository?.logs.length > 0), distinctUntilChanged(logsAreEqual))
-        .subscribe(this.onRepositoryLogChanges);
+      // TODO: split states into respective services, depending git commands (logs / stashes ...), then replace logsAreEqual
+      combineLatest([
+        this.gitRepository$.pipe(filter(gitRepository => gitRepository?.logs.length > 0), distinctUntilChanged(logsAreEqual)),
+        this.workingDirectoryService.hasChanges$.pipe(distinctUntilChanged()),
+      ])
+        .subscribe(([repo, hasChanges]) => this.onRepositoryLogChanges(repo, hasChanges));
     });
 
     effect(() => this.gitRepositoryService.updateCurrentRepository({selectedCommits: this.selectedCommits()}));
@@ -165,12 +169,12 @@ export class LogsComponent implements AfterViewInit {
     // TODO: Apply this filter on the displayed elements only
   };
 
-  private onRepositoryLogChanges = (gitRepository: GitRepository) => {
+  private onRepositoryLogChanges = (gitRepository: GitRepository, workingDirHasChanges: boolean) => {
     const commits = gitRepository.logs.map(c => this.commitToDisplayRef(c, gitRepository.stashes.find(s => s.parentSHAs[1] == c.sha)));
 
     // "Index" commit = working directory changes
     const indexParent = commits.find(c => c.isPointedByLocalHead);
-    if (indexParent) commits.unshift(indexCommit(indexParent));
+    if (indexParent && workingDirHasChanges) commits.unshift(indexCommit(indexParent));
 
     const shaMap = buildShaMap(commits);
     const childrenMap = buildChildrenMap(commits);
