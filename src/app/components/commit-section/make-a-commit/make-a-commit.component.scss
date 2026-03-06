@@ -6,7 +6,6 @@
   width: 100%;
 
   ::ng-deep {
-
     .max-size-bottom .p-splitterpanel:last-child {
       max-height: 400px;
     }
@@ -14,5 +13,27 @@
     .p-splitterpanel.p-splitterpanel-nested.ng-star-inserted {
       min-height: 210px;
     }
+
+    .show-button-on-li-hover .p-listbox-option {
+      position: relative;
+
+      .file-row-stage-button {
+        opacity: 0;
+        transition: all 0.08s ease-in-out;
+      }
+
+      &:hover .file-row-stage-button {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
   }
+}
+
+.stick-right-button {
+  height: 80%;
+  position: absolute;
+  right: 2.5px;
+  top: 50%;
+  transform: translateY(-50%);
 }

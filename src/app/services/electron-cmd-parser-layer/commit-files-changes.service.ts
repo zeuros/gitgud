@@ -4,11 +4,12 @@ import {parseRawLogWithNumstat, parseWorkingDirChanges, WorkDirStatus} from '../
 import {GitRepositoryService} from '../git-repository.service';
 import {FileWatcherService} from '../file-watcher.service';
 import {GitApiService} from './git-api.service';
+import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 
 @Injectable({
   providedIn: 'root',
 })
-export class CommitFilesChangesService {
+export class WorkingDirectoryService {
 
   private readonly workingDirChangesSubject$ = new BehaviorSubject<WorkDirStatus>({unstaged: [], staged: []});
 
@@ -35,6 +36,12 @@ export class CommitFilesChangesService {
     this.gitApiService.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
       .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, sha)));
 
+
+  readonly stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApiService.git(['add', '--', path]).subscribe(this.fetchWorkingDirChanges);
+  readonly unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApiService.git(['reset', '--', path]).subscribe(this.fetchWorkingDirChanges);
+
+  readonly stageAll = () => this.gitApiService.git(['add', '--all']).subscribe(this.fetchWorkingDirChanges);
+  readonly unstageAll = () => this.gitApiService.git(['reset', 'HEAD', '--', '.']).subscribe(this.fetchWorkingDirChanges);
 
   /**
    * Get a list of files which have recorded changes in the index as compared to

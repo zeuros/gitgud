@@ -2,7 +2,7 @@ import {Component, inject} from '@angular/core';
 import {Divider} from 'primeng/divider';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
-import {ButtonDirective} from 'primeng/button';
+import {Button, ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {CommitFilesChangesService} from '../../../services/electron-cmd-parser-layer/commit-files-changes.service';
 import {Listbox} from 'primeng/listbox';
@@ -11,6 +11,7 @@ import {directory, fileName} from '../../../utils/utils';
 import {AsyncPipe} from '@angular/common';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {slightSlideIn} from '../../../shared/animations';
+import {PrimeTemplate} from 'primeng/api';
 
 @Component({
   selector: 'gitgud-make-a-commit',
@@ -22,6 +23,8 @@ import {slightSlideIn} from '../../../shared/animations';
     InputText,
     Listbox,
     AsyncPipe,
+    Button,
+    PrimeTemplate,
   ],
   templateUrl: './make-a-commit.component.html',
   styleUrl: './make-a-commit.component.scss',
