@@ -1,11 +1,11 @@
 <div class="flex align-items-center justify-content-between">
     <h4 class="m-0">Unstaged files</h4>
-    <p-button styleClass="p-button-sm" (click)="commitFilesChangesService.stageAll()" label="Stage all"/>
+    <p-button styleClass="p-button-sm" (click)="workingDirectoryService.stageAll()" label="Stage all"/>
 </div>
 
 <p-divider type="solid" class="mt-2"/>
 
-@let workingDirFilesChanges = commitFilesChangesService.workingDirChanges$ | async;
+@let workingDirFilesChanges = workingDirectoryService.workingDirChanges$ | async;
 
 @if (workingDirFilesChanges) {
     <p-listbox @slightSlideIn
@@ -26,7 +26,7 @@
             <p-button
                     class="stick-right-button"
                     styleClass="file-row-stage-button p-button-sm"
-                    (click)="commitFilesChangesService.stageFile(fileChanges); $event.stopPropagation()"
+                    (click)="workingDirectoryService.stageFile(fileChanges); $event.stopPropagation()"
                     label="Stage"/>
         </ng-template>
     </p-listbox>
@@ -34,7 +34,7 @@
 
 <div class="flex align-items-center justify-content-between mt-3">
     <h4 class="m-0">Staged files</h4>
-    <p-button styleClass="p-button-sm" (click)="commitFilesChangesService.unstageAll()" label="Unstage all"/>
+    <p-button styleClass="p-button-sm" (click)="workingDirectoryService.unstageAll()" label="Unstage all"/>
 </div>
 
 <p-divider type="solid" class="mt-2"/>
@@ -58,7 +58,7 @@
             <p-button
                     class="stick-right-button"
                     styleClass="file-row-stage-button p-button-sm"
-                    (click)="commitFilesChangesService.unstageFile(fileChanges); $event.stopPropagation()"
+                    (click)="workingDirectoryService.unstageFile(fileChanges); $event.stopPropagation()"
                     label="Unstage"/>
         </ng-template>
     </p-listbox>
