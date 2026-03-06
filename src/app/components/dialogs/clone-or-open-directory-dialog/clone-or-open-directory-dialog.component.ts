@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, inject, model} from '@angular/core';
 import {PopupService} from '../../../services/popup.service';
 import {FieldsetModule} from 'primeng/fieldset';
 import {ButtonModule} from 'primeng/button';
@@ -26,16 +26,13 @@ import {FloatLabelModule} from 'primeng/floatlabel';
 })
 export class CloneOrOpenDirectoryDialogComponent {
 
-  repositoryUrl?: string;
 
-  constructor(
-    private gitApiService: GitApiService,
-    private popupService: PopupService,
-  ) {
+  private readonly gitApiService = inject(GitApiService);
+  private readonly popupService = inject(PopupService);
 
-  }
+  repositoryUrl = model<string>();
 
-  protected clone = () => this.gitApiService.clone()
+  protected clone = (url: string) => this.gitApiService.clone(url, '', '')
     .subscribe(() => this.popupService.info('Repository cloned'));
 
 }

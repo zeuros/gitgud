@@ -14,9 +14,9 @@ export class CommitFilesChangesService {
 
   readonly workingDirChanges$ = this.workingDirChangesSubject$.asObservable();
 
-  private gitRepositoryService = inject(GitRepositoryService);
-  private gitApiService = inject(GitApiService);
-  private fileWatcherService = inject(FileWatcherService);
+  private readonly gitRepositoryService = inject(GitRepositoryService);
+  private readonly gitApiService = inject(GitApiService);
+  private readonly fileWatcherService = inject(FileWatcherService);
 
   constructor() {
     this.fetchWorkingDirChanges();
@@ -40,7 +40,7 @@ export class CommitFilesChangesService {
    * Get a list of files which have recorded changes in the index as compared to
    * HEAD along with the type of change.
    */
-  fetchWorkingDirChanges = () =>
+  readonly fetchWorkingDirChanges = () =>
     this.gitApiService.git([
       'status',
       '--porcelain',

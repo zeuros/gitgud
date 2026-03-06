@@ -29,7 +29,7 @@ import {Edge} from '../../models/edge';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {DragDropModule} from 'primeng/dragdrop';
 import {SearchLogsComponent} from '../search-logs/search-logs.component';
-import {AfterViewInit, Component, effect, ElementRef, HostListener, input, signal, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, effect, ElementRef, HostListener, inject, input, signal, ViewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
 import {DatePipe, NgForOf, NgIf, NgStyle} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
@@ -73,7 +73,7 @@ export class LogsComponent implements AfterViewInit {
   protected readonly ROW_HEIGHT = this.NODE_DIAMETER + this.NODES_VERTICAL_SPACING;
   protected readonly COMMITS_SHOWN_ON_CANVAS = 37; // TODO: change it on screen resize depending table row count
 
-  gitRepository = input<GitRepository>();
+  protected readonly gitRepository = input<GitRepository>();
   protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
   protected showSearchBar = false;
   protected graphColumnCount?: number;
@@ -82,16 +82,16 @@ export class LogsComponent implements AfterViewInit {
   private treeLockedColumn?: number;
   private columns: Column[] = []; // keep track of the states of the columns when drawing commits from top to bottom
   private edges?: IntervalTree<Edge>; // Edges are updated after computedDisplayLog is set
-  private gitRepository$ = toObservable(this.gitRepository).pipe(filter(notUndefined));
+  private readonly gitRepository$ = toObservable(this.gitRepository).pipe(filter(notUndefined));
   private startCommit = 0;
-  protected selectedCommits = signal<DisplayRef[]>([]);
+  protected readonly selectedCommits = signal<DisplayRef[]>([]);
   private stashImg?: HTMLImageElement;
   @ViewChild('canvas', {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('logTable', {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
 
-  constructor(
-    private gitRepositoryService: GitRepositoryService,
-  ) {
+  private readonly gitRepositoryService = inject(GitRepositoryService);
+
+  constructor() {
     this.gitRepository$
       .subscribe(this.onEveryRepositoryChanges);
 
@@ -111,7 +111,6 @@ export class LogsComponent implements AfterViewInit {
     });
 
     effect(() => this.gitRepositoryService.updateCurrentRepository({selectedCommits: this.selectedCommits()}));
-
   }
 
   get logTableElement() {
@@ -241,7 +240,7 @@ export class LogsComponent implements AfterViewInit {
 
       childrenMap[commit.sha]?.forEach(child => {
         const [childRow, childCol] = [child.row!, child.indent!];
-        edges.insert(new Edge(childRow, childCol, parentRow, parentCol, child.summary, edgeType(child)));
+        edges.insert(new Edge(childRow, childCol, parentRow, parentCol, edgeType(child)));
       });
     });
 
