@@ -1,12 +1,19 @@
-<h4>Unstaged files</h4>
+<div class="flex align-items-center justify-content-between">
+    <h4 class="m-0">Unstaged files</h4>
+    <p-button styleClass="p-button-sm" (click)="commitFilesChangesService.stageAll()" label="Stage all"/>
+</div>
 
-<p-divider type="solid"/>
+<p-divider type="solid" class="mt-2"/>
 
 @let workingDirFilesChanges = commitFilesChangesService.workingDirChanges$ | async;
 
 @if (workingDirFilesChanges) {
-    <p-listbox @slightSlideIn [options]="workingDirFilesChanges.unstaged.slice()" optionLabel="path" (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)">
-        <ng-template #item let-workingDirFileChanges>
+    <p-listbox @slightSlideIn
+               [options]="workingDirFilesChanges.unstaged"
+               optionLabel="path"
+               class="show-button-on-li-hover"
+               (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)">
+        <ng-template let-workingDirFileChanges pTemplate="item">
             @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
             <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
                [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
@@ -16,17 +23,29 @@
                 <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
             }
             <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+            <p-button
+                    class="stick-right-button"
+                    styleClass="file-row-stage-button p-button-sm"
+                    (click)="commitFilesChangesService.stageFile(fileChanges); $event.stopPropagation()"
+                    label="Stage"/>
         </ng-template>
     </p-listbox>
 }
 
-<h4>Staged files</h4>
+<div class="flex align-items-center justify-content-between mt-3">
+    <h4 class="m-0">Staged files</h4>
+    <p-button styleClass="p-button-sm" (click)="commitFilesChangesService.unstageAll()" label="Unstage all"/>
+</div>
 
-<p-divider type="solid"/>
+<p-divider type="solid" class="mt-2"/>
 
 @if (workingDirFilesChanges) {
-    <p-listbox @slightSlideIn [options]="workingDirFilesChanges.staged.slice()" optionLabel="path" (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)">
-        <ng-template #item let-workingDirFileChanges>
+    <p-listbox @slightSlideIn
+               [options]="workingDirFilesChanges.staged"
+               optionLabel="path"
+               class="show-button-on-li-hover"
+               (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)">
+        <ng-template let-workingDirFileChanges pTemplate="item">
             @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
             <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
                [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
@@ -36,6 +55,11 @@
                 <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
             }
             <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+            <p-button
+                    class="stick-right-button"
+                    styleClass="file-row-stage-button p-button-sm"
+                    (click)="commitFilesChangesService.unstageFile(fileChanges); $event.stopPropagation()"
+                    label="Unstage"/>
         </ng-template>
     </p-listbox>
 }
