@@ -33,7 +33,7 @@ export class BranchService {
     this.branchParser = parserService.createForEachRefParser(this.fields);
   }
 
-  getBranches = (): Observable<ReadonlyArray<Branch>> =>
+  getBranches = (): Observable<Branch[]> =>
     this.gitApiService.git(['for-each-ref', ...PREFIXES, formatArg(this.fields)])
       .pipe(map(result =>
 

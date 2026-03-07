@@ -39,7 +39,7 @@ export class LogService {
     revisionRange?: string,
     limit?: number,
     skip?: number,
-    additionalArgs: ReadonlyArray<string> = [],
+    additionalArgs: string[] = [],
   ): Observable<Commit[]> => {
 
     const args = ['log'];

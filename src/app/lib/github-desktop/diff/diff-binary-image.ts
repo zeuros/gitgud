@@ -19,7 +19,7 @@ const imageFileExtensions = new Set([
 ]);
 
 
-export const beforeAndAfterText = (contents: string, hunks: ReadonlyArray<DiffHunk>) => {
+export const beforeAndAfterText = (contents: string, hunks: DiffHunk[]) => {
   const lines = contents.split('\n');
 
   // Extract the lines that represent the original and modified content

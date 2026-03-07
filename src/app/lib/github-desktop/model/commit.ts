@@ -55,9 +55,9 @@ export class Commit implements LogObject {
     public readonly refLogSubject: string,
     public readonly author: CommitIdentity,
     public readonly committer: CommitIdentity,
-    public readonly parentSHAs: ReadonlyArray<string>,
-    public readonly trailers: ReadonlyArray<Trailer>,
-    public readonly tags: ReadonlyArray<string>,
+    public readonly parentSHAs: string[],
+    public readonly trailers: Trailer[],
+    public readonly tags: string[],
   ) {
     this.authoredByCommitter =
       this.author.name === this.committer.name &&

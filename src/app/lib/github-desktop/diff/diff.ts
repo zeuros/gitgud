@@ -59,7 +59,7 @@ export async function getBranchMergeBaseDiff(
 //   gitRepositoryService: GitRepositoryService,
 //   git: (args?: string[]) => Observable<string>,
 //   file: FileChange,
-//   commits: ReadonlyArray<string>,
+//   commits: string[],
 //   hideWhitespaceInDiff: boolean = false,
 //   useNullTreeSHA: boolean = false
 // ): Promise<IDiff> {
@@ -140,7 +140,7 @@ export async function getBranchMergeBaseDiff(
 
 // export async function getCommitRangeChangedFiles(
 //   git: (args?: string[]) => Observable<string>,
-//   shas: ReadonlyArray<string>,
+//   shas: string[],
 //   useNullTreeSHA: boolean = false
 // ): Promise<IChangesetData> {
 //   if (shas.length === 0) {
@@ -356,7 +356,7 @@ export async function getBlobImage(
  * otherwise you should probably pass `'HEAD'` to get a diff of the working tree vs `HEAD`
  * @param conflictedFilesInIndex
  */
-export const getBinaryPaths = (git: (args?: string[]) => Observable<string>, ref: string, conflictedFilesInIndex?: ReadonlyArray<IStatusEntry>) =>
+export const getBinaryPaths = (git: (args?: string[]) => Observable<string>, ref: string, conflictedFilesInIndex?: IStatusEntry[]) =>
   forkJoin([getDetectedBinaryFiles(git, ref), getFilesUsingBinaryMergeDriver(git)])
     .pipe(map(([detectedBinaryFiles, conflictedFilesUsingBinaryMergeDriver]) => [...new Set([...detectedBinaryFiles, ...conflictedFilesUsingBinaryMergeDriver])]));
 

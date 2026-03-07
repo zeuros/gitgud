@@ -205,7 +205,7 @@ export class DiffParser {
    *
    * Example hunk header (text within ``):
    *
-   * `@@ -84,10 +82,8 @@ export function parseRawDiff(lines: ReadonlyArray<string>): Diff {`
+   * `@@ -84,10 +82,8 @@ export function parseRawDiff(lines: string[]): Diff {`
    *
    * Where everything after the last @@ is what's known as the hunk, or section, heading
    */

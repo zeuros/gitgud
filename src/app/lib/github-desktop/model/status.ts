@@ -361,7 +361,7 @@ export class CommittedFileChange extends FileChange {
 export class WorkingDirectoryStatus {
   /** Create a new status with the given files. */
   public static fromFiles(
-    files: ReadonlyArray<WorkingDirectoryFileChange>,
+    files: WorkingDirectoryFileChange[],
   ): WorkingDirectoryStatus {
     return new WorkingDirectoryStatus(files, getIncludeAllState(files));
   }
@@ -375,7 +375,7 @@ export class WorkingDirectoryStatus {
    *                         and perform two-way binding manually when this changes.
    */
   private constructor(
-    public readonly files: ReadonlyArray<WorkingDirectoryFileChange>,
+    public readonly files: WorkingDirectoryFileChange[],
     public readonly includeAll: boolean | null = true,
   ) {
     files.forEach((f, ix) => this.fileIxById.set(f.id, ix));
@@ -403,7 +403,7 @@ export class WorkingDirectoryStatus {
 }
 
 function getIncludeAllState(
-  files: ReadonlyArray<WorkingDirectoryFileChange>,
+  files: WorkingDirectoryFileChange[],
 ): boolean | null {
   if (!files.length) {
     return true;

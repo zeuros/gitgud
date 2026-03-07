@@ -9,10 +9,10 @@ export class GitRepository {
     public name: string,
     public sizes = [20, 50, 30], // panels sizes
     public selected = true, // This repository is selected
-    public logs: ReadonlyArray<Commit> = [],
-    public stashes: ReadonlyArray<Commit> = [],
-    public branches: ReadonlyArray<Branch> = [],
-    public selectedCommits: ReadonlyArray<DisplayRef> = [],
+    public logs: Commit[] = [],
+    public stashes: Commit[] = [],
+    public branches: Branch[] = [],
+    public selectedCommits: DisplayRef[] = [],
     public highlightedCommitSha?: string,
     public checkedOutBranch?: Branch,
     public startCommit = 0,

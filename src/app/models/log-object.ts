@@ -11,7 +11,7 @@ export interface LogObject {
   refLogSubject: string
   author: CommitIdentity
   committer: CommitIdentity
-  parentSHAs: ReadonlyArray<string>
-  trailers: ReadonlyArray<Trailer>
-  tags: ReadonlyArray<string>
+  parentSHAs: string[]
+  trailers: Trailer[]
+  tags: string[]
 }

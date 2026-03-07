@@ -36,7 +36,7 @@ export class DiffHunk {
    */
   public constructor(
     public readonly header: DiffHunkHeader,
-    public readonly lines: ReadonlyArray<DiffLine>,
+    public readonly lines: DiffLine[],
     public readonly unifiedDiffStart: number,
     public readonly unifiedDiffEnd: number,
     public readonly expansionType: DiffHunkExpansionType

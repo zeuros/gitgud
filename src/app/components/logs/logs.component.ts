@@ -42,7 +42,7 @@ const indexCommit = (parentCommit: DisplayRef) => ({
   summary: 'WIP',
   ref: parentCommit.ref,
   sha: 'index',
-  parentSHAs: [parentCommit.sha] as ReadonlyArray<string>,
+  parentSHAs: [parentCommit.sha] as string[],
   branchesDetails: [] as Branch[],
   refType: RefType.INDEX,
   isPointedByLocalHead: false,
@@ -78,7 +78,7 @@ export class LogsComponent implements AfterViewInit {
   protected readonly selectedCommits = signal<DisplayRef[]>([]);
   private readonly gitRepository$ = toObservable(this.gitRepository).pipe(filter(notUndefined));
 
-  protected branches: ReadonlyArray<Branch> = []; // Local and distant branches
+  protected branches: Branch[] = []; // Local and distant branches
   protected showSearchBar = false;
   protected graphColumnCount?: number;
   protected searchBarFocus = {};
