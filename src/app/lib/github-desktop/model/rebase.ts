@@ -26,14 +26,14 @@ export type RebaseInternalState = {
  * Options to pass in to rebase progress reporting
  */
 export type RebaseProgressOptions = {
-  commits: ReadonlyArray<CommitOneLine>
+  commits: CommitOneLine[]
   /** The callback to fire when rebase progress is reported */
   progressCallback: (progress: IMultiCommitOperationProgress) => void
 }
 
 export type CleanRebase = {
   readonly kind: ComputedAction.Clean
-  readonly commits: ReadonlyArray<CommitOneLine>
+  readonly commits: CommitOneLine[]
 }
 
 export type RebaseWithConflicts = {
@@ -57,7 +57,7 @@ export type RebasePreview =
 /** Represents a snapshot of the rebase state from the Git repository  */
 export type GitRebaseSnapshot = {
   /** The sequence of commits that are used in the rebase */
-  readonly commits: ReadonlyArray<CommitOneLine>
+  readonly commits: CommitOneLine[]
   /** The progress of the operation */
   readonly progress: IMultiCommitOperationProgress
 }

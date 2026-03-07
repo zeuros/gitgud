@@ -2,7 +2,7 @@ import {AppFileStatus, AppFileStatusKind} from './status';
 
 export interface ChangeSet {
   /** Files changed in the changeset. */
-  readonly files: ReadonlyArray<CommittedFileChange>;
+  readonly files: CommittedFileChange[];
 
   /** Number of lines added in the changeset. */
   readonly linesAdded: number;

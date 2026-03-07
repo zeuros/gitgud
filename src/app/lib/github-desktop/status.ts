@@ -67,7 +67,7 @@ interface IStatusHeadersData {
 
 type ConflictFilesDetails = {
   conflictCountsByPath: Record<string, number>
-  binaryFilePaths: ReadonlyArray<string>
+  binaryFilePaths: string[]
 }
 
 // function parseConflictedState(
@@ -267,14 +267,14 @@ function parseStatusHeader(results: IStatusHeadersData, header: StatusHeader) {
 }
 
 const getMergeConflictDetails =
-  (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: ReadonlyArray<IStatusEntry>): Observable<ConflictFilesDetails> =>
+  (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: IStatusEntry>): Observable<ConflictFilesDetails> =[]
     forkJoin({
       conflictCountsByPath: getFilesWithConflictMarkers(git),
       binaryFilePaths: getBinaryPaths(git, 'MERGE_HEAD', conflictedFilesInIndex)
     });
 
 const getRebaseConflictDetails =
-  (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: ReadonlyArray<IStatusEntry>): Observable<ConflictFilesDetails> =>
+  (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: IStatusEntry>): Observable<ConflictFilesDetails> =[]
     forkJoin({
       conflictCountsByPath: getFilesWithConflictMarkers(git),
       binaryFilePaths: getBinaryPaths(git, 'REBASE_HEAD', conflictedFilesInIndex)
@@ -285,7 +285,7 @@ const getRebaseConflictDetails =
  * of popping a stash into the index
  */
 const getWorkingDirectoryConflictDetails =
-  (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: ReadonlyArray<IStatusEntry>): Observable<ConflictFilesDetails> =>
+  (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: IStatusEntry>): Observable<ConflictFilesDetails> =[]
     forkJoin({
       conflictCountsByPath: getFilesWithConflictMarkers(git),
       binaryFilePaths: getBinaryPaths(git, 'HEAD', conflictedFilesInIndex),
@@ -311,7 +311,7 @@ const getWorkingDirectoryConflictDetails =
 export const getConflictDetails = (
   git: (args?: string[]) => Observable<string>,
   mergeHeadFound: boolean,
-  conflictedFilesInIndex: ReadonlyArray<IStatusEntry>,
+  conflictedFilesInIndex: IStatusEntry[],
   rebaseInternalState: RebaseInternalState | null
 ) => {
   if (mergeHeadFound) {

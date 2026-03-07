@@ -58,7 +58,7 @@ interface ITextDiffData {
   /** The diff contents organized by hunk - how the git CLI outputs to the caller */
   readonly beforeAfter: FileDiff
   /** The diff contents organized by hunk - how the git CLI outputs to the caller */
-  readonly hunks: ReadonlyArray<DiffHunk>
+  readonly hunks: DiffHunk[]
   /** A warning from Git that the line endings have changed in this file and will affect the commit */
   readonly lineEndingsChange?: LineEndingsChange
   /** The largest line number in the diff  */
