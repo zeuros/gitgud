@@ -51,7 +51,7 @@ const IgnoredEntryType = '!'
 /** Parses output from git status --porcelain -z into file status entries */
 export function parsePorcelainStatus(
   output: Buffer
-): ReadonlyArray<StatusItem> {
+): StatusItem[] {
   const entries = new Array<StatusItem>()
 
   // See https://git-scm.com/docs/git-status
