@@ -1,7 +1,4 @@
-import {IRawDiff} from '../model/diff/raw-diff';
-import {GitRepository} from '../../../models/git-repository';
 import {AppFileStatusKind, FileChange} from '../model/status';
-import {DiffType, ILargeTextDiff, LineEndingsChange} from '../model/diff/diff-data';
 import {GitRepositoryService} from '../../../services/git-repository.service';
 import {forkJoin, map, Observable} from 'rxjs';
 import * as Path from 'node:path';
@@ -9,10 +6,6 @@ import {getBlobContents} from '../show';
 import {Image} from '../model/diff/image';
 import {IStatusEntry} from '../status-parser';
 import {createLogParser} from '../git-delimiter-parser';
-import {DiffParser} from './diff-parser';
-import {forceUnwrap} from '../throw-ex';
-import {isDiffTooLarge, isStringTooLarge, isValidBuffer} from './diff-utils';
-import {convertDiff} from './diff-binary-image';
 import {buildDiff} from './diff-builder';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
 
@@ -309,16 +302,16 @@ function getMediaType(extension: string) {
 //  * https://en.wikipedia.org/wiki/Data_URI_scheme
 //  */
 export async function getBlobImage(
-  gitRepositoryService: GitRepositoryService,
+  gitApiService: GitApiService,
   git: (args?: string[]) => Observable<string>,
   path: string,
   commitish: string,
 ) {
-  return getBlobContents(gitRepositoryService, commitish, path)
+  return getBlobContents(gitApiService, commitish, path)
     .pipe(map(contents => new Image(
       contents,
       btoa(contents),
-      getMediaType(Path.extname(path)),
+      getMediaType(window.electron.path.extname(path)),
       contents.length,
     )));
 }

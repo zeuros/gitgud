@@ -1,9 +1,4 @@
 import {inject, Injectable} from '@angular/core';
-import {map} from 'rxjs';
-import {isStatusEntry, isStatusHeader, parsePorcelainStatus} from '../../lib/github-desktop/status-parser';
-import {isMergeHeadSet} from '../../lib/github-desktop/merge';
-import {conflictStatusCodes, WorkingDirectoryFileChange, WorkingDirectoryStatus} from '../../lib/github-desktop/model/status';
-import {getConflictDetails} from '../../lib/github-desktop/status';
 import {GitApiService} from './git-api.service';
 
 @Injectable({

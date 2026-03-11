@@ -4,9 +4,7 @@
     "moduleResolution": "bundler",
     "outDir": "../out-tsc/app",
     "baseUrl": "",
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
   "files": [
     "main.ts",
