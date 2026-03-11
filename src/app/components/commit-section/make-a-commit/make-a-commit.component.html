@@ -8,7 +8,7 @@
 @let workingDirFilesChanges = gitRepositoryStore.workDirStatus();
 
 @if (workingDirFilesChanges) {
-    <p-listbox @slightSlideIn
+    <p-listbox animate.enter="slight-slide-in"
                [options]="workingDirFilesChanges.unstaged"
                optionLabel="path"
                class="show-button-on-li-hover"
@@ -40,7 +40,7 @@
 <p-divider type="solid" class="mt-2"/>
 
 @if (workingDirFilesChanges) {
-    <p-listbox @slightSlideIn
+    <p-listbox animate.enter="slight-slide-in"
                [options]="workingDirFilesChanges.staged"
                optionLabel="path"
                class="show-button-on-li-hover"

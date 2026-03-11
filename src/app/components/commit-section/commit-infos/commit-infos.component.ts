@@ -4,7 +4,7 @@ import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from '@angular
 import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
 import {ButtonDirective} from 'primeng/button';
-import {DatePipe, NgIf} from '@angular/common';
+import {DatePipe} from '@angular/common';
 import {isEqual} from 'lodash-es';
 import {DATE_FORMAT} from '../../../utils/constants';
 import {directory, fileName} from '../../../utils/utils';
@@ -14,7 +14,6 @@ import {Listbox} from 'primeng/listbox';
 import {ChangeSet, CommittedFileChange} from '../../../lib/github-desktop/model/change-set';
 import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
-import {slightSlideIn} from '../../../shared/animations';
 import {GitRepositoryStore} from '../../../stores/git-repos.store';
 
 @Component({
@@ -24,7 +23,6 @@ import {GitRepositoryStore} from '../../../stores/git-repos.store';
     InputText,
     Textarea,
     ButtonDirective,
-    NgIf,
     DatePipe,
     Tooltip,
     AvatarComponent,
@@ -33,7 +31,6 @@ import {GitRepositoryStore} from '../../../stores/git-repos.store';
   ],
   templateUrl: './commit-infos.component.html',
   styleUrl: './commit-infos.component.scss',
-  animations: [slightSlideIn],
 })
 export class CommitInfosComponent {
 
