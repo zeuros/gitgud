@@ -1,12 +1,11 @@
-import {GitRepository} from '../../models/git-repository';
 import {TableModule} from 'primeng/table';
 import {Commit} from '../../lib/github-desktop/model/commit';
 import {RefType} from '../../enums/ref-type.enum';
-import {notUndefined, removeDuplicates} from '../../utils/utils';
+import {notUndefined, removeDuplicates, workingDirHasChanges} from '../../utils/utils';
 import {Branch, BranchType} from '../../lib/github-desktop/model/branch';
-import {byName, bySha, logsAreEqual} from '../../utils/log-utils';
+import {byName, bySha} from '../../utils/log-utils';
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
-import {max, once, uniqBy} from 'lodash';
+import {max, once, uniqBy} from 'lodash-es';
 import {
   buildChildrenMap,
   buildShaMap,
@@ -23,19 +22,17 @@ import {
   ShaMap,
 } from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
-import {combineLatest, distinctUntilChanged, filter, first, interval, map} from 'rxjs';
+import {first, interval, map} from 'rxjs';
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
-import {GitRepositoryService} from '../../services/git-repository.service';
 import {DragDropModule} from 'primeng/dragdrop';
 import {SearchLogsComponent} from '../search-logs/search-logs.component';
-import {AfterViewInit, Component, effect, ElementRef, HostListener, inject, input, signal, ViewChild} from '@angular/core';
+import {Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, ViewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
 import {DatePipe, NgForOf, NgIf, NgStyle} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
-import {toObservable} from '@angular/core/rxjs-interop';
 import {DATE_FORMAT} from '../../utils/constants';
-import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
+import {GitRepositoryStore} from '../../stores/git-repos.store';
 
 type Column = ['taken' | 'free', rowCount: number];
 const indexCommit = (parentCommit: DisplayRef) => ({
@@ -65,7 +62,7 @@ const indexCommit = (parentCommit: DisplayRef) => ({
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
 })
-export class LogsComponent implements AfterViewInit {
+export class LogsComponent {
 
   protected readonly CANVAS_MARGIN = [5, 1];
   protected readonly NODE_DIAMETER = 26;
@@ -74,50 +71,49 @@ export class LogsComponent implements AfterViewInit {
   protected readonly ROW_HEIGHT = this.NODE_DIAMETER + this.NODES_VERTICAL_SPACING;
   protected readonly COMMITS_SHOWN_ON_CANVAS = 37; // TODO: change it on screen resize depending table row count
 
-  protected readonly gitRepository = input<GitRepository>();
-  protected readonly selectedCommits = signal<DisplayRef[]>([]);
-  private readonly gitRepository$ = toObservable(this.gitRepository).pipe(filter(notUndefined));
+  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  protected readonly branches = this.gitRepositoryStore.branches;
+  protected readonly commitsSelection = computed(() => {
+    const selectedCommitsShas = this.gitRepositoryStore.selectedCommitsShas();
+    return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
+  });
 
-  protected branches: Branch[] = []; // Local and distant branches
   protected showSearchBar = false;
   protected graphColumnCount?: number;
   protected searchBarFocus = {};
-  protected computedDisplayLog: DisplayRef[] = []; // Commits ready for display
+  protected computedDisplayLog = signal<DisplayRef[]>([]); // Commits ready for display
   private treeLockedColumn?: number;
   private columns: Column[] = []; // keep track of the states of the columns when drawing commits from top to bottom
   private edges?: IntervalTree<Edge>; // Edges are updated after computedDisplayLog is set
-  private startCommit = 0;
-  private stashImg?: HTMLImageElement;
+  private startCommit = this.gitRepositoryStore.startCommit();
+
+  // signal holding the stash image
+  private readonly stashImg = loadStashImage();
 
   @ViewChild('canvas', {static: false}) private canvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('logTable', {read: ElementRef}) private logTableRef?: ElementRef<HTMLElement>;
 
-  private readonly workingDirectoryService = inject(WorkingDirectoryService);
-  private readonly gitRepositoryService = inject(GitRepositoryService);
 
   constructor() {
-    this.gitRepository$
-      .subscribe(this.onEveryRepositoryChanges);
 
-    // Listen to commit selection (click on a branch for example)
-    this.gitRepository$
-      .pipe(map(gitRepository => gitRepository.highlightedCommitSha), distinctUntilChanged(), filter(notUndefined))
-      .subscribe(this.selectAndScrollToCommit);
-
-    // Load stash image for drawing stashes in the graph
-    loadStashImage().subscribe(stashImg => {
-      this.stashImg = stashImg;
-
-      // When repository changes its logs, compute the log graph and draw it
-      // TODO: split states into respective services, depending git commands (logs / stashes ...), then replace logsAreEqual
-      combineLatest([
-        this.gitRepository$.pipe(filter(gitRepository => gitRepository?.logs.length > 0), distinctUntilChanged(logsAreEqual)),
-        this.workingDirectoryService.hasChanges$.pipe(distinctUntilChanged()),
-      ])
-        .subscribe(([repo, hasChanges]) => this.onRepositoryLogChanges(repo, hasChanges));
+    // Scroll to selected commit
+    effect(() => {
+      const sha = this.gitRepositoryStore.selectedCommitSha();
+      if (sha) untracked(() => this.scrollToCommit(sha));
     });
 
-    effect(() => this.gitRepositoryService.updateCurrentRepository({selectedCommits: this.selectedCommits()}));
+
+    // When repository changes its logs, compute the log graph and draw it
+    // TODO: displayLog should be build without side effects, and moved into service
+    effect(() => {
+      const logs = this.gitRepositoryStore.logs();
+      const stashes = this.gitRepositoryStore.stashes();
+      const workDirStatus = this.gitRepositoryStore.workDirStatus();
+      // Wait for stash image before drawing stashes in the graph
+      if (!this.stashImg() || !logs.length || !workDirStatus) return;
+
+      untracked(() => this.onRepositoryLogChanges(workingDirHasChanges(workDirStatus), logs, stashes));
+    });
   }
 
   get logTableElement() {
@@ -135,11 +131,6 @@ export class LogsComponent implements AfterViewInit {
     }
   }
 
-  ngAfterViewInit() {
-    this.logTableElement.addEventListener('scroll', this.onTableScroll);
-    this.logTableElement.addEventListener('scrollend', this.onTableScrollEnd);
-  }
-
   protected branchName = (b: Branch) => b.name.replace('origin/', '');
 
   protected xPosition = (col?: number) => this.NODE_RADIUS + (col ?? 0) * this.NODE_DIAMETER;
@@ -151,13 +142,15 @@ export class LogsComponent implements AfterViewInit {
     uniqBy([...displayLogElement.branchesDetails/*, this.findBranchByRef(displayLogElement.ref)*/], 'branchesDetails.name');
 
   protected search = (searchString = '') => {
-    if (searchString == '') // Clear search
-      return this.computedDisplayLog.forEach(commit => commit.highlight = undefined);
+    const computedDisplayLog = this.computedDisplayLog();
 
-    this.computedDisplayLog.forEach(commit => commit.highlight = undefined);
+    if (searchString == '') // Clear search
+      return computedDisplayLog.forEach(commit => commit.highlight = undefined);
+
+    computedDisplayLog.forEach(commit => commit.highlight = undefined);
 
     const searchStringL = searchString.toLowerCase();
-    this.computedDisplayLog
+    computedDisplayLog
       .filter(({sha, summary, author, committer}) => !(
         sha.includes(searchStringL)
         || summary.toLowerCase().includes(searchStringL)
@@ -169,8 +162,8 @@ export class LogsComponent implements AfterViewInit {
     // TODO: Apply this filter on the displayed elements only
   };
 
-  private onRepositoryLogChanges = (gitRepository: GitRepository, workingDirHasChanges: boolean) => {
-    const commits = gitRepository.logs.map(c => this.commitToDisplayRef(c, gitRepository.stashes.find(s => s.parentSHAs[1] == c.sha)));
+  private onRepositoryLogChanges = (workingDirHasChanges: boolean, logs: Commit[], stashes: Commit[]) => {
+    const commits = logs.map(c => this.commitToDisplayRef(c, stashes.find(s => s.parentSHAs[1] == c.sha)));
 
     // "Index" commit = working directory changes
     const indexParent = commits.find(c => c.isPointedByLocalHead);
@@ -181,7 +174,7 @@ export class LogsComponent implements AfterViewInit {
 
     const displayLog = this.saveRowIndexIntoDisplayRef(commits);
 
-    this.computedDisplayLog = displayLog;
+    this.computedDisplayLog.set(displayLog);
 
     this.computeCommitsIndents(displayLog, shaMap, childrenMap);
 
@@ -190,49 +183,45 @@ export class LogsComponent implements AfterViewInit {
     const edges = this.updateEdgeIntervals(displayLog, childrenMap);
     this.edges = edges;
 
-    this.afterLogsComputed(gitRepository, displayLog, edges);
+    this.afterLogsComputed(displayLog, edges);
   };
 
-  private onEveryRepositoryChanges = (gitRepository: GitRepository) => {
-    // Sort branches by last commit date put on it => first branch is the one pointing to the last commit in date
-    this.branches = gitRepository.branches;
-  };
-
-  private afterLogsComputed = (gitRepository: GitRepository, displayLog: DisplayRef[], edges: IntervalTree<Edge>) => {
+  private afterLogsComputed = (displayLog: DisplayRef[], edges: IntervalTree<Edge>) => {
     this.waitForCanvasToAppear.subscribe(canvasContext => {
-      this.drawLog(canvasContext, displayLog, this.startCommit, edges);
+      this.drawLog(canvasContext, displayLog, edges);
       this.moveCanvasDown(this.startCommit);
-      this.moveCommitWindow(canvasContext, this.startCommit);
+      this.moveCommitWindow(canvasContext);
 
-      this.afterLogFirstDisplay(gitRepository);
+      this.afterLogFirstDisplay();
     });
   };
 
   // Called after log is computed and computedDisplayLog is set (runs once)
-  private afterLogFirstDisplay = once((gitRepository: GitRepository) => {
+  private afterLogFirstDisplay = once(() => {
 
-    // On first load, scroll down to last saved position
-    this.logTableElement.scrollTo({top: gitRepository.startCommit * this.ROW_HEIGHT});
+    // On first load, scroll down to last saved position, synchronous, fires no scroll events
+    this.logTableElement.scrollTop = this.startCommit * this.ROW_HEIGHT;
 
-    const headPointedBranch = this.branches.find(b => b.isHeadPointed);
-    if (headPointedBranch) this.selectAndScrollToCommit(headPointedBranch.tip.sha);
+    // Only after initial automatic scrolling we start recording user scrolling
+    this.logTableElement.addEventListener('scroll', e => this.onTableScroll(e));
+    this.logTableElement.addEventListener('scrollend', e => this.onTableScrollEnd(e));
 
   });
 
   private onTableScroll: EventListener = ({target}) => {
     this.startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
-    this.moveCommitWindow(this.canvasContext(), this.startCommit);
+    this.moveCommitWindow(this.canvasContext());
   };
 
   // Redraw the window of commits to display into log
-  private moveCommitWindow = (canvas: CanvasRenderingContext2D, startCommit: number) => {
-    this.moveCanvasDown(startCommit);
-    this.drawLog(canvas, this.computedDisplayLog, startCommit, this.edges!);
+  private moveCommitWindow = (canvas: CanvasRenderingContext2D) => {
+    this.moveCanvasDown(this.startCommit);
+    this.drawLog(canvas, this.computedDisplayLog(), this.edges!);
   };
 
   private onTableScrollEnd: EventListener = ({target}) => {
     this.startCommit = Math.floor((target as HTMLElement).scrollTop / this.ROW_HEIGHT);
-    this.gitRepositoryService.updateCurrentRepository({startCommit: this.startCommit}); // saveCurrentRepository doesn't trigger observers (whole panel refresh)
+    this.gitRepositoryStore.updateSelectedRepository({startCommit: this.startCommit}); // saveSelectedRepository doesn't trigger observers (whole panel refresh)
   };
 
   /**
@@ -330,11 +319,11 @@ export class LogsComponent implements AfterViewInit {
 
   private findBranchByRef = (branchRef: string) => {
     if (branchRef.includes('origin/HEAD')) // Commit is pointed by remote head (usually origin/main)
-      return this.branches.find(b => b.type == BranchType.Remote && b.isHeadPointed);
+      return this.branches().find(b => b.type == BranchType.Remote && b.isHeadPointed);
     else if (branchRef.includes('HEAD -> ')) // This commit is pointed by local HEAD, git tells which branch is pointed at. e.g: (HEAD -> branchPointedAt)
-      return this.branches.find(byName(branchRef.replace('HEAD -> ', '')));
+      return this.branches().find(byName(branchRef.replace('HEAD -> ', '')));
 
-    return this.branches.find(byName(branchRef));
+    return this.branches().find(byName(branchRef));
   };
 
   // Indent will be reused for future commits
@@ -352,14 +341,14 @@ export class LogsComponent implements AfterViewInit {
   /**
    * Draw each commit / stash and their connections
    */
-  private drawLog = (canvas: CanvasRenderingContext2D, displayLog: DisplayRef[], startCommit: number, edges: IntervalTree<Edge>) => {
+  private drawLog = (canvas: CanvasRenderingContext2D, displayLog: DisplayRef[], edges: IntervalTree<Edge>) => {
 
     canvas.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
 
-    edges.search(startCommit, startCommit + this.COMMITS_SHOWN_ON_CANVAS)
-      .forEach(edge => this.drawEdge(canvas, edge, startCommit));
+    edges.search(this.startCommit, this.startCommit + this.COMMITS_SHOWN_ON_CANVAS)
+      .forEach(edge => this.drawEdge(canvas, edge, this.startCommit));
 
-    displayLog.slice(startCommit, startCommit + this.COMMITS_SHOWN_ON_CANVAS)
+    displayLog.slice(this.startCommit, this.startCommit + this.COMMITS_SHOWN_ON_CANVAS)
       .forEach((ref, indexForThisSlice) => this.drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref));
 
     return canvas;
@@ -494,7 +483,7 @@ export class LogsComponent implements AfterViewInit {
       canvas.stroke();
     } else { // Stash
       // We made sure to load stashImg before drawing the log
-      canvas.drawImage(this.stashImg!, x - this.NODE_RADIUS, y - this.NODE_RADIUS, this.NODE_DIAMETER, this.NODE_DIAMETER);
+      canvas.drawImage(this.stashImg()!, x - this.NODE_RADIUS, y - this.NODE_RADIUS, this.NODE_DIAMETER, this.NODE_DIAMETER);
     }
   };
 
@@ -537,20 +526,21 @@ export class LogsComponent implements AfterViewInit {
   private pushNewColumn = () => this.columns.push(['taken', 0]) - 1;
 
   // Scroll view to display the selected commit
-  private selectAndScrollToCommit = (sha: string) => {
-    const indexCommitToSelect = this.computedDisplayLog.findIndex(bySha(sha));
-
-    if (this.computedDisplayLog[indexCommitToSelect])
-      this.selectedCommits.set([this.computedDisplayLog[indexCommitToSelect]]);
+  private scrollToCommit = (sha: string) => {
+    const indexCommitToSelect = this.computedDisplayLog().findIndex(bySha(sha));
 
     if (!this.isOnView(indexCommitToSelect)) {
       this.waitForCanvasToAppear.subscribe(canvas => {
         const scrollToCommit = Math.max(Math.ceil(indexCommitToSelect - this.COMMITS_SHOWN_ON_CANVAS / 2), 0);
-        this.moveCommitWindow(canvas, scrollToCommit);
+        this.startCommit = scrollToCommit;
+        this.moveCommitWindow(canvas);
         this.logTableElement.scrollTo({top: scrollToCommit * this.ROW_HEIGHT});
       });
     }
   };
+
+  protected readonly onCommitsSelection = (selection: DisplayRef[]) =>
+    this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: selection.map(s => s.sha)});
 
   private isOnView = (commitIndex: number) =>
     commitIndex > this.startCommit && commitIndex < this.startCommit + this.COMMITS_SHOWN_ON_CANVAS;
@@ -559,5 +549,4 @@ export class LogsComponent implements AfterViewInit {
   protected readonly local = local;
   protected readonly commitColor = commitColor;
   protected readonly DATE_FORMAT = DATE_FORMAT;
-
 }

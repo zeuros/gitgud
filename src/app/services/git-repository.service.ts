@@ -1,19 +1,14 @@
-import {inject, Injectable} from '@angular/core';
-import {BehaviorSubject, debounceTime, forkJoin, fromEvent, map, Observable, of, switchMap, tap} from 'rxjs';
+import {effect, inject, Injectable} from '@angular/core';
+import {forkJoin, map, of, switchMap} from 'rxjs';
 import {GitRepository} from '../models/git-repository';
-import {StorageName} from '../enums/storage-name.enum';
-import {SettingsService} from './settings.service';
-import {byDirectory, isRootDirectory, throwEx} from '../utils/utils';
+import {isRootDirectory, throwEx} from '../utils/utils';
 import {createRepository, filterOutStashes} from '../utils/repository-utils';
-
-import * as fs from 'fs';
-import * as path from 'path';
-import * as electron from '@electron/remote';
 import {LogService} from './electron-cmd-parser-layer/log.service';
 import {StashService} from './electron-cmd-parser-layer/stash.service';
 import {BranchService} from './electron-cmd-parser-layer/branch.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {FileWatcherService} from './file-watcher.service';
+import {GitRepositoryStore} from '../stores/git-repos.store';
 
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 
@@ -25,70 +20,36 @@ const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
  * - Coordinate git/log/branch/stash services
  * - React to window focus and filesystem changes
  *
- * FIXME: Too complicated
+ * FIXME: Too complicated + rename to ElectronGit ?
  */
 @Injectable({
   providedIn: 'root',
 })
 export class GitRepositoryService {
 
-  // Electron imports (TODO: move electron remote things to dedicated service)
-  private readonly fs: typeof fs = (window as any).require('fs');
-  private readonly path: typeof path = (window as any).require('path');
-  private readonly electron: typeof electron = (window as any).require('@electron/remote');
-  private readonly dialog = this.electron.dialog;
-  // Electron events
-  readonly windowFocused$ = fromEvent(this.electron.getCurrentWindow(), 'focus');
-
-  // Repositories state (TODO: move in dedicated repo service, split in different observables ?)
-  private repositories$: BehaviorSubject<GitRepository>[] = [];
-  private readonly currentRepositoryIndex$ = new BehaviorSubject<number>(-1);
-
   // Services
-  private readonly settingsService = inject(SettingsService);
   private readonly logService = inject(LogService);
   private readonly branchService = inject(BranchService);
   private readonly stashService = inject(StashService);
   private readonly gitApiService = inject(GitApiService);
   private readonly fileWatcher = inject(FileWatcherService);
+  private readonly gitRepositoryStore = inject(GitRepositoryStore);
 
   constructor() {
 
-    // Restore persisted repositories
-    (this.settingsService.get<GitRepository[]>(StorageName.GitRepositories) ?? []).forEach(this.addToRepos);
-
     // Refresh data when window regains focus
-    this.windowFocused$
-      .pipe(switchMap(this.updateLogsAndBranches))
-      .subscribe(this.updateCurrentRepository);
+    window.electron.onWindowFocus(this.updateLogsAndBranches);
 
-    // React to repository selection changes (hook for future side effects)
-    this.currentRepositoryIndex$
-      .pipe(map(() => this.currentRepository!))
-      .subscribe(this.onRepositorySelected);
+    // React to repository selection changes
+    effect(() => {
+      const repo = this.gitRepositoryStore.selectedRepository();
+      if (repo) this.onRepositorySelected(repo);
+    });
   }
 
-  private onRepositorySelected = (gitRepository: GitRepository) => {
-    this.fileWatcher.setWatcher(gitRepository.directory);
-    this.gitApiService.setCwd(gitRepository.directory);
-  };
-
-  get currentRepository(): GitRepository | undefined {
-    return this.currentRepositoryIndex$.value >= 0
-      ? this.repositories$[this.currentRepositoryIndex$.value]?.value
-      : undefined;
-  }
-
-  // Just saves changes of current repo, doesn't trigger subscribers
-  saveAllRepos = (repos: GitRepository[]) => this.settingsService.store(StorageName.GitRepositories, repos);
-
-  selectRepositoryByIndex = (repositoryIndex: number) => {
-    // Deselect current repo
-    this.updateCurrentRepository({selected: false});
-
-    // Select the good one
-    this.currentRepositoryIndex$.next(repositoryIndex);
-    this.updateCurrentRepository({selected: true});
+  private onRepositorySelected = ({id}: GitRepository) => {
+    this.fileWatcher.setWatcher(id);
+    this.gitApiService.cwd.set(id);
   };
 
   /**
@@ -100,18 +61,26 @@ export class GitRepositoryService {
   openRepository = () => {
     const repoDirectory = this.pickGitFolder();
 
-    const repo$ = this.repositories$.find(byDirectory(repoDirectory)) ?? this.addToRepos(createRepository(repoDirectory));
-    this.currentRepositoryIndex$.next(this.repositories$.indexOf(repo$));
+    const repos = this.gitRepositoryStore.repositories();
 
-    this.updateRepo(repo$, {selected: true});
+    let repo = repos.find(r => r.id === repoDirectory);
 
-    // Git log and update current repo
-    return this.updateLogsAndBranches().pipe(tap(this.updateCurrentRepository));
+    // Add repo if not already opened
+    if (!repo) {
+      repo = createRepository(repoDirectory);
+      this.gitRepositoryStore.addRepository(repo);
+    }
+
+    // Select it
+    this.gitRepositoryStore.selectRepository(repoDirectory);
+
+    // Refresh git data
+    this.updateLogsAndBranches();
   };
 
   pickGitFolder = () => {
 
-    const pickedGitFolder = (this.dialog.showOpenDialogSync({properties: ['openDirectory']}) ?? throwEx('No folder current'))[0];
+    const pickedGitFolder = (window.electron.dialog.showOpenDialogSync({properties: ['openDirectory']}) ?? throwEx('No folder current'))[0];
 
     return this.findGitDir(pickedGitFolder);
 
@@ -123,86 +92,35 @@ export class GitRepositoryService {
    */
   findGitDir = (gitDir: string): string => {
 
-    if (this.fs.statSync(gitDir).isFile())
-      return this.findGitDir(this.path.dirname(gitDir));
+    if (window.electron.fs.isFile(gitDir))
+      return this.findGitDir(window.electron.path.dirname(gitDir));
 
-    const files = this.fs.readdirSync(gitDir);
+    const files = window.electron.fs.readdirSync(gitDir);
     if (files.includes('.git'))
       return gitDir;
     else if (isRootDirectory(gitDir))
       return throwEx(`This folder is not a valid git repository`);
     else
-      return this.findGitDir(this.path.resolve(gitDir, '..'));
+      return this.findGitDir(window.electron.path.resolve(gitDir, '..'));
 
   };
 
-  /**
-   * Removes a repository and updates selection:
-   * - If the removed repo was selected, selects the nearest neighbor
-   * - Persists updated repository list
-   */
-  removeRepository = (repoIndex: number) => {
-    const repoToRemoveWascurrent = this.repositories$[repoIndex].value.selected;
-
-    const toRemove = this.repositories$[repoIndex];
-    toRemove.unsubscribe();
-
-    this.repositories$ = this.repositories$.filter((_, i) => i !== repoIndex);
-
-    // Selects the next repository in next tab (if available)
-    if (repoToRemoveWascurrent && this.repositories$.length) {
-      if (this.repositories$.length >= repoIndex)
-        this.selectRepositoryByIndex(repoIndex);
-      else if (repoIndex - 1 >= 0)
-        this.selectRepositoryByIndex(repoIndex - 1);
-
-      // Else, no repos at all, nothing to select !
-    }
-
-  };
-
-  fetchCurrentRepository = () => {
-    if (this.currentRepositoryIndex$.value == -1) return;
-
-    this.gitApiService.git(['fetch']);
-    this.updateLogsAndBranches().subscribe(this.updateCurrentRepository);
-  };
-
-  private updateRepo = (repository$: BehaviorSubject<GitRepository>, updates: Partial<GitRepository>) =>
-    repository$?.next({...repository$.value, ...updates});
-
-  /**
-   * Adds a repository to the internal list and wires persistence.
-   * Any change to the repo state is debounced and saved to storage.
-   */
-  private addToRepos = (repo: GitRepository) => {
-    const repo$ = new BehaviorSubject(repo);
-
-    const insertedIndex = this.repositories$.push(repo$) - 1;
-    if (repo.selected) this.currentRepositoryIndex$.next(insertedIndex);
-
-    // Stores repositories changes into localstorage
-    repo$
-      .pipe(debounceTime(500)) // Skip fast edits
-      .subscribe(() => this.saveAllRepos(this.repositories$.map(repo$ => repo$.value)));
-
-    return repo$;
-  };
 
   /**
    * Fetches logs, branches, and stashes for the current repository
    * and returns a partial repository update.
    */
-  private updateLogsAndBranches = (): Observable<Partial<GitRepository>> =>
-    this.stashService.getStashes().pipe(switchMap(stashes => forkJoin({
-      logs: this.logService.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', ...stashes.map(s => s.sha)])
-        .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
-      branches: this.branchService.getBranches(), // Source will show which branch the  commit is in
-      stashes: of(stashes), // Source will show which branch commit is in
-    })));
-
-  updateCurrentRepository = (updates: Partial<GitRepository>) => {
-    if (this.currentRepositoryIndex$.value != -1) this.updateRepo(this.repositories$[this.currentRepositoryIndex$.value], updates);
+  updateLogsAndBranches = () => {
+    this.stashService.getStashes()
+      .pipe(
+        switchMap(stashes => forkJoin({
+          logs: this.logService.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', ...stashes.map(s => s.sha)])
+            .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
+          branches: this.branchService.getBranches(), // Source will show which branch the  commit is in
+          stashes: of(stashes), // Source will show which branch commit is in
+        })),
+      )
+      .subscribe(r => this.gitRepositoryStore.updateSelectedRepository(r));
   };
 
 }

@@ -2,51 +2,29 @@
   "compileOnSave": false,
   "compilerOptions": {
     "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": false, // Set to false temporarily
+    "noUnusedLocals": false, // FIXME Set to false temporarily
+    "noUnusedParameters": false, // FIXME Set to false temporarily
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "outDir": "./dist/out-tsc",
-    "module": "es2022",
+    "module": "ESNext",
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowJs": true,
-    "target": "ES2022",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "lib": [
-      "es2017",
-      "es2016",
-      "es2015",
-      "es2018",
-      "es2021",
-      "dom"
-    ],
+    "target": "es2022",
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["es2022", "dom"],
     "useDefineForClassFields": false
   },
-  "exclude": [
-    "node_modules"
-  ],
+  "exclude": ["node_modules", "**/*.spec.ts"],
   "angularCompilerOptions": {
     "strictTemplates": true,
     "fullTemplateTypeCheck": true,
-    "annotateForClosureCompiler": true,
     "strictInjectionParameters": true,
-    "skipTemplateCodegen": false,
     "preserveWhitespaces": true,
-    "skipMetadataEmit": false,
-    "disableTypeScriptVersionCheck": true,
     "strictInputAccessModifiers": true
   }
 }

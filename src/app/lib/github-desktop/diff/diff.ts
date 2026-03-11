@@ -1,7 +1,5 @@
 import {AppFileStatusKind, FileChange} from '../model/status';
-import {GitRepositoryService} from '../../../services/git-repository.service';
 import {forkJoin, map, Observable} from 'rxjs';
-import * as Path from 'node:path';
 import {getBlobContents} from '../show';
 import {Image} from '../model/diff/image';
 import {IStatusEntry} from '../status-parser';
@@ -371,8 +369,4 @@ const getFilesUsingBinaryMergeDriver = (git: (args?: string[]) => Observable<str
       logParser.parse(r)
         .filter(x => x.attr === 'merge' && x.value === 'binary')
         .map(x => x.path)));
-
-function getOldPathOrDefault(file: FileChange): string {
-  throw new Error('Function not implemented.');
-}
 

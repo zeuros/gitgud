@@ -1,6 +1,7 @@
-import {GitRepository} from '../models/git-repository';
-import {isUndefined, omitBy} from 'lodash';
-import {BehaviorSubject} from 'rxjs';
+import {isUndefined, omitBy} from 'lodash-es';
+import {WorkDirStatus} from '../lib/github-desktop/commit-files-changes';
+import {Commit} from '../lib/github-desktop/model/commit';
+import {Branch} from '../lib/github-desktop/model/branch';
 
 export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
 
@@ -15,8 +16,6 @@ export const errorMessage = (message: Error | string) => {
   if (message instanceof Error) return message.message; // avoids having 'Error: ...' which the Error class brings
   return message;
 };
-
-export const byDirectory = (directory: string) => (repo: BehaviorSubject<GitRepository>) => directory === repo.value.directory;
 
 // Filter out undefined values from an object
 export const omitUndefined = <T extends object>(o: T | undefined) => omitBy<T>(o, isUndefined);
@@ -36,3 +35,9 @@ export const showPerf = (cmd: string, args: string[] = []) => {
   const start = performance.now();
   return () => console.log(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`);
 };
+
+export const workingDirHasChanges = (status?: WorkDirStatus) => (status?.unstaged.length ?? 0) > 0 || (status?.staged.length ?? 0) > 0;
+
+// Signals diff comparators
+export const logsComparison = (a: Commit[], b: Commit[]) => a.length === b.length && a[0]?.sha === b[0]?.sha
+export const branchesComparison = (a: Branch[], b: Branch[]) => a.length === b.length && a.every((b1, i) => b1.name === b[i]?.name)

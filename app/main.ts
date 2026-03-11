@@ -1,93 +1,98 @@
 import {app, BrowserWindow, screen} from 'electron';
-import * as path from 'path';
-import * as fs from 'fs';
+import {join} from 'node:path';
+import {existsSync} from 'node:fs';
 import {enable, initialize} from '@electron/remote/main';
 
-let window: Electron.CrossProcessExports.BrowserWindow | null;
-const args = process.argv.slice(1),
-  serve = args.some(val => val === '--serve');
+let mainWindow: BrowserWindow | null;
+// let splashWindow: BrowserWindow | null;
 
+const isDev = process.argv.slice(1).includes('--serve');
+
+// -----------------------------
+// Preload & Remote initialization
+// -----------------------------
+initialize();
+
+// -----------------------------
+// Create main application window
+// -----------------------------
 function createMainWindow() {
+  const {width, height} = screen.getPrimaryDisplay().workAreaSize;
 
-  const displayWindowSize = screen.getPrimaryDisplay().workAreaSize;
-
-  // Create the browser window.
-  window = new BrowserWindow({
-    width: displayWindowSize.width,
-    height: displayWindowSize.height,
-    show: false, // Hide the main window initially
+  mainWindow = new BrowserWindow({
+    width,
+    height,
+    show: false,
     webPreferences: {
-      // preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      allowRunningInsecureContent: (serve),
-      contextIsolation: false,
-      webSecurity: false,
+      preload: join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,  // required when preload uses Node built-ins
+      webSecurity: !isDev,
     },
   });
 
-  // Initialize remote api, it's like ipc but much more simple, and avoiding the hassle of re-typing in front / back.
-  initialize();
-  enable(window.webContents);
+  // Must be called immediately after window creation, before loadURL/loadFile
+  enable(mainWindow.webContents);
 
-  if (serve) {
-    const debug = require('electron-debug');
-    debug();
-
-    require('electron-reloader')(module);
-    window.loadURL('http://localhost:4200');
+  if (isDev) {
+    mainWindow.loadURL('http://localhost:4200');
   } else {
-    // Path when running electron executable
-    let pathIndex = './index.html';
+    const indexPath = existsSync(join(__dirname, '../dist/index.html'))
+      ? join(__dirname, '../dist/index.html')
+      : join(__dirname, './index.html');
 
-    if (fs.existsSync(path.join(__dirname, '../dist/index.html'))) {
-      // Path when running electron in local folder
-      pathIndex = '../dist/index.html';
-    }
-
-    const url = new URL(path.join('file:', __dirname, pathIndex));
-    window.loadURL(url.href);
+    mainWindow.loadFile(indexPath);
   }
 
-  window.on('closed', () => {
-    // Dereference the window object, usually you would store window
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    window = null;
+  mainWindow.on('closed', () => {
+    mainWindow = null;
   });
 
-  return window;
+  return mainWindow;
 }
 
-const createSplashWindow = () => {
-  let splash: BrowserWindow | null = new BrowserWindow({width: 512, height: 288 - 18, frame: false, alwaysOnTop: true, transparent: true});
-  splash.loadFile('app/splash.html');
-  splash.center();
-
-  const mainWindow = createMainWindow();
-
-  mainWindow.once('ready-to-show', () => {
-    splash?.close();
-    mainWindow.show();
-    splash = null;
+// -----------------------------
+// Splash screen
+// -----------------------------
+function createSplashWindow() {
+  let splashWindow: BrowserWindow | null = new BrowserWindow({
+    width: 512,
+    height: 270,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
   });
-};
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', createSplashWindow);
+  splashWindow.loadFile(join(__dirname, 'splash.html'));
+  splashWindow.center();
 
-// Quit when all windows are closed.
-app.on('window-all-closed', () => {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  const mainWin = createMainWindow();
+
+  // Show main window once ready, then close splash
+  mainWin.once('ready-to-show', () => {
+    splashWindow?.close();
+    splashWindow = null;
+    mainWin.show();
+    mainWin.focus();
+    if (isDev) mainWin.webContents.openDevTools();
+  });
+}
+
+// -----------------------------
+// App lifecycle events
+// -----------------------------
+app.whenReady().then(() => {
+
+  createSplashWindow();
+
+  // macOS: re-create window if dock icon clicked with no windows open
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createSplashWindow();
+  });
 });
 
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (window === null) createMainWindow();
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
 });

@@ -1,14 +1,13 @@
-import {Component, inject, input} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {LeftPanelComponent} from '../left-panel/left-panel.component';
 import {SplitterModule} from 'primeng/splitter';
-import {GitRepositoryService} from '../../services/git-repository.service';
 import {CommitSectionComponent} from '../commit-section/commit-section.component';
 import {LogsComponent} from '../logs/logs.component';
-import {GitRepository} from '../../models/git-repository';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {AsyncPipe, NgIf} from '@angular/common';
-import {sum} from 'lodash';
+import {sum} from 'lodash-es';
 import {MonacoEditorViewComponent} from '../monaco-editor-view/monaco-editor-view.component';
+import {GitRepositoryStore} from '../../stores/git-repos.store';
 
 @Component({
   selector: 'gitgud-repository-view',
@@ -19,10 +18,8 @@ import {MonacoEditorViewComponent} from '../monaco-editor-view/monaco-editor-vie
 })
 export class RepositoryViewComponent {
 
-  gitRepository = input<GitRepository>();
+  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
   protected readonly fileDiffPanelService = inject(FileDiffPanelService);
   protected readonly sum = sum;
-  private readonly gitRepositoryService = inject(GitRepositoryService);
-
-  protected readonly savePanelSizes = (sizes: number[]) => this.gitRepositoryService.updateCurrentRepository({sizes});
+  protected readonly savePanelSizes = (panelSizes: number[]) => this.gitRepositoryStore.updateSelectedRepository({panelSizes});
 }

@@ -1,12 +1,11 @@
-import {Component, effect, inject, input} from '@angular/core';
+import {Component, effect, inject} from '@angular/core';
 import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
-import {DisplayRef} from '../../../lib/github-desktop/model/display-ref';
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
 import {ButtonDirective} from 'primeng/button';
 import {DatePipe, NgIf} from '@angular/common';
-import {isEqual} from 'lodash';
+import {isEqual} from 'lodash-es';
 import {DATE_FORMAT} from '../../../utils/constants';
 import {directory, fileName} from '../../../utils/utils';
 import {Tooltip} from 'primeng/tooltip';
@@ -16,6 +15,7 @@ import {ChangeSet, CommittedFileChange} from '../../../lib/github-desktop/model/
 import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {slightSlideIn} from '../../../shared/animations';
+import {GitRepositoryStore} from '../../../stores/git-repos.store';
 
 @Component({
   selector: 'gitgud-commit-infos',
@@ -37,8 +37,6 @@ import {slightSlideIn} from '../../../shared/animations';
 })
 export class CommitInfosComponent {
 
-  readonly selectedCommits = input<DisplayRef[]>([]);
-
   protected editCommitForm = new FormGroup({
     summary: new FormControl(''),
     description: new FormControl(''),
@@ -50,21 +48,24 @@ export class CommitInfosComponent {
   protected readonly directory = directory;
   protected readonly fileName = fileName;
   protected readonly FileStatusesIcons = FileStatusesIcons;
+  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
   private readonly workingDirectoryService = inject(WorkingDirectoryService);
   protected readonly fileDiffPanelService = inject(FileDiffPanelService);
 
   constructor() {
     effect(() => {
-      if (this.selectedCommits().length == 1) {
-        this.workingDirectoryService.getChangedFilesForGivenCommit(this.selectedCommits()[0].sha)
-          .subscribe(editedFiles => this.editedFiles = editedFiles);
+      const selectedCommit = this.gitRepositoryStore.selectedCommit();
+      const selectedCommitsShas = this.gitRepositoryStore.selectedCommitsShas();
+
+      if (selectedCommit) {
+        this.workingDirectoryService.getChangedFilesForGivenCommit(selectedCommit.sha).subscribe(editedFiles => this.editedFiles = editedFiles);
         this.editCommitForm.setValue({
-          summary: this.selectedCommits()[0].summary,
-          description: this.selectedCommits()[0].body,
+          summary: selectedCommit.summary,
+          description: selectedCommit.body,
         });
         this.initialValue = this.editCommitForm.value;
 
-      } else if (this.selectedCommits().length > 1)
+      } else if (selectedCommitsShas && selectedCommitsShas?.length > 1)
         console.warn('TODO');
     });
   }

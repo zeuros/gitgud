@@ -5,7 +5,7 @@
 
 <p-divider type="solid" class="mt-2"/>
 
-@let workingDirFilesChanges = workingDirectoryService.workingDirChanges$ | async;
+@let workingDirFilesChanges = gitRepositoryStore.workDirStatus();
 
 @if (workingDirFilesChanges) {
     <p-listbox @slightSlideIn

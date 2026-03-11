@@ -1,14 +1,14 @@
-@let repo = gitRepository();
-@if (repo) {
-    <p-splitter [panelSizes]="repo.sizes" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event.sizes)" styleClass="auto-wh">
+@let sizes = gitRepositoryStore.panelSizes();
+@if (sizes && sizes.length) {
+    <p-splitter [panelSizes]="sizes" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event.sizes)" styleClass="auto-wh">
         <ng-template pTemplate>
-            <gitgud-left-panel [branches]="repo.branches.slice()" [stashes]="repo.stashes.slice()" class="col flex"/>
+            <gitgud-left-panel class="col flex"/>
         </ng-template>
         <ng-template pTemplate>
-            <gitgud-logs [gitRepository]="repo"/>
+            <gitgud-logs/>
         </ng-template>
         <ng-template pTemplate>
-            <gitgud-commit-section [selectedCommits]="repo.selectedCommits" class="col flex"/>
+            <gitgud-commit-section class="col flex"/>
         </ng-template>
     </p-splitter>
 
@@ -16,6 +16,6 @@
             *ngIf="fileDiffPanelService.fileToDiff$ | async as fileToDiff"
             [fileToDiff]="fileToDiff"
             class="absolute left-0 bottom-0 wuuuu"
-            [style.right]="'calc(100vw * ' + (repo.sizes[2] / sum(repo.sizes)) + ' + 3px)'"
+            [style.right]="'calc(100vw * ' + (sizes[2] / sum(sizes)) + ' + 3px)'"
     />
 }

@@ -9,10 +9,14 @@
     "!*.map",
     "!package.json",
     "!package-lock.json",
+    "!node_modules/**",
     {
       "from": "../dist",
       "filter": ["**/*"]
     }
+  ],
+  "asarUnpack": [
+    "dist/assets/monaco/**"
   ],
   "win": {
     "icon": "dist/assets/icons",

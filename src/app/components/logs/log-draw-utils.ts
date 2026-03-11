@@ -1,10 +1,11 @@
-import {Observable} from 'rxjs';
+import {signal} from '@angular/core';
 
-export const loadStashImage = (): Observable<HTMLImageElement> => new Observable(subscriber => {
+export const loadStashImage = () => {
+  const imgSignal = signal<HTMLImageElement | undefined>(undefined);
+
   const img = new Image();
   img.src = '/assets/images/chest.svg';
-  img.onload = () => {
-    subscriber.next(img);
-    subscriber.complete();
-  };
-});
+  img.onload = () => imgSignal.set(img);
+
+  return imgSignal.asReadonly();
+};
