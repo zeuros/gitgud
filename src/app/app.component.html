@@ -2,33 +2,38 @@
 
 @let currentRepoIndex = gitRepositoryStore.selectedIndex();
 @if (currentRepoIndex != -1) {
-  <p-tabs
-    [value]="currentRepoIndex"
-    (valueChange)="gitRepositoryStore.selectRepository($event!)"
-    [scrollable]="true"
-    class="no-panels-paddings">
+    <p-tabs
+            [value]="currentRepoIndex"
+            (valueChange)="gitRepositoryStore.selectRepository($event!)"
+            [scrollable]="true"
+            class="no-panels-paddings">
 
-    <p-tablist>
-      @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
-        <p-tab [value]="i">
-          <i class="fa fa-code-fork"></i>
-          {{ repository.name }}
-          <button type="button" (click)="gitRepositoryStore.removeRepository(i); $event.stopPropagation()" class="tab-close-btn">
-            <i class="pi pi-times"></i>
-          </button>
-        </p-tab>
-      }
-    </p-tablist>
+        <p-tablist>
+            @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
+                <p-tab [value]="i">
+                    <i class="fa fa-code-fork"></i>
+                    {{ repository.name }}
+                    <p-button
+                            icon="pi pi-times"
+                            [rounded]="true"
+                            [text]="true"
+                            severity="secondary"
+                            styleClass="close-tab-btn"
+                            (click)="gitRepositoryStore.removeRepository(i); $event.stopPropagation()"
+                    />
+                </p-tab>
+            }
+        </p-tablist>
 
-    <p-tabpanels>
-      @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
-        <p-tabpanel [value]="i">
-          <gitgud-repository-view/>
-        </p-tabpanel>
-      }
-    </p-tabpanels>
+        <p-tabpanels>
+            @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
+                <p-tabpanel [value]="i">
+                    <gitgud-repository-view/>
+                </p-tabpanel>
+            }
+        </p-tabpanels>
 
-  </p-tabs>
+    </p-tabs>
 }
 
 <p-toast/>

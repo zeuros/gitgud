@@ -6,10 +6,11 @@ import {ToastModule} from 'primeng/toast';
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
 import {GitRepositoryStore} from './stores/git-repos.store';
 import {AutoFetchService} from './services/auto-fetch.service';
+import {Button} from 'primeng/button';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, TopBarComponent, RepositoryViewComponent, Tabs, TabList, Tab, TabPanels, TabPanel],
+  imports: [CommonModule, ToastModule, TopBarComponent, RepositoryViewComponent, Tabs, TabList, Tab, TabPanels, TabPanel, Button],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

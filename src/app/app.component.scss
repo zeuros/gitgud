@@ -2,10 +2,23 @@
   .p-tabview-nav-container {
     margin-left: 240px;
   }
+
   .p-tabview-panels {
     padding: 0;
   }
+
+  .close-tab-btn {
+    width: 1.4rem;
+    height: 1.4rem;
+    vertical-align: middle;
+
+    .p-button-icon {
+      font-size: 1rem;
+    }
+  }
+
 }
+
 
 .float-left {
   position: absolute;
