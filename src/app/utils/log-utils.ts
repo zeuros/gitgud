@@ -1,6 +1,6 @@
 import {Branch} from '../lib/github-desktop/model/branch';
 import {DisplayRef} from '../lib/github-desktop/model/display-ref';
-import {Commit} from '../lib/github-desktop/model/commit';
+import {RefType} from '../enums/ref-type.enum';
 
 export const formatArg = (fields: Object) => {
   const format = Object.values(fields).join('%x00');
@@ -11,7 +11,14 @@ export const byName = (branchName: string) => (branch: Branch) => branch.name ==
 
 export const bySha = (sha: string) => (c: DisplayRef) => c.sha === sha;
 
-export const hasSameShas = (logsA: Commit[], logsB: Commit[]) => {
-  const aShas = logsA.map(c => c.sha);
-  return logsA.length == logsB.length && logsB.every(c => aShas.includes(c.sha));
-};
+export const createIndexCommit = (parentCommit: DisplayRef) => ({
+  summary: 'WIP',
+  ref: parentCommit.ref,
+  sha: 'index',
+  parentSHAs: [parentCommit.sha] as string[],
+  branchesDetails: [] as Branch[],
+  refType: RefType.INDEX,
+  isPointedByLocalHead: false,
+  author: {},
+  committer: {},
+} as DisplayRef);
