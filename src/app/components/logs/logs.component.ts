@@ -1,26 +1,12 @@
 import {TableModule} from 'primeng/table';
-import {Commit} from '../../lib/github-desktop/model/commit';
 import {RefType} from '../../enums/ref-type.enum';
-import {notUndefined, removeDuplicates, workingDirHasChanges} from '../../utils/utils';
-import {Branch, BranchType} from '../../lib/github-desktop/model/branch';
-import {byName, bySha} from '../../utils/log-utils';
+import {notUndefined, workingDirHasChanges} from '../../utils/utils';
+import {Branch} from '../../lib/github-desktop/model/branch';
+import {bySha} from '../../utils/log-utils';
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
-import {max, once, uniqBy} from 'lodash-es';
-import {
-  buildChildrenMap,
-  buildShaMap,
-  ChildrenMap,
-  commitColor,
-  edgeType,
-  hasName,
-  initials,
-  isCommit,
-  isIndex,
-  isMergeCommit,
-  isRootCommit,
-  isStash,
-  ShaMap,
-} from '../../utils/commit-utils';
+import {Commit} from '../../lib/github-desktop/model/commit';
+import {once, uniqBy} from 'lodash-es';
+import {commitColor, hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
 import {first, interval, map} from 'rxjs';
 import {IntervalTree} from 'node-interval-tree';
@@ -33,19 +19,8 @@ import {DatePipe, NgStyle} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {LogBuilderService} from '../../services/log-builder.service';
 
-type Column = ['taken' | 'free', rowCount: number];
-const indexCommit = (parentCommit: DisplayRef) => ({
-  summary: 'WIP',
-  ref: parentCommit.ref,
-  sha: 'index',
-  parentSHAs: [parentCommit.sha] as string[],
-  branchesDetails: [] as Branch[],
-  refType: RefType.INDEX,
-  isPointedByLocalHead: false,
-  author: {},
-  committer: {},
-} as DisplayRef);
 
 @Component({
   selector: 'gitgud-logs',
@@ -70,6 +45,7 @@ export class LogsComponent {
   protected readonly COMMITS_SHOWN_ON_CANVAS = 37; // TODO: change it on screen resize depending table row count
 
   protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  protected readonly logBuilderService = inject(LogBuilderService);
   protected readonly branches = this.gitRepositoryStore.branches;
   protected readonly commitsSelection = computed(() => {
     const selectedCommitsShas = this.gitRepositoryStore.selectedCommitsShas();
@@ -77,12 +53,10 @@ export class LogsComponent {
   });
 
   protected showSearchBar = false;
-  protected graphColumnCount?: number;
   protected searchBarFocus = {};
+  protected graphColumnCount = signal<number>(0);
   protected computedDisplayLog = signal<DisplayRef[]>([]); // Commits ready for display
-  private treeLockedColumn?: number;
-  private columns: Column[] = []; // keep track of the states of the columns when drawing commits from top to bottom
-  private edges?: IntervalTree<Edge>; // Edges are updated after computedDisplayLog is set
+  protected edges = signal<IntervalTree<Edge>>(new IntervalTree<Edge>()); // Edges computed from displayLog
   private startCommit = this.gitRepositoryStore.startCommit();
 
   // signal holding the stash image
@@ -102,7 +76,6 @@ export class LogsComponent {
 
 
     // When repository changes its logs, compute the log graph and draw it
-    // TODO: displayLog should be build without side effects, and moved into service
     effect(() => {
       const logs = this.gitRepositoryStore.logs();
       const stashes = this.gitRepositoryStore.stashes();
@@ -161,25 +134,19 @@ export class LogsComponent {
   };
 
   private onRepositoryLogChanges = (workingDirHasChanges: boolean, logs: Commit[], stashes: Commit[]) => {
-    const commits = logs.map(c => this.commitToDisplayRef(c, stashes.find(s => s.parentSHAs[1] == c.sha)));
+    const headCommit = workingDirHasChanges
+      ? logs.find(c => c.branches.includes('HEAD ->'))
+      : undefined;
 
-    // "Index" commit = working directory changes
-    const indexParent = commits.find(c => c.isPointedByLocalHead);
-    if (indexParent && workingDirHasChanges) commits.unshift(indexCommit(indexParent));
+    const indexParent = headCommit
+      ? {...headCommit, branchesDetails: [], isPointedByLocalHead: true, refType: RefType.COMMIT} as DisplayRef
+      : undefined;
 
-    const shaMap = buildShaMap(commits);
-    const childrenMap = buildChildrenMap(commits);
-
-    const displayLog = this.saveRowIndexIntoDisplayRef(commits);
+    const {displayLog, edges, graphColumnCount} = this.logBuilderService.buildDisplayLog(logs, stashes, indexParent);
 
     this.computedDisplayLog.set(displayLog);
-
-    this.computeCommitsIndents(displayLog, shaMap, childrenMap);
-
-    this.graphColumnCount = max(displayLog.map(c => c.indent!))! + 1;
-
-    const edges = this.updateEdgeIntervals(displayLog, childrenMap);
-    this.edges = edges;
+    this.edges.set(edges);
+    this.graphColumnCount.set(graphColumnCount);
 
     this.afterLogsComputed(displayLog, edges);
   };
@@ -214,7 +181,7 @@ export class LogsComponent {
   // Redraw the window of commits to display into log
   private moveCommitWindow = (canvas: CanvasRenderingContext2D) => {
     this.moveCanvasDown(this.startCommit);
-    this.drawLog(canvas, this.computedDisplayLog(), this.edges!);
+    this.drawLog(canvas, this.computedDisplayLog(), this.edges());
   };
 
   private onTableScrollEnd: EventListener = ({target}) => {
@@ -222,24 +189,6 @@ export class LogsComponent {
     this.gitRepositoryStore.updateSelectedRepository({startCommit: this.startCommit}); // saveSelectedRepository doesn't trigger observers (whole panel refresh)
   };
 
-  /**
-   * Creates an interval tree with all the vertical connections between commits
-   */
-  private updateEdgeIntervals = (commitsLog: DisplayRef[], childrenMap: ChildrenMap) => {
-    const edges = new IntervalTree<Edge>();
-
-    commitsLog.forEach(commit => {
-
-      const [parentRow, parentCol] = [commit.row!, commit.indent!];
-
-      childrenMap[commit.sha]?.forEach(child => {
-        const [childRow, childCol] = [child.row!, child.indent!];
-        edges.insert(new Edge(childRow, childCol, parentRow, parentCol, edgeType(child)));
-      });
-    });
-
-    return edges;
-  };
 
   private drawEdge = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: number) => {
 
@@ -289,52 +238,6 @@ export class LogsComponent {
     canvas.stroke();
   };
 
-  /**
-   * Read commits top to bottom and style them (indentation & connections)
-   * TODO: Cleanup this branch mess and use basic types provided by github-desktop, also clean the uniqBy
-   */
-  private commitToDisplayRef = (commit: Commit, stashChild?: Commit): DisplayRef => {
-    const commitBranches = this.findCommitBranches(commit.branches) ?? [];
-
-    return {
-      ...commit,
-      summary: stashChild?.summary ?? commit.summary,
-      refType: stashChild ? RefType.STASH : RefType.COMMIT,
-      isPointedByLocalHead: !!commitBranches.find(b => !b.name.includes('origin/') && b.isHeadPointed),
-      branchesDetails: commitBranches,
-    };
-  };
-
-  /**
-   * @param commitBranches Branch objects pointing to this commit
-   */
-  private findCommitBranches = (commitBranches: string): Branch[] =>
-    commitBranches
-      .split(', ')
-      .map(this.findBranchByRef)
-      .filter(notUndefined)
-      .filter(removeDuplicates);
-
-  private findBranchByRef = (branchRef: string) => {
-    if (branchRef.includes('origin/HEAD')) // Commit is pointed by remote head (usually origin/main)
-      return this.branches().find(b => b.type == BranchType.Remote && b.isHeadPointed);
-    else if (branchRef.includes('HEAD -> ')) // This commit is pointed by local HEAD, git tells which branch is pointed at. e.g: (HEAD -> branchPointedAt)
-      return this.branches().find(byName(branchRef.replace('HEAD -> ', '')));
-
-    return this.branches().find(byName(branchRef));
-  };
-
-  // Indent will be reused for future commits
-  private computeCommitsIndents = (displayLog: DisplayRef[], shaMap: ShaMap, childrenMap: ChildrenMap) => {
-
-    this.treeLockedColumn = undefined;
-    this.columns = [];
-
-    displayLog.forEach(commit => {
-      commit.indent = this.computeCommitIndent(commit, shaMap, childrenMap);
-      this.columns = this.columns.map(([status, count]) => [status, count + 1]);
-    });
-  };
 
   /**
    * Draw each commit / stash and their connections
@@ -352,107 +255,6 @@ export class LogsComponent {
     return canvas;
   };
 
-  // Every commit from top (index=0) to bottom will be chosen a column (indent)
-  private computeCommitIndent = (commit: DisplayRef, shaMap: ShaMap, childrenMap: ChildrenMap) => {
-
-    if (commit.refType == RefType.INDEX) {
-      const indent = this.pushNewColumn();
-      shaMap[commit.parentSHAs[0]].indent = indent;
-      return indent;
-    }
-
-    const children = (childrenMap[commit.sha] ?? []).filter(c => isCommit(c) || isStash(c) || isIndex(c));
-    // If commit has a child having current commit as first parent, we align with this commit
-    const childrenOfSameBranch = children.filter(child => child.parentSHAs[0] == commit.sha);
-    const leftChildOfSameBranch = childrenOfSameBranch.find(isMergeCommit) ?? childrenOfSameBranch[0]; // The children we align with
-    let hasMergeChild = children.some(isMergeCommit);
-    let distanceToNextMergeCommit = 0;
-    let indent = -1;
-
-    if (hasMergeChild) {
-      const farthestMergeChild = children
-        .filter(isMergeCommit)
-        .sort((c1, c2) => c1.row! > c2.row! ? 1 : -1)[0];
-
-      distanceToNextMergeCommit = commit.row! - farthestMergeChild.row!;
-    }
-
-    // If the commit has no parentSha => It is a tree root commit ! => It means that the following commits belong to another tree.
-    // In order to indent commits for this new tree, we clear the saved commits refs and restart commits indentation from column 0
-    if (isRootCommit(commit)) {
-
-      // Lock starting column of the tree for the next tree (looks better)
-      if (this.treeLockedColumn != undefined) this.setColumnFree(this.treeLockedColumn);
-
-      this.treeLockedColumn = children[0].indent!;
-
-      return children[0].indent!; // The column of a root commit will remain taken since it doesn't have a parent to free the column
-    }
-
-    if (children.length > 1 && leftChildOfSameBranch) {
-      // Free all the children we don't align with
-      this.freeChildrenColumns(children.filter(c => !isMergeCommit(c)), commit.indent ?? leftChildOfSameBranch.indent!);
-    }
-
-    if (isMergeCommit(commit)) {
-      // Parents of current commit
-      const parents = commit.parentSHAs.map(sha => shaMap[sha]).filter(notUndefined);
-
-      // if there's no parents (In the bottom of log, parents could not be available), we just align with child
-      if (!parents.length) return commit.indent ?? leftChildOfSameBranch?.indent ?? children[0].indent!;
-
-      const firstParent = parents[0];
-
-      // Skip the first parent because we will align the current commit with it !
-      const otherParentsHavingOneChild = parents.slice(1);
-
-      // For each parent we don't align with, we push a new column
-      // This helps to hold the column taken till we reach the parent commit. It helps to make a continuous column with related commits (of the same branch most times)
-      // It also helps to put all merge columns close to each other, [like this](docs/nice.png)
-      otherParentsHavingOneChild
-        .filter(otherParent => otherParent.indent == undefined)
-        .forEach(otherParent => otherParent.indent = this.findFreeColumnOrPushNewColumn(-1));
-
-      // Either the column of the commit has been determined by its parent ?? else, comes from his 'favorite' children (referencing this commit in parentSha[0]) ?? Else pushes a new column
-      indent = commit.indent ?? leftChildOfSameBranch?.indent ?? this.findFreeColumnOrPushNewColumn(distanceToNextMergeCommit);
-
-      firstParent.indent = indent;
-
-      return indent;
-    }
-
-    // This commit have been positioned in a column by its merge children. We have to mark this column taken because the child didn't do it
-    if (commit.indent != undefined) {
-      this.columns[commit.indent] = ['taken', 0];
-      return commit.indent;
-    }
-
-    // We have a parent to align to, column already taken
-    if (leftChildOfSameBranch?.indent != undefined) return leftChildOfSameBranch?.indent;
-
-    // We don't have child to align to => push a new column
-    return this.findFreeColumnOrPushNewColumn(distanceToNextMergeCommit);
-  };
-
-  private freeChildrenColumns(childrenOfSameBranch: DisplayRef[], excludeThisColumn: number) {
-    childrenOfSameBranch
-      .filter(child => child.indent! != excludeThisColumn)
-      .forEach(child => this.setColumnFree(child.indent!));
-  }
-
-// keep track of the states of the columns when drawing commits from top to bottom
-  private findFreeColumnOrPushNewColumn = (neededFreeSpaceAbove = 0) => {
-    const freeColumn = this.columns.findIndex(this.isColumnFree(neededFreeSpaceAbove + 1));
-
-    if (freeColumn != -1) {
-      this.columns[freeColumn] = ['taken', 0];
-      return freeColumn;
-    } else {
-      return this.pushNewColumn();
-    }
-  };
-
-  private isColumnFree = (neededFreeSpaceAbove: number) => ([status, spaceCount]: Column) => status == 'free' && spaceCount >= neededFreeSpaceAbove;
 
   private drawNode(canvas: CanvasRenderingContext2D, commitCoordinates: Coordinates, ref: DisplayRef) {
     const [x, y] = [this.xPosition(commitCoordinates.col), this.yPosition(commitCoordinates.row)];
@@ -511,17 +313,6 @@ export class LogsComponent {
   private waitForCanvasToAppear = interval(20).pipe(map(this.canvasContext), first(notUndefined));
 
   private moveCanvasDown = (startCommit: number) => this.canvas!.nativeElement.style.top = `${startCommit * this.ROW_HEIGHT}px`;
-
-  private saveRowIndexIntoDisplayRef = (log: DisplayRef[]) => log.map((c, i) => {
-    c.row = i;
-    return c;
-  });
-
-  private setColumnFree = (column: number) => {
-    this.columns[column] = ['free', 0];
-  };
-
-  private pushNewColumn = () => this.columns.push(['taken', 0]) - 1;
 
   // Scroll view to display the selected commit
   private scrollToCommit = (sha: string) => {

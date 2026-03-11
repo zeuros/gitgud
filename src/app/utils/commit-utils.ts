@@ -1,7 +1,7 @@
-import {Commit} from "../lib/github-desktop/model/commit";
-import {DisplayRef} from "../lib/github-desktop/model/display-ref";
-import {RefType} from "../enums/ref-type.enum";
-import {CommitIdentity} from "../lib/github-desktop/model/commit-identity";
+import {Commit} from '../lib/github-desktop/model/commit';
+import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {RefType} from '../enums/ref-type.enum';
+import {CommitIdentity} from '../lib/github-desktop/model/commit-identity';
 import Identicon from 'identicon.js';
 
 
@@ -13,7 +13,7 @@ export const isCommit = (displayRef: DisplayRef) => displayRef.refType == RefTyp
 export const isIndex = (displayRef: DisplayRef) => displayRef.refType == RefType.INDEX;
 export const isStash = (displayRef: DisplayRef) => displayRef.refType == RefType.STASH;
 export const isMergeCommit = (displayRef: DisplayRef) => isCommit(displayRef) && displayRef.parentSHAs.length > 1;
-export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0
+export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0;
 
 export const initials = (author: CommitIdentity) => author.name.split(' ').slice(0, 2).map(e => e[0]).join('').toUpperCase();
 export const hasName = (author: CommitIdentity) => author.name.length > 0;
@@ -24,7 +24,7 @@ export const edgeType = (childCommit: DisplayRef) => {
   if (childCommit.refType == RefType.INDEX) return RefType.INDEX;
   else if (isMergeCommit(childCommit)) return RefType.MERGE_COMMIT;
   else return RefType.COMMIT;
-}
+};
 
 /**
  *                                                                                       (c)
@@ -39,7 +39,7 @@ export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: Childr
   if (childrenCommits.length == 0) return true; // We followed the commits till last one without finding branching
 
   return hasNoBranching(childrenCommits[0], childMap);
-}
+};
 
 export const hasChild = (stash: DisplayRef, childrenMap: ChildrenMap) => !!childrenMap[stash.sha];
 
@@ -58,7 +58,7 @@ export const buildChildrenMap = (commitLog: DisplayRef[]) => {
   }
 
   return commitsChildrenShas;
-}
+};
 
 export const buildShaMap = (logs: DisplayRef[]) => {
   const commitMap: ShaMap = {};
@@ -68,7 +68,18 @@ export const buildShaMap = (logs: DisplayRef[]) => {
   }
 
   return commitMap;
-}
+};
+
+
+export const buildStashMap = (stashes: Commit[]) => {
+  const stashMap: { [sha: string]: Commit } = {};
+
+  for (const stash of stashes) {
+    if (stash.parentSHAs[1]) stashMap[stash.parentSHAs[1]] = stash;
+  }
+
+  return stashMap;
+};
 
 
 export const identIcon = (email: string) => new Identicon(window.electron.crypto.md5(email), {size: 48, format: 'png', background: [0, 0, 0, 0]});
