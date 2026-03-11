@@ -1,8 +1,3 @@
-
-// System dependant separator
-export const SEPARATOR: '\\' | '/' = (window as any).require('path').sep;
-
-
 export const DATE_FORMAT = 'd/M/YYYY @ HH:mm';
 export const PREFIXES = ['refs/heads', 'refs/remotes']
 export const MINUTE_MS = 60 * 1000;

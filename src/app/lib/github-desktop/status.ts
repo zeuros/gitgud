@@ -1,23 +1,10 @@
-import {RebaseInternalState} from "./model/rebase"
-import {
-  AppFileStatus,
-  AppFileStatusKind,
-  ConflictedFileStatus,
-  FileEntry,
-  GitStatusEntry,
-  UnmergedEntry,
-  UnmergedEntrySummary,
-  WorkingDirectoryFileChange,
-  WorkingDirectoryStatus
-} from "./model/status"
-import {DiffSelection, DiffSelectionType} from "./model/diff/diff-selection"
-import {IStatusEntry, mapStatus, StatusHeader} from "./status-parser"
-import {IAheadBehind} from "./model/branch"
-import {throwEx} from "../../utils/utils";
-import {GitRepository} from "../../models/git-repository";
-import {getFilesWithConflictMarkers} from "./diff/diff-check";
-import {catchError, forkJoin, Observable} from "rxjs"
-import {getBinaryPaths} from "./diff/diff"
+import {RebaseInternalState} from './model/rebase';
+import {WorkingDirectoryStatus} from './model/status';
+import {IStatusEntry, StatusHeader} from './status-parser';
+import {IAheadBehind} from './model/branch';
+import {getFilesWithConflictMarkers} from './diff/diff-check';
+import {catchError, forkJoin, Observable} from 'rxjs';
+import {getBinaryPaths} from './diff/diff';
 
 /** The encapsulation of the result from 'git status' */
 export interface IStatusResult {

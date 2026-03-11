@@ -9,8 +9,7 @@ import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.se
  * the binary contents of the blob or an error if the file doesn't
  * exists in the given revision.
  *
- * @param repository - The repository from where to read the blob
- *
+ * @param gitApiService
  * @param commitish  - A commit SHA or some other identifier that
  *                     ultimately dereferences to a commit/tree.
  *
