@@ -9,7 +9,6 @@ import {Listbox} from 'primeng/listbox';
 import {FileStatusesIcons, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/status';
 import {directory, fileName} from '../../../utils/utils';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
-import {slightSlideIn} from '../../../shared/animations';
 import {PrimeTemplate} from 'primeng/api';
 import {GitRepositoryStore} from '../../../stores/git-repos.store';
 
@@ -27,7 +26,6 @@ import {GitRepositoryStore} from '../../../stores/git-repos.store';
   ],
   templateUrl: './make-a-commit.component.html',
   styleUrl: './make-a-commit.component.scss',
-  animations: [slightSlideIn],
 })
 export class MakeACommitComponent {
 

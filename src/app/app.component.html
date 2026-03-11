@@ -2,25 +2,33 @@
 
 @let currentRepoIndex = gitRepositoryStore.selectedIndex();
 @if (currentRepoIndex != -1) {
-  <p-tabView
-    [activeIndex]="currentRepoIndex"
-    (activeIndexChange)="gitRepositoryStore.setCurrentRepoIndex($event)"
+  <p-tabs
+    [value]="currentRepoIndex"
+    (valueChange)="gitRepositoryStore.selectRepository($event!)"
     [scrollable]="true"
-    [autoHideButtons]="true"
-    class="no-panels-paddings"
-    (onClose)="gitRepositoryStore.removeRepository($event.index)">
+    class="no-panels-paddings">
 
-    @for (repository of gitRepositoryStore.repositories(); track repository.id) {
-      <p-tabPanel
-        [leftIcon]="'fa fa-code-fork'"
-        [header]="repository.name"
-        class="relative"
-        [closable]="true">
-        <gitgud-repository-view/>
-      </p-tabPanel>
-    }
+    <p-tablist>
+      @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
+        <p-tab [value]="i">
+          <i class="fa fa-code-fork"></i>
+          {{ repository.name }}
+          <button type="button" (click)="gitRepositoryStore.removeRepository(i); $event.stopPropagation()" class="tab-close-btn">
+            <i class="pi pi-times"></i>
+          </button>
+        </p-tab>
+      }
+    </p-tablist>
 
-  </p-tabView>
+    <p-tabpanels>
+      @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
+        <p-tabpanel [value]="i">
+          <gitgud-repository-view/>
+        </p-tabpanel>
+      }
+    </p-tabpanels>
+
+  </p-tabs>
 }
 
 <p-toast/>

@@ -29,7 +29,7 @@ import {DragDropModule} from 'primeng/dragdrop';
 import {SearchLogsComponent} from '../search-logs/search-logs.component';
 import {Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, ViewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
-import {DatePipe, NgForOf, NgIf, NgStyle} from '@angular/common';
+import {DatePipe, NgStyle} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
@@ -56,8 +56,6 @@ const indexCommit = (parentCommit: DisplayRef) => ({
     SearchLogsComponent,
     NgStyle,
     DatePipe,
-    NgIf,
-    NgForOf,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',

@@ -1,0 +1,115 @@
+// Angular 21 CSS Animations
+
+.fade-slide-in-out-enter {
+  animation: slide-fade 0.2s;
+}
+
+.fade-slide-in-out-leave {
+  animation: fade-slide-in-out-leave 0.2s;
+}
+
+.fade-slide-in {
+  animation: fade-slide-in 0.2s;
+}
+
+.slight-slide-in {
+  animation: slight-slide-in 0.2s;
+}
+
+@keyframes fade-slide-in-out-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-slide-in-out-leave {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slight-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+// Primeng animations
+
+// ── Anchored overlays (ContextMenu, MultiSelect, TreeSelect, Panel, …) ──
+.p-anchored-overlay-enter-active {
+  animation: overlay-enter 0.12s ease;
+}
+.p-anchored-overlay-leave-active {
+  animation: overlay-leave 0.12s ease forwards;
+}
+
+@keyframes overlay-enter {
+  from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+@keyframes overlay-leave {
+  from { opacity: 1; transform: scale(1)    translateY(0);    }
+  to   { opacity: 0; transform: scale(0.97) translateY(-4px); }
+}
+
+// ── Message (inline alerts) ──
+.p-message-enter-active {
+  animation: message-enter 0.12s ease;
+}
+.p-message-leave-active {
+  animation: message-leave 0.12s ease forwards;
+}
+
+@keyframes message-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes message-leave {
+  from { opacity: 1; transform: translateY(0);    }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+// ── Toast (corner notifications) ──
+.p-toast-message-enter-active {
+  animation: toast-enter 0.12s ease;
+}
+.p-toast-message-leave-active {
+  animation: toast-leave 0.12s ease forwards;
+}
+
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+@keyframes toast-leave {
+  from { opacity: 1; transform: translateX(0);    }
+  to   { opacity: 0; transform: translateX(24px); }
+}
