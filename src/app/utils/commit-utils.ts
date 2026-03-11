@@ -2,6 +2,7 @@ import {Commit} from "../lib/github-desktop/model/commit";
 import {DisplayRef} from "../lib/github-desktop/model/display-ref";
 import {RefType} from "../enums/ref-type.enum";
 import {CommitIdentity} from "../lib/github-desktop/model/commit-identity";
+import Identicon from 'identicon.js';
 
 
 export type ChildrenMap = { [parentSha: string]: DisplayRef[] };
@@ -68,3 +69,6 @@ export const buildShaMap = (logs: DisplayRef[]) => {
 
   return commitMap;
 }
+
+
+export const identIcon = (email: string) => new Identicon(window.electron.crypto.md5(email), {size: 48, format: 'png', background: [0, 0, 0, 0]});

@@ -1,24 +1,24 @@
 import {Commit} from '../lib/github-desktop/model/commit';
 import {Branch} from '../lib/github-desktop/model/branch';
-import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {WorkDirStatus} from '../lib/github-desktop/commit-files-changes';
 import {ViewType} from '../components/monaco-editor-view/monaco-editor-view.component';
 
 export class GitRepository {
   constructor(
-    public directory: string, // Identify the directory (like an id)
+    public id: string, // = repository directory
     public name: string,
-    public sizes = [20, 50, 30], // panels sizes
+    public panelSizes = [20, 50, 30], // panels sizes
     public selected = true, // This repository is selected
     public logs: Commit[] = [],
     public stashes: Commit[] = [],
     public branches: Branch[] = [],
-    public selectedCommits: DisplayRef[] = [],
-    public highlightedCommitSha?: string,
+    public selectedCommitsShas: string[] = [],
     public checkedOutBranch?: Branch,
     public startCommit = 0,
     public remotes: { remote: string; url: string }[] = [],
     // Editor config
     public editorConfig: { viewType: ViewType } = {viewType: 'split'},
+    public workDirStatus: WorkDirStatus = {unstaged: [], staged: []},
   ) {
   }
 }

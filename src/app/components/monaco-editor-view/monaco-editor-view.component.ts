@@ -1,6 +1,5 @@
-import {AfterViewInit, Component, effect, ElementRef, inject, input, OnDestroy, signal, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal, ViewChild} from '@angular/core';
 import {CommittedFileChange, FileChange} from '../../lib/github-desktop/model/status';
-import {GitRepositoryService} from '../../services/git-repository.service';
 import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
 import {instanceOf} from '../../utils/utils';
@@ -11,6 +10,7 @@ import {Tooltip} from 'primeng/tooltip';
 import {Toolbar} from 'primeng/toolbar';
 import {buildDiff} from '../../lib/github-desktop/diff/diff-builder';
 import {FormsModule} from '@angular/forms';
+import {GitRepositoryStore} from '../../stores/git-repos.store';
 import IEditorOptions = editor.IEditorOptions;
 import IDiffEditor = editor.IDiffEditor;
 
@@ -40,11 +40,11 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
   diffModels = signal<DiffModels | undefined>(undefined);
 
-  private readonly gitRepositoryService = inject(GitRepositoryService);
-  viewType = signal<ViewType>(this.gitRepositoryService.currentRepository?.editorConfig?.viewType ?? 'split');
+  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  protected readonly viewType = computed(() => this.gitRepositoryStore.editorConfig()!.viewType);
 
   private fileDiffService = inject(FileDiffService);
-  private diffEditor?: IDiffEditor;
+  private diffEditor = signal<IDiffEditor | undefined>(undefined);
   private readonly editorOptions: IEditorOptions & { theme: string } = {
     theme: 'vs-dark',
     readOnly: true,
@@ -83,14 +83,13 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     });
 
     effect(() => {
-      this.gitRepositoryService.updateCurrentRepository({
-        editorConfig: {...this.gitRepositoryService.currentRepository?.editorConfig, viewType: this.viewType()},
-      });
+      const viewType = this.viewType();
+      const editor = this.diffEditor();
 
-      if (this.diffEditor) {
-        this.diffEditor.updateOptions({
-          renderSideBySide: this.viewType() === 'split',
-          hideUnchangedRegions: this.viewType() === 'hunk'
+      if (editor) {
+        editor.updateOptions({
+          renderSideBySide: viewType === 'split',
+          hideUnchangedRegions: viewType === 'hunk'
             ? {enabled: true, revealLineCount: 15, minimumLineCount: 5, contextLineCount: 3}
             : {enabled: false},
         } as IEditorOptions);
@@ -99,14 +98,15 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
     // Update editor models when data changes
     effect(() => {
-      if (this.diffModels() && this.diffEditor)
-        this.updateDiffEditor(this.diffModels()!);
+      const models = this.diffModels();
+      if (models && this.diffEditor())
+        this.updateDiffEditor(models!);
     });
   }
 
   ngAfterViewInit(): void {
     if (this.diffEditorContainer) {
-      this.diffEditor = editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions);
+      this.diffEditor.set(editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions));
     }
   }
 
@@ -117,8 +117,10 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     //   For now we let monaco handle the disposal when the editor is disposed; otherwise we get "Model is disposed" errors
     //   this.diffEditor?.getModel()?.original.dispose();
     //   this.diffEditor?.getModel()?.modified.dispose();
-    this.diffEditor?.dispose();
+    this.diffEditor()?.dispose();
   }
+
+  protected readonly setViewType = (viewType: ViewType) => this.gitRepositoryStore.updateSelectedRepository({editorConfig: {viewType}});
 
   private updateDiffEditor({before, after}: DiffModels) {
     const beforeUri = Uri.parse(`before-${before.fileName}`);
@@ -139,7 +141,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       modified = editor.createModel(after.code, undefined, afterUri);
     }
 
-    this.diffEditor!.setModel({original, modified});
+    this.diffEditor()!.setModel({original, modified});
   }
 
   private editorContents(diffs: IDiff) {

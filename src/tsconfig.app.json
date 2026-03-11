@@ -6,12 +6,8 @@
     "baseUrl": "",
     "types": ["node"]
   },
-  "files": [
-    "main.ts",
-    "polyfills.ts"
-  ],
   "include": [
-    "**/*.d.ts"
+    "**/*.ts"
   ],
   "exclude": [
     "**/*.spec.ts"

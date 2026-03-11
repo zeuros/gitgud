@@ -4,7 +4,7 @@ import { StorageName } from "../enums/storage-name.enum";
 @Injectable({
     providedIn: 'root'
 })
-export class SettingsService {
+export class LocalStorageService {
 
     readonly store = (where: StorageName, item: any) => localStorage.setItem(where, JSON.stringify(item));
 

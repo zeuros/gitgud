@@ -1,55 +1,51 @@
-<p-accordion class="w-full" [multiple]="true" [activeIndex]="[0, 1]">
-    <p-accordionTab>
+<p-accordion class="w-full" [multiple]="true" [value]="['local-branches', 'remote-branches', 'stashes']">
 
-        <ng-template pTemplate="header">
-                <span class="flex align-items-center gap-2 w-full">
-                    <span class="font-bold white-space-nowrap"><i class="fa fa-laptop mr-2"></i>Local</span>
-                </span>
-        </ng-template>
-
-        <p-tree
+    <p-accordion-panel value="local-branches">
+        <p-accordion-header>
+            <span><i class="fa fa-laptop mr-2"></i>Local</span>
+        </p-accordion-header>
+        <p-accordion-content>
+            <p-tree
                 selectionMode="single"
                 [value]="localBranches()"
-                [selection]="selectedNode"
-                (selectionChange)="selectedNode = $branchNode($event)"
-                (onNodeSelect)="selectBranchCommit($event.node)"
+                [selection]="selectedBranchNode()"
+                (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
                 [contextMenu]="branchesContextMenu"
-        ></p-tree>
+            />
+        </p-accordion-content>
+    </p-accordion-panel>
 
-    </p-accordionTab>
-
-    <p-accordionTab>
-        <ng-template pTemplate="header">
-            <span class="flex align-items-center gap-2 w-full">
-                <span class="font-bold white-space-nowrap"><i class="fa fa-cloud mr-2"></i> Remote</span>
-            </span>
-        </ng-template>
-        <p-tree
+    <p-accordion-panel value="remote-branches">
+        <p-accordion-header>
+            <span><i class="fa fa-cloud mr-2"></i>Remote</span>
+        </p-accordion-header>
+        <p-accordion-content>
+            <p-tree
                 selectionMode="single"
                 class="text-overflow-ellipsis"
                 [value]="remoteBranches()"
-                [selection]="selectedNode"
-                (selectionChange)="selectedNode = $branchNode($event)"
-                (onNodeSelect)="selectBranchCommit($event.node)"
+                [selection]="selectedBranchNode()"
+                (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
                 [contextMenu]="branchesContextMenu"
-        ></p-tree>
-    </p-accordionTab>
+            />
+        </p-accordion-content>
+    </p-accordion-panel>
 
-    <p-accordionTab>
-        <ng-template pTemplate="header">
-            <span class="flex align-items-center gap-2 w-full">
-                <span class="font-bold white-space-nowrap"><i class="fa fa-archive mr-2"></i> Stashes</span>
-            </span>
-        </ng-template>
+    <p-accordion-panel value="stashes">
+        <p-accordion-header>
+            <span><i class="fa fa-archive mr-2"></i>Stashes</span>
+        </p-accordion-header>
+        <p-accordion-content>
+            <p-listbox [options]="gitRepositoryStore.stashes()" (onChange)="selectStash($event.value)">
+                <ng-template #item let-s>
+                    @let stash = $stash(s);
+                    <i class="fa fa-archive mr-2"></i>
+                    <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ stash.summary }}</span>
+                </ng-template>
+            </p-listbox>
+        </p-accordion-content>
+    </p-accordion-panel>
 
-        <p-listbox [options]="(stashes() ?? []).slice()" (onChange)="selectStash($event.value)">
-            <ng-template #item let-s>
-                @let stash = $stash(s);
-                <i class="fa fa-archive mr-2"></i>
-                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ stash.summary }}</span>
-            </ng-template>
-        </p-listbox>
-    </p-accordionTab>
 </p-accordion>
 
 <!-- TODO: update to latest primeng version to have groups of options: [group]="true" -->
@@ -57,3 +53,4 @@
 <!--    <ng-template #item let-i>-->
 <!--        <i class="{{ i.icon }} context-menu-icon"></i> {{ i.label }}-->
 <!--    </ng-template>-->
+</p-contextMenu>

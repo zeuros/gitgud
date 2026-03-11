@@ -1,8 +1,9 @@
-@if (selectedCommits()!.length > 0) {
-    @if (selectedCommits()[0]?.sha == 'index') {
+@let selectedCommitsShas = gitRepositoryStore.selectedCommitsShas();
+@if (selectedCommitsShas && selectedCommitsShas.length > 0) {
+    @if (selectedCommitsShas[0] == 'index') {
         <gitgud-make-a-commit/>
     } @else {
-        <gitgud-commit-infos [selectedCommits]="selectedCommits()"/>
+        <gitgud-commit-infos/>
     }
 } @else {
     <h2>No commit selected</h2>

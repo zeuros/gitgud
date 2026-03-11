@@ -1,29 +1,26 @@
 import {inject, Injectable} from '@angular/core';
-import {BehaviorSubject, map} from 'rxjs';
-import {parseRawLogWithNumstat, parseWorkingDirChanges, WorkDirStatus} from '../../lib/github-desktop/commit-files-changes';
-import {GitRepositoryService} from '../git-repository.service';
+import {map} from 'rxjs';
+import {parseRawLogWithNumstat, parseWorkingDirChanges} from '../../lib/github-desktop/commit-files-changes';
 import {FileWatcherService} from '../file-watcher.service';
 import {GitApiService} from './git-api.service';
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
+import {GitRepositoryStore} from '../../stores/git-repos.store';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WorkingDirectoryService {
 
-  private readonly workingDirChangesSubject$ = new BehaviorSubject<WorkDirStatus>({unstaged: [], staged: []});
 
-  readonly workingDirChanges$ = this.workingDirChangesSubject$.asObservable();
-  readonly hasChanges$ = this.workingDirChanges$.pipe(map(({unstaged, staged}) => !!(unstaged.length + staged.length)));
+  private readonly gitRepositoryStore = inject(GitRepositoryStore);
 
-  private readonly gitRepositoryService = inject(GitRepositoryService);
   private readonly gitApiService = inject(GitApiService);
   private readonly fileWatcherService = inject(FileWatcherService);
 
   constructor() {
     // Refresh working directory changes on app startup, window focus, or file system changes
     this.fetchWorkingDirChanges();
-    this.gitRepositoryService.windowFocused$.subscribe(this.fetchWorkingDirChanges);
+    window.electron.onWindowFocus(this.fetchWorkingDirChanges);
     this.fileWatcherService.onWorkingDirFileChange$.subscribe(this.fetchWorkingDirChanges);
   }
 
@@ -57,7 +54,7 @@ export class WorkingDirectoryService {
       '--',
     ])
       .pipe(map(parseWorkingDirChanges))
-      .subscribe(workDirChanges => this.workingDirChangesSubject$.next(workDirChanges));
+      .subscribe(workDirStatus => this.gitRepositoryStore.updateSelectedRepository({workDirStatus}));
 
 }
 

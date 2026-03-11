@@ -1,8 +1,7 @@
-import {inject, Injectable} from '@angular/core';
+import {effect, inject, Injectable, untracked} from '@angular/core';
+import {GitRepositoryStore} from '../stores/git-repos.store';
+import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRepositoryService} from './git-repository.service';
-import {SettingsService} from './settings.service';
-import {StorageName} from '../enums/storage-name.enum';
-import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
 
 @Injectable({
   providedIn: 'root',
@@ -10,17 +9,24 @@ import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
 export class AutoFetchService {
 
   private readonly gitRepositoryService = inject(GitRepositoryService);
-  private readonly settingsService = inject(SettingsService);
+  private readonly gitApiService = inject(GitApiService);
+  private readonly gitRepositoryStore = inject(GitRepositoryStore);
 
-  readonly startAutoFetch = () => setTimeout(this.autoFetch, this.autoFetchInterval());
+  private intervalId?: ReturnType<typeof setInterval>;
+
+  constructor() {
+    effect(() => {
+      clearInterval(this.intervalId);
+      this.intervalId = setInterval(this.autoFetch, this.gitRepositoryStore.config().autoFetchInterval);
+    });
+  }
 
   // TODO: auto fetch only if no other programs have done it (stat .git/FETCH_HEAD to know that)
   private readonly autoFetch = () => {
-    this.gitRepositoryService.fetchCurrentRepository();
-    setTimeout(this.autoFetch, this.autoFetchInterval());
+    if (untracked(() => this.gitRepositoryStore.selectedRepository())) {
+      this.gitApiService.git(['fetch']);
+      this.gitRepositoryService.updateLogsAndBranches();
+    }
   };
 
-  // TODO: make settings observable
-  private readonly autoFetchInterval = () =>
-    Number(this.settingsService.get<string>(StorageName.AutoFetchInterval) ?? DEFAULT_AUTO_FETCH_INTERVAL);
 }

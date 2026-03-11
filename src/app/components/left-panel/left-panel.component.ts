@@ -1,33 +1,36 @@
-import {Component, computed, input} from '@angular/core';
-import {AccordionModule} from 'primeng/accordion';
-import {BadgeModule} from 'primeng/badge';
+import {Component, computed, inject} from '@angular/core';
+import {Accordion, AccordionContent, AccordionHeader, AccordionPanel} from 'primeng/accordion';
 import {TerminalService} from 'primeng/terminal';
-import {TreeModule} from 'primeng/tree';
-import {ContextMenuModule} from 'primeng/contextmenu';
+import {Tree} from 'primeng/tree';
+import {ContextMenu} from 'primeng/contextmenu';
 import {MenuItem, TreeNode} from 'primeng/api';
 import {PopupService} from '../../services/popup.service';
 import {Branch} from '../../lib/github-desktop/model/branch';
-import {GitRepositoryService} from '../../services/git-repository.service';
-import {local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branch-utils';
+import {findNode, local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branch-utils';
 import {Listbox} from 'primeng/listbox';
 import {Commit} from '../../lib/github-desktop/model/commit';
+import {GitRepositoryStore} from '../../stores/git-repos.store';
 
 
 @Component({
   selector: 'gitgud-left-panel',
   standalone: true,
   imports: [
-    AccordionModule,
-    BadgeModule,
-    TreeModule,
-    ContextMenuModule,
+    Accordion,
+    AccordionPanel,
+    AccordionHeader,
+    AccordionContent,
+    Tree,
     Listbox,
+    ContextMenu,
   ],
   providers: [TerminalService],
   templateUrl: './left-panel.component.html',
   styleUrl: './left-panel.component.scss',
 })
 export class LeftPanelComponent {
+
+  private readonly popupService = inject(PopupService);
 
   contextMenu: MenuItem[] = [
     {label: 'Pull (fast-forward if possible)', icon: 'pi pi-cloud-download', command: () => this.popupService.info('Pull (fast-forward if possible) selected')},
@@ -45,27 +48,26 @@ export class LeftPanelComponent {
     {label: 'Copy commit sha', icon: 'pi pi-receipt', command: () => this.popupService.info('Copy commit sha selected')},
   ];
 
-  readonly branches = input<Branch[]>();
-  readonly stashes = input<Commit[]>();
-  protected localBranches = computed(() => toBranchTree((this.branches() ?? []).filter(local)));
-  protected remoteBranches = computed(() => toBranchTree((this.branches() ?? []).filter(remote), removeRemotePrefix));
-  protected selectedNode?: TreeNode<Branch>;
+  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  protected readonly localBranches = computed(() => toBranchTree(this.gitRepositoryStore.branches().filter(local) ?? []));
+  protected readonly remoteBranches = computed(() => toBranchTree(this.gitRepositoryStore.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
+  protected readonly selectedBranchNode = computed(() => {
+    const sha = this.gitRepositoryStore.selectedCommitSha();
+    if (!sha) return null;
+    return findNode([...this.localBranches(), ...this.remoteBranches()], sha);
+  });
 
-  constructor(
-    private popupService: PopupService,
-    private gitRepositoryService: GitRepositoryService,
-  ) {
-  }
+  protected readonly selectBranchCommit = (branch?: Branch) => {
+    if (branch) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [branch.tip.sha]});
+  };
 
-  selectBranchCommit = (branch: TreeNode<Branch>) =>
-    this.gitRepositoryService.updateCurrentRepository({highlightedCommitSha: branch?.data?.tip.sha});
-
-  selectStash = (stash: Commit) =>
-    this.gitRepositoryService.updateCurrentRepository({highlightedCommitSha: stash?.sha});
+  protected readonly selectStash = (stash?: Commit) => {
+    if (stash) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [stash.sha]});
+  };
 
 
   // checkoutBranch = (branch: TreeNode<Branch>) => {
-  //   this.gitRepositoryService.updateCurrentRepository({checkedOutBranch: branch.data})
+  //   this.gitRepositoryStore.updateSelectedRepository({checkedOutBranch: branch.data})
   //
   //   leaves(this.allBranchNodes).forEach(b => b.styleClass?.replace('selected-branch', ''));
   //   branch.styleClass = 'selected-branch';
@@ -73,7 +75,7 @@ export class LeftPanelComponent {
   //   this.popupService.info(`Branch ${branch.data?.upstream} checked out`);
   // };
 
-  protected $branchNode = (branchNode: any): TreeNode<Branch> => branchNode;
-  protected $stash = (stash: any): Commit => stash;
+  protected readonly $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
+  protected readonly $stash = (stash: Commit) => stash;
 
 }

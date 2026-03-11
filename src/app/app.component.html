@@ -1,23 +1,26 @@
 <gitgud-top-bar class="float-left"/>
 
-@let currentRepoIndex = (gitRepositoryService.currentRepositoryIndex$ | async) ?? -1;
+@let currentRepoIndex = gitRepositoryStore.selectedIndex();
 @if (currentRepoIndex != -1) {
-    <p-tabView
-            [activeIndex]="currentRepoIndex"
-            (activeIndexChange)="gitRepositoryService.selectRepositoryByIndex($event)"
-            [scrollable]="true" [autoHideButtons]="true" class="no-panels-paddings"
-            (onClose)="gitRepositoryService.removeRepository($event.index)">
-        <p-tabPanel
-                *ngFor="let repository$ of gitRepositoryService.repositories$"
-                [leftIcon]="'fa fa-code-fork'"
-                [header]="(repository$ | async)!.name"
-                class="relative"
-                [closable]="true">
-            <gitgud-repository-view [gitRepository]="(repository$ | async)!"/>
-        </p-tabPanel>
+  <p-tabView
+    [activeIndex]="currentRepoIndex"
+    (activeIndexChange)="gitRepositoryStore.setCurrentRepoIndex($event)"
+    [scrollable]="true"
+    [autoHideButtons]="true"
+    class="no-panels-paddings"
+    (onClose)="gitRepositoryStore.removeRepository($event.index)">
 
+    @for (repository of gitRepositoryStore.repositories(); track repository.id) {
+      <p-tabPanel
+        [leftIcon]="'fa fa-code-fork'"
+        [header]="repository.name"
+        class="relative"
+        [closable]="true">
+        <gitgud-repository-view/>
+      </p-tabPanel>
+    }
 
-    </p-tabView>
+  </p-tabView>
 }
 
 <p-toast/>

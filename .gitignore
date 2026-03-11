@@ -135,5 +135,7 @@ out/
 
 .nx
 **/*.map
+
 # Generated
 app/main.js
+app/preload.js

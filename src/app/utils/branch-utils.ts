@@ -1,69 +1,68 @@
-import {Branch, BranchType} from "../lib/github-desktop/model/branch";
-import {TreeNode} from "primeng/api";
+import {Branch, BranchType} from '../lib/github-desktop/model/branch';
+import {TreeNode} from 'primeng/api';
 
 export const local = (branch: Branch) => branch.type == BranchType.Local;
 export const remote = (branch: Branch) => branch.type == BranchType.Remote;
 
-const byKey = (key: string) => (treeNode: TreeNode<Branch>) => treeNode.key == key;
-
 // 'a/b/c' => ['a', 'a/b', 'a/b/c']
-const toSubPaths = (path: string) => path.split("/").map((_, i) => path.split("/").slice(0, i + 1).join("/"));
+const toSubPaths = (path: string) => path.split('/').map((_, i, parts) => parts.slice(0, i + 1).join('/'));
 
-const allNodes = (rootNodes: TreeNode<Branch>[]): TreeNode<Branch>[] =>
-  [...rootNodes, ...rootNodes.flatMap(node => allNodes(node.children ?? []))];
+export const toBranchTree = (branches: Branch[], branchNameTransform = (n: string) => n): TreeNode<Branch>[] => {
+  const nodeMap = new Map<string, TreeNode<Branch>>();
+  const roots: TreeNode<Branch>[] = [];
 
-export const toBranchTree = (branches: Branch[], branchNameTransform?: (n: string) => string) => {
-  const nodes: TreeNode<Branch>[] = [];
-  branches.forEach(b => addBranchToTree(b, nodes, branchNameTransform));
-  return nodes;
-}
+  branches.forEach(branch => {
+    const parts = toSubPaths(branchNameTransform(branch.name));
 
-// Add branch as branch in tree (heh)
-export const addBranchToTree = (branch: Branch, rootNodes: TreeNode<Branch>[], branchNameTransform = (n: string) => n) => {
+    parts.forEach((key, i) => {
+      if (nodeMap.has(key)) return;
 
-  const allTreeNodes = allNodes(rootNodes);
+      const isLeaf = i === parts.length - 1;
+      const node: TreeNode<Branch> = isLeaf
+        ? {
+          key,
+          icon: 'fa fa-code-fork',
+          label: key.split('/').pop(),
+          data: branch,
+          leaf: true,
+          expanded: true,
+          selectable: true,
+        }
+        : {
+          key,
+          icon: 'pi pi-fw pi-folder',
+          label: key.split('/').pop(),
+          leaf: false,
+          expanded: true,
+          selectable: false,
+          children: [],
+        };
 
-  const parts = [
-    ...toSubPaths(branchNameTransform(branch.name)).slice(0, -1).map(key => allTreeNodes.find(byKey(key)) ?? pathBitToTreeNode(key)),
-    branchToTreeNode(branch)
-  ];
+      nodeMap.set(key, node);
 
-  parts.forEach((part, i) => {
-    if (i < parts.length - 1 && !part.children?.some(c => c.key == parts[i + 1].key))
-      part.children = [...(part.children ?? []), parts[i + 1]];
+      if (i === 0) {
+        roots.push(node);
+      } else {
+        const parentKey = parts[i - 1];
+        const parent = nodeMap.get(parentKey)!;
+        parent.children = [...(parent.children ?? []), node];
+      }
+    });
   });
 
-  // Only add root nodes (if not duplicate)
-  if (!rootNodes.find(byKey(parts[0].key!)))
-    rootNodes.push(parts[0]);
-}
+  return roots;
+};
 
-const pathBitToTreeNode = (pathBit: string): TreeNode<Branch> => ({
-  key: pathBit,
-  icon: 'pi pi-fw pi-folder',
-  label: pathBit.split('/').pop(),
-  leaf: false,
-  expanded: true,
-  selectable: false,
-});
+export const removeRemotePrefix = (name: string): string => name.match(/.*?\/(.*)/)?.[1] ?? name;
 
 
-const branchToTreeNode = (branch: Branch): TreeNode<Branch> => ({
-  key: branch.name,
-  icon: 'fa fa-code-fork',
-  label: branch.name.split('/').pop(),
-  data: branch,
-  leaf: true,
-  expanded: true,
-  selectable: true,
-});
-
-/**
- * Remove the remote prefix from the string. If there is no prefix, returns
- * null. E.g.:
- *
- * origin/my-branch       -> my-branch
- * origin/thing/my-branch -> thing/my-branch
- * my-branch              -> null
- */
-export const removeRemotePrefix = (name: string): string => name.match(/.*?\/(.*)/)![1]
+export const findNode = (nodes: TreeNode<Branch>[], sha: string): TreeNode<Branch> | null => {
+  for (const node of nodes) {
+    if (node.data?.tip?.sha === sha) return node;
+    if (node.children) {
+      const found = findNode(node.children, sha);
+      if (found) return found;
+    }
+  }
+  return null;
+};

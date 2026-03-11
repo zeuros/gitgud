@@ -1,27 +1,18 @@
-import {Injectable, isDevMode} from '@angular/core';
+import {Injectable, isDevMode, signal} from '@angular/core';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting JavaScript file will look as if you never imported the module at all.
-import * as childProcess from 'child_process';
-import {ExecOptions} from 'child_process';
-import * as util from 'util';
+// import type {ExecOptions} from 'child_process';
 import {from, map, Observable, switchMap, tap} from 'rxjs';
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
 
-/**
- * This service helps manipulate git through @electron/remote
- */
 @Injectable({
   providedIn: 'root',
 })
 export class GitApiService {
 
-  readonly childProcess: typeof childProcess = (window as any).require('child_process');
-  private readonly util: typeof util = (window as any).require('util');
-  // private electron: typeof electron = (window as any).require('@electron/remote');
-  private readonly promisedExec = this.util.promisify(this.childProcess.execFile);
-  // private path: typeof path = (window as any).require('path');
-  private cwd?: string;
+  // When a repository is opened / loaded, set the cwd for future git commands
+  readonly cwd = signal<string | undefined>(undefined);
 
   constructor() {
     // Notes :
@@ -41,30 +32,24 @@ export class GitApiService {
       .subscribe(console.log);
   }
 
-  get isElectron() {
-    return !!window?.process?.type;
-  }
-
   git = (args: (string | undefined)[] | undefined) =>
-    this.exec('git', args?.filter(notUndefined) ?? [], {cwd: this.cwd, env: process.env});
+    this.exec('git', args?.filter(notUndefined) ?? [], {cwd: this.cwd(), env: window.electron.processEnv});
 
   clone = (url: string, repoName: string, dir: string) =>
-     this.cd(dir).pipe(
+    this.cd(dir).pipe(
       switchMap(() => this.git(['clone', url, repoName])),
-      switchMap(() => this.setCwd(`${dir}/${repoName}`)),
+      tap(() => this.cwd.set(`${dir}/${repoName}`)),
     );
 
 
-  cd = (dir: string) => this.exec('cd', [dir]).pipe(tap(() => this.setCwd(dir)));
+  cd = (dir: string) => this.exec('cd', [dir]).pipe(tap(() => this.cwd.set(dir)));
 
-  exec = (cmd: string, args: string[] = [], options?: ExecOptions): Observable<string> => {
-    return from(this.promisedExec(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
+  exec = (cmd: string, args: string[] = [], options?: any): Observable<string> => {
+    return from(window.electron.execFile(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
       .pipe(
-        map(({stdout}) => stdout),
+        map(({stdout}) => stdout.toString()),
         tap(isDevMode() ? showPerf(cmd, args) : () => 0),
       );
   };
 
-  // When a repository is opened / loaded, set the cwd for future git commands
-  setCwd = (cwd: string) => this.cwd = cwd;
 }

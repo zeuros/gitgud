@@ -1,12 +1,15 @@
-<img @fadeSlideIn
-     [class.hidden]="!avatarLoaded"
-     [src]="identity.email | gravatarUrl"
-     (load)="avatarLoaded = true"
-     (error)="avatarLoaded = false"
-     class="avatar-size"
-     alt="user avatar from gravatar"/>
+@let id = identity();
+@if (id) {
+    <img @fadeSlideIn
+         [class.hidden]="!avatarLoaded"
+         [src]="id.email | gravatarUrl"
+         (load)="avatarLoaded = true"
+         (error)="avatarLoaded = false"
+         class="avatar-size"
+         alt="user avatar from gravatar"/>
 
-<img *ngIf="!avatarLoaded"
-     @fadeSlideIn
-     [src]="identity.email | identicon"
-     alt="user avatar identicon"/>
+    <img *ngIf="!avatarLoaded"
+         @fadeSlideIn
+         [src]="id.email | identicon"
+         alt="user avatar identicon"/>
+}
