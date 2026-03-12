@@ -4,27 +4,35 @@ import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {RefType} from '../../enums/ref-type.enum';
 import {commitColor, hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
-import {COMMITS_SHOWN_ON_CANVAS, NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
+import {NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
 
 
 /**
  * Draw each commit / stash and their connections
+ * Uses scrollOffset to position canvas continuously without jumps
  */
 export const drawLog = (
   canvas: CanvasRenderingContext2D,
   displayLog: DisplayRef[],
   edges: IntervalTree<Edge>,
   startCommit: number,
+  endCommit: number,
+  scrollOffset: number,
   stashImg: HTMLImageElement,
 ) => {
+  // clearRect() doesn't clear properly with transform applied, we remove it before clearing
+  canvas.resetTransform();
+
   canvas.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
 
+  // Drawn commit window will be shifted by scrollFromTop % ROW_HEIGHT which gives smooth scroll
+  canvas.setTransform(1, 0, 0, 1, 0, ROW_HEIGHT - scrollOffset);
+
   // Draw edges (connections between commits)
-  edges.search(startCommit, startCommit + COMMITS_SHOWN_ON_CANVAS)
-    .forEach(edge => drawEdge(canvas, edge, startCommit));
+  edges.search(startCommit, endCommit).forEach(edge => drawEdge(canvas, edge, startCommit));
 
   // Draw commit nodes
-  displayLog.slice(startCommit, startCommit + COMMITS_SHOWN_ON_CANVAS)
+  displayLog.slice(startCommit, endCommit)
     .forEach((ref, indexForThisSlice) =>
       drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref, stashImg),
     );

@@ -3,7 +3,7 @@ import {GitRepository} from '../models/git-repository';
 import {LocalStorageService} from '../services/local-storage.service';
 import {StorageName} from '../enums/storage-name.enum';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
-import {branchesComparison, logsComparison} from '../utils/utils';
+import {branchesComparison, logsComparison, workDirComparison} from '../utils/utils';
 import {syncToStorage} from '../utils/store.utils';
 
 export interface AppConfig {
@@ -34,10 +34,10 @@ export class GitRepositoryStore {
 
   // Selected repo
   readonly logs = computed(() => this.selectedRepository()?.logs ?? [], {equal: logsComparison});
-  readonly stashes = computed(() => this.selectedRepository()?.stashes ?? []);
+  readonly stashes = computed(() => this.selectedRepository()?.stashes ?? [], {equal: logsComparison});
   readonly branches = computed(() => this.selectedRepository()?.branches ?? [], {equal: branchesComparison});
   readonly startCommit = computed(() => this.selectedRepository()?.startCommit ?? 0);
-  readonly workDirStatus = computed(() => this.selectedRepository()?.workDirStatus);
+  readonly workDirStatus = computed(() => this.selectedRepository()?.workDirStatus, {equal: workDirComparison});
   readonly panelSizes = computed(() => this.selectedRepository()?.panelSizes);
   readonly editorConfig = computed(() => this.selectedRepository()?.editorConfig);
 
