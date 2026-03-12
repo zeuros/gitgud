@@ -2,6 +2,7 @@ import {isUndefined, omitBy} from 'lodash-es';
 import {WorkDirStatus} from '../lib/github-desktop/commit-files-changes';
 import {Commit} from '../lib/github-desktop/model/commit';
 import {Branch} from '../lib/github-desktop/model/branch';
+import {WorkingDirectoryFileChange} from '../lib/github-desktop/model/status';
 
 export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
 
@@ -33,11 +34,15 @@ export const fileName = (path: string) => path.split('/').pop();
 
 export const showPerf = (cmd: string, args: string[] = []) => {
   const start = performance.now();
-  return () => console.log(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`);
+  return () => console.warn(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`);
 };
 
 export const workingDirHasChanges = (status?: WorkDirStatus) => (status?.unstaged.length ?? 0) > 0 || (status?.staged.length ?? 0) > 0;
 
 // Signals diff comparators
-export const logsComparison = (a: Commit[], b: Commit[]) => a.length === b.length && a[0]?.sha === b[0]?.sha
+export const logsComparison = (a: Commit[], b: Commit[]) => a.length === b.length && a.every((c, i) => c.sha === b[i].sha);
 export const branchesComparison = (a: Branch[], b: Branch[]) => a.length === b.length && a.every((b1, i) => b1.name === b[i]?.name)
+export const workDirComparison = (a?: WorkDirStatus, b?: WorkDirStatus) => workDirStatusKey(a) === workDirStatusKey(b);
+
+const workDirStatusKey = (s?: WorkDirStatus) => s ? [...s.staged, ...s.unstaged].map(workDirFileChangeKey).join() : '';
+const workDirFileChangeKey = (f: WorkingDirectoryFileChange) => `${f.path}:${f.status}:${String(f.selection)}`;

@@ -310,7 +310,6 @@ export class WorkingDirectoryFileChange extends FileChange {
    * @param path The relative path to the file in the repository.
    * @param status The status of the change to the file.
    * @param selection Contains the selection details for this file - all, nothing or partial.
-   * @param oldPath The original path in the case of a renamed file.
    */
   public constructor(
     path: string,
