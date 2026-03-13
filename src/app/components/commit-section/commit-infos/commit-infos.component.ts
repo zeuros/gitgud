@@ -1,9 +1,9 @@
-import {Component, effect, inject} from '@angular/core';
+import {Component, effect, inject, viewChild} from '@angular/core';
 import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
-import {ButtonDirective} from 'primeng/button';
+import {Button, ButtonDirective} from 'primeng/button';
 import {DatePipe} from '@angular/common';
 import {isEqual} from 'lodash-es';
 import {DATE_FORMAT} from '../../../utils/constants';
@@ -28,6 +28,7 @@ import {GitRepositoryStore} from '../../../stores/git-repos.store';
     AvatarComponent,
     Listbox,
     FormsModule,
+    Button,
   ],
   templateUrl: './commit-infos.component.html',
   styleUrl: './commit-infos.component.scss',
@@ -38,6 +39,7 @@ export class CommitInfosComponent {
     summary: new FormControl(''),
     description: new FormControl(''),
   });
+  private shaTooltip = viewChild(Tooltip);
   protected initialValue: typeof this.editCommitForm.value = {};
   protected editedFiles?: ChangeSet;
   protected readonly isEqual = isEqual;
@@ -67,5 +69,12 @@ export class CommitInfosComponent {
     });
   }
 
-  protected readonly file$ = (f: CommittedFileChange) => f;
+  protected copyTooltip = 'Copy';
+  protected copyToClipboard = (sha: string) => {
+    navigator.clipboard.writeText(sha);
+    this.copyTooltip = 'Copied';
+    setTimeout(() => this.shaTooltip()?.show(), 0); // show after deactivate runs (deactivate is triggered when pTooltip gets new value)
+  };
+
+  protected file$ = (f: CommittedFileChange) => f;
 }
