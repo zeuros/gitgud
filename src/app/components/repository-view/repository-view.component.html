@@ -2,7 +2,7 @@
 @if (sizes && sizes.length) {
     <p-splitter [panelSizes]="sizes" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event.sizes)" styleClass="auto-wh">
         <ng-template pTemplate>
-            <gitgud-left-panel class="col flex"/>
+            <gitgud-left-panel/>
         </ng-template>
         <ng-template pTemplate>
             <gitgud-logs/>
