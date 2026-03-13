@@ -70,7 +70,7 @@ export class LogsComponent {
 
   constructor() {
 
-    // Scroll to selected commit
+    // Scroll to selected commit / stash
     effect(() => {
       const sha = this.gitRepositoryStore.selectedCommitSha();
       const logTable = this.logTableContainer();

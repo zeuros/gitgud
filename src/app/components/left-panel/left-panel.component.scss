@@ -1,26 +1,46 @@
 :host {
+  display: block;
+  height: 100%;
 
   ::ng-deep {
     .p-tree .p-tree-container .p-treenode .p-treenode-content {
       padding: 0;
-    }
-  }
-
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-
-  ::ng-deep {
-    .selected-branch > .p-treenode-content {
-
-      background: rgba(147, 216, 148, 0.16);
-      color: #9ad893;
-
-      .p-treenode-icon {
-        color: #9ad893;
-      }
+      color: var(--hmmmmmmGray);
     }
   }
 }
 
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; // required for scroll
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--hmmmmmmGray);
+  }
+}
+
+.title {
+  padding: 8px;
+  font-weight: bold;
+  color: var(--wowowowGray);
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  color: var(--hmmmmmmGray);
+}
+
+.black-and-white {
+  filter: brightness(0) saturate(100%) invert(70%);
+}
