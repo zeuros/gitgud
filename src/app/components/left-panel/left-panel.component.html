@@ -1,56 +1,52 @@
-<p-accordion class="w-full" [multiple]="true" [value]="['local-branches', 'remote-branches', 'stashes']">
+<div class="container h-full w-full">
 
-    <p-accordion-panel value="local-branches">
-        <p-accordion-header>
-            <span><i class="fa fa-laptop mr-2"></i>Local</span>
-        </p-accordion-header>
-        <p-accordion-content>
+    <div class="panel">
+        <div class="title">
+            <i class="fa fa-laptop mr-2"></i>Local
+        </div>
+        <div class="content">
             <p-tree
-                selectionMode="single"
-                [value]="localBranches()"
-                [selection]="selectedBranchNode()"
-                (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
-                [contextMenu]="branchesContextMenu"
+                    class="p-0"
+                    selectionMode="single"
+                    [value]="localBranches()"
+                    [selection]="selectedBranchNode()"
+                    (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
+                    [contextMenu]="branchesContextMenu"
             />
-        </p-accordion-content>
-    </p-accordion-panel>
+        </div>
+    </div>
 
-    <p-accordion-panel value="remote-branches">
-        <p-accordion-header>
-            <span><i class="fa fa-cloud mr-2"></i>Remote</span>
-        </p-accordion-header>
-        <p-accordion-content>
+    <div class="panel">
+        <div class="title">
+            <i class="fa fa-cloud mr-2"></i>Remote
+        </div>
+        <div class="content">
             <p-tree
-                selectionMode="single"
-                class="text-overflow-ellipsis"
-                [value]="remoteBranches()"
-                [selection]="selectedBranchNode()"
-                (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
-                [contextMenu]="branchesContextMenu"
+                    class="p-0"
+                    selectionMode="single"
+                    [value]="localBranches()"
+                    [selection]="selectedBranchNode()"
+                    (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
+                    [contextMenu]="branchesContextMenu"
             />
-        </p-accordion-content>
-    </p-accordion-panel>
+        </div>
+    </div>
 
-    <p-accordion-panel value="stashes">
-        <p-accordion-header>
-            <span><i class="fa fa-archive mr-2"></i>Stashes</span>
-        </p-accordion-header>
-        <p-accordion-content>
-            <p-listbox [options]="gitRepositoryStore.stashes()" (onChange)="selectStash($event.value)">
-                <ng-template #item let-s>
-                    @let stash = $stash(s);
-                    <i class="fa fa-archive mr-2"></i>
-                    <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ stash.summary }}</span>
-                </ng-template>
-            </p-listbox>
-        </p-accordion-content>
-    </p-accordion-panel>
+    <div class="panel">
+        <div class="title">
+            <i class="fa fa-archive mr-2"></i>Stashes
+        </div>
+        <div class="content">
 
-</p-accordion>
+            @for (stash of gitRepositoryStore.stashes(); track stash.sha) {
+                @let s = $stash(stash);
+                <div class="p-2 cursor-pointer hover:surface-hover flex align-items-center gap-2" tabindex (click)="selectStash(stash)">
+                    <img src="assets/images/chest.svg" width="16" height="16" alt="stash" class="black-and-white"/>
+                    <span class="ellipsis text-gray">{{ s.summary }}</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
-<!-- TODO: update to latest primeng version to have groups of options: [group]="true" -->
-<p-contextMenu #branchesContextMenu [model]="contextMenu" appendTo="body"  styleClass="context-menu">
-<!--    <ng-template #item let-i>-->
-<!--        <i class="{{ i.icon }} context-menu-icon"></i> {{ i.label }}-->
-<!--    </ng-template>-->
-</p-contextMenu>
+<p-contextMenu #branchesContextMenu [model]="contextMenu" appendTo="body"/>

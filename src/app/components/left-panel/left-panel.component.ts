@@ -1,5 +1,4 @@
 import {Component, computed, inject} from '@angular/core';
-import {Accordion, AccordionContent, AccordionHeader, AccordionPanel} from 'primeng/accordion';
 import {TerminalService} from 'primeng/terminal';
 import {Tree} from 'primeng/tree';
 import {ContextMenu} from 'primeng/contextmenu';
@@ -7,7 +6,6 @@ import {MenuItem, TreeNode} from 'primeng/api';
 import {PopupService} from '../../services/popup.service';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {findNode, local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branch-utils';
-import {Listbox} from 'primeng/listbox';
 import {Commit} from '../../lib/github-desktop/model/commit';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
 
@@ -16,12 +14,7 @@ import {GitRepositoryStore} from '../../stores/git-repos.store';
   selector: 'gitgud-left-panel',
   standalone: true,
   imports: [
-    Accordion,
-    AccordionPanel,
-    AccordionHeader,
-    AccordionContent,
     Tree,
-    Listbox,
     ContextMenu,
   ],
   providers: [TerminalService],
@@ -62,7 +55,7 @@ export class LeftPanelComponent {
   };
 
   protected readonly selectStash = (stash?: Commit) => {
-    if (stash) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [stash.sha]});
+    if (stash?.parentSHAs?.[1]) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [stash.parentSHAs[1]]});
   };
 
 
