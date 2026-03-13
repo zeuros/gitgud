@@ -1,6 +1,17 @@
 @let selectedCommit = gitRepositoryStore.selectedCommit();
 @if (selectedCommit) {
-    <h4>Commit: <span class="border-white">{{ selectedCommit.shortSha }}</span></h4>
+    <h4>Commit:
+        <p-button
+                styleClass="p-0"
+                [link]="true"
+                size="small"
+                (click)="copyToClipboard(selectedCommit.shortSha)"
+                (mouseout)="copyTooltip = 'Copy'"
+                [pTooltip]="copyTooltip"
+                [label]="selectedCommit.shortSha"
+                tooltipPosition="top"
+        />
+    </h4>
 
     <hr>
 
@@ -46,7 +57,8 @@
         }
     </div>
 
-    <p-listbox animate.enter="fade-slide-in-out-enter" [options]="(editedFiles?.files ?? []).slice()" (onChange)="fileDiffPanelService.showCommittedFileDiffs($event.value)" optionLabel="path">
+    <p-listbox animate.enter="fade-slide-in-out-enter" [options]="(editedFiles?.files ?? []).slice()" (onChange)="fileDiffPanelService.showCommittedFileDiffs($event.value)"
+               optionLabel="path">
         <ng-template #item let-f>
             @let file = file$(f);
             @let dir = directory(file.path);
