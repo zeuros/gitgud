@@ -41,9 +41,14 @@ export const workingDirHasChanges = (status?: WorkDirStatus) => (status?.unstage
 
 // Signals diff comparators
 export const logsComparison = (a: Commit[], b: Commit[]) => a.length === b.length && a.every((c, i) => c.sha === b[i].sha);
-export const branchesComparison = (a: Branch[], b: Branch[]) => a.length === b.length && a.every((b1, i) => b1.name === b[i]?.name)
-export const workDirComparison = (a?: WorkDirStatus, b?: WorkDirStatus) => workDirStatusKey(a) === workDirStatusKey(b);
+export const branchesComparison = (a: Branch[], b: Branch[]) => a.length === b.length && a.every((b1, i) => b1.name === b[i]?.name);
 export const shallowArrayEqual = <T>(a?: T[], b?: T[]) => a === b || (!!a && !!b && a.length === b.length && a.every((v, i) => v === b[i]));
+export const workDirComparison = (a?: WorkDirStatus, b?: WorkDirStatus) => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.staged.length !== b.staged.length || a.unstaged.length !== b.unstaged.length) return false;
+  return a.staged.every((f, i) => workDirFileChangeKey(f) === workDirFileChangeKey(b.staged[i]))
+      && a.unstaged.every((f, i) => workDirFileChangeKey(f) === workDirFileChangeKey(b.unstaged[i]));
+};
 
-const workDirStatusKey = (s?: WorkDirStatus) => s ? [...s.staged, ...s.unstaged].map(workDirFileChangeKey).join() : '';
-const workDirFileChangeKey = (f: WorkingDirectoryFileChange) => `${f.path}:${f.status}:${String(f.selection)}`;
+const workDirFileChangeKey = (f: WorkingDirectoryFileChange) => `${f.path}:${f.status}`;
