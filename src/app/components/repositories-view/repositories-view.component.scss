@@ -14,4 +14,14 @@
       padding: 0;
     }
   }
+
+  p-tab[draggable="true"] {
+    * {
+      pointer-events: none; // This disables pointer events on all children so drag events bubble up to the p-tab itself
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
 }

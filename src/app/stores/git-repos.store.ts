@@ -71,4 +71,12 @@ export class GitRepositoryStore {
 
   updateSelectedRepository = (updates: Partial<GitRepository>) =>
     this._repositories.update(repos => repos.map(r => r.selected ? {...r, ...updates} : r),);
+
+  reorderRepositories = (from: number, to: number) => {
+    this._repositories.update(repos => {
+      const result = [...repos];
+      result.splice(to, 0, result.splice(from, 1)[0]);
+      return result;
+    });
+  };
 }

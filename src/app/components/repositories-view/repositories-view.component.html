@@ -1,9 +1,17 @@
 @let selectedIndex = gitRepositoryStore.selectedIndex();
-<p-tabs [value]="selectedIndex" (valueChange)="gitRepositoryStore.selectRepository($event!)">
+<p-tabs [value]="selectedIndex" (valueChange)="gitRepositoryStore.selectRepository($event!)" scrollable>
 
     <p-tablist>
         @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
-            <p-tab [value]="i">
+            <p-tab
+                    [value]="i"
+                    draggable="true"
+                    (dragstart)="onDragStart($event, i)"
+                    (dragover)="onDragOver($event, i)"
+                    (drop)="onDrop($event)"
+                    (dragend)="onDragEnd()"
+                    (auxclick)="onMiddleClick($event, i)"
+            >
                 <i class="fa fa-code-fork"></i>
                 {{ repository.name }}
                 <p-button
