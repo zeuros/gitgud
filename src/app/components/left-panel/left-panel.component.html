@@ -1,53 +1,69 @@
-<div class="container h-full w-full">
-
-    <div class="panel">
-        <div class="title">
-            <i class="fa fa-laptop mr-2"></i>Local
-        </div>
-        <div class="content">
-            <p-tree
-                    class="p-0"
-                    selectionMode="single"
-                    [value]="localBranches()"
-                    [selection]="selectedBranchNode()"
-                    (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
-                    [contextMenu]="branchesContextMenu"
-            />
-        </div>
-    </div>
-
-    <div class="panel">
-        <div class="title">
-            <i class="fa fa-cloud mr-2"></i>Remote
-        </div>
-        <div class="content">
-            <p-tree
-                    class="p-0"
-                    selectionMode="single"
-                    [value]="localBranches()"
-                    [selection]="selectedBranchNode()"
-                    (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
-                    [contextMenu]="branchesContextMenu"
-            />
-        </div>
-    </div>
-
-    <div class="panel">
-        <div class="title">
-            <i class="fa fa-archive mr-2"></i>Stashes
-        </div>
-        <div class="content">
-
-            @for (stash of gitRepositoryStore.stashes(); track stash.sha) {
-                @let s = $stash(stash);
-                <div class="p-2 cursor-pointer hover:surface-hover flex align-items-center gap-2" tabindex (click)="selectStash(stash)"
-                 [class.p-highlight]="gitRepositoryStore.selectedStash()?.sha === stash.sha">
-                    <img src="assets/images/chest.svg" width="16" height="16" alt="stash" class="black-and-white"/>
-                    <span class="ellipsis text-gray">{{ s.summary }}</span>
+@let panelSizes = gitRepositoryStore.panelSizes()?.leftPanel;
+@if (panelSizes) {
+    <p-splitter
+            [style]="{ height: '100%' }"
+            layout="vertical"
+            [panelSizes]="panelSizes"
+            (onResizeEnd)="savePanelSizes($event)"
+            [minSizes]="[20, 20, 20]"
+    >
+        <ng-template pTemplate="panel">
+            <div class="panel">
+                <div class="title">
+                    <i class="fa fa-laptop mr-2"></i>Local
                 </div>
-            }
-        </div>
-    </div>
-</div>
+                <div class="content">
+                    <p-tree
+                            selectionMode="single"
+                            [value]="localBranches()"
+                            [selection]="selectedBranchNode()"
+                            (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
+                            [contextMenu]="branchesContextMenu"
+                    />
+                </div>
+            </div>
+        </ng-template>
 
+        <ng-template pTemplate="panel">
+            <div class="panel">
+                <div class="title">
+                    <i class="fa fa-cloud mr-2"></i>Remote
+                </div>
+                <div class="content">
+                    <p-tree
+                            selectionMode="single"
+                            [value]="remoteBranches()"
+                            [selection]="selectedBranchNode()"
+                            (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
+                            [contextMenu]="branchesContextMenu"
+                    />
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="panel">
+            <div class="panel">
+                <div class="title">
+                    <i class="fa fa-archive mr-2"></i>Stashes
+                </div>
+                <p-listbox
+                        [options]="gitRepositoryStore.stashes()"
+                        [ngModel]="gitRepositoryStore.selectedStash()"
+                        (ngModelChange)="selectStash($event)"
+                        scrollHeight="auto"
+                        dataKey="sha"
+                        class="border-none"
+                >
+                    <ng-template #item let-s>
+                        @let stash = $stash(s);
+                        <div class="flex align-items-center gap-2 ellipsis">
+                            <img src="assets/images/chest.svg" width="16" height="16" alt="stash" class="black-and-white"/>
+                            <span class="ellipsis text-gray">{{ stash.summary }}</span>
+                        </div>
+                    </ng-template>
+                </p-listbox>
+            </div>
+        </ng-template>
+    </p-splitter>
+}
 <p-contextMenu #branchesContextMenu [model]="contextMenu" appendTo="body"/>

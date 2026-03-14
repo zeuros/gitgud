@@ -6,13 +6,13 @@ import {DialogModule} from 'primeng/dialog';
 import {DialogService} from 'primeng/dynamicdialog';
 
 @Component({
-  selector: 'gitgud-top-bar',
+  selector: 'gitgud-welcome-screen',
   standalone: true,
   imports: [ButtonModule, DialogModule],
-  templateUrl: './top-bar.component.html',
-  styleUrl: './top-bar.component.scss',
+  templateUrl: './welcome-screen.component.html',
+  styleUrl: './welcome-screen.component.scss',
 })
-export class TopBarComponent {
+export class WelcomeScreenComponent {
 
   protected readonly gitRepositoryService = inject(GitRepositoryService);
   private readonly dialogService = inject(DialogService);
