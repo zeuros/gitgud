@@ -63,9 +63,6 @@ export class GitRepositoryStore {
   selectRepository = (directoryOrIndex: string | number) =>
     this._repositories.update(repos => repos.map((r, i) => ({...r, selected: typeof directoryOrIndex === 'number' ? i === directoryOrIndex : r.id === directoryOrIndex})),);
 
-  setCurrentRepoIndex = (index: number) =>
-    this._repositories.update(repos => repos.map((r, i) => ({...r, selected: i === index})),);
-
   removeRepository = (indexOrId: number | string) =>
     this._repositories.update(repos => repos.filter((r, i) => typeof indexOrId === 'number' ? i !== indexOrId : r.id !== indexOrId),);
 
