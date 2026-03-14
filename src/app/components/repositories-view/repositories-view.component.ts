@@ -25,4 +25,42 @@ import {GitRepositoryService} from '../../services/git-repository.service';
 export class RepositoriesViewComponent {
   protected readonly gitRepositoryStore = inject(GitRepositoryStore);
   protected readonly gitRepositoryService = inject(GitRepositoryService);
+  private draggedIndex: number | null = null;
+  private throttled = false;
+
+  protected onDragStart(event: DragEvent, index: number): void {
+    this.draggedIndex = index;
+    event.dataTransfer!.effectAllowed = 'linkMove';
+  }
+
+  protected onDragOver(event: DragEvent, targetIndex: number): void {
+    event.preventDefault();
+    if (this.draggedIndex === null || targetIndex === this.draggedIndex || this.throttled) return;
+
+    this.throttled = true;
+    this.gitRepositoryStore.reorderRepositories(this.draggedIndex, targetIndex);
+    this.draggedIndex = targetIndex;
+    setTimeout(() => this.throttled = false, 300);
+  }
+
+  protected onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.cleanup();
+  }
+
+  protected onDragEnd(): void {
+    this.cleanup();
+  }
+
+  private cleanup(): void {
+    this.draggedIndex = null;
+    this.throttled = false;
+  }
+
+  protected onMiddleClick(event: MouseEvent, index: number): void {
+    if (event.button === 1) {
+      event.preventDefault();
+      this.gitRepositoryStore.removeRepository(index);
+    }
+  }
 }
