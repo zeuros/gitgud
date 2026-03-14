@@ -80,7 +80,7 @@ export class GitRepositoryService {
 
   pickGitFolder = () => {
 
-    const pickedGitFolder = (window.electron.dialog.showOpenDialogSync({properties: ['openDirectory']}) ?? throwEx('No folder current'))[0];
+    const pickedGitFolder = (window.electron.dialog.showOpenDialogSync({properties: ['openDirectory']}) ?? throwEx('No folder picked'))[0];
 
     return this.findGitDir(pickedGitFolder);
 
