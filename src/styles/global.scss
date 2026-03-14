@@ -1,9 +1,13 @@
-
-html, body, app-root {
+html, body {
+  height: 100%;
   margin: 0;
   padding: 0;
+}
+
+app-root {
   height: 100%;
   overflow: hidden;
+  display: flex;
 }
 
 .space-between {
@@ -28,11 +32,6 @@ html, body, app-root {
   thead th, tbody td {
     border-style: none;
   }
-}
-
-.auto-wh {
-  width: auto;
-  height: auto;
 }
 
 *:focus {

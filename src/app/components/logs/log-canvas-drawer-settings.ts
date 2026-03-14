@@ -1,4 +1,4 @@
-export const CANVAS_MARGIN = [5, 1];
+export const CANVAS_MARGIN = {left: 5, top: 4};
 export const NODE_DIAMETER = 26;
 export const NODES_VERTICAL_SPACING = 8;
 export const NODE_RADIUS = NODE_DIAMETER / 2;

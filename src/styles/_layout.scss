@@ -12,3 +12,16 @@
 .w-full {
   width: 100%;
 }
+
+// Makes an element fill its parent's remaining height in a flex column layout.
+// - display:flex + flex-direction:column: allows children to also participate in the flex chain
+// - flex:1: grow to fill all available space from the parent
+// - min-height:0: override browser default min-height:auto which prevents flex children from shrinking below their content size
+// - overflow:hidden: contain children, preventing them from bleeding outside this element (scroll zones are defined explicitly deeper in the tree)
+.fill-height {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}

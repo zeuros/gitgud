@@ -9,7 +9,8 @@
             id="commit-graph-canvas"
             [height]="yPosition(visibleCommitsCnt)"
             [width]="xPosition(graphColCount - 1) + NODE_RADIUS"
-            [style.left.px]="_branchColumnWidth() + CANVAS_MARGIN[0]"
+            [style.top.px]="CANVAS_MARGIN.top"
+            [style.left.px]="_branchColumnWidth() + CANVAS_MARGIN.left"
     ></canvas>
 }
 <p-table
@@ -19,15 +20,15 @@
         (selectionChange)="onCommitsSelection($event)"
         [rowHover]="true"
         [scrollable]="true"
-        scrollHeight="calc(100vh - 51px)"
         [resizableColumns]="true"
+        scrollHeight="flex"
         selectionMode="multiple" [metaKeySelection]="true"
         class="pointer borderless p-datatable-sm"
 >
     <ng-template pTemplate="header">
         <tr class="uppercase text-gray">
             <th pResizableColumn>Branch / Tag</th>
-            <th pResizableColumn [style.max-width.px]="CANVAS_MARGIN[0] + xPosition(graphColCount)" [style.width.px]="CANVAS_MARGIN[0] + xPosition(graphColCount)">Graph</th>
+            <th pResizableColumn [style.max-width.px]="CANVAS_MARGIN.left + xPosition(graphColCount)" [style.width.px]="CANVAS_MARGIN.left + xPosition(graphColCount)">Graph</th>
             <th pResizableColumn style="min-width: 100px;">Commit message</th>
             <th pResizableColumn>Author</th>
             <th pResizableColumn style="min-width: 170px;">Commit date / time</th>
@@ -60,7 +61,7 @@
                 }
             </td>
             <td class="graph">
-                <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN[0] + xPosition(commit.indent)"></div>
+                <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN.left + xPosition(commit.indent)"></div>
             </td>
             <td class="summary ellipsis">{{ commit.summary }}</td>
             <td class="author text-gray ellipsis">{{ commit.author.name }}</td>

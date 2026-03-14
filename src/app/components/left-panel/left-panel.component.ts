@@ -8,6 +8,10 @@ import {Branch} from '../../lib/github-desktop/model/branch';
 import {findNode, local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branch-utils';
 import {Commit} from '../../lib/github-desktop/model/commit';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {TableModule} from 'primeng/table';
+import {Listbox} from 'primeng/listbox';
+import {FormsModule} from '@angular/forms';
+import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
 
 
 @Component({
@@ -16,6 +20,10 @@ import {GitRepositoryStore} from '../../stores/git-repos.store';
   imports: [
     Tree,
     ContextMenu,
+    TableModule,
+    Listbox,
+    FormsModule,
+    Splitter,
   ],
   providers: [TerminalService],
   templateUrl: './left-panel.component.html',
@@ -58,7 +66,8 @@ export class LeftPanelComponent {
     if (stash) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [stash.parentSHAs[1]]});
   };
 
-
+  protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
+    this.gitRepositoryStore.updateSelectedRepository({panelSizes: {...this.gitRepositoryStore.panelSizes()!, leftPanel: sizes.map(Number)}});
   // checkoutBranch = (branch: TreeNode<Branch>) => {
   //   this.gitRepositoryStore.updateSelectedRepository({checkedOutBranch: branch.data})
   //
