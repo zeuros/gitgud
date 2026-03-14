@@ -1,6 +1,6 @@
-@let selectedCommitsShas = gitRepositoryStore.selectedCommitsShas();
-@if (selectedCommitsShas && selectedCommitsShas.length > 0) {
-    @if (selectedCommitsShas[0] == 'index') {
+@let selectedCommitsSha = gitRepositoryStore.selectedCommitSha();
+@if (selectedCommitsSha) {
+    @if (selectedCommitsSha == 'index') {
         <gitgud-make-a-commit/>
     } @else {
         <gitgud-commit-infos/>

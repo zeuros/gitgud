@@ -1,6 +1,6 @@
 import {Component, inject} from '@angular/core';
 import {LeftPanelComponent} from '../left-panel/left-panel.component';
-import {SplitterModule} from 'primeng/splitter';
+import {SplitterModule, SplitterResizeEndEvent} from 'primeng/splitter';
 import {CommitSectionComponent} from '../commit-section/commit-section.component';
 import {LogsComponent} from '../logs/logs.component';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
@@ -15,12 +15,15 @@ import {GitRepositoryStore} from '../../stores/git-repos.store';
   imports: [LeftPanelComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe, MonacoEditorViewComponent],
   templateUrl: './repository-view.component.html',
   styleUrl: './repository-view.component.scss',
+  host: {
+    class: 'fill-height',
+  },
 })
 export class RepositoryViewComponent {
 
   protected readonly gitRepositoryStore = inject(GitRepositoryStore);
   protected readonly fileDiffPanelService = inject(FileDiffPanelService);
   protected readonly sum = sum;
-  protected readonly savePanelSizes = (panelSizes: (number | string)[]) =>
-    this.gitRepositoryStore.updateSelectedRepository({panelSizes: panelSizes.map(Number)});
+  protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
+    this.gitRepositoryStore.updateSelectedRepository({panelSizes: {...this.gitRepositoryStore.panelSizes()!, mainPanels: sizes.map(Number)}});
 }

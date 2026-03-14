@@ -1,0 +1,17 @@
+
+:host ::ng-deep {
+  p-tabs {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+
+    .p-tabpanel {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      padding: 0;
+    }
+  }
+}

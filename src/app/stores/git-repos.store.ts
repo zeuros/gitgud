@@ -31,6 +31,7 @@ export class GitRepositoryStore {
   readonly repositories = this._repositories.asReadonly();
   readonly selectedRepository = computed(() => this._repositories().find(r => r.selected));
   readonly selectedIndex = computed(() => this._repositories().findIndex(r => r.selected));
+  readonly hasRepositories = computed(() => this._repositories().length > 0);
 
   // Selected repo
   readonly logs = computed(() => this.selectedRepository()?.logs ?? [], {equal: logsComparison});
@@ -47,7 +48,6 @@ export class GitRepositoryStore {
 
   readonly selectedCommitsShas = computed(() => this.selectedRepository()?.selectedCommitsShas, {equal: shallowArrayEqual});
   readonly selectedCommitSha = computed(() => {const sc = this.selectedRepository()?.selectedCommitsShas;return sc?.length === 1 ? sc[0] : undefined;});
-  readonly selectedCommits = computed(() => {const sc = this.selectedCommitsShas();return this.logs().find(c => sc?.includes(c.sha));});
   readonly selectedCommit = computed(() => {const sc = this.selectedCommitSha();return this.logs().find(c => c.sha === sc);});
   readonly selectedStash = computed(() => {const sc = this.selectedCommitSha();return this.stashes().find(s => s.parentSHAs?.[1] && s.parentSHAs?.[1] === sc);});
 
