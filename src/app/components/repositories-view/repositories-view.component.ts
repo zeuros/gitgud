@@ -3,6 +3,7 @@ import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
 import {Button} from 'primeng/button';
 import {RepositoryViewComponent} from '../repository-view/repository-view.component';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {GitRepositoryService} from '../../services/git-repository.service';
 
 @Component({
   selector: 'gitgud-repositories-view',
@@ -23,4 +24,5 @@ import {GitRepositoryStore} from '../../stores/git-repos.store';
 })
 export class RepositoriesViewComponent {
   protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  protected readonly gitRepositoryService = inject(GitRepositoryService);
 }

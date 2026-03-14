@@ -1,4 +1,5 @@
-<p-tabs [value]="gitRepositoryStore.selectedIndex()" (valueChange)="gitRepositoryStore.selectRepository($event!)">
+@let selectedIndex = gitRepositoryStore.selectedIndex();
+<p-tabs [value]="selectedIndex" (valueChange)="gitRepositoryStore.selectRepository($event!)">
 
     <p-tablist>
         @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
@@ -9,20 +10,26 @@
                         icon="pi pi-times"
                         [rounded]="true"
                         [text]="true"
-                        severity="primary"
+                        [severity]="i == selectedIndex ? 'primary' : 'secondary'"
                         styleClass="close-tab-btn"
                         (click)="gitRepositoryStore.removeRepository(i); $event.stopPropagation()"
                 />
             </p-tab>
         }
+
+        <p-button
+                icon="pi pi-plus"
+                [text]="true"
+                class="flex"
+                severity="primary"
+                (click)="gitRepositoryService.openRepository()"
+        />
     </p-tablist>
 
     <p-tabpanels class="fill-height">
-        @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
-            <p-tabpanel [value]="i">
-                <gitgud-repository-view/>
-            </p-tabpanel>
-        }
+        <p-tabpanel>
+            <gitgud-repository-view/>
+        </p-tabpanel>
     </p-tabpanels>
 
 </p-tabs>
