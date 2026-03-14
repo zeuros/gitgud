@@ -1,16 +1,18 @@
-import {Injectable, isDevMode, signal} from '@angular/core';
+import {inject, Injectable, isDevMode, signal} from '@angular/core';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting JavaScript file will look as if you never imported the module at all.
 // import type {ExecOptions} from 'child_process';
-import {from, map, Observable, switchMap, tap} from 'rxjs';
+import {catchError, from, map, Observable, switchMap, tap} from 'rxjs';
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
+import {PopupService} from '../popup.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GitApiService {
 
+  private popupService = inject(PopupService);
   // When a repository is opened / loaded, set the cwd for future git commands
   readonly cwd = signal<string | undefined>(undefined);
 

@@ -2,10 +2,11 @@ import {inject, Injectable} from '@angular/core';
 import {ParserService} from '../parser.service';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {Branch, BranchType, IBranchTip} from '../../lib/github-desktop/model/branch';
-import {map, Observable} from 'rxjs';
+import {catchError, map, Observable} from 'rxjs';
 import {PREFIXES} from '../../utils/constants';
 import {formatArg} from '../../utils/log-utils';
 import {GitApiService} from './git-api.service';
+import {PopupService} from '../popup.service';
 
 @Injectable({
   providedIn: 'root',
@@ -25,6 +26,7 @@ export class BranchService {
   branchParser;
   remoteHeadPointer?: string;
 
+  private popupService = inject(PopupService);
   private gitApiService = inject(GitApiService);
 
   constructor(
@@ -67,4 +69,21 @@ export class BranchService {
           }),
       ));
 
+  checkoutBranch = (branch: Branch) => {
+    if (branch.isHeadPointed) {
+      this.popupService.warn(`Branch ${branch.name} is already checked out`);
+      return;
+    }
+
+    if (branch.type === BranchType.Local) {
+      this.gitApiService.git(['checkout', branch.name]).subscribe();
+      return;
+    }
+
+    const localName = branch.name.replace(/^origin\//, '');
+    this.gitApiService.git(['checkout', localName]).pipe(
+      // If the branch exists remotely only, we check it out and track it
+      catchError(() => this.gitApiService.git(['checkout', '-b', localName, '--track', `origin/${localName}`])),
+    ).subscribe();
+  };
 }

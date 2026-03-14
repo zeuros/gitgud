@@ -37,21 +37,6 @@ export interface IGenericProgress extends IProgress {
 }
 
 /**
- * An object describing the progression of a branch checkout operation
- */
-export interface ICheckoutProgress extends IProgress {
-  kind: 'checkout'
-
-  /** The branch or commit that's currently being checked out */
-  readonly target: string
-
-  /**
-   * Infotext for the user.
-   */
-  readonly description: string
-}
-
-/**
  * An object describing the progression of a fetch operation
  */
 export interface IFetchProgress extends IProgress {
@@ -116,7 +101,6 @@ export interface IMultiCommitOperationProgress extends IProgress {
 
 export type Progress =
   | IGenericProgress
-  | ICheckoutProgress
   | IFetchProgress
   | IPullProgress
   | IPushProgress

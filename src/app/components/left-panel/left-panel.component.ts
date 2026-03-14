@@ -1,6 +1,6 @@
 import {Component, computed, inject} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
-import {Tree} from 'primeng/tree';
+import {Tree, TreeNodeDoubleClickEvent} from 'primeng/tree';
 import {ContextMenu} from 'primeng/contextmenu';
 import {MenuItem, TreeNode} from 'primeng/api';
 import {PopupService} from '../../services/popup.service';
@@ -12,6 +12,7 @@ import {TableModule} from 'primeng/table';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
 import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
+import {BranchService} from '../../services/electron-cmd-parser-layer/branch.service';
 
 
 @Component({
@@ -50,6 +51,7 @@ export class LeftPanelComponent {
   ];
 
   protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  private readonly branchService = inject(BranchService);
   protected readonly localBranches = computed(() => toBranchTree(this.gitRepositoryStore.branches().filter(local) ?? []));
   protected readonly remoteBranches = computed(() => toBranchTree(this.gitRepositoryStore.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
   protected readonly selectedBranchNode = computed(() => {
@@ -66,16 +68,12 @@ export class LeftPanelComponent {
     if (stash) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [stash.parentSHAs[1]]});
   };
 
+  protected checkoutBranch = (branch?: Branch) => {
+      if (branch) this.branchService.checkoutBranch(branch);
+  };
+
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
     this.gitRepositoryStore.updateSelectedRepository({panelSizes: {...this.gitRepositoryStore.panelSizes()!, leftPanel: sizes.map(Number)}});
-  // checkoutBranch = (branch: TreeNode<Branch>) => {
-  //   this.gitRepositoryStore.updateSelectedRepository({checkedOutBranch: branch.data})
-  //
-  //   leaves(this.allBranchNodes).forEach(b => b.styleClass?.replace('selected-branch', ''));
-  //   branch.styleClass = 'selected-branch';
-  //
-  //   this.popupService.info(`Branch ${branch.data?.upstream} checked out`);
-  // };
 
   protected readonly $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
   protected readonly $stash = (stash: Commit) => stash;

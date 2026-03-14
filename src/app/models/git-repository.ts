@@ -13,7 +13,6 @@ export class GitRepository {
     public stashes: Commit[] = [],
     public branches: Branch[] = [],
     public selectedCommitsShas: string[] = [],
-    public checkedOutBranch?: Branch,
     public startCommit = 0,
     public remotes: { remote: string; url: string }[] = [],
     // Editor config
