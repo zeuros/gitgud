@@ -43,6 +43,7 @@ export const workingDirHasChanges = (status?: WorkDirStatus) => (status?.unstage
 export const logsComparison = (a: Commit[], b: Commit[]) => a.length === b.length && a.every((c, i) => c.sha === b[i].sha);
 export const branchesComparison = (a: Branch[], b: Branch[]) => a.length === b.length && a.every((b1, i) => b1.name === b[i]?.name)
 export const workDirComparison = (a?: WorkDirStatus, b?: WorkDirStatus) => workDirStatusKey(a) === workDirStatusKey(b);
+export const shallowArrayEqual = <T>(a?: T[], b?: T[]) => a === b || (!!a && !!b && a.length === b.length && a.every((v, i) => v === b[i]));
 
 const workDirStatusKey = (s?: WorkDirStatus) => s ? [...s.staged, ...s.unstaged].map(workDirFileChangeKey).join() : '';
 const workDirFileChangeKey = (f: WorkingDirectoryFileChange) => `${f.path}:${f.status}:${String(f.selection)}`;
