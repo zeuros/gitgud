@@ -44,3 +44,7 @@
 .black-and-white {
   filter: brightness(0) saturate(100%) invert(70%);
 }
+
+.p-highlight {
+  background: var(--row-selected-background-color);
+}
