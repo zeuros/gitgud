@@ -40,7 +40,8 @@
 
             @for (stash of gitRepositoryStore.stashes(); track stash.sha) {
                 @let s = $stash(stash);
-                <div class="p-2 cursor-pointer hover:surface-hover flex align-items-center gap-2" tabindex (click)="selectStash(stash)">
+                <div class="p-2 cursor-pointer hover:surface-hover flex align-items-center gap-2" tabindex (click)="selectStash(stash)"
+                 [class.p-highlight]="gitRepositoryStore.selectedStash()?.sha === stash.sha">
                     <img src="assets/images/chest.svg" width="16" height="16" alt="stash" class="black-and-white"/>
                     <span class="ellipsis text-gray">{{ s.summary }}</span>
                 </div>

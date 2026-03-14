@@ -55,7 +55,7 @@ export class LeftPanelComponent {
   };
 
   protected readonly selectStash = (stash?: Commit) => {
-    if (stash?.parentSHAs?.[1]) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [stash.parentSHAs[1]]});
+    if (stash) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [stash.parentSHAs[1]]});
   };
 
 

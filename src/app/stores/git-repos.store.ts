@@ -3,7 +3,7 @@ import {GitRepository} from '../models/git-repository';
 import {LocalStorageService} from '../services/local-storage.service';
 import {StorageName} from '../enums/storage-name.enum';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
-import {branchesComparison, logsComparison, workDirComparison} from '../utils/utils';
+import {branchesComparison, logsComparison, shallowArrayEqual, workDirComparison} from '../utils/utils';
 import {syncToStorage} from '../utils/store.utils';
 
 export interface AppConfig {
@@ -35,16 +35,22 @@ export class GitRepositoryStore {
   // Selected repo
   readonly logs = computed(() => this.selectedRepository()?.logs ?? [], {equal: logsComparison});
   readonly stashes = computed(() => this.selectedRepository()?.stashes ?? [], {equal: logsComparison});
+  readonly logStashes = computed(() => {
+    const stashes = this.stashes().map(s => s.parentSHAs?.[1]);
+    return this.logs()?.filter(l => stashes.includes(l.sha)) ?? [];
+  }, {equal: logsComparison});
   readonly branches = computed(() => this.selectedRepository()?.branches ?? [], {equal: branchesComparison});
   readonly startCommit = computed(() => this.selectedRepository()?.startCommit ?? 0);
   readonly workDirStatus = computed(() => this.selectedRepository()?.workDirStatus, {equal: workDirComparison});
   readonly panelSizes = computed(() => this.selectedRepository()?.panelSizes);
   readonly editorConfig = computed(() => this.selectedRepository()?.editorConfig);
 
-  readonly selectedCommitsShas = computed(() => this.selectedRepository()?.selectedCommitsShas);
-  readonly selectedCommitSha = computed(() => {const sc = this.selectedCommitsShas();return sc?.length === 1 ? sc[0] : undefined;});
+  readonly selectedCommitsShas = computed(() => this.selectedRepository()?.selectedCommitsShas, {equal: shallowArrayEqual});
+  readonly selectedCommitSha = computed(() => {const sc = this.selectedRepository()?.selectedCommitsShas;return sc?.length === 1 ? sc[0] : undefined;});
   readonly selectedCommits = computed(() => {const sc = this.selectedCommitsShas();return this.logs().find(c => sc?.includes(c.sha));});
   readonly selectedCommit = computed(() => {const sc = this.selectedCommitSha();return this.logs().find(c => c.sha === sc);});
+  readonly selectedStash = computed(() => {const sc = this.selectedCommitSha();return this.stashes().find(s => s.parentSHAs?.[1] && s.parentSHAs?.[1] === sc);});
+
 
   constructor() {
     syncToStorage(this._repositories, StorageName.GitRepositories, this.localStorageService);
