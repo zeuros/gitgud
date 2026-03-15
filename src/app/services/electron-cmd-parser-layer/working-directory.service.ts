@@ -1,4 +1,4 @@
-import {inject, Injectable} from '@angular/core';
+import {DestroyRef, inject, Injectable} from '@angular/core';
 import {map} from 'rxjs';
 import {parseRawLogWithNumstat, parseWorkingDirChanges} from '../../lib/github-desktop/commit-files-changes';
 import {FileWatcherService} from '../file-watcher.service';
@@ -13,14 +13,17 @@ export class WorkingDirectoryService {
 
 
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
-
   private readonly gitApiService = inject(GitApiService);
   private readonly fileWatcherService = inject(FileWatcherService);
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
     // Refresh working directory changes on app startup, window focus, or file system changes
     this.fetchWorkingDirChanges();
+
     window.electron.onWindowFocus(this.fetchWorkingDirChanges);
+    this.destroyRef.onDestroy(() => window.electron.offWindowFocus(this.fetchWorkingDirChanges));
+
     this.fileWatcherService.onWorkingDirFileChange$.subscribe(this.fetchWorkingDirChanges);
   }
 

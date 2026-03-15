@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld('electron', {
 
   // Window events
   onWindowFocus: (cb: () => void): BrowserWindow => getCurrentWindow().on('focus', cb),
+  offWindowFocus: (cb: () => void) => getCurrentWindow().off('focus', cb),
 
   processEnv: {...process.env},
 });

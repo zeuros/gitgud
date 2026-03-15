@@ -1,4 +1,4 @@
-import {effect, inject, Injectable} from '@angular/core';
+import {DestroyRef, effect, inject, Injectable} from '@angular/core';
 import {forkJoin, map, of, switchMap} from 'rxjs';
 import {GitRepository} from '../models/git-repository';
 import {isRootDirectory, throwEx} from '../utils/utils';
@@ -34,11 +34,13 @@ export class GitRepositoryService {
   private readonly gitApiService = inject(GitApiService);
   private readonly fileWatcher = inject(FileWatcherService);
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
 
     // Refresh data when window regains focus
     window.electron.onWindowFocus(this.updateLogsAndBranches);
+    this.destroyRef.onDestroy(() => window.electron.offWindowFocus(this.updateLogsAndBranches));
 
     // React to repository selection changes
     effect(() => {
