@@ -16,8 +16,8 @@
   }
 
   p-tab[draggable="true"] {
-    * {
-      pointer-events: none; // This disables pointer events on all children so drag events bubble up to the p-tab itself
+    *:not(button):not(p-button) {
+      pointer-events: none; // This disables pointer events on some children so drag events bubble up to the p-tab itself
     }
 
     &:active {
