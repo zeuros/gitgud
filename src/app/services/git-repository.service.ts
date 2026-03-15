@@ -1,5 +1,5 @@
 import {DestroyRef, effect, inject, Injectable} from '@angular/core';
-import {forkJoin, map, of, switchMap} from 'rxjs';
+import {forkJoin, map, of, switchMap, tap} from 'rxjs';
 import {GitRepository} from '../models/git-repository';
 import {isRootDirectory, throwEx} from '../utils/utils';
 import {createRepository, filterOutStashes} from '../utils/repository-utils';
@@ -39,8 +39,8 @@ export class GitRepositoryService {
   constructor() {
 
     // Refresh data when window regains focus
-    window.electron.onWindowFocus(this.updateLogsAndBranches);
-    this.destroyRef.onDestroy(() => window.electron.offWindowFocus(this.updateLogsAndBranches));
+    window.electron.onWindowFocus(this.doUpdateLogsAndBranches);
+    this.destroyRef.onDestroy(() => window.electron.offWindowFocus(this.doUpdateLogsAndBranches));
 
     // React to repository selection changes
     effect(() => {
@@ -77,7 +77,7 @@ export class GitRepositoryService {
     this.gitRepositoryStore.selectRepository(repoDirectory);
 
     // Refresh git data
-    this.updateLogsAndBranches();
+    this.doUpdateLogsAndBranches();
   };
 
   pickGitFolder = () => {
@@ -112,7 +112,7 @@ export class GitRepositoryService {
    * Fetches logs, branches, and stashes for the current repository
    * and returns a partial repository update.
    */
-  updateLogsAndBranches = () => {
+  updateLogsAndBranches = () =>
     this.stashService.getStashes()
       .pipe(
         switchMap(stashes => forkJoin({
@@ -121,8 +121,10 @@ export class GitRepositoryService {
           branches: this.branchService.getBranches(), // Source will show which branch the  commit is in
           stashes: of(stashes), // Source will show which branch commit is in
         })),
-      )
-      .subscribe(r => this.gitRepositoryStore.updateSelectedRepository(r));
-  };
+        tap(r => this.gitRepositoryStore.updateSelectedRepository(r)),
+      );
+
+
+  doUpdateLogsAndBranches = () => this.updateLogsAndBranches().subscribe();
 
 }

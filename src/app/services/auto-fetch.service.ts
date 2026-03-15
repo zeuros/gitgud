@@ -25,7 +25,7 @@ export class AutoFetchService {
   private readonly autoFetch = () => {
     if (untracked(() => this.gitRepositoryStore.selectedRepository())) {
       this.gitApiService.git(['fetch']);
-      this.gitRepositoryService.updateLogsAndBranches();
+      this.gitRepositoryService.doUpdateLogsAndBranches();
     }
   };
 
