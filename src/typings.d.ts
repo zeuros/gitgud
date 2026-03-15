@@ -24,6 +24,7 @@ declare global {
       };
       execFile: (cmd: string, args: string[], options: import('child_process').ExecOptions) => Promise<{ stdout: string; stderr: string }>;
       onWindowFocus: (cb: () => void) => import('electron').BrowserWindow;
+      offWindowFocus: (cb: () => void) => import('electron').BrowserWindow;
       processEnv: NodeJS.ProcessEnv;
     };
   }
