@@ -1,8 +1,8 @@
 import {Component, inject} from '@angular/core';
 import {Divider} from 'primeng/divider';
-import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
-import {Button, ButtonDirective} from 'primeng/button';
+import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
 import {Listbox} from 'primeng/listbox';
@@ -11,6 +11,9 @@ import {directory, fileName} from '../../../utils/utils';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {PrimeTemplate} from 'primeng/api';
 import {GitRepositoryStore} from '../../../stores/git-repos.store';
+import {CommitService} from '../../../services/commit.service';
+import {Checkbox} from 'primeng/checkbox';
+import {headCommit} from '../../../utils/commit-utils';
 
 @Component({
   selector: 'gitgud-make-a-commit',
@@ -18,28 +21,57 @@ import {GitRepositoryStore} from '../../../stores/git-repos.store';
     Divider,
     ReactiveFormsModule,
     Textarea,
-    ButtonDirective,
     InputText,
     Listbox,
     Button,
     PrimeTemplate,
+    Checkbox,
   ],
   templateUrl: './make-a-commit.component.html',
   styleUrl: './make-a-commit.component.scss',
 })
 export class MakeACommitComponent {
 
-  protected readonly directory = directory;
-  protected readonly fileName = fileName;
-  protected readonly commitForm = new FormGroup({
-    summary: new FormControl(''),
-    description: new FormControl(''),
-  });
-  protected readonly keys = Object.keys;
-  protected readonly FileStatusesIcons = FileStatusesIcons;
-  protected readonly fileDiffPanelService = inject(FileDiffPanelService);
-  protected readonly workingDirectoryService = inject(WorkingDirectoryService);
-  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  protected fileDiffPanelService = inject(FileDiffPanelService);
+  protected workingDirectoryService = inject(WorkingDirectoryService);
+  protected gitRepositoryStore = inject(GitRepositoryStore);
+  private commitService = inject(CommitService);
+  private savedFormState?: typeof this.commitForm.value;
+  protected commitForm = inject(FormBuilder).nonNullable.group({summary: '', description: ''});
+  protected amend = false;
 
-  protected readonly $WorkDirFileChanges = (w: WorkingDirectoryFileChange) => w;
+  protected commit() {
+    const {summary, description} = this.commitForm.value;
+
+    this.commitService.commit(summary!, description?.length ? description : undefined, this.amend);
+  }
+
+  protected amendMode(amend: boolean) {
+    this.amend = amend;
+    if (amend) {
+      // Save current form state
+      this.savedFormState = this.commitForm.value;
+
+      // Prefill with last commit message
+      const lastCommit = headCommit(this.gitRepositoryStore.branches(), this.gitRepositoryStore.logs()); // HEAD;
+      if (lastCommit) {
+        this.commitForm.patchValue({
+          summary: lastCommit.summary,
+          description: lastCommit.body ?? '',
+        });
+      }
+    } else {
+      // Restore saved state
+      if (this.savedFormState) {
+        this.commitForm.patchValue(this.savedFormState);
+        this.savedFormState = undefined;
+      }
+    }
+  }
+
+  protected FileStatusesIcons = FileStatusesIcons;
+  protected keys = Object.keys;
+  protected directory = directory;
+  protected fileName = fileName;
+  protected $WorkDirFileChanges = (w: WorkingDirectoryFileChange) => w;
 }

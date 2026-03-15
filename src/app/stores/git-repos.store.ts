@@ -50,6 +50,7 @@ export class GitRepositoryStore {
   readonly selectedCommitSha = computed(() => {const sc = this.selectedRepository()?.selectedCommitsShas;return sc?.length === 1 ? sc[0] : undefined;});
   readonly selectedCommit = computed(() => {const sc = this.selectedCommitSha();return this.logs().find(c => c.sha === sc);});
   readonly selectedStash = computed(() => {const sc = this.selectedCommitSha();return this.stashes().find(s => s.parentSHAs?.[1] && s.parentSHAs?.[1] === sc);});
+  readonly headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
 
 
   constructor() {
