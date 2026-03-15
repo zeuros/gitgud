@@ -14,6 +14,7 @@ import {GitRepositoryStore} from '../../../stores/git-repos.store';
 import {CommitService} from '../../../services/commit.service';
 import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
+import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
 
 @Component({
   selector: 'gitgud-make-a-commit',
@@ -26,6 +27,7 @@ import {headCommit} from '../../../utils/commit-utils';
     Button,
     PrimeTemplate,
     Checkbox,
+    Splitter,
   ],
   templateUrl: './make-a-commit.component.html',
   styleUrl: './make-a-commit.component.scss',
@@ -68,6 +70,9 @@ export class MakeACommitComponent {
       }
     }
   }
+
+  protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
+    this.gitRepositoryStore.updateSelectedRepository({panelSizes: {...this.gitRepositoryStore.panelSizes()!, makeCommitPanel: sizes.map(Number)}});
 
   protected FileStatusesIcons = FileStatusesIcons;
   protected keys = Object.keys;
