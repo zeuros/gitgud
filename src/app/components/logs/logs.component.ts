@@ -51,6 +51,7 @@ export class LogsComponent {
   private stashImg = loadStashImage();
 
   private _layoutReady = signal(false);
+  protected _canvasResized = signal({}); // When selectedRepository() changes, canvas is resized for some reason, it helps redraw the log at the good moment
   protected _branchColumnWidth = signal(0);
   private _tableHeight = signal(0);
   private canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
@@ -105,7 +106,7 @@ export class LogsComponent {
       const logTableContainer = this.logTableContainer();
       const canvas = this.canvas()?.nativeElement?.getContext('2d');
 
-      if (canvas && displayLog.length && stashImg && visibleCommitsCount && visibleCommitsCount > 10 && logTableContainer) {
+      if (this._canvasResized() && canvas && displayLog.length && stashImg && visibleCommitsCount && visibleCommitsCount > 0 && logTableContainer) {
         drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg);
         untracked(() => this.setupScrollListeners(logTableContainer));// will be called once
       }
@@ -113,12 +114,18 @@ export class LogsComponent {
 
     // Position the canvas over the p-table GRAPH column
     effect(() => {
-      const logTableContainer = this.logTableContainer();
       const firstTableTh = this.logTableRef()?.querySelector('table')?.querySelector('th');
-      if (!firstTableTh || !logTableContainer) return;
+      if (firstTableTh) new ResizeObserver(() => this._branchColumnWidth.set(firstTableTh.clientWidth)).observe(firstTableTh);
+    });
 
-      new ResizeObserver(() => this._branchColumnWidth.set(firstTableTh.offsetWidth)).observe(firstTableTh);
-      new ResizeObserver(() => this._tableHeight.set(logTableContainer.clientHeight)).observe(logTableContainer);
+    effect(() => {
+      const logTableContainer = this.logTableContainer();
+      if (logTableContainer) new ResizeObserver(() => this._tableHeight.set(logTableContainer.clientHeight)).observe(logTableContainer);
+    });
+
+    effect(() => {
+      const canvas = this.canvas()?.nativeElement;
+      if (canvas) new ResizeObserver(() => this._canvasResized.set({})).observe(canvas);
     });
 
     afterNextRender(() => this._layoutReady.set(true));
