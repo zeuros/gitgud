@@ -3,6 +3,7 @@ import {DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {RefType} from '../enums/ref-type.enum';
 import {CommitIdentity} from '../lib/github-desktop/model/commit-identity';
 import Identicon from 'identicon.js';
+import {Branch} from '../lib/github-desktop/model/branch';
 
 
 export type ChildrenMap = { [parentSha: string]: DisplayRef[] };
@@ -83,3 +84,12 @@ export const buildStashMap = (stashes: Commit[]) => {
 
 
 export const identIcon = (email: string) => new Identicon(window.electron.crypto.md5(email), {size: 48, format: 'png', background: [0, 0, 0, 0]});
+
+export const headCommit = (branches: Branch[], logs: Commit[], offset = 0) => {
+  const headBranch = branches.find(b => b.isHeadPointed);
+  let commit = logs.find(c => c.sha === headBranch?.tip.sha);
+  for (let i = 0 ; i < Math.abs(offset) ; i++) {
+    commit = logs.find(c => c.sha === commit?.parentSHAs?.[0]);
+  }
+  return commit;
+};
