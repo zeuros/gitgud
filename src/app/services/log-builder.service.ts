@@ -14,7 +14,6 @@ type Column = ['taken' | 'free', rowCount: number];
 
 interface ColumnsState {
   columns: Column[];
-  treeLockedColumn?: number;
   maxIndent: number;
 }
 
@@ -44,7 +43,7 @@ export class LogBuilderService {
 
     const displayLog = this.saveRowIndexIntoDisplayRef(commits);
 
-    const columnState: ColumnsState = {columns: [], treeLockedColumn: undefined, maxIndent: 0};
+    const columnState: ColumnsState = {columns: [], maxIndent: 0};
     this.computeCommitsIndents(displayLog, shaMap, childrenMap, columnState);
 
     const edges = this.updateEdgeIntervals(displayLog, childrenMap);
@@ -130,8 +129,8 @@ export class LogBuilderService {
     // In order to indent commits for this new tree, we clear the saved commits refs and restart commits indentation from column 0
     if (isRootCommit(commit)) {
 
-      // Lock starting column of the tree for the next tree (looks better)
-      if (colState.treeLockedColumn != undefined) this.setColumnFree(colState.treeLockedColumn, colState);
+      // Free tree main column
+      // this.setColumnFree(children[0].indent!, colState);
 
       // The column of a root commit will remain taken since it doesn't have a parent to free the column
       return children[0].indent!; // The column of a root commit will remain taken since it doesn't have a parent to free the column
