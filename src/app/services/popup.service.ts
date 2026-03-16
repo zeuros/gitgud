@@ -1,19 +1,17 @@
-import {Injectable} from '@angular/core';
-import {MessageService, ToastMessageOptions} from "primeng/api";
-import {errorMessage} from "../utils/utils";
+import {inject, Injectable} from '@angular/core';
+import {MessageService, ToastMessageOptions} from 'primeng/api';
+import {errorMessage} from '../utils/utils';
 
 const defaultMessageConfig: ToastMessageOptions = {styleClass: 'headLess', text: '', life: 5000};
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PopupService {
 
-  constructor(
-    private messageService: MessageService,
-  ) {
-  }
+  private messageService = inject(MessageService);
 
+  success = (message: Error | string) => this.messageService.add({...defaultMessageConfig, severity: 'success', detail: message.toString()});
 
   info = (message: Error | string) => this.messageService.add({...defaultMessageConfig, severity: 'info', detail: message.toString()});
 

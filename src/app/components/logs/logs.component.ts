@@ -20,6 +20,8 @@ import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {LogBuilderService} from '../../services/log-builder.service';
 import {CANVAS_MARGIN, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
+import {LogContextMenuService} from './log-context-menu.service';
+import {ContextMenu} from 'primeng/contextmenu';
 
 @Component({
   selector: 'gitgud-logs',
@@ -29,6 +31,7 @@ import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
     DragDropModule,
     SearchLogsComponent,
     DatePipe,
+    ContextMenu,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -37,6 +40,7 @@ export class LogsComponent {
 
   private gitRepositoryStore = inject(GitRepositoryStore);
   private logBuilderService = inject(LogBuilderService);
+  protected logContextMenuService = inject(LogContextMenuService);
   protected commitsSelection = computed(() => {
     const selectedCommitsShas = this.gitRepositoryStore.selectedCommitsShas();
     return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
