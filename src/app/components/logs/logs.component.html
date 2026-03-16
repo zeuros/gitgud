@@ -20,6 +20,7 @@
         (selectionChange)="onCommitsSelection($event)"
         dataKey="sha"
         [rowHover]="true"
+        [contextMenu]="commitContextMenu" (onContextMenuSelect)="logContextMenuService.selectedCommit.set($event.data)"
         [scrollable]="true"
         [resizableColumns]="true"
         scrollHeight="flex"
@@ -40,7 +41,8 @@
         <tr class="commit-row {{ commit.highlight }}"
             [pSelectableRow]="commit"
             [pSelectableRowIndex]="rowIndex"
-            [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2">
+            [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2"
+            [pContextMenuRow]="commit">
             <td class="branch-tag-td">
                 @for (branch of branchesAndRef(commit); track branch.name; let i = $index) {
                     <div class="branch-tag">
@@ -52,8 +54,7 @@
                             <span class="float-icons">
                                 @if (remote(branch)) {
                                     <i class="fa fa-github mr-2"></i>
-                                }
-                                @else if (local(branch)) {
+                                } @else if (local(branch)) {
                                     <i class="fa fa-laptop mr-2"></i>
                                 }
                             </span>
@@ -70,3 +71,5 @@
         </tr>
     </ng-template>
 </p-table>
+
+<p-contextMenu #commitContextMenu [model]="logContextMenuService.contextMenu" appendTo="body"/>

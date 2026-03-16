@@ -23,6 +23,7 @@ declare global {
         showOpenDialogSync: typeof import('@electron/remote').dialog.showOpenDialogSync;
       };
       execFile: (cmd: string, args: string[], options: import('child_process').ExecOptions) => Promise<{ stdout: string; stderr: string }>;
+      openTerminal: (cwd: string, command?: string) => import('child_process').ChildProcess;
       onWindowFocus: (cb: () => void) => import('electron').BrowserWindow;
       offWindowFocus: (cb: () => void) => import('electron').BrowserWindow;
       processEnv: NodeJS.ProcessEnv;

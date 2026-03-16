@@ -2,7 +2,7 @@ import {BrowserWindow, contextBridge} from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import {createHash} from 'crypto';
-import {execFile, ExecFileOptions} from 'child_process';
+import {exec, execFile, ExecFileOptions} from 'child_process';
 import {promisify} from 'util';
 import {dialog, getCurrentWindow} from '@electron/remote';
 import {ChokidarOptions, FSWatcher, watch} from 'chokidar';
@@ -40,6 +40,16 @@ contextBridge.exposeInMainWorld('electron', {
   },
 
   execFile: promisify(execFile) as (cmd: string, args: string[], options: ExecFileOptions) => Promise<{ stdout: string; stderr: string }>,
+
+  openTerminal: (cwd: string, command?: string) => {
+    if (process.platform === 'win32') {
+      exec(`start cmd.exe /K "cd /d ${cwd}${command ? ' && ' + command : ''}"`, {cwd});
+    } else if (process.platform === 'darwin') {
+      exec(`osascript -e 'tell app "Terminal" to do script "cd ${cwd}${command ? ' && ' + command : ''}"'`);
+    } else {
+      exec(`x-terminal-emulator -e "bash -c 'cd ${cwd}${command ? ' && ' + command : ''}; exec bash'"`, {cwd});
+    }
+  },
 
   // dialog via @electron/remote
   dialog: {
