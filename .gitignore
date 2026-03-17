@@ -136,6 +136,9 @@ out/
 .nx
 **/*.map
 
+# AI shit
+.claude
+
 # Generated
 app/main.js
 app/preload.js
