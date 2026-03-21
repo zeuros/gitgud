@@ -32,9 +32,9 @@ export const instanceOf = <T extends new (...args: any[]) => any>(o: any, theCla
 export const directory = (path: string) => path.split('/').slice(0, -1).join('/');
 export const fileName = (path: string) => path.split('/').pop();
 
-export const showPerf = (cmd: string, args: string[] = []) => {
+export const showPerf = (cmd: string, args: string[] = [], out?: any) => {
   const start = performance.now();
-  return () => console.warn(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`);
+  return () => console.warn(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`, out);
 };
 
 export const workingDirHasChanges = (status?: WorkDirStatus) => (status?.unstaged.length ?? 0) > 0 || (status?.staged.length ?? 0) > 0;

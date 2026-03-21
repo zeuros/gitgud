@@ -133,7 +133,7 @@ export class LogContextMenuService {
   protected interactiveRebase = () => {
     const sha = this.selectedCommit()?.sha;
     if (!sha) return;
-    window.electron.openTerminal(this.gitApiService.cwd()!, `git rebase -i ${sha}~1`);
+    // window.electron.openTerminal(this.gitApiService.cwd()!, `git rebase -i ${sha}~1`);
   };
 
   protected dropCommit = () =>

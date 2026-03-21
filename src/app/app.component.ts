@@ -22,6 +22,6 @@ export class AppComponent {
 
     effect(() => this.router.navigate([this.gitRepositoryStore.hasRepositories() ? 'repo' : 'welcome-screen']));
 
-    console.log('Process env: ', window.electron.processEnv);
+    console.log('Process env: ', window.electron.process.env);
   }
 }

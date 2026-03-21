@@ -1,18 +1,17 @@
-import {inject, Injectable, isDevMode, signal} from '@angular/core';
+import {Injectable, isDevMode, signal} from '@angular/core';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting JavaScript file will look as if you never imported the module at all.
 // import type {ExecOptions} from 'child_process';
-import {catchError, from, map, Observable, switchMap, tap} from 'rxjs';
+import {from, map, Observable, switchMap, tap} from 'rxjs';
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
-import {PopupService} from '../popup.service';
+import {ExecOptions, SpawnOptionsWithoutStdio} from 'node:child_process';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GitApiService {
 
-  private popupService = inject(PopupService);
   // When a repository is opened / loaded, set the cwd for future git commands
   readonly cwd = signal<string | undefined>(undefined);
 
@@ -34,8 +33,8 @@ export class GitApiService {
       .subscribe(console.log);
   }
 
-  git = (args: (string | undefined)[] | undefined) =>
-    this.exec('git', args?.filter(notUndefined) ?? [], {cwd: this.cwd(), env: window.electron.processEnv});
+  git = (args: (string | undefined)[] | undefined, options?: ExecOptions) =>
+    this.exec('git', args?.filter(notUndefined) ?? [], {cwd: this.cwd(), env: window.electron.process.env, ...options});
 
   clone = (url: string, repoName: string, dir: string) =>
     this.cd(dir).pipe(
@@ -46,12 +45,23 @@ export class GitApiService {
 
   cd = (dir: string) => this.exec('cd', [dir]).pipe(tap(() => this.cwd.set(dir)));
 
-  exec = (cmd: string, args: string[] = [], options?: any): Observable<string> => {
+  exec = (cmd: string, args: string[] = [], options?: any) => {
     return from(window.electron.execFile(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
       .pipe(
         map(({stdout}) => stdout.toString()),
         tap(isDevMode() ? showPerf(cmd, args) : () => 0),
       );
   };
+
+  spawn = (cmd: string, args: string[] = [], options?: SpawnOptionsWithoutStdio) =>
+    new Observable(observer => {
+      window.electron.spawn(`${cmd}`, args, {cwd: this.cwd(), env: window.electron.process.env, ...options})
+        .then(out => {
+          if (isDevMode()) showPerf(cmd, args, out);
+          observer.next(out);
+          observer.complete();
+        })
+        .catch(e => observer.error(e));
+    });
 
 }
