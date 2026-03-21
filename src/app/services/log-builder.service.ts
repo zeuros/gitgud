@@ -5,7 +5,20 @@ import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {RefType} from '../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../utils/utils';
 import {byName, createIndexCommit} from '../utils/log-utils';
-import {buildChildrenMap, buildShaMap, buildStashMap, ChildrenMap, edgeType, isCommit, isIndex, isMergeCommit, isRootCommit, isStash, ShaMap} from '../utils/commit-utils';
+import {
+  buildChildrenMap,
+  buildShaMap,
+  buildStashMap,
+  ChildrenMap,
+  edgeType,
+  isCommit,
+  isIndex,
+  isMergeCommit,
+  isRootCommit,
+  isStash,
+  ShaMap,
+  stashUntrackedChildren,
+} from '../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../models/edge';
 import {GitRepositoryStore} from '../stores/git-repos.store';
@@ -20,6 +33,7 @@ interface ColumnsState {
 export interface LogBuildResult {
   displayLog: DisplayRef[];
   edges: IntervalTree<Edge>;
+  untrackedStashes: string[];
   graphColumnCount: number;
 }
 
@@ -30,11 +44,11 @@ export class LogBuilderService {
 
   private readonly branches = inject(GitRepositoryStore).branches;
 
-  buildDisplayLog(logs: Commit[], stashes: Commit[], indexParent?: DisplayRef): LogBuildResult {
-    const stashMap = buildStashMap(stashes);
+  buildDisplayLog(logs: Commit[], stashChildren: Commit[], indexParent?: DisplayRef): LogBuildResult {
+    const stashMap = buildStashMap(stashChildren);
+    const untrackedStashes = stashUntrackedChildren(stashChildren);
 
-    const commits = logs.map(c => this.commitToDisplayRef(c, stashMap[c.sha]));
-
+    const commits = logs.filter(l => !untrackedStashes.includes(l.sha)).map(c => this.commitToDisplayRef(c, stashMap[c.sha]));
     // "Index" commit = working directory changes
     if (indexParent) commits.unshift(createIndexCommit(indexParent));
 
@@ -48,7 +62,7 @@ export class LogBuilderService {
 
     const edges = this.updateEdgeIntervals(displayLog, childrenMap);
 
-    return {displayLog, edges, graphColumnCount: columnState.maxIndent + 1};
+    return {displayLog, untrackedStashes, edges, graphColumnCount: columnState.maxIndent + 1};
   }
 
   /**
@@ -133,7 +147,7 @@ export class LogBuilderService {
       // this.setColumnFree(children[0].indent!, colState);
 
       // The column of a root commit will remain taken since it doesn't have a parent to free the column
-      return children[0].indent!; // The column of a root commit will remain taken since it doesn't have a parent to free the column
+      return children[0].indent!;
     }
 
     if (children.length > 1 && leftChildOfSameBranch) {
