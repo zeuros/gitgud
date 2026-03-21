@@ -14,7 +14,7 @@ export const isCommit = (displayRef: DisplayRef) => displayRef.refType == RefTyp
 export const isIndex = (displayRef: DisplayRef) => displayRef.refType == RefType.INDEX;
 export const isStash = (displayRef: DisplayRef) => displayRef.refType == RefType.STASH;
 export const isMergeCommit = (displayRef: DisplayRef) => isCommit(displayRef) && displayRef.parentSHAs.length > 1;
-export const isRootCommit = (displayRef: DisplayRef | Commit) => displayRef.parentSHAs.length == 0;
+export const isRootCommit = (displayRef: DisplayRef) => isCommit(displayRef) && displayRef.parentSHAs.length == 0;
 
 export const initials = (author: CommitIdentity) => author.name.split(' ').slice(0, 2).map(e => e[0]).join('').toUpperCase();
 export const hasName = (author: CommitIdentity) => author.name.length > 0;
