@@ -4,10 +4,12 @@ import {RefType} from '../enums/ref-type.enum';
 import {CommitIdentity} from '../lib/github-desktop/model/commit-identity';
 import Identicon from 'identicon.js';
 import {Branch} from '../lib/github-desktop/model/branch';
+import {notUndefined} from './utils';
 
 
 export type ChildrenMap = { [parentSha: string]: DisplayRef[] };
 export type ShaMap = { [sha: string]: DisplayRef };
+export type StashMap = { [stashMergeParent: string]: Commit };
 
 
 export const isCommit = (displayRef: DisplayRef) => displayRef.refType == RefType.COMMIT;
@@ -42,10 +44,6 @@ export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: Childr
   return hasNoBranching(childrenCommits[0], childMap);
 };
 
-export const hasChild = (stash: DisplayRef, childrenMap: ChildrenMap) => !!childrenMap[stash.sha];
-
-export const stashParentCommitSha = (stash: DisplayRef, shaMap: ShaMap) => stash.parentSHAs.find(parentSha => shaMap[parentSha] && isCommit(shaMap[parentSha]));
-
 // Build the opposite of the Commit.parentShas => Commit.childShas
 export const buildChildrenMap = (commitLog: DisplayRef[]) => {
   const commitsChildrenShas: ChildrenMap = {};
@@ -73,7 +71,7 @@ export const buildShaMap = (logs: DisplayRef[]) => {
 
 
 export const buildStashMap = (stashes: Commit[]) => {
-  const stashMap: { [sha: string]: Commit } = {};
+  const stashMap: StashMap = {};
 
   for (const stash of stashes) {
     if (stash.parentSHAs[1]) stashMap[stash.parentSHAs[1]] = stash;
@@ -82,6 +80,7 @@ export const buildStashMap = (stashes: Commit[]) => {
   return stashMap;
 };
 
+export const stashUntrackedChildren = (stashes: Commit[]) => stashes.map(s => s.parentSHAs?.[2]).filter(notUndefined);
 
 export const identIcon = (email: string) => new Identicon(window.electron.crypto.md5(email), {size: 48, format: 'png', background: [0, 0, 0, 0]});
 
