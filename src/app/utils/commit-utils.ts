@@ -22,6 +22,8 @@ export const initials = (author: CommitIdentity) => author.name.split(' ').slice
 export const hasName = (author: CommitIdentity) => author.name.length > 0;
 export const commitColor = (indent: number) => `hue-rotate(${indent * 360 / 7}deg)`;
 
+export const short = (sha: string) => sha.substring(0, 6);
+
 // TODO move somewhere
 export const edgeType = (childCommit: DisplayRef) => {
   if (childCommit.refType == RefType.INDEX) return RefType.INDEX;
