@@ -3,8 +3,10 @@ import {GitRepository} from '../models/git-repository';
 import {LocalStorageService} from '../services/local-storage.service';
 import {StorageName} from '../enums/storage-name.enum';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
-import {branchesComparison, logsComparison, shallowArrayEqual, workDirComparison} from '../utils/utils';
+import {keyComparison, logsComparison, shallowArrayEqual} from '../utils/utils';
 import {syncToStorage} from '../utils/store.utils';
+import {Branch} from '../lib/github-desktop/model/branch';
+import {isEqual} from 'lodash-es';
 
 export interface AppConfig {
   autoFetchInterval: number;
@@ -40,9 +42,13 @@ export class GitRepositoryStore {
     const stashes = this.stashes().map(s => s.parentSHAs?.[1]);
     return this.logs()?.filter(l => stashes.includes(l.sha)) ?? [];
   }, {equal: logsComparison});
-  readonly branches = computed(() => this.selectedRepository()?.branches ?? [], {equal: branchesComparison});
+  readonly branches = computed(() => this.selectedRepository()?.branches ?? [], {equal: isEqual});
+  readonly branchesByTip = computed(() => this.branches().reduce((acc, b) => ({
+    ...acc,
+    [b.tip.sha]: [...(acc[b.tip.sha] ?? []), b],
+  }), {} as Record<string, Branch[] | undefined>), {equal: keyComparison});
   readonly startCommit = computed(() => this.selectedRepository()?.startCommit ?? 0);
-  readonly workDirStatus = computed(() => this.selectedRepository()?.workDirStatus, {equal: workDirComparison});
+  readonly workDirStatus = computed(() => this.selectedRepository()?.workDirStatus, {equal: isEqual});
   readonly panelSizes = computed(() => this.selectedRepository()?.panelSizes);
   readonly editorConfig = computed(() => this.selectedRepository()?.editorConfig);
 
