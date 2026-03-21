@@ -5,6 +5,7 @@ import {map, Observable} from 'rxjs';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {formatArg} from '../../utils/log-utils';
 import {GitApiService} from './git-api.service';
+import {short} from '../../utils/commit-utils';
 
 @Injectable({
   providedIn: 'root',
@@ -78,7 +79,7 @@ export class LogService {
 
         return new Commit(
           commit.sha,
-          commit.shortSha,
+          short(commit.shortSha),
           commit.summary,
           commit.body,
           commit.branch,

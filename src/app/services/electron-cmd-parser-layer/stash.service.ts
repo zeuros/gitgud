@@ -5,6 +5,7 @@ import {map} from 'rxjs';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {formatArg} from '../../utils/log-utils';
 import {GitApiService} from './git-api.service';
+import {short} from '../../utils/commit-utils';
 
 @Injectable({
   providedIn: 'root'
@@ -43,7 +44,7 @@ export class StashService {
       '--no-show-signature',
       '--no-color',
       '--'
-    ]
+    ];
 
     return this.gitApiService.git(args)
       .pipe(map(log => this.stashParse(log).map(stash => {
@@ -58,7 +59,7 @@ export class StashService {
 
         return new Commit(
           stash.sha,
-          stash.shortSha,
+          short(stash.shortSha),
           stash.summary,
           stash.body,
           stash.branch ?? '',
