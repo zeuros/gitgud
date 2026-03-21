@@ -24,8 +24,7 @@ export class AutoFetchService {
   // TODO: auto fetch only if no other programs have done it (stat .git/FETCH_HEAD to know that)
   private readonly autoFetch = () => {
     if (untracked(() => this.gitRepositoryStore.selectedRepository())) {
-      this.gitApiService.git(['fetch']);
-      this.gitRepositoryService.doUpdateLogsAndBranches();
+      this.gitApiService.git(['fetch']).subscribe(this.gitRepositoryService.doUpdateLogsAndBranches);
     }
   };
 
