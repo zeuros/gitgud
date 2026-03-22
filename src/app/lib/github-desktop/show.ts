@@ -9,15 +9,15 @@ import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.se
  * the binary contents of the blob or an error if the file doesn't
  * exists in the given revision.
  *
- * @param gitApiService
+ * @param gitApi
  * @param commitish  - A commit SHA or some other identifier that
  *                     ultimately dereferences to a commit/tree.
  *
  * @param path       - The file path, relative to the repository
  *                     root from where to read the blob contents
  */
-export const getBlobContents = (gitApiService: GitApiService, commitish: string, path: string) =>
-  gitApiService.git(['show', `${commitish}:${path}`]);
+export const getBlobContents = (gitApi: GitApiService, commitish: string, path: string) =>
+  gitApi.git(['show', `${commitish}:${path}`]);
 
 /**
  * Retrieve some or all binary contents of a blob from the repository

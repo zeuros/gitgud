@@ -20,8 +20,8 @@ import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {LogBuilderService} from '../../services/log-builder.service';
 import {CANVAS_MARGIN, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
-import {LogContextMenuService} from './log-context-menu.service';
 import {ContextMenu} from 'primeng/contextmenu';
+import {LogContextMenuService} from './log-context-menu.service';
 
 @Component({
   selector: 'gitgud-logs',
@@ -38,8 +38,8 @@ import {ContextMenu} from 'primeng/contextmenu';
 })
 export class LogsComponent {
 
-  private gitRepositoryStore = inject(GitRepositoryStore);
-  private logBuilderService = inject(LogBuilderService);
+  private logBuilder = inject(LogBuilderService);
+  protected gitRepositoryStore = inject(GitRepositoryStore);
   protected logContextMenuService = inject(LogContextMenuService);
   protected commitsSelection = computed(() => {
     const selectedCommitsShas = this.gitRepositoryStore.selectedCommitsShas();
@@ -186,7 +186,7 @@ export class LogsComponent {
       ? {...headCommit, branchesDetails: [], isPointedByLocalHead: true, refType: RefType.COMMIT} as DisplayRef
       : undefined;
 
-    const {displayLog, edges, graphColumnCount} = this.logBuilderService.buildDisplayLog(logs, stashes, indexParent);
+    const {displayLog, edges, graphColumnCount} = this.logBuilder.buildDisplayLog(logs, stashes, indexParent);
 
     this.computedDisplayLog.set(displayLog);
     this.edges.set(edges);

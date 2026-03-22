@@ -9,19 +9,19 @@ import { workingDirHasChanges } from '../utils/utils';
 @Injectable({providedIn: 'root'})
 export class CommitService {
 
-  private readonly gitApiService = inject(GitApiService);
-  private readonly gitRepositoryService = inject(GitRepositoryService);
+  private readonly gitApi = inject(GitApiService);
+  private readonly gitRepository = inject(GitRepositoryService);
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
-  private readonly workingDirectoryService = inject(WorkingDirectoryService);
+  private readonly workingDirectory = inject(WorkingDirectoryService);
 
-  giveHead = () => this.gitApiService.git(['rev-parse', 'HEAD']).pipe(map(sha => sha.trim()));
+  giveHead = () => this.gitApi.git(['rev-parse', 'HEAD']).pipe(map(sha => sha.trim()));
 
   commit = (summary: string, description?: string, amend = false) =>
-    this.gitApiService.git(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])])
+    this.gitApi.git(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])])
       .pipe(
         switchMap(() => forkJoin({
-          workDirStatus: this.workingDirectoryService.fetchWorkingDirChanges(),
-          logsAndBranches: this.gitRepositoryService.updateLogsAndBranches(), // refresh log and wait for it so that selected commit sha can be updated
+          workDirStatus: this.workingDirectory.fetchWorkingDirChanges(),
+          logsAndBranches: this.gitRepository.updateLogsAndBranches(), // refresh log and wait for it so that selected commit sha can be updated
         })),
       )
       .subscribe(({workDirStatus}) => {

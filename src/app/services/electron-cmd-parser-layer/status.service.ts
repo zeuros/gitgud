@@ -6,7 +6,7 @@ import {GitApiService} from './git-api.service';
 })
 export class StatusService {
 
-  gitApiService = inject(GitApiService);
+  gitApi = inject(GitApiService);
 
   /**
    *  Retrieve the status for a given repository,
