@@ -3,9 +3,9 @@ import {forkJoin, map, of, switchMap, tap} from 'rxjs';
 import {GitRepository} from '../models/git-repository';
 import {isRootDirectory, throwEx} from '../utils/utils';
 import {createRepository, filterOutStashes} from '../utils/repository-utils';
-import {LogService} from './electron-cmd-parser-layer/log.service';
-import {StashService} from './electron-cmd-parser-layer/stash.service';
-import {BranchService} from './electron-cmd-parser-layer/branch.service';
+import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
+import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
+import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {FileWatcherService} from './file-watcher.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
@@ -28,10 +28,10 @@ const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 export class GitRepositoryService {
 
   // Services
-  private readonly logService = inject(LogService);
-  private readonly branchService = inject(BranchService);
-  private readonly stashService = inject(StashService);
-  private readonly gitApiService = inject(GitApiService);
+  private readonly logReader = inject(LogReaderService);
+  private readonly branchReader = inject(BranchReaderService);
+  private readonly stashReader = inject(StashReaderService);
+  private readonly gitApi = inject(GitApiService);
   private readonly fileWatcher = inject(FileWatcherService);
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
   private readonly destroyRef = inject(DestroyRef);
@@ -51,7 +51,7 @@ export class GitRepositoryService {
 
   private onRepositorySelected = ({id}: GitRepository) => {
     this.fileWatcher.setWatcher(id);
-    this.gitApiService.cwd.set(id);
+    this.gitApi.cwd.set(id);
   };
 
   /**
@@ -113,12 +113,12 @@ export class GitRepositoryService {
    * and returns a partial repository update.
    */
   updateLogsAndBranches = () =>
-    this.stashService.getStashes()
+    this.stashReader.getStashes()
       .pipe(
         switchMap(stashes => forkJoin({
-          logs: this.logService.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', ...stashes.map(s => s.sha)])
+          logs: this.logReader.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', ...stashes.map(s => s.sha)])
             .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
-          branches: this.branchService.getBranches(), // Source will show which branch the  commit is in
+          branches: this.branchReader.getBranches(), // Source will show which branch the  commit is in
           stashes: of(stashes), // Source will show which branch commit is in
         })),
         tap(r => this.gitRepositoryStore.updateSelectedRepository(r)),

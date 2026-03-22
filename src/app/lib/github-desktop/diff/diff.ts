@@ -12,7 +12,7 @@ import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api
  * (Show what would be the result of merge)
  */
 export async function getBranchMergeBaseDiff(
-  gitApiService: GitApiService,
+  gitApi: GitApiService,
   file: FileChange,
   baseBranchName: string,
   comparisonBranchName: string,
@@ -39,7 +39,7 @@ export async function getBranchMergeBaseDiff(
     args.push(file.status.oldPath);
   }
 
-  return gitApiService.git(args).pipe(map(result => buildDiff(result, file, latestCommit)));
+  return gitApi.git(args).pipe(map(result => buildDiff(result, file, latestCommit)));
 }
 
 /**
@@ -300,12 +300,12 @@ function getMediaType(extension: string) {
 //  * https://en.wikipedia.org/wiki/Data_URI_scheme
 //  */
 export async function getBlobImage(
-  gitApiService: GitApiService,
+  gitApi: GitApiService,
   git: (args?: string[]) => Observable<string>,
   path: string,
   commitish: string,
 ) {
-  return getBlobContents(gitApiService, commitish, path)
+  return getBlobContents(gitApi, commitish, path)
     .pipe(map(contents => new Image(
       contents,
       btoa(contents),

@@ -436,7 +436,7 @@ export class DiffParser {
 })
 export class FileDiffService {
 
-  private readonly gitApiService = inject(GitApiService);
+  private readonly gitApi = inject(GitApiService);
 
   /**
    * Render the difference between a file in the given commit and its parent
@@ -444,7 +444,7 @@ export class FileDiffService {
    * @param commitish A commit SHA or some other identifier that ultimately dereferences to a commit.
    */
    getCommitDiff = (file: FileChange, commitish: string, hideWhitespaceInDiff = false) =>
-    this.gitApiService
+    this.gitApi
       .git([
         'log',
         commitish,
@@ -468,7 +468,7 @@ export class FileDiffService {
    * @param commitish A commit SHA or some other identifier that ultimately dereferences to a commit.
    */
   getWorkingDirectoryDiff = (file: FileChange, hideWhitespaceInDiff = false) =>
-    this.gitApiService
+    this.gitApi
       .git([
         'diff',
         ...(hideWhitespaceInDiff ? ['-w'] : []),

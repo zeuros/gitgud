@@ -12,7 +12,7 @@ import {TableModule} from 'primeng/table';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
 import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
-import {BranchService} from '../../services/electron-cmd-parser-layer/branch.service';
+import {BranchReaderService} from '../../services/electron-cmd-parser-layer/branch-reader.service';
 
 
 @Component({
@@ -51,7 +51,7 @@ export class LeftPanelComponent {
   ];
 
   protected readonly gitRepositoryStore = inject(GitRepositoryStore);
-  private readonly branchService = inject(BranchService);
+  private readonly branchReader = inject(BranchReaderService);
   protected readonly localBranches = computed(() => toBranchTree(this.gitRepositoryStore.branches().filter(local) ?? []));
   protected readonly remoteBranches = computed(() => toBranchTree(this.gitRepositoryStore.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
   protected readonly selectedBranchNode = computed(() => {
@@ -69,7 +69,7 @@ export class LeftPanelComponent {
   };
 
   protected checkoutBranch = (branch?: Branch) => {
-      if (branch) this.branchService.checkoutBranch(branch);
+      if (branch) this.branchReader.checkoutBranch(branch);
   };
 
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>

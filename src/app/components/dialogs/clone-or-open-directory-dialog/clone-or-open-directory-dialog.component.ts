@@ -27,12 +27,12 @@ import {FloatLabelModule} from 'primeng/floatlabel';
 export class CloneOrOpenDirectoryDialogComponent {
 
 
-  private readonly gitApiService = inject(GitApiService);
-  private readonly popupService = inject(PopupService);
+  private readonly gitApi = inject(GitApiService);
+  private readonly popup = inject(PopupService);
 
   repositoryUrl = model<string>();
 
-  protected clone = (url: string) => this.gitApiService.clone(url, '', '')
-    .subscribe(() => this.popupService.info('Repository cloned'));
+  protected clone = (url: string) => this.gitApi.clone(url, '', '')
+    .subscribe(() => this.popup.info('Repository cloned'));
 
 }

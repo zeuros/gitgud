@@ -11,7 +11,7 @@ import {PopupService} from '../popup.service';
 @Injectable({
   providedIn: 'root',
 })
-export class BranchService {
+export class BranchReaderService {
 
   readonly fields = {
     fullName: '%(refname)',
@@ -27,7 +27,7 @@ export class BranchService {
   remoteHeadPointer?: string;
 
   private popupService = inject(PopupService);
-  private gitApiService = inject(GitApiService);
+  private gitApi = inject(GitApiService);
 
   constructor(
     parserService: ParserService,
@@ -36,7 +36,7 @@ export class BranchService {
   }
 
   getBranches = (): Observable<Branch[]> =>
-    this.gitApiService.git(['for-each-ref', ...PREFIXES, formatArg(this.fields)])
+    this.gitApi.git(['for-each-ref', ...PREFIXES, formatArg(this.fields)])
       .pipe(map(result =>
 
         this.branchParser(result)
@@ -76,14 +76,14 @@ export class BranchService {
     }
 
     if (branch.type === BranchType.Local) {
-      this.gitApiService.git(['checkout', branch.name]).subscribe();
+      this.gitApi.git(['checkout', branch.name]).subscribe();
       return;
     }
 
     const localName = branch.name.replace(/^origin\//, '');
-    this.gitApiService.git(['checkout', localName]).pipe(
+    this.gitApi.git(['checkout', localName]).pipe(
       // If the branch exists remotely only, we check it out and track it
-      catchError(() => this.gitApiService.git(['checkout', '-b', localName, '--track', `origin/${localName}`])),
+      catchError(() => this.gitApi.git(['checkout', '-b', localName, '--track', `origin/${localName}`])),
     ).subscribe();
   };
 }

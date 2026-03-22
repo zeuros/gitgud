@@ -13,8 +13,8 @@ export class WorkingDirectoryService {
 
 
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
-  private readonly gitApiService = inject(GitApiService);
-  private readonly fileWatcherService = inject(FileWatcherService);
+  private readonly gitApi = inject(GitApiService);
+  private readonly fileWatcher = inject(FileWatcherService);
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
@@ -24,7 +24,7 @@ export class WorkingDirectoryService {
     window.electron.onWindowFocus(this.doFetchWorkingDirChanges);
     this.destroyRef.onDestroy(() => window.electron.offWindowFocus(this.doFetchWorkingDirChanges));
 
-    this.fileWatcherService.onWorkingDirFileChange$.subscribe(this.doFetchWorkingDirChanges);
+    this.fileWatcher.onWorkingDirFileChange$.subscribe(this.doFetchWorkingDirChanges);
   }
 
   /**
@@ -35,22 +35,22 @@ export class WorkingDirectoryService {
    *          along with their statistics (e.g., lines added/removed).
    */
   getChangedFilesForGivenCommit = (sha: string) =>
-    this.gitApiService.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
+    this.gitApi.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
       .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, sha)));
 
 
-  readonly stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApiService.git(['add', '--', path]).subscribe(this.doFetchWorkingDirChanges);
-  readonly unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApiService.git(['reset', '--', path]).subscribe(this.doFetchWorkingDirChanges);
+  readonly stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['add', '--', path]).subscribe(this.doFetchWorkingDirChanges);
+  readonly unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['reset', '--', path]).subscribe(this.doFetchWorkingDirChanges);
 
-  readonly stageAll = () => this.gitApiService.git(['add', '--all']).subscribe(this.doFetchWorkingDirChanges);
-  readonly unstageAll = () => this.gitApiService.git(['reset', 'HEAD', '--', '.']).subscribe(this.doFetchWorkingDirChanges);
+  readonly stageAll = () => this.gitApi.git(['add', '--all']).subscribe(this.doFetchWorkingDirChanges);
+  readonly unstageAll = () => this.gitApi.git(['reset', 'HEAD', '--', '.']).subscribe(this.doFetchWorkingDirChanges);
 
   /**
    * Get a list of files which have recorded changes in the index as compared to
    * HEAD along with the type of change.
    */
   readonly fetchWorkingDirChanges = () =>
-    this.gitApiService.git([
+    this.gitApi.git([
       'status',
       '--porcelain',
       '-z',

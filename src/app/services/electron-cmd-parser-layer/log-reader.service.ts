@@ -1,16 +1,16 @@
 import {inject, Injectable} from '@angular/core';
 import {Commit, parseRawUnfoldedTrailers} from '../../lib/github-desktop/model/commit';
 import {ParserService} from '../parser.service';
-import {map} from 'rxjs';
+import {map, Observable} from 'rxjs';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {formatArg} from '../../utils/log-utils';
 import {GitApiService} from './git-api.service';
 import {short} from '../../utils/commit-utils';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-export class StashService {
+export class LogReaderService {
   private fields = {
     sha: '%H', // SHA
     shortSha: '%h', // short SHA
@@ -28,57 +28,75 @@ export class StashService {
     trailers: '%(trailers:unfold,only)',
     refs: '%D',
   };
-  private logParserService = inject(ParserService);
-  private gitApiService = inject(GitApiService);
-  private stashParse = this.logParserService.createParser(this.fields);
+  private gitApi = inject(GitApiService);
+  private logParser = inject(ParserService).createParser(this.fields);
 
-  getStashes = () => {
 
-    // TODO: refactor with LogService
-    const args = [
-      'stash',
-      'list',
+  /**
+   * Get the repository's commits using `revisionRange` and limited to `limit`
+   */
+  getCommitLog = (
+    revisionRange?: string,
+    limit?: number,
+    skip?: number,
+    additionalArgs: string[] = [],
+  ): Observable<Commit[]> => {
+
+    const args = ['log'];
+
+    if (revisionRange !== undefined) {
+      args.push(revisionRange);
+    }
+
+    if (limit !== undefined) {
+      args.push(`--max-count=${limit}`);
+    }
+
+    if (skip !== undefined) {
+      args.push(`--skip=${skip}`);
+    }
+
+
+    args.push(
       '--date=raw',
+      '--all',
       '-z', // Separate lines with NUL character
       formatArg(this.fields),
       '--no-show-signature',
       '--no-color',
-      '--'
-    ];
-
-    return this.gitApiService.git(args)
-      .pipe(map(log => this.stashParse(log).map(stash => {
+      ...additionalArgs,
+      '--',
+    );
+    return this.gitApi.git(args)
+      .pipe(map(log => this.logParser(log).map(commit => {
         // Ref is of the format: (HEAD -> master, tag: some-tag-name, tag: some-other-tag,with-a-comma, origin/master, origin/HEAD)
         // Refs are comma separated, but some like tags can also contain commas in the name, so we split on the pattern ", " and then
         // check each ref for the tag prefix. We used to use the regex /tag: ([^\s,]+)/g)`, but will clip a tag with a comma short.
-
-        const tags = stash.refs
+        const tags = commit.refs
           .split(', ')
-          .flatMap(ref => (ref.startsWith('tag: ') ? ref.substring(5) : []))
-
+          .flatMap(ref => (ref.startsWith('tag: ') ? ref.substring(5) : []));
 
         return new Commit(
-          stash.sha,
-          short(stash.shortSha),
-          stash.summary,
-          stash.body,
-          stash.branch ?? '',
-          stash.ref,
-          stash.refLogSubject,
-          CommitIdentity.parseIdentity(stash.author),
-          CommitIdentity.parseIdentity(stash.committer),
-          stash.parents.length > 0 ? stash.parents.split(' ') : [],
+          commit.sha,
+          short(commit.shortSha),
+          commit.summary,
+          commit.body,
+          commit.branch,
+          commit.ref,
+          commit.refLogSubject,
+          CommitIdentity.parseIdentity(commit.author),
+          CommitIdentity.parseIdentity(commit.committer),
+          commit.parents.length > 0 ? commit.parents.split(' ') : [],
           // We know for sure that the trailer separator will be ':' since we got
           // them from %(trailers:unfold) above, see `git help log`:
           //
-          //   "key_value_separator=<SEP>: specify a separator inserted between
+          //   key_value_separator=<SEP>: specify a separator inserted between
           //    trailer lines. When this option is not given each trailer key-value
           //    pair is separated by ": ". Otherwise, it shares the same semantics as
           //    separator=<SEP> above."
-          parseRawUnfoldedTrailers(stash.trailers, ':'),
-          tags
-        )
+          parseRawUnfoldedTrailers(commit.trailers, ':'),
+          tags,
+        );
       })));
-  }
-
+  };
 }
