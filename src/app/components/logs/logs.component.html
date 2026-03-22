@@ -20,7 +20,6 @@
         (selectionChange)="onCommitsSelection($event)"
         dataKey="sha"
         [rowHover]="true"
-        [contextMenu]="commitContextMenu" (onContextMenuSelect)="logContextMenuService.selectedCommit.set($event.data)"
         [scrollable]="true"
         [resizableColumns]="true"
         scrollHeight="flex"
@@ -42,9 +41,13 @@
             [pSelectableRow]="commit"
             [pSelectableRowIndex]="rowIndex"
             [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2"
-            [pContextMenuRow]="commit">
+            (contextmenu)="openContextMenu(commit, $event)"
+            [class.p-highlight-contextmenu]="contextMenuActiveCommit() === commit"
+            [pContextMenuRow]="commit"
+            [pContextMenuRowDisabled]="isIndex(commit)"
+        >
             <td class="branch-tag-td">
-                @for (branch of branchesAndRef(commit); track branch.name; let i = $index) {
+                @for (branch of gitRepositoryStore.branchesByTip()[commit.sha] ?? []; track branch.name; let i = $index) {
                     <div class="branch-tag">
                         <div class="commit-branch" [style.top.px]="i * 30" [style.filter]="commitColor(commit.indent!)" pDraggable>
                             @if (commit.isPointedByLocalHead) {
@@ -72,4 +75,5 @@
     </ng-template>
 </p-table>
 
-<p-contextMenu #commitContextMenu [model]="logContextMenuService.contextMenu" appendTo="body"/>
+<p-contextMenu #commitContextMenu [model]="commitContextMenuService.commitContextMenu()" appendTo="body"/>
+<p-contextMenu #stashContextMenu [model]="stashContextMenuService.stashContextMenu()" appendTo="body"/>

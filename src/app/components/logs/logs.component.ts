@@ -5,8 +5,8 @@ import {Branch} from '../../lib/github-desktop/model/branch';
 import {bySha} from '../../utils/log-utils';
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {Commit} from '../../lib/github-desktop/model/commit';
-import {once, uniqBy} from 'lodash-es';
-import {commitColor} from '../../utils/commit-utils';
+import {once} from 'lodash-es';
+import {commitColor, isCommit, isIndex, isStash} from '../../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
 import {DragDropModule} from 'primeng/dragdrop';
@@ -21,7 +21,8 @@ import {LogBuilderService} from '../../services/log-builder.service';
 import {CANVAS_MARGIN, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
 import {ContextMenu} from 'primeng/contextmenu';
-import {LogContextMenuService} from './log-context-menu.service';
+import {CommitContextMenuService} from './commit-context-menu.service';
+import {StashContextMenuService} from './stash-context-menu.service';
 
 @Component({
   selector: 'gitgud-logs',
@@ -40,7 +41,9 @@ export class LogsComponent {
 
   private logBuilder = inject(LogBuilderService);
   protected gitRepositoryStore = inject(GitRepositoryStore);
-  protected logContextMenuService = inject(LogContextMenuService);
+  protected commitContextMenuService = inject(CommitContextMenuService);
+  protected stashContextMenuService = inject(StashContextMenuService);
+  protected contextMenuActiveCommit = signal<DisplayRef | undefined>(undefined);
   protected commitsSelection = computed(() => {
     const selectedCommitsShas = this.gitRepositoryStore.selectedCommitsShas();
     return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
@@ -49,6 +52,7 @@ export class LogsComponent {
   protected showSearchBar = false;
   protected searchBarFocus = {};
   protected graphColumnCount = signal(0);
+  protected untrackedStashes = signal<string[]>([]); // Unused (edge case)
   protected computedDisplayLog = signal<DisplayRef[]>([]); // Commits ready for display
   private edges = signal(new IntervalTree<Edge>()); // Edges computed from displayLog
   protected firstCommitOffsetPx = signal(0); // Pixel-based scroll position for smooth canvas drawing
@@ -60,6 +64,8 @@ export class LogsComponent {
   private _tableHeight = signal(0);
   private canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   private logTable = viewChild<Table<DisplayRef>>('logTable');
+  private commitContextMenu = viewChild<ContextMenu>('commitContextMenu');
+  private stashContextMenu = viewChild<ContextMenu>('stashContextMenu');
   private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
   private logTableContainer = computed(() => this.logTableRef()?.querySelector<HTMLElement>('.p-datatable-table-container'));
   protected visibleCommitsCount = computed(() => {
@@ -153,9 +159,6 @@ export class LogsComponent {
 
   protected yPosition = yPosition;
 
-  // TODO: show ghost branch on the left of commit if merged
-  protected branchesAndRef = (commit: DisplayRef) => uniqBy(commit.branchesDetails, 'branchesDetails.name');
-
   protected search = (searchString = '') => {
     const computedDisplayLog = this.computedDisplayLog();
 
@@ -186,11 +189,12 @@ export class LogsComponent {
       ? {...headCommit, branchesDetails: [], isPointedByLocalHead: true, refType: RefType.COMMIT} as DisplayRef
       : undefined;
 
-    const {displayLog, edges, graphColumnCount} = this.logBuilder.buildDisplayLog(logs, stashes, indexParent);
+    const {displayLog, edges, untrackedStashes, graphColumnCount} = this.logBuilder.buildDisplayLog(logs, stashes, indexParent);
 
     this.computedDisplayLog.set(displayLog);
     this.edges.set(edges);
     this.graphColumnCount.set(graphColumnCount);
+    this.untrackedStashes.set(untrackedStashes);
   };
 
   // Called after canvas is available (runs once)
@@ -204,6 +208,7 @@ export class LogsComponent {
   });
 
   private onTableScroll: EventListener = ({target}) => {
+    this.hideContextMenus();
     this.firstCommitOffsetPx.set((target as HTMLElement).scrollTop % ROW_HEIGHT); // Update pixel-based scroll for smooth canvas drawing
     const startCommit = Math.floor((target as HTMLElement).scrollTop / ROW_HEIGHT);
     this.gitRepositoryStore.updateSelectedRepository({startCommit}); // First commit to raw
@@ -226,9 +231,28 @@ export class LogsComponent {
   private isOnView = (commitIndex: number, startCommit: number, endCommit: number) =>
     commitIndex > startCommit && commitIndex < endCommit;
 
+  protected openContextMenu = (commit: DisplayRef, $event: PointerEvent) => {
+    this.contextMenuActiveCommit.set(commit);
+    if (isCommit(commit)) {
+      this.stashContextMenu()?.hide();
+      this.commitContextMenuService.selectedCommit.set(commit);
+      this.commitContextMenu()?.show($event);
+    } else if (isStash(commit)) {
+      this.commitContextMenu()?.hide();
+      this.stashContextMenuService.selectedCommit.set(commit);
+      this.stashContextMenu()?.show($event);
+    }
+  };
+
+  protected hideContextMenus = () => {
+    this.commitContextMenu()?.hide();
+    this.stashContextMenu()?.hide();
+  };
+
   protected remote = remote;
   protected local = local;
   protected commitColor = commitColor;
+  protected isIndex = isIndex;
   protected DATE_FORMAT = DATE_FORMAT;
   protected NODE_RADIUS = NODE_RADIUS;
   protected CANVAS_MARGIN = CANVAS_MARGIN;
