@@ -15,6 +15,8 @@ import {ChangeSet, CommittedFileChange} from '../../../lib/github-desktop/model/
 import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {GitRepositoryStore} from '../../../stores/git-repos.store';
+import {GitWorkflowService} from '../../../services/git-workflow.service';
+import {PopupService} from '../../../services/popup.service';
 
 @Component({
   selector: 'gitgud-commit-infos',
@@ -48,6 +50,8 @@ export class CommitInfosComponent {
   protected FileStatusesIcons = FileStatusesIcons;
   protected gitRepositoryStore = inject(GitRepositoryStore);
   private workingDirectoryService = inject(WorkingDirectoryService);
+  private gitWorkflow = inject(GitWorkflowService);
+  private popup = inject(PopupService);
   protected fileDiffPanelService = inject(FileDiffPanelService);
 
   constructor() {
@@ -75,5 +79,13 @@ export class CommitInfosComponent {
     setTimeout(() => this.shaTooltip()?.show(), 0); // show after deactivate runs (deactivate is triggered when pTooltip gets new value)
   };
 
+  protected rewordCommit = () =>
+    this.gitWorkflow.rewordCommit(this.editCommitForm.getRawValue())
+      .subscribe(() => {
+        this.initialValue = this.editCommitForm.value;
+        this.popup.success('Commit message updated');
+      });
+
   protected file$ = (f: CommittedFileChange) => f;
+
 }
