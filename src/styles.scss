@@ -1,4 +1,4 @@
-@forward 'font-awesome/css/font-awesome.min.css';
+@forward 'font-awesome/css/font-awesome.min';
 
 @forward 'styles/custom-fonts';
 @forward 'styles/global';
@@ -6,6 +6,6 @@
 @forward 'styles/variables';
 @forward 'styles/animations';
 
-@forward 'primeflex/primeflex.scss';
-@import 'primeicons/primeicons.css';
-@import 'styles/primeng-theme-custom/theme-custom-dark-deeppurple.css' layer(my-theme);
+@forward 'primeflex/primeflex';
+@import 'primeicons/primeicons';
+@import 'styles/primeng-theme-custom/theme-custom-dark-deeppurple' layer(my-theme);
