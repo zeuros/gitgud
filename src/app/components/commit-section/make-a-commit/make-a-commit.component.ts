@@ -17,20 +17,21 @@ import {headCommit} from '../../../utils/commit-utils';
 import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
 
 @Component({
-  selector: 'gitgud-make-a-commit',
-  imports: [
-    Divider,
-    ReactiveFormsModule,
-    Textarea,
-    InputText,
-    Listbox,
-    Button,
-    PrimeTemplate,
-    Checkbox,
-    Splitter,
-  ],
-  templateUrl: './make-a-commit.component.html',
-  styleUrl: './make-a-commit.component.scss',
+    selector: 'gitgud-make-a-commit',
+    imports: [
+        Divider,
+        ReactiveFormsModule,
+        Textarea,
+        InputText,
+        Listbox,
+        Button,
+        PrimeTemplate,
+        Checkbox,
+        Splitter,
+    ],
+    templateUrl: './make-a-commit.component.html',
+    styleUrl: './make-a-commit.component.scss',
+    standalone: true
 })
 export class MakeACommitComponent {
 

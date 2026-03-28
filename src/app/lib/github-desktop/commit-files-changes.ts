@@ -27,21 +27,47 @@
  *    file_two_new_path
  */
 
-import {CommittedFileChange} from './model/change-set';
+import {ChangeSet} from './model/change-set';
+import {AppFileStatus, CommittedFileChange, WorkingDirectoryFileChange} from './model/status';
 import {forceUnwrap} from './throw-ex';
 import {isCopyOrRename, mapPorcelainStatus, mapStatus} from './log';
-import {AppFileStatus, WorkingDirectoryFileChange} from './model/status';
 
-export const parseRawLogWithNumstat = (rawFileChanges: string, sha: string) => {
+/**
+ * Parses output of diff flags -z --raw --numstat.
+ * Handles single commits, 2-commit ranges, and 3+ commit combined diffs.
+ *
+ * @param rawFileChanges Raw git output
+ * @param shas Array of commit SHAs (for commitish references)
+ * @returns ChangeSet with parsed files
+ */
+export const parseRawLogWithNumstat = (rawFileChanges: string, shas: string[]): ChangeSet => {
   const files: CommittedFileChange[] = [];
   let linesAdded = 0;
   let linesDeleted = 0;
   let numStatCount = 0;
   const lines = rawFileChanges.split('\0');
+  const latestSha = shas[shas.length - 1];
 
   for (let i = 0 ; i < lines.length - 1 ; i++) {
     const line = lines[i];
-    if (line.startsWith(':')) {
+
+    // Combined diff format (3+ commits): ::mode mode mode hash hash hash MM path
+    if (line.startsWith('::')) {
+      const parts = line.split('\t');
+      const statusPart = parts[0].split(' ').pop()!;
+      const path = parts[1] || lines[++i];
+
+      // Take last character of combined status (e.g., "MM" -> "M")
+      const statusChar = statusPart.charAt(statusPart.length - 1);
+
+      files.push(new CommittedFileChange(
+        path,
+        {kind: mapStatus(statusChar)} as AppFileStatus,
+        latestSha,
+      ));
+    }
+    // Regular diff format (2 commits): :mode mode hash hash status path
+    else if (line.startsWith(':')) {
       const lineComponents = line.split(' ');
       const status = forceUnwrap('Invalid log output (status)', lineComponents.at(-1));
       const oldPath = /^R|C/.test(status)
@@ -50,24 +76,34 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, sha: string) => {
 
       const path = forceUnwrap('Missing path', lines.at(++i));
 
-      files.push(new CommittedFileChange(path, {kind: mapStatus(status, oldPath), oldPath} as AppFileStatus, sha));
-    } else {
+      files.push(new CommittedFileChange(
+        path,
+        {kind: mapStatus(status, oldPath), oldPath} as AppFileStatus,
+        latestSha,
+      ));
+    }
+    // Numstat line: added deleted path
+    else {
       const match = /^(\d+|-)\t(\d+|-)\t/.exec(line);
-      const [, added, deleted] = forceUnwrap('Invalid numstat line', match);
-      linesAdded += added === '-' ? 0 : Number.parseInt(added);
-      linesDeleted += deleted === '-' ? 0 : Number.parseInt(deleted);
+      if (match) {
+        const [, added, deleted] = match;
+        linesAdded += added === '-' ? 0 : Number.parseInt(added);
+        linesDeleted += deleted === '-' ? 0 : Number.parseInt(deleted);
 
-      // If this entry denotes a rename or copy the old and new paths are on
-      // two separate fields (separated by \0). Otherwise, they're on the same
-      // line as the added and deleted lines.
-      if (isCopyOrRename(files[numStatCount].status)) {
-        i += 2;
+        if (files[numStatCount] && isCopyOrRename(files[numStatCount].status)) {
+          i += 2;
+        }
+        numStatCount++;
       }
-      numStatCount++;
     }
   }
 
-  return {files, linesAdded, linesDeleted};
+  return {
+    kind: 'working-directory',
+    files,
+    linesAdded,
+    linesDeleted,
+  };
 };
 
 //TODO: move

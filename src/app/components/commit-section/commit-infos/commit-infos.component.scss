@@ -6,12 +6,3 @@
   flex-direction: column;
   width: 100%;
 }
-
-.author-icon {
-
-  color: var(--huaaaaaGray);
-
-  & + .author-icon {
-    margin-top: 0.5rem;
-  }
-}

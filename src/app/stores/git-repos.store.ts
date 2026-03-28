@@ -53,6 +53,7 @@ export class GitRepositoryStore {
   readonly editorConfig = computed(() => this.selectedRepository()?.editorConfig);
 
   readonly selectedCommitsShas = computed(() => this.selectedRepository()?.selectedCommitsShas, {equal: shallowArrayEqual});
+  readonly selectedCommits = computed(() => {const scs = this.selectedCommitsShas();return this.logs().filter(l => scs?.includes(l.sha)); });
   readonly selectedCommitSha = computed(() => {const sc = this.selectedRepository()?.selectedCommitsShas;return sc?.length === 1 ? sc[0] : undefined;});
   readonly selectedCommit = computed(() => {const sc = this.selectedCommitSha();return this.logs().find(c => c.sha === sc);});
   readonly selectedCommitIndex = computed(() => {const sc = this.selectedCommitSha();return this.logs().findIndex(c => c.sha === sc);});

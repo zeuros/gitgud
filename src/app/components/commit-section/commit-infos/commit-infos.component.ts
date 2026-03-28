@@ -1,22 +1,19 @@
-import {Component, effect, inject, viewChild} from '@angular/core';
-import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
+import {Component, effect, inject, signal, viewChild} from '@angular/core';
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
 import {Button} from 'primeng/button';
-import {DatePipe} from '@angular/common';
 import {isEqual} from 'lodash-es';
-import {DATE_FORMAT} from '../../../utils/constants';
 import {directory, fileName} from '../../../utils/utils';
 import {Tooltip} from 'primeng/tooltip';
-import {AvatarComponent} from './avatar/avatar.component';
-import {Listbox} from 'primeng/listbox';
-import {ChangeSet, CommittedFileChange} from '../../../lib/github-desktop/model/change-set';
-import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
-import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
+import {ChangeSet} from '../../../lib/github-desktop/model/change-set';
 import {GitRepositoryStore} from '../../../stores/git-repos.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
 import {PopupService} from '../../../services/popup.service';
+import {FileDiffService} from '../../../services/file-diff.service';
+import {CommitCardComponent} from '../commit-line/commit-card.component';
+import {Divider} from 'primeng/divider';
+import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
 
 @Component({
   selector: 'gitgud-commit-infos',
@@ -24,15 +21,16 @@ import {PopupService} from '../../../services/popup.service';
     ReactiveFormsModule,
     InputText,
     Textarea,
-    DatePipe,
     Tooltip,
-    AvatarComponent,
-    Listbox,
     FormsModule,
     Button,
+    CommitCardComponent,
+    Divider,
+    CommitFileListComponent,
   ],
   templateUrl: './commit-infos.component.html',
   styleUrl: './commit-infos.component.scss',
+  standalone: true,
 })
 export class CommitInfosComponent {
 
@@ -41,34 +39,28 @@ export class CommitInfosComponent {
     description: new FormControl('', {nonNullable: true}),
   });
   private shaTooltip = viewChild(Tooltip);
+  protected editedFiles = signal<ChangeSet | undefined>(undefined);
   protected initialValue: typeof this.editCommitForm.value = {};
-  protected editedFiles?: ChangeSet;
   protected isEqual = isEqual;
-  protected DATE_FORMAT = DATE_FORMAT;
   protected directory = directory;
   protected fileName = fileName;
-  protected FileStatusesIcons = FileStatusesIcons;
   protected gitRepositoryStore = inject(GitRepositoryStore);
-  private workingDirectoryService = inject(WorkingDirectoryService);
+  private fileDiff = inject(FileDiffService);
   private gitWorkflow = inject(GitWorkflowService);
   private popup = inject(PopupService);
-  protected fileDiffPanelService = inject(FileDiffPanelService);
 
   constructor() {
     effect(() => {
       const selectedCommit = this.gitRepositoryStore.selectedCommit();
-      const selectedCommitsShas = this.gitRepositoryStore.selectedCommitsShas();
 
       if (selectedCommit) {
-        this.workingDirectoryService.getChangedFilesForGivenCommit(selectedCommit.sha).subscribe(editedFiles => this.editedFiles = editedFiles);
+        this.fileDiff.getChangedFilesForGivenCommit(selectedCommit.sha).subscribe(editedFiles => this.editedFiles.set(editedFiles));
         this.editCommitForm.setValue({
           summary: selectedCommit.summary,
           description: selectedCommit.body,
         });
         this.initialValue = this.editCommitForm.value;
-
-      } else if (selectedCommitsShas && selectedCommitsShas?.length > 1)
-        console.warn('TODO');
+      }
     });
   }
 
@@ -85,7 +77,5 @@ export class CommitInfosComponent {
         this.initialValue = this.editCommitForm.value;
         this.popup.success('Commit message updated');
       });
-
-  protected file$ = (f: CommittedFileChange) => f;
 
 }

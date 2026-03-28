@@ -1,11 +1,15 @@
 import {inject, Injectable} from '@angular/core';
-import {AppFileStatusKind, FileChange} from '../lib/github-desktop/model/status';
+import {AppFileStatusKind, CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
 import {DiffHunk, DiffHunkHeader, IRawDiff} from '../lib/github-desktop/model/diff/raw-diff';
 import {DiffLine, DiffLineType} from '../lib/github-desktop/model/diff/diff-line';
 import {throwEx} from '../utils/utils';
 import {getHunkHeaderExpansionType} from '../lib/github-desktop/diff/diff-hunks';
 import {getLargestLineNumber} from '../lib/github-desktop/diff/diff-parser';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {ChangeSet} from '../lib/github-desktop/model/change-set';
+import {forkJoin, map, Observable, of} from 'rxjs';
+import {parseRawLogWithNumstat} from '../lib/github-desktop/commit-files-changes';
+import {GitRepositoryStore} from '../stores/git-repos.store';
 
 // in which case s defaults to 1
 const diffHeaderRe = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
@@ -436,7 +440,8 @@ export class DiffParser {
 })
 export class FileDiffService {
 
-  private readonly gitApi = inject(GitApiService);
+  private gitApi = inject(GitApiService);
+  private gitRepositoryStore = inject(GitRepositoryStore);
 
   /**
    * Render the difference between a file in the given commit and its parent
@@ -476,4 +481,108 @@ export class FileDiffService {
         file.path,
       ]);
 
+  // In FileDiffService
+
+  /**
+   * Retrieves the list of changed files for multiple commits.
+   *
+   * - 1 commit: Show files changed in that commit
+   * - 2 commits: Show cumulative diff between the two (range)
+   * - 3+ commits: Merge all individual commit diffs together
+   */
+  getChangedFilesForGivenCommits = (shas: string[]): Observable<ChangeSet | undefined> => {
+    if (shas.length === 0) {
+      return of(undefined);
+    }
+
+    // Single commit: show changes in that commit
+    if (shas.length === 1) {
+      return this.getChangedFilesForGivenCommit(shas[0]);
+    }
+
+    // Sort commits oldest to newest
+    const logs = this.gitRepositoryStore.logs();
+    const sortedShas = [...shas].sort((a, b) =>
+      logs.findIndex(l => l.sha === b) - logs.findIndex(l => l.sha === a),
+    );
+
+    // Two commits: show range diff
+    if (sortedShas.length === 2) {
+      const [older, newer] = sortedShas;
+
+      return this.gitApi.git([
+        'diff',
+        older,
+        newer,
+        '-C',              // Detect copies
+        '-M',              // Detect renames
+        '--raw',           // Raw format
+        '--numstat',       // Numeric stats
+        '-z',              // NUL separator
+        '--no-color',      // No color codes
+        '--',
+      ]).pipe(
+        map(output => parseRawLogWithNumstat(output, sortedShas)),
+      );
+    }
+
+    // Three or more commits: merge individual diffs
+    return forkJoin(
+      sortedShas.map(sha => this.getChangedFilesForGivenCommit(sha)),
+    ).pipe(
+      map(this.mergeChangeSets),
+    );
+  };
+
+  /**
+   * Retrieves the list of changed files for a specific commit.
+   *
+   * @param sha commit hash
+   * @returns An Observable emitting an array of file changes: added, modified, and deleted files,
+   *          along with their statistics (e.g., lines added/removed).
+   */
+  getChangedFilesForGivenCommit = (sha: string) =>
+    this.gitApi.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
+      .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, [sha])));
+
+  private mergeChangeSets = (changeSets: ChangeSet[]): ChangeSet => {
+    const fileMap = new Map<string, CommittedFileChange>();
+
+    // Merge all files across commits
+    changeSets.forEach(changeSet => {
+      changeSet.files.forEach(file => {
+        const existing = fileMap.get(file.path);
+
+        if (!existing) {
+          fileMap.set(file.path, file);
+        } else {
+          // Merge status logic
+          const oldStatus = existing.status.kind;
+          const newStatus = file.status.kind;
+
+          // If file was added then deleted across commits, remove it
+          if (oldStatus === AppFileStatusKind.New && newStatus === AppFileStatusKind.Deleted) {
+            fileMap.delete(file.path);
+            return;
+          }
+
+          // If file was added, keep it as added (not modified)
+          if (oldStatus === AppFileStatusKind.New && newStatus === AppFileStatusKind.Modified) {
+            // Keep existing (already has parentCommitish)
+          }
+          // Otherwise use latest status
+          else {
+            fileMap.set(file.path, file);
+          }
+        }
+      });
+    });
+
+    return {
+      files: Array.from(fileMap.values()),
+      kind: 'committed',
+      linesAdded: 0,
+      linesDeleted: 0,
+    };
+  };
 }

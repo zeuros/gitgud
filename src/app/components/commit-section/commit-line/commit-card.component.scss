@@ -1,0 +1,14 @@
+
+.author-icon {
+
+  color: var(--huaaaaaGray);
+
+  & + .author-icon {
+    margin-top: 0.5rem;
+  }
+}
+
+.absolute-right {
+  position: absolute;
+  right: 0.5rem;
+}

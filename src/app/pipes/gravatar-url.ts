@@ -2,6 +2,7 @@ import {Pipe, PipeTransform} from '@angular/core';
 
 @Pipe({
   name: 'gravatarUrl',
+  standalone: true,
 })
 export class GravatarUrlPipe implements PipeTransform {
 

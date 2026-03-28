@@ -1,8 +1,11 @@
-import {AppFileStatus, AppFileStatusKind} from './status';
+import {AppFileStatus, AppFileStatusKind, CommittedFileChange} from './status';
 
 export interface ChangeSet {
   /** Files changed in the changeset. */
   readonly files: CommittedFileChange[];
+
+  /** Origin of changeset */
+  readonly kind: 'committed' | 'working-directory';
 
   /** Number of lines added in the changeset. */
   readonly linesAdded: number;
@@ -29,26 +32,5 @@ export class FileChange {
       this.id = `${status.kind}+${path}+${status.oldPath}`;
     else
       this.id = `${status.kind}+${path}`;
-  }
-}
-
-/**
- * An object encapsulating the changes to a committed file.
- *
- * @param status A commit SHA or some other identifier that ultimately
- *               dereferences to a commit. This is the pointer to the
- *               'after' version of this change. I.e. the parent of this
- *               commit will contain the 'before' (or nothing, if the
- *               file change represents a new file).
- */
-export class CommittedFileChange extends FileChange {
-  public constructor(
-    path: string,
-    status: AppFileStatus,
-    public readonly commitish: string,
-  ) {
-    super(path, status);
-
-    this.commitish = commitish;
   }
 }
