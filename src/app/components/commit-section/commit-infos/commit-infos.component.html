@@ -19,17 +19,15 @@
         <div class="p-2">
             Amend commit message
         </div>
-        <form class="flex-column flex-1" [formGroup]="editCommitForm">
+        <form class="flex-column flex-1" [formGroup]="editCommitForm" (ngSubmit)="rewordCommit()">
 
             <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
 
             <textarea pTextarea placeholder="Description" rows="3" class="flex-1 commit-description" formControlName="description"></textarea>
 
-            <div class="flex gap-2">
-                <button pButton [disabled]="isEqual(editCommitForm.value, initialValue)" class="my-2 border-round-xs flex-1">
-                    Update message
-                </button>
-            </div>
+            <p-button type="submit" [disabled]="isEqual(editCommitForm.value, initialValue)" class="flex gap-2 mt-2 w-full" styleClass="w-full border-round-xs">
+                Update message
+            </p-button>
 
         </form>
     </div>
