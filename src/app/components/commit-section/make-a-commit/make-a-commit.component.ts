@@ -6,7 +6,7 @@ import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
 import {Listbox} from 'primeng/listbox';
-import {FileStatusesIcons, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/status';
+import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {directory, fileName} from '../../../utils/utils';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {PrimeTemplate} from 'primeng/api';
@@ -15,6 +15,7 @@ import {CommitService} from '../../../services/commit.service';
 import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
 import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
+import {WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
 
 @Component({
     selector: 'gitgud-make-a-commit',

@@ -28,9 +28,10 @@
  */
 
 import {ChangeSet} from './model/change-set';
-import {AppFileStatus, CommittedFileChange, WorkingDirectoryFileChange} from './model/status';
+import {AppFileStatus, CommittedFileChange} from './model/status';
 import {forceUnwrap} from './throw-ex';
 import {isCopyOrRename, mapPorcelainStatus, mapStatus} from './log';
+import {WorkDirStatus, WorkingDirectoryFileChange} from './model/workdir';
 
 /**
  * Parses output of diff flags -z --raw --numstat.
@@ -106,11 +107,6 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, shas: string[]): 
   };
 };
 
-//TODO: move
-export interface WorkDirStatus {
-  unstaged: WorkingDirectoryFileChange[];
-  staged: WorkingDirectoryFileChange[];
-}
 
 /**
  * Parses the output of `git status --porcelain -z` into staged and unstaged changes.

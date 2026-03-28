@@ -1,5 +1,7 @@
 import {IRawDiff} from '../model/diff/raw-diff';
 import {Commit} from '../model/commit';
+import {ChangeSet} from '../model/change-set';
+import {AppFileStatusKind, CommittedFileChange} from '../model/status';
 
 
 /**
@@ -47,6 +49,43 @@ export const isDiffTooLarge = (diff: IRawDiff) => {
   return false;
 };
 
-// Sort oldest to newest
-export const sortedShas = (shas: string[], logs: Commit[]) =>
-  [...shas].sort((a, b) => logs.findIndex(l => l.sha === b) - logs.findIndex(l => l.sha === a));
+export const mergeChangeSets = (changeSets: ChangeSet[]): ChangeSet => {
+    const fileMap = new Map<string, CommittedFileChange>();
+
+    // Merge all files across commits
+    changeSets.forEach(changeSet => {
+      changeSet.files.forEach(file => {
+        const existing = fileMap.get(file.path);
+
+        if (!existing) {
+          fileMap.set(file.path, file);
+        } else {
+          // Merge status logic
+          const oldStatus = existing.status.kind;
+          const newStatus = file.status.kind;
+
+          // If file was added then deleted across commits, remove it
+          if (oldStatus === AppFileStatusKind.New && newStatus === AppFileStatusKind.Deleted) {
+            fileMap.delete(file.path);
+            return;
+          }
+
+          // If file was added, keep it as added (not modified)
+          if (oldStatus === AppFileStatusKind.New && newStatus === AppFileStatusKind.Modified) {
+            // Keep existing (already has parentCommitish)
+          }
+          // Otherwise use latest status
+          else {
+            fileMap.set(file.path, file);
+          }
+        }
+      });
+    });
+
+    return {
+      files: Array.from(fileMap.values()),
+      kind: 'committed',
+      linesAdded: 0,
+      linesDeleted: 0,
+    };
+  };
