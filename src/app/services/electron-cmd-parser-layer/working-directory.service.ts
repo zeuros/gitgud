@@ -3,8 +3,8 @@ import {map, tap} from 'rxjs';
 import {parseRawLogWithNumstat, parseWorkingDirChanges} from '../../lib/github-desktop/commit-files-changes';
 import {FileWatcherService} from '../file-watcher.service';
 import {GitApiService} from './git-api.service';
-import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {WorkingDirectoryFileChange} from "../../lib/github-desktop/model/workdir";
 
 @Injectable({
   providedIn: 'root',

@@ -1,8 +1,9 @@
 import {DiffType, IDiff, IImageDiff, LineEndingsChange} from '../model/diff/diff-data';
 import {DiffHunk, IRawDiff} from '../model/diff/raw-diff';
-import {AppFileStatusKind, CommittedFileChange, FileChange, WorkingDirectoryFileChange} from '../model/status';
+import {AppFileStatusKind, CommittedFileChange, FileChange} from '../model/status';
 import {Image} from '../model/diff/image';
 import {fileName} from '../../../utils/utils';
+import {WorkingDirectoryFileChange} from "../model/workdir";
 
 /**
  *  Defining the list of known extensions we can render inside the app

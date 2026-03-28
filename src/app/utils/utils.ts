@@ -1,8 +1,8 @@
 import {isUndefined, omitBy} from 'lodash-es';
-import {WorkDirStatus} from '../lib/github-desktop/commit-files-changes';
 import {Commit} from '../lib/github-desktop/model/commit';
 import {Branch} from '../lib/github-desktop/model/branch';
-import {WorkingDirectoryFileChange} from '../lib/github-desktop/model/status';
+
+import {WorkDirStatus, WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
 
 export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
 

@@ -1,8 +1,9 @@
 import {inject, Injectable} from '@angular/core';
-import {CommittedFileChange, FileChange, WorkingDirectoryFileChange} from '../lib/github-desktop/model/status';
+import {CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
 import {EMPTY, of, Subject, switchMap} from 'rxjs';
 import {instanceOf} from '../utils/utils';
 import {GitRepositoryStore} from '../stores/git-repos.store';
+import {WorkingDirectoryFileChange} from "../lib/github-desktop/model/workdir";
 
 @Injectable({
   providedIn: 'root',

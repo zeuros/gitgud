@@ -1,5 +1,5 @@
 import {inject, Injectable} from '@angular/core';
-import {AppFileStatusKind, CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
+import {AppFileStatusKind, FileChange} from '../lib/github-desktop/model/status';
 import {DiffHunk, DiffHunkHeader, IRawDiff} from '../lib/github-desktop/model/diff/raw-diff';
 import {DiffLine, DiffLineType} from '../lib/github-desktop/model/diff/diff-line';
 import {throwEx} from '../utils/utils';
@@ -10,6 +10,7 @@ import {ChangeSet} from '../lib/github-desktop/model/change-set';
 import {forkJoin, map, Observable, of} from 'rxjs';
 import {parseRawLogWithNumstat} from '../lib/github-desktop/commit-files-changes';
 import {GitRepositoryStore} from '../stores/git-repos.store';
+import {mergeChangeSets} from '../lib/github-desktop/diff/diff-utils';
 
 // in which case s defaults to 1
 const diffHeaderRe = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
@@ -530,7 +531,7 @@ export class FileDiffService {
     return forkJoin(
       sortedShas.map(sha => this.getChangedFilesForGivenCommit(sha)),
     ).pipe(
-      map(this.mergeChangeSets),
+      map(mergeChangeSets),
     );
   };
 
@@ -545,44 +546,4 @@ export class FileDiffService {
     this.gitApi.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
       .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, [sha])));
 
-  private mergeChangeSets = (changeSets: ChangeSet[]): ChangeSet => {
-    const fileMap = new Map<string, CommittedFileChange>();
-
-    // Merge all files across commits
-    changeSets.forEach(changeSet => {
-      changeSet.files.forEach(file => {
-        const existing = fileMap.get(file.path);
-
-        if (!existing) {
-          fileMap.set(file.path, file);
-        } else {
-          // Merge status logic
-          const oldStatus = existing.status.kind;
-          const newStatus = file.status.kind;
-
-          // If file was added then deleted across commits, remove it
-          if (oldStatus === AppFileStatusKind.New && newStatus === AppFileStatusKind.Deleted) {
-            fileMap.delete(file.path);
-            return;
-          }
-
-          // If file was added, keep it as added (not modified)
-          if (oldStatus === AppFileStatusKind.New && newStatus === AppFileStatusKind.Modified) {
-            // Keep existing (already has parentCommitish)
-          }
-          // Otherwise use latest status
-          else {
-            fileMap.set(file.path, file);
-          }
-        }
-      });
-    });
-
-    return {
-      files: Array.from(fileMap.values()),
-      kind: 'committed',
-      linesAdded: 0,
-      linesDeleted: 0,
-    };
-  };
 }
