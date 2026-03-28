@@ -1,3 +1,5 @@
+$row-height: 34px;
+$row-spacing: 8px;
 
 :host {
   width: 100%;
@@ -21,12 +23,12 @@
 
       .p-datatable-tbody > tr {
         background-color: transparent;
-
+        height: $row-height;
+        border-top: calc( $row-spacing / 2 ) solid var(--p-content-background);
+        border-bottom: calc( $row-spacing / 2 ) solid var(--p-content-background);
 
         & > td {
-          border: 0 solid transparent;
-          padding: 3px 0.5rem;
-          border-top-width: 6px;
+          padding: 0;
         }
 
         &:hover {
@@ -131,6 +133,18 @@
           color: rgba(253, 247, 255, 0.17);
         }
       }
+    }
+  }
+}
+
+.fixed-row-height {
+  .p-datatable-tbody > tr {
+    height: 34px !important;
+    max-height: 34px !important;
+
+    & > td {
+      height: 34px !important;
+      max-height: 34px !important;
     }
   }
 }
