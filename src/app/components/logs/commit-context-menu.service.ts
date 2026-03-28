@@ -1,7 +1,7 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {MenuItem} from 'primeng/api';
 import {PopupService} from '../../services/popup.service';
-import {filter, first, map, switchMap} from 'rxjs';
+import {first, map, switchMap} from 'rxjs';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {short} from '../../utils/commit-utils';
@@ -86,7 +86,7 @@ export class CommitContextMenuService {
 
   protected reset = (mode: 'soft' | 'mixed' | 'hard') =>
     this.gitWorkflow.doRunAndRefresh(['reset', `--${mode}`, this.sha()], `Reset ${mode} to ${short(this.sha())}`, mode == 'hard', false);
-    // this.gitWorkflow.doRunAndRefresh(['status'], `Reset ${mode} to ${short(this.sha())}`, mode == 'hard', false);
+  // this.gitWorkflow.doRunAndRefresh(['status'], `Reset ${mode} to ${short(this.sha())}`, mode == 'hard', false);
 
   protected revertCommit = () => {
     this.gitWorkflow.doRunAndRefresh(['revert', '--no-edit', this.sha()], `Reverted ${short(this.sha())}`, true);
@@ -104,7 +104,7 @@ export class CommitContextMenuService {
     return isTip
       // We reset the last commit => we just do a reset to previous commit — no rebase needed
       ? this.gitWorkflow.doRunAndRefresh(['reset', '--hard', `${this.sha()}~1`], successMsg, true)
-      : this.gitWorkflow.rebaseAndRun(this.parentSha(), actions => actions.filter(a => !a.includes(short(this.sha()))))
+      : this.gitWorkflow.rebaseAndEditActions(this.parentSha(), actions => actions.filter(a => !a.includes(short(this.sha()))))
         .subscribe(() => this.popup.success(successMsg));
   };
 
@@ -115,7 +115,7 @@ export class CommitContextMenuService {
 
     const swapCommits = (actions: string[]) => this.swapActions(actions, this.sha(), toExchange);
 
-    this.gitWorkflow.rebaseAndRun(startRebaseFrom, swapCommits).subscribe(() => this.popup.success(`Moved commit ${direction}`));
+    this.gitWorkflow.rebaseAndEditActions(startRebaseFrom, swapCommits).subscribe(() => this.popup.success(`Moved commit ${direction}`));
   };
 
   private swapActions(actions: string[], shaActionA: string, shaActionB: string) {
@@ -133,14 +133,15 @@ export class CommitContextMenuService {
   protected createTag = () =>
     this.prompt.open('Tag name:').pipe(
       first(notUndefined),
-      switchMap(tagName => this.prompt.open('Tag message for annotated tags (leave empty for lightweight tag):', false).pipe(map(message => ({tagName, message: message ?? null})))),
+      switchMap(tagName => this.prompt.open('Tag message for annotated tags (leave empty for lightweight tag):', false)
+        .pipe(map(message => ({tagName, message: message ?? null})))),
     ).subscribe(({tagName, message}) => message?.trim()?.length
       ? this.gitWorkflow.doRunAndRefresh(['tag', '-a', tagName, '-m', message, this.sha()], `Annotated tag ${tagName} created`)
       : this.gitWorkflow.doRunAndRefresh(['tag', tagName, this.sha()], `Tag ${tagName} created`));
 
   // TODO: make a quick action close to staged changes
   fixupCommit = () =>
-    this.gitWorkflow.rebaseAndRun(
+    this.gitWorkflow.rebaseAndEditActions(
       `${this.sha()}~1`,
       actions => actions.map(a => a.includes(short(this.sha())) ? a.replace(/^pick/, 'fixup') : a),
       true,

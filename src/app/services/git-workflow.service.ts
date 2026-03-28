@@ -1,37 +1,36 @@
 import {inject, Injectable} from '@angular/core';
 import {finalize, map, switchMap, tap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
-import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-directory.service';
-import {GitRepositoryService} from './git-repository.service';
 import {PopupService} from './popup.service';
 import {StashService} from './stash.service';
 import {RebaseService} from './rebase.service';
+import {GitRefreshService} from './git-refresh.service';
+import {GitRepositoryStore} from '../stores/git-repos.store';
 
 // High-level workflows combining services
 @Injectable({
   providedIn: 'root',
 })
 export class GitWorkflowService {
-  private readonly gitApi = inject(GitApiService);
-  private readonly stash = inject(StashService);
-  private readonly rebase = inject(RebaseService);
-  private readonly workingDirectory = inject(WorkingDirectoryService);
-  private readonly gitRepository = inject(GitRepositoryService);
-  private readonly popup = inject(PopupService);
+  private gitApi = inject(GitApiService);
+  private stash = inject(StashService);
+  private rebase = inject(RebaseService);
+  private popup = inject(PopupService);
+  private gitRefresh = inject(GitRefreshService);
+  private gitRepositoryStore = inject(GitRepositoryStore);
 
-
-  rebaseAndRun = (rebaseFrom: string, mapActions: (actions: string[]) => string[], autosquash = false) =>
+  rebaseAndEditActions = (rebaseFrom: string, mapActions: (actions: string[]) => string[], autosquash = false) =>
     this.stash.stashAndRun(
       this.rebase.startInteractiveRebase(rebaseFrom).pipe(
         map(actions => mapActions(actions)),
         switchMap(actions => this.rebase.finishRebase(actions.join('\n'))),
       ),
-    ).pipe(finalize(this.refreshBranchesAndLogs));
+    ).pipe(finalize(this.gitRefresh.doRefreshBranchesAndLogs));
 
   runAndRefresh = (args: (string | undefined)[], successMsg?: string, stashBefore = false, thenUnstash = true) => {
     const action$ = this.gitApi.git(args)
       .pipe(
-        finalize(this.refreshBranchesAndLogs),
+        finalize(this.gitRefresh.doRefreshBranchesAndLogs),
         tap(() => successMsg && this.popup.success(successMsg)),
       );
 
@@ -40,7 +39,5 @@ export class GitWorkflowService {
 
   doRunAndRefresh = (args: (string | undefined)[], successMsg?: string, stashBefore = false, thenUnstash = true) =>
     this.runAndRefresh(args, successMsg, stashBefore, thenUnstash).subscribe();
-
-  refreshBranchesAndLogs = () => this.workingDirectory.doFetchWorkingDirChanges() && this.gitRepository.doUpdateLogsAndBranches();
 
 }

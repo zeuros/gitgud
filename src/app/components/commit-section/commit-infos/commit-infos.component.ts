@@ -1,9 +1,9 @@
 import {Component, effect, inject, viewChild} from '@angular/core';
 import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
-import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
-import {Button, ButtonDirective} from 'primeng/button';
+import {Button} from 'primeng/button';
 import {DatePipe} from '@angular/common';
 import {isEqual} from 'lodash-es';
 import {DATE_FORMAT} from '../../../utils/constants';
@@ -22,7 +22,6 @@ import {GitRepositoryStore} from '../../../stores/git-repos.store';
     ReactiveFormsModule,
     InputText,
     Textarea,
-    ButtonDirective,
     DatePipe,
     Tooltip,
     AvatarComponent,
@@ -36,20 +35,20 @@ import {GitRepositoryStore} from '../../../stores/git-repos.store';
 export class CommitInfosComponent {
 
   protected editCommitForm = new FormGroup({
-    summary: new FormControl(''),
-    description: new FormControl(''),
+    summary: new FormControl('', {nonNullable: true, validators: [Validators.required]}),
+    description: new FormControl('', {nonNullable: true}),
   });
   private shaTooltip = viewChild(Tooltip);
   protected initialValue: typeof this.editCommitForm.value = {};
   protected editedFiles?: ChangeSet;
-  protected readonly isEqual = isEqual;
-  protected readonly DATE_FORMAT = DATE_FORMAT;
-  protected readonly directory = directory;
-  protected readonly fileName = fileName;
-  protected readonly FileStatusesIcons = FileStatusesIcons;
-  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
-  private readonly workingDirectoryService = inject(WorkingDirectoryService);
-  protected readonly fileDiffPanelService = inject(FileDiffPanelService);
+  protected isEqual = isEqual;
+  protected DATE_FORMAT = DATE_FORMAT;
+  protected directory = directory;
+  protected fileName = fileName;
+  protected FileStatusesIcons = FileStatusesIcons;
+  protected gitRepositoryStore = inject(GitRepositoryStore);
+  private workingDirectoryService = inject(WorkingDirectoryService);
+  protected fileDiffPanelService = inject(FileDiffPanelService);
 
   constructor() {
     effect(() => {

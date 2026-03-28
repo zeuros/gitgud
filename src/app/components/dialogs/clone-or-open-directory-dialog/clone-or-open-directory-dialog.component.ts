@@ -27,8 +27,8 @@ import {FloatLabelModule} from 'primeng/floatlabel';
 export class CloneOrOpenDirectoryDialogComponent {
 
 
-  private readonly gitApi = inject(GitApiService);
-  private readonly popup = inject(PopupService);
+  private gitApi = inject(GitApiService);
+  private popup = inject(PopupService);
 
   repositoryUrl = model<string>();
 

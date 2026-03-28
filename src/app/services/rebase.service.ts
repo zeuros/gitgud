@@ -1,11 +1,6 @@
 import {inject, Injectable} from '@angular/core';
-import {catchError, defer, delay, EMPTY, finalize, first, map, Observable, of, retry, Subject, switchMap, tap, throwError} from 'rxjs';
+import {catchError, defer, EMPTY, finalize, first, of, retry, Subject, switchMap, throwError} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
-import {workingDirHasChanges} from '../utils/utils';
-import {GitRepositoryStore} from '../stores/git-repos.store';
-import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-directory.service';
-import {GitRepositoryService} from './git-repository.service';
-import {PopupService} from './popup.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,10 +8,6 @@ import {PopupService} from './popup.service';
 export class RebaseService {
 
   private readonly gitApi = inject(GitApiService);
-  private readonly gitRepositoryStore = inject(GitRepositoryStore);
-  private readonly workingDirectory = inject(WorkingDirectoryService);
-  private readonly gitRepository = inject(GitRepositoryService);
-  private readonly popup = inject(PopupService);
   private pendingRebase$ = new Subject<void>();
 
   /**
@@ -98,6 +89,5 @@ export class RebaseService {
     contents.split('\n')
       .map(line => line.trim())
       .filter(line => !line.startsWith('#'));
-
 
 }
