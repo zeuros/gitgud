@@ -9,21 +9,21 @@ import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 @Injectable({providedIn: 'root'})
 export class StashContextMenuService {
 
-  private readonly gitApi = inject(GitApiService);
-  private readonly gitRepository = inject(GitRepositoryService);
-  private readonly popup = inject(PopupService);
+  private gitApi = inject(GitApiService);
+  private gitRepository = inject(GitRepositoryService);
+  private popup = inject(PopupService);
 
-  readonly selectedCommit = signal<DisplayRef | undefined>(undefined);
-  private readonly sha = computed(() => this.selectedCommit()!.sha);
+  selectedCommit = signal<DisplayRef | undefined>(undefined);
+  private sha = computed(() => this.selectedCommit()!.sha);
 
   // Stash index derived from the stash ref name e.g. "stash@{2}"
-  private readonly stashRef = computed(() => {
+  private stashRef = computed(() => {
     const ref = this.selectedCommit()?.branchesDetails?.find(b => b.name?.startsWith('stash@'));
-    if(ref)debugger
+    if (ref) debugger
     return ref?.name ?? 'stash@{0}';
   });
 
-  readonly stashContextMenu = computed<MenuItem[]>(() => [
+  stashContextMenu = computed<MenuItem[]>(() => [
     {label: 'Apply stash', icon: 'fa fa-download', command: this.applyStash},
     {label: 'Pop stash', icon: 'fa fa-level-down', command: this.popStash},
     {separator: true},
