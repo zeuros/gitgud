@@ -12,7 +12,7 @@ export class GitRepository {
     public logs: Commit[] = [],
     public stashes: Commit[] = [],
     public branches: Branch[] = [],
-    public selectedCommitsShas: string[] = [],
+    public selectedCommitsShas: string[] = ['index'],
     public startCommit = 0,
     public remotes: { remote: string; url: string }[] = [],
     // Editor config
