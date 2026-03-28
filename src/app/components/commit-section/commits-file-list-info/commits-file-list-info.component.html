@@ -1,0 +1,12 @@
+@let selectedCommits = gitRepositoryStore.selectedCommits();
+@if (selectedCommits!.length > 1) {
+    <h4 class="m-0">Diffs {{ selectedCommits.length == 2 ? 'between' : 'of' }} {{ selectedCommits.length }} commits:</h4>
+
+    <p-divider/>
+
+    @for (commit of selectedCommits; track commit.sha) {
+        <gitgud-commit-card [commit]="commit"/>
+    }
+
+    <gitgud-commit-file-list [files]="(editedFiles()?.files ?? [])"/>
+}

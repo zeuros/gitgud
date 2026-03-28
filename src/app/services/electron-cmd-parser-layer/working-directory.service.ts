@@ -27,18 +27,6 @@ export class WorkingDirectoryService {
     this.fileWatcher.onWorkingDirFileChange$.subscribe(this.doFetchWorkingDirChanges);
   }
 
-  /**
-   * Retrieves the list of changed files for a specific commit.
-   *
-   * @param sha commit hash
-   * @returns An Observable emitting an array of file changes: added, modified, and deleted files,
-   *          along with their statistics (e.g., lines added/removed).
-   */
-  getChangedFilesForGivenCommit = (sha: string) =>
-    this.gitApi.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
-      .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, sha)));
-
-
   readonly stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['add', '--', path]).subscribe(this.doFetchWorkingDirChanges);
   readonly unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['reset', '--', path]).subscribe(this.doFetchWorkingDirChanges);
 

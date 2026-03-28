@@ -1,4 +1,5 @@
 import {IRawDiff} from '../model/diff/raw-diff';
+import {Commit} from '../model/commit';
 
 
 /**
@@ -45,3 +46,7 @@ export const isDiffTooLarge = (diff: IRawDiff) => {
 
   return false;
 };
+
+// Sort oldest to newest
+export const sortedShas = (shas: string[], logs: Commit[]) =>
+  [...shas].sort((a, b) => logs.findIndex(l => l.sha === b) - logs.findIndex(l => l.sha === a));

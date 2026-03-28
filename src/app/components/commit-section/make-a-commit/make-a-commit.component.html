@@ -17,7 +17,7 @@
                     <p-button styleClass="p-button-sm" (click)="workingDirectoryService.stageAll()" label="Stage all"/>
                 }
             </div>
-            <p-divider type="solid" class="mt-0"/>
+            <p-divider class="mt-0"/>
             @if (workingDirFilesChanges && workingDirFilesChanges.unstaged.length) {
                 <p-listbox
                         animate.enter="slight-slide-in"
@@ -56,7 +56,7 @@
                     <p-button styleClass="p-button-sm" (click)="workingDirectoryService.unstageAll()" label="Unstage all"/>
                 }
             </div>
-            <p-divider type="solid" class="mt-0"/>
+            <p-divider class="mt-0"/>
             @if (workingDirFilesChanges && workingDirFilesChanges.staged.length) {
                 <p-listbox
                         animate.enter="slight-slide-in"

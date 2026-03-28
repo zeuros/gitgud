@@ -11,6 +11,7 @@ import {IdenticonPipe} from '../../../../services/identicon-pipe.service';
   ],
   templateUrl: './avatar.component.html',
   styleUrl: './avatar.component.scss',
+  standalone: true,
 })
 export class AvatarComponent {
 
