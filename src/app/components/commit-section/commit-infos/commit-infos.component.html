@@ -57,7 +57,10 @@
         }
     </div>
 
-    <p-listbox animate.enter="fade-slide-in-out-enter" [options]="(editedFiles?.files ?? []).slice()" (onChange)="fileDiffPanelService.showCommittedFileDiffs($event.value)"
+    <p-listbox animate.enter="fade-slide-in-out-enter"
+               [options]="(editedFiles?.files ?? []).slice()"
+               (onChange)="fileDiffPanelService.showCommittedFileDiffs($event.value)"
+               scrollHeight="auto"
                optionLabel="path">
         <ng-template #item let-f>
             @let file = file$(f);
