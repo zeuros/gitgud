@@ -44,7 +44,7 @@
     --p-primary-900: var(--dark-purple);
     --p-primary-950: var(--raisin-black);
 
-    --font-family: 'Nunito', Roboto, "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    --font-family: Nunito, Roboto, Cantarell, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
     --p-text-color: var(--wowowowGray);
     --p-highlight-focus-color: #e5e5e5;
     --p-text-color-secondary: rgba(255, 255, 255, 0.6);
