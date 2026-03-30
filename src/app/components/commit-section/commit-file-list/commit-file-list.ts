@@ -1,4 +1,3 @@
-// commit-file-list.component.ts
 import {Component, inject, input} from '@angular/core';
 import {directory, fileName} from '../../../utils/utils';
 import {Listbox, ListboxChangeEvent} from 'primeng/listbox';
@@ -14,7 +13,8 @@ import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
                [options]="files().slice()"
                (onChange)="onFileChange($event)"
                scrollHeight="auto"
-               optionLabel="path">
+               optionLabel="path"
+               class="fill-height">
       <ng-template #item let-f>
         @let file = file$(f);
         @let dir = directory(file.path);
@@ -28,6 +28,9 @@ import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
       </ng-template>
     </p-listbox>
   `,
+  host: {
+    class: 'overflow-hidden',
+  },
 })
 export class CommitFileListComponent {
   files = input.required<CommittedFileChange[]>();

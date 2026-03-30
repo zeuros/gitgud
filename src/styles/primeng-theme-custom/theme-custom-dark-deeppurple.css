@@ -58,3 +58,8 @@
     --p-divider-horizontal-margin: 0.5rem 0;
     --p-form-field-border-radius: var(--p-border-radius-xs);
 }
+
+/* Make listboxes borders very slight */
+p-listbox {
+    border: 1px solid #dfade61c;
+}

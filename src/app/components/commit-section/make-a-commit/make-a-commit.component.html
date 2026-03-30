@@ -10,8 +10,8 @@
 >
     <ng-template pTemplate="panel">
         <!-- Unstaged files -->
-        <div class="flex flex-column h-full overflow-hidden">
-            <div class="flex align-items-center justify-content-between p-2">
+        <div class="flex flex-column h-full">
+            <div class="flex align-items-center justify-content-between h-3rem">
                 <h4 class="m-0">Unstaged files ({{ workingDirFilesChanges?.unstaged?.length ?? 0 }})</h4>
                 @if (workingDirFilesChanges?.unstaged?.length) {
                     <p-button styleClass="p-button-sm" (click)="workingDirectoryService.stageAll()" label="Stage all"/>
@@ -23,7 +23,7 @@
                         animate.enter="slight-slide-in"
                         [options]="workingDirFilesChanges.unstaged"
                         optionLabel="path"
-                        class="show-button-on-li-hover flex-1"
+                        class="show-button-on-li-hover flex-1 overflow-hidden"
                         scrollHeight="flex"
                         (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)">
                     <ng-template let-workingDirFileChanges pTemplate="item">
@@ -49,8 +49,8 @@
 
     <ng-template pTemplate="panel">
         <!-- Staged files -->
-        <div class="flex flex-column h-full overflow-hidden">
-            <div class="flex align-items-center justify-content-between p-2">
+        <div class="flex flex-column h-full">
+            <div class="flex align-items-center justify-content-between h-3rem">
                 <h4 class="m-0">Staged files ({{ workingDirFilesChanges?.staged?.length ?? 0 }})</h4>
                 @if (workingDirFilesChanges?.staged?.length) {
                     <p-button styleClass="p-button-sm" (click)="workingDirectoryService.unstageAll()" label="Unstage all"/>
@@ -62,7 +62,7 @@
                         animate.enter="slight-slide-in"
                         [options]="workingDirFilesChanges.staged"
                         optionLabel="path"
-                        class="show-button-on-li-hover flex-1"
+                        class="show-button-on-li-hover flex-1 overflow-hidden"
                         scrollHeight="flex"
                         (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)">
                     <ng-template let-workingDirFileChanges pTemplate="item">
@@ -88,9 +88,9 @@
 
     <ng-template pTemplate="panel">
         <!-- Commit form -->
-        <div class="flex flex-column h-full p-2">
-            <div class="flex align-items-center justify-content-between mb-2">
-                <div>Commit message</div>
+        <div class="flex flex-column h-full">
+            <div class="flex align-items-center justify-content-between h-3rem">
+                <h4 class="m-0">Commit message</h4>
                 <label class="flex align-items-center gap-2 cursor-pointer">
                     <span>Amend</span>
                     <p-checkbox [binary]="true" (onChange)="amendMode($event.checked)"/>

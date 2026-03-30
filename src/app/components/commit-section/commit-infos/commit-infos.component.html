@@ -16,7 +16,7 @@
     <p-divider class="mb-0"/>
 
     <div class="flex-column items-center justify-center">
-        <div class="p-2">
+        <div class="py-2">
             Amend commit message
         </div>
         <form class="flex-column flex-1" [formGroup]="editCommitForm" (ngSubmit)="rewordCommit()">
@@ -36,6 +36,6 @@
 
     <gitgud-commit-card [commit]="selectedCommit" [showSha]="false"/>
 
-    <gitgud-commit-file-list [files]="(editedFiles()?.files ?? [])"/>
+    <gitgud-commit-file-list class="pt-2" [files]="(editedFiles()?.files ?? [])"/>
 
 }
