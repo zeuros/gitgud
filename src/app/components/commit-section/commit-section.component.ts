@@ -17,6 +17,9 @@ import {CommitsFileListInfoComponent} from './commits-file-list-info/commits-fil
   ],
   templateUrl: './commit-section.component.html',
   styleUrl: './commit-section.component.scss',
+  host: {
+    class: 'fill-height',
+  },
 })
 export class CommitSectionComponent {
 

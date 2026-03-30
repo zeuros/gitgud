@@ -1,13 +1,13 @@
 @let selectedCommitsShas = gitRepositoryStore.selectedCommitsShas();
 @if (selectedCommitsShas && selectedCommitsShas?.length) {
     @if (selectedCommitsShas[0] == 'index') {
-        <gitgud-make-a-commit/>
+        <gitgud-make-a-commit class="p-2 h-full"/>
     } @else if (selectedCommitsShas.length == 1){
         <!-- Show one commit diffs -->
-        <gitgud-commit-infos/>
+        <gitgud-commit-infos class="p-2 h-full"/>
     } @else if (selectedCommitsShas.length > 1){
         <!-- Show 2+ commit diffs -->
-        <gitgud-commits-file-list-info/>
+        <gitgud-commits-file-list-info class="p-2 h-full"/>
     } @else {
         NO COMMITS SELECTED
     }

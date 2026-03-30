@@ -31,6 +31,9 @@ import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
   templateUrl: './commit-infos.component.html',
   styleUrl: './commit-infos.component.scss',
   standalone: true,
+  host: {
+    class: 'fill-height',
+  },
 })
 export class CommitInfosComponent {
 

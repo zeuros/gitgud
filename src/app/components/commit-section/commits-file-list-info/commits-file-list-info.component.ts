@@ -19,6 +19,9 @@ import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
   ],
   templateUrl: './commits-file-list-info.component.html',
   standalone: true,
+  host: {
+    class: 'fill-height',
+  },
 })
 export class CommitsFileListInfoComponent {
   protected editedFiles = signal<ChangeSet | undefined>(undefined);

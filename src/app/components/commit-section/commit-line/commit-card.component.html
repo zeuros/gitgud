@@ -1,8 +1,7 @@
 @let c = commit();
 @if (c) {
-    <div class="flex items-center justify-center">
-        <div class="flex align-items-center gap-2 author-icon"
-             [pTooltip]="c.author.email">
+    <div class="flex items-center justify-center" [pTooltip]="c.author.email" tooltipPosition="left">
+        <div class="flex align-items-center gap-2 author-icon">
             <gitgud-avatar [identity]="c.author"/>
             <div class="flex-column">
                 <span>{{ c.author.name }}</span>

@@ -32,7 +32,7 @@ import {WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/work
     ],
     templateUrl: './make-a-commit.component.html',
     styleUrl: './make-a-commit.component.scss',
-    standalone: true
+    standalone: true,
 })
 export class MakeACommitComponent {
 
