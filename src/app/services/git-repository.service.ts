@@ -119,9 +119,10 @@ export class GitRepositoryService {
           logs: this.logReader.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', ...stashes.map(s => s.sha)])
             .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
           branches: this.branchReader.getBranches(), // Source will show which branch the  commit is in
+          detachedHeadSha: this.branchReader.detachedHeadSha(), // Source will show which branch the  commit is in
           stashes: of(stashes), // Source will show which branch commit is in
         })),
-        tap(r => this.gitRepositoryStore.updateSelectedRepository(r)),
+        tap((r: Partial<GitRepository>) => this.gitRepositoryStore.updateSelectedRepository(r)),
       );
 
 

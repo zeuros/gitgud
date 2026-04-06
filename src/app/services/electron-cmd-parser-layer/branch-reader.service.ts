@@ -69,6 +69,12 @@ export class BranchReaderService {
           }),
       ));
 
+  detachedHeadSha = () =>
+    this.gitApi.git(['symbolic-ref', 'HEAD']).pipe(
+      map(() => undefined),
+      catchError(() => this.gitApi.git(['rev-parse', 'HEAD']).pipe(map(sha => sha.trim()))),
+    );
+
   checkoutBranch = (branch: Branch) => {
     if (branch.isHeadPointed) {
       this.popupService.warn(`Branch ${branch.name} is already checked out`);
