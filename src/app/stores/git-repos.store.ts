@@ -59,6 +59,7 @@ export class GitRepositoryStore {
   readonly selectedCommitIndex = computed(() => {const sc = this.selectedCommitSha();return this.logs().findIndex(c => c.sha === sc);});
   readonly selectedStash = computed(() => {const sc = this.selectedCommitSha();return this.stashes().find(s => s.parentSHAs?.[1] && s.parentSHAs?.[1] === sc);});
   readonly headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
+  readonly detachedHeadSha = computed(() => this.selectedRepository()?.detachedHeadSha);
 
   constructor() {
     syncToStorage(this._repositories, StorageName.GitRepositories, this.localStorageService);

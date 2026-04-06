@@ -37,6 +37,7 @@
     </ng-template>
     <ng-template pTemplate="body" let-rowIndex="rowIndex" let-displayRef>
         @let commit = $displayRef(displayRef);
+        @let isDetachedHead = gitRepositoryStore.detachedHeadSha() === commit.sha;
         <tr class="commit-row {{ commit.highlight }}"
             [pSelectableRow]="commit"
             [pSelectableRowIndex]="rowIndex"
@@ -47,9 +48,19 @@
             [pContextMenuRowDisabled]="isIndex(commit)"
         >
             <td class="branch-tag-td">
+                @if (isDetachedHead) {
+                    <div class="branch-tag">
+                        <div class="commit-branch" [style.top.px]="0" [style.filter]="commitColor(commit.indent!)">
+                            <i class="fa fa-check mr-2"></i>
+                            <span class="ellipsis branch-name">HEAD (detached)</span>
+                            <i class="fa fa-unlink mr-2"></i>
+                        </div>
+                    </div>
+                }
                 @for (branch of gitRepositoryStore.branchesByTip()[commit.sha] ?? []; track branch.name; let i = $index) {
                     <div class="branch-tag">
-                        <div class="commit-branch" [style.top.px]="i * 30" [style.filter]="commitColor(commit.indent!)" pDraggable>
+                        <div class="commit-branch" [style.top.px]="(isDetachedHead ? i + 1 : i) * 30"
+                             [style.filter]="commitColor(commit.indent!)" pDraggable>
                             @if (commit.isPointedByLocalHead) {
                                 <i class="fa fa-check mr-2"></i>
                             }
