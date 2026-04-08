@@ -10,7 +10,7 @@
   "private": true,
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
-    "ng:serve": "ng serve -c dev",
+    "ng:serve": "node --max-old-space-size=4096 ./node_modules/@angular/cli/bin/ng serve -c dev",
     "build:angular": "ng build --base-href ./",
     "build:electron": "tsc -p tsconfig.serve.json",
     "build": "npm run build:electron && npm run build:angular",
