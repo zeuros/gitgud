@@ -24,8 +24,8 @@ $row-spacing: 8px;
       .p-datatable-tbody > tr {
         background-color: transparent;
         height: $row-height;
-        border-top: calc( $row-spacing / 2 ) solid var(--p-content-background);
-        border-bottom: calc( $row-spacing / 2 ) solid var(--p-content-background);
+        border-top: calc($row-spacing / 2) solid var(--p-content-background);
+        border-bottom: calc($row-spacing / 2) solid var(--p-content-background);
 
         & > td {
           padding: 0;
@@ -64,15 +64,16 @@ $row-spacing: 8px;
         max-width: 200px;
         position: relative;
         padding: 0 !important;
+        overflow: visible;
 
         // Other branches will appear below on hover
         &:hover {
-          overflow: visible;
 
           .branch-tag {
             .commit-branch {
+              transform: translateY(var(--offset)) scale(1);
               max-width: 300px;
-              z-index: 400;
+              z-index: 420;
             }
           }
         }
@@ -80,11 +81,13 @@ $row-spacing: 8px;
         .branch-tag {
 
           .commit-branch {
+            transition: all 0.2s ease;
+            transform: translateY(0) scale(0.95);
             cursor: grab;
             z-index: 300; // Display this over commit graph
-            transition: all 0.1s;
             position: absolute;
             left: 8px;
+            top: 0;
             display: flex;
             max-width: 90%;
             border: 1px solid rgba(119, 87, 126, 0.9);
@@ -99,7 +102,7 @@ $row-spacing: 8px;
               margin-right: 4px;
             }
 
-            i {
+            i.with-padding {
               padding: 0 3px;
             }
 

@@ -66,3 +66,6 @@ export const findNode = (nodes: TreeNode<Branch>[], sha: string): TreeNode<Branc
   }
   return null;
 };
+
+// Normalize origin / local branch name origin/main → main
+export const normalizedBranchName = (b: Branch) => b.name.replace('origin/', '')
