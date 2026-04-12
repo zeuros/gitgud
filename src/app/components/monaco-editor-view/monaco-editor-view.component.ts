@@ -10,7 +10,7 @@ import {Tooltip} from 'primeng/tooltip';
 import {Toolbar} from 'primeng/toolbar';
 import {buildDiff} from '../../lib/github-desktop/diff/diff-builder';
 import {FormsModule} from '@angular/forms';
-import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 import IEditorOptions = editor.IEditorOptions;
 import IDiffEditor = editor.IDiffEditor;
 
@@ -40,8 +40,8 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
   diffModels = signal<DiffModels | undefined>(undefined);
 
-  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
-  protected readonly viewType = computed(() => this.gitRepositoryStore.editorConfig()!.viewType);
+  protected readonly currentRepo = inject(CurrentRepoStore);
+  protected readonly viewType = computed(() => this.currentRepo.editorConfig()!.viewType);
 
   private fileDiffService = inject(FileDiffService);
   private diffEditor = signal<IDiffEditor | undefined>(undefined);
@@ -120,7 +120,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     this.diffEditor()?.dispose();
   }
 
-  protected readonly setViewType = (viewType: ViewType) => this.gitRepositoryStore.updateSelectedRepository({editorConfig: {viewType}});
+  protected readonly setViewType = (viewType: ViewType) => this.currentRepo.update({editorConfig: {viewType}});
 
   private updateDiffEditor({before, after}: DiffModels) {
     const beforeUri = Uri.parse(`before-${before.fileName}`);

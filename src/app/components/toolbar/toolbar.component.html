@@ -1,8 +1,7 @@
-@let repo = gitRepositoryStore.selectedRepository();
 
 <div class="repo-info">
-    <span class="repo-name">{{ repo?.name }}</span>
-    <span class="branch-badge">{{ gitRepositoryStore.headBranch()?.name ?? short(gitRepositoryStore.detachedHeadSha() ?? '') + ' (detached HEAD)' }}</span>
+    <span class="repo-name">{{ currentRepo.name() }}</span>
+    <span class="branch-badge">{{ currentRepo.headBranch()?.name ?? short(currentRepo.detachedHeadSha() ?? '') + ' (detached HEAD)' }}</span>
 </div>
 
 <p-divider layout="vertical"/>

@@ -7,7 +7,7 @@ import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {AsyncPipe} from '@angular/common';
 import {sum} from 'lodash-es';
 import {MonacoEditorViewComponent} from '../monaco-editor-view/monaco-editor-view.component';
-import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 @Component({
   selector: 'gitgud-repository-view',
@@ -21,9 +21,9 @@ import {GitRepositoryStore} from '../../stores/git-repos.store';
 })
 export class RepositoryViewComponent {
 
-  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  protected readonly currentRepo = inject(CurrentRepoStore);
   protected readonly fileDiffPanelService = inject(FileDiffPanelService);
   protected readonly sum = sum;
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
-    this.gitRepositoryStore.updateSelectedRepository({panelSizes: {...this.gitRepositoryStore.panelSizes()!, mainPanels: sizes.map(Number)}});
+    this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, mainPanels: sizes.map(Number)}});
 }

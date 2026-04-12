@@ -1,5 +1,5 @@
-@let workingDirFilesChanges = gitRepositoryStore.workDirStatus();
-@let panelSizes = gitRepositoryStore.panelSizes()?.makeCommitPanel ?? [];
+@let workingDirFilesChanges = currentRepo.workDirStatus();
+@let panelSizes = currentRepo.panelSizes()?.makeCommitPanel ?? [];
 
 <p-splitter
         [style]="{ height: '100%' }"

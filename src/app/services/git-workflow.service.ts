@@ -5,7 +5,7 @@ import {PopupService} from './popup.service';
 import {StashService} from './stash.service';
 import {RebaseService} from './rebase.service';
 import {GitRefreshService} from './git-refresh.service';
-import {GitRepositoryStore} from '../stores/git-repos.store';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 import {rewordCommitAction} from '../utils/rebase.utils';
 
 // High-level workflows combining services
@@ -18,7 +18,7 @@ export class GitWorkflowService {
   private rebase = inject(RebaseService);
   private popup = inject(PopupService);
   private gitRefresh = inject(GitRefreshService);
-  private gitRepositoryStore = inject(GitRepositoryStore);
+  private currentRepo = inject(CurrentRepoStore);
 
   rebaseAndEditActions = (rebaseFrom: string, mapActions: (actions: string[]) => string[], autosquash = false) =>
     this.stash.stashAndRun(
@@ -49,14 +49,14 @@ export class GitWorkflowService {
 
 
   rewordCommit = ({summary, description}: { summary: string, description: string }) => {
-    const selectedCommitSha = this.gitRepositoryStore.selectedCommitSha()!;
+    const selectedCommitSha = this.currentRepo.selectedCommitSha()!;
     const newMessage = `${summary}\n\n${description || ''}`.trim();
-    const commitIndex = this.gitRepositoryStore.selectedCommitIndex();
+    const commitIndex = this.currentRepo.selectedCommitIndex();
 
     // Use interactive rebase to reword a past commit
     return this.rebaseAndEditActions(`${selectedCommitSha}~1`, rewordCommitAction(this.gitApi.cwd()!, selectedCommitSha, newMessage))
       // After refreshing logs, selects the edited commit
-      .pipe(tap(() => this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [this.gitRepositoryStore.logs()[commitIndex]?.sha]})));
+      .pipe(tap(() => this.currentRepo.update({selectedCommitsShas: [this.currentRepo.logs()[commitIndex]?.sha]})));
   };
 
 }

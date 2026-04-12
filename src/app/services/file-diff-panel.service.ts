@@ -2,7 +2,7 @@ import {inject, Injectable} from '@angular/core';
 import {CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
 import {EMPTY, of, Subject, switchMap} from 'rxjs';
 import {instanceOf} from '../utils/utils';
-import {GitRepositoryStore} from '../stores/git-repos.store';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 import {WorkingDirectoryFileChange} from "../lib/github-desktop/model/workdir";
 
 @Injectable({
@@ -11,7 +11,7 @@ import {WorkingDirectoryFileChange} from "../lib/github-desktop/model/workdir";
 export class FileDiffPanelService {
 
 
-  private readonly gitRepositoryStore = inject(GitRepositoryStore);
+  private readonly currentRepo = inject(CurrentRepoStore);
   private readonly fileToDiffSubject$ = new Subject<FileChange | null>();
 
   // Here we update monaco view for commit files (no live changes) or for working dir changes (live update on file change)
@@ -26,7 +26,7 @@ export class FileDiffPanelService {
 
       // Working directory file → re-emit on file diff update
       if (instanceOf(file, WorkingDirectoryFileChange)) {
-        this.gitRepositoryStore.updateSelectedRepository({workDirStatus: {...this.gitRepositoryStore.workDirStatus()!}}); // FIXME: force new reference to update editor on file change
+        this.currentRepo.update({workDirStatus: {...this.currentRepo.workDirStatus()!}}); // FIXME: force new reference to update editor on file change
         return of({...file});
       }
 

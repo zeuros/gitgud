@@ -2,7 +2,7 @@ import {computed, inject, Injectable, signal} from '@angular/core';
 import {MenuItem} from 'primeng/api';
 import {PopupService} from '../../services/popup.service';
 import {first, map, switchMap} from 'rxjs';
-import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {short} from '../../utils/commit-utils';
 import {PromptService} from '../../services/prompt.service';
@@ -15,7 +15,7 @@ import {GitWorkflowService} from '../../services/git-workflow.service';
 export class CommitContextMenuService {
 
   private popup = inject(PopupService);
-  private gitRepositoryStore = inject(GitRepositoryStore);
+  private currentRepo = inject(CurrentRepoStore);
   protected prompt = inject(PromptService);
   protected gitWorkflow = inject(GitWorkflowService);
 
@@ -24,7 +24,7 @@ export class CommitContextMenuService {
   private parentSha = computed(() => this.selectedCommit()!.parentSHAs[0]);
   private childSha = computed(() => {
     const selectedSha = this.sha();
-    return this.gitRepositoryStore.logs().find(c => c.parentSHAs[0] === selectedSha)?.sha;
+    return this.currentRepo.logs().find(c => c.parentSHAs[0] === selectedSha)?.sha;
   });
 
   commitContextMenu = computed<MenuItem[]>(() => [
@@ -33,7 +33,7 @@ export class CommitContextMenuService {
     {label: 'Create branch here', icon: 'fa fa-plus', command: this.createBranch},
     {label: 'Cherry pick commit', icon: 'fa fa-hand-grab-o', command: this.cherryPick},
     {
-      label: `Reset ${this.gitRepositoryStore.headBranch()?.name} to this commit`,
+      label: `Reset ${this.currentRepo.headBranch()?.name} to this commit`,
       icon: 'fa fa-history',
       items: [{
         label: 'Soft — Undo commits, keep changes stage',
@@ -98,7 +98,7 @@ export class CommitContextMenuService {
   // };
 
   protected dropCommit = () => {
-    const isTip = this.gitRepositoryStore.headBranch()?.tip.sha === this.sha();
+    const isTip = this.currentRepo.headBranch()?.tip.sha === this.sha();
     const successMsg = `Dropped ${short(this.sha())}`;
 
     return isTip

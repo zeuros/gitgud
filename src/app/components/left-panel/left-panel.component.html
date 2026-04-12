@@ -1,4 +1,4 @@
-@let panelSizes = gitRepositoryStore.panelSizes()?.leftPanel;
+@let panelSizes = currentRepo.panelSizes()?.leftPanel;
 @if (panelSizes) {
     <p-splitter
             [style]="{ height: '100%' }"
@@ -49,8 +49,8 @@
                     <i class="fa fa-archive mr-2"></i>Stashes
                 </div>
                 <p-listbox
-                        [options]="gitRepositoryStore.stashes()"
-                        [ngModel]="gitRepositoryStore.selectedStash()"
+                        [options]="currentRepo.stashes()"
+                        [ngModel]="currentRepo.selectedStash()"
                         (ngModelChange)="selectStash($event)"
                         scrollHeight="auto"
                         dataKey="sha"

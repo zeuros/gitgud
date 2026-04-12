@@ -10,7 +10,7 @@ import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {directory, fileName} from '../../../utils/utils';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {PrimeTemplate} from 'primeng/api';
-import {GitRepositoryStore} from '../../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {CommitService} from '../../../services/commit.service';
 import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
@@ -38,7 +38,7 @@ export class MakeACommitComponent {
 
   protected fileDiffPanelService = inject(FileDiffPanelService);
   protected workingDirectoryService = inject(WorkingDirectoryService);
-  protected gitRepositoryStore = inject(GitRepositoryStore);
+  protected currentRepo = inject(CurrentRepoStore);
   private commitService = inject(CommitService);
   private savedFormState?: typeof this.commitForm.value;
   protected commitForm = inject(FormBuilder).nonNullable.group({summary: '', description: ''});
@@ -57,7 +57,7 @@ export class MakeACommitComponent {
       this.savedFormState = this.commitForm.value;
 
       // Prefill with last commit message
-      const lastCommit = headCommit(this.gitRepositoryStore.branches(), this.gitRepositoryStore.logs()); // HEAD;
+      const lastCommit = headCommit(this.currentRepo.branches(), this.currentRepo.logs()); // HEAD;
       if (lastCommit) {
         this.commitForm.patchValue({
           summary: lastCommit.summary,
@@ -74,7 +74,7 @@ export class MakeACommitComponent {
   }
 
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
-    this.gitRepositoryStore.updateSelectedRepository({panelSizes: {...this.gitRepositoryStore.panelSizes()!, makeCommitPanel: sizes.map(Number)}});
+    this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, makeCommitPanel: sizes.map(Number)}});
 
   protected FileStatusesIcons = FileStatusesIcons;
   protected keys = Object.keys;

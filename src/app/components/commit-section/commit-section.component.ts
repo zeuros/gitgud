@@ -2,7 +2,7 @@ import {Component, inject} from '@angular/core';
 import {ReactiveFormsModule} from '@angular/forms';
 import {CommitInfosComponent} from './commit-infos/commit-infos.component';
 import {MakeACommitComponent} from './make-a-commit/make-a-commit.component';
-import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {CommitsFileListInfoComponent} from './commits-file-list-info/commits-file-list-info.component';
 
 
@@ -23,6 +23,6 @@ import {CommitsFileListInfoComponent} from './commits-file-list-info/commits-fil
 })
 export class CommitSectionComponent {
 
-  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  protected readonly currentRepo = inject(CurrentRepoStore);
 
 }

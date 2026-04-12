@@ -14,6 +14,7 @@ import {PrimeTemplate} from 'primeng/api';
 import {AutoFetchService} from '../../services/auto-fetch.service';
 import {SettingsComponent} from '../settings/settings.component';
 import {short} from '../../utils/commit-utils';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -24,7 +25,7 @@ import {short} from '../../utils/commit-utils';
 })
 export class ToolbarComponent {
 
-  protected gitRepositoryStore = inject(GitRepositoryStore);
+  protected currentRepo = inject(CurrentRepoStore);
   protected autoFetchService = inject(AutoFetchService);
   protected loading = signal<'push' | 'pull' | 'fetch' | undefined>(undefined);
   protected readonly short = short;

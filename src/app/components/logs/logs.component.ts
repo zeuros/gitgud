@@ -15,7 +15,7 @@ import {loadStashImage} from './log-draw-utils';
 import {DatePipe} from '@angular/common';
 import {local, normalizedBranchName, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
-import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {LogBuilderService} from '../../services/log-builder.service';
 import {CANVAS_MARGIN, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
@@ -41,12 +41,12 @@ import {Badge} from 'primeng/badge';
 export class LogsComponent {
 
   private logBuilder = inject(LogBuilderService);
-  protected gitRepositoryStore = inject(GitRepositoryStore);
+  protected currentRepo = inject(CurrentRepoStore);
   protected commitContextMenuService = inject(CommitContextMenuService);
   protected stashContextMenuService = inject(StashContextMenuService);
   protected contextMenuActiveCommit = signal<DisplayRef | undefined>(undefined);
   protected commitsSelection = computed(() => {
-    const selectedCommitsShas = this.gitRepositoryStore.selectedCommitsShas();
+    const selectedCommitsShas = this.currentRepo.selectedCommitsShas();
     return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
   });
 
@@ -84,9 +84,9 @@ export class LogsComponent {
 
     // Scroll to selected commit / stash
     effect(() => {
-      const sha = this.gitRepositoryStore.selectedCommitSha();
+      const sha = this.currentRepo.selectedCommitSha();
       const logTable = this.logTableContainer();
-      const startCommit = untracked(() => this.gitRepositoryStore.startCommit());
+      const startCommit = untracked(() => this.currentRepo.startCommit());
       const visibleCommitsCount = this.visibleCommitsCount();
 
       if (sha && logTable && visibleCommitsCount) {
@@ -97,9 +97,9 @@ export class LogsComponent {
 
     // When repository changes its logs, stashes, working dir (index commit) => recompute the log graph
     effect(() => {
-      const logs = this.gitRepositoryStore.logs();
-      const stashes = this.gitRepositoryStore.stashes();
-      const workDirStatus = this.gitRepositoryStore.workDirStatus();
+      const logs = this.currentRepo.logs();
+      const stashes = this.currentRepo.stashes();
+      const workDirStatus = this.currentRepo.workDirStatus();
       // Wait for stash image before drawing stashes in the graph
       if (!this.stashImg() || !logs.length || !workDirStatus) return;
 
@@ -110,7 +110,7 @@ export class LogsComponent {
     effect(() => {
       const displayLog = this.computedDisplayLog();
       const edges = this.edges();
-      const startCommit = this.gitRepositoryStore.startCommit();
+      const startCommit = this.currentRepo.startCommit();
       const scrollOffset = this.firstCommitOffsetPx();
       const stashImg = this.stashImg();
       const visibleCommitsCount = this.visibleCommitsCount();
@@ -201,7 +201,7 @@ export class LogsComponent {
   // Called after canvas is available (runs once)
   private setupScrollListeners = once((logTableContainer: Element) => {
     // On first load, scroll down to last saved position, synchronous, fires no scroll events
-    logTableContainer.scrollTop = this.gitRepositoryStore.startCommit() * ROW_HEIGHT;
+    logTableContainer.scrollTop = this.currentRepo.startCommit() * ROW_HEIGHT;
 
     // Only after initial automatic scrolling we start recording user scrolling
     logTableContainer.addEventListener('scroll', e => this.onTableScroll(e));
@@ -212,7 +212,7 @@ export class LogsComponent {
     this.hideContextMenus();
     this.firstCommitOffsetPx.set((target as HTMLElement).scrollTop % ROW_HEIGHT); // Update pixel-based scroll for smooth canvas drawing
     const startCommit = Math.floor((target as HTMLElement).scrollTop / ROW_HEIGHT);
-    this.gitRepositoryStore.updateSelectedRepository({startCommit}); // First commit to raw
+    this.currentRepo.update({startCommit}); // First commit to raw
   };
 
   // Scroll view to display the selected commit
@@ -221,13 +221,13 @@ export class LogsComponent {
 
     if (!this.isOnView(indexCommitToSelect, startCommit, endCommit)) {
       const scrollToThisCommit = Math.max(Math.ceil(indexCommitToSelect - this.visibleCommitsCount()! / 2), 0);
-      this.gitRepositoryStore.updateSelectedRepository({startCommit: scrollToThisCommit});
+      this.currentRepo.update({startCommit: scrollToThisCommit});
       logTable.scrollTo({top: scrollToThisCommit * ROW_HEIGHT});
     }
   };
 
   protected onCommitsSelection = (selection: DisplayRef[]) =>
-    this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: selection.map(s => s.sha)});
+    this.currentRepo.update({selectedCommitsShas: selection.map(s => s.sha)});
 
   private isOnView = (commitIndex: number, startCommit: number, endCommit: number) =>
     commitIndex > startCommit && commitIndex < endCommit;
