@@ -1,4 +1,4 @@
-@let sizes = gitRepositoryStore.panelSizes()?.mainPanels;
+@let sizes = currentRepo.panelSizes()?.mainPanels;
 @if (sizes) {
     <p-splitter [panelSizes]="sizes" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event)" class="h-full">
         <ng-template pTemplate>

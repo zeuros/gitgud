@@ -7,7 +7,7 @@ import {PopupService} from '../../services/popup.service';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {findNode, local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branch-utils';
 import {Commit} from '../../lib/github-desktop/model/commit';
-import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {TableModule} from 'primeng/table';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
@@ -50,22 +50,22 @@ export class LeftPanelComponent {
     {label: 'Copy commit sha', icon: 'pi pi-receipt', command: () => this.popupService.info('Copy commit sha selected')},
   ];
 
-  protected readonly gitRepositoryStore = inject(GitRepositoryStore);
+  protected readonly currentRepo = inject(CurrentRepoStore);
   private readonly branchReader = inject(BranchReaderService);
-  protected readonly localBranches = computed(() => toBranchTree(this.gitRepositoryStore.branches().filter(local) ?? []));
-  protected readonly remoteBranches = computed(() => toBranchTree(this.gitRepositoryStore.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
+  protected readonly localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
+  protected readonly remoteBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
   protected readonly selectedBranchNode = computed(() => {
-    const sha = this.gitRepositoryStore.selectedCommitSha();
+    const sha = this.currentRepo.selectedCommitSha();
     if (!sha) return null;
     return findNode([...this.localBranches(), ...this.remoteBranches()], sha);
   });
 
   protected readonly selectBranchCommit = (branch?: Branch) => {
-    if (branch) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [branch.tip.sha]});
+    if (branch) this.currentRepo.update({selectedCommitsShas: [branch.tip.sha]});
   };
 
   protected readonly selectStash = (stash?: Commit) => {
-    if (stash) this.gitRepositoryStore.updateSelectedRepository({selectedCommitsShas: [stash.parentSHAs[1]]});
+    if (stash) this.currentRepo.update({selectedCommitsShas: [stash.parentSHAs[1]]});
   };
 
   protected checkoutBranch = (branch?: Branch) => {
@@ -73,7 +73,7 @@ export class LeftPanelComponent {
   };
 
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
-    this.gitRepositoryStore.updateSelectedRepository({panelSizes: {...this.gitRepositoryStore.panelSizes()!, leftPanel: sizes.map(Number)}});
+    this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, leftPanel: sizes.map(Number)}});
 
   protected readonly $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
   protected readonly $stash = (stash: Commit) => stash;

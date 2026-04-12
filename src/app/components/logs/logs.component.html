@@ -37,7 +37,7 @@
     </ng-template>
     <ng-template pTemplate="body" let-rowIndex="rowIndex" let-displayRef>
         @let commit = $displayRef(displayRef);
-        @let isDetachedHead = gitRepositoryStore.detachedHeadSha() === commit.sha;
+        @let isDetachedHead = currentRepo.detachedHeadSha() === commit.sha;
         <tr class="commit-row {{ commit.highlight }}"
             [pSelectableRow]="commit"
             [pSelectableRowIndex]="rowIndex"
@@ -47,8 +47,7 @@
             [pContextMenuRow]="commit"
             [pContextMenuRowDisabled]="isIndex(commit)"
         >
-            @let branches = gitRepositoryStore.branchesByTip()[commit.sha] ?? [];
-            @let branchesGrouped = gitRepositoryStore.mergedBranchesByTip()[commit.sha] ?? [];
+            @let branchesGrouped = currentRepo.mergedBranchesByTip()[commit.sha] ?? [];
             @let extraCount = branchesGrouped.length + (isDetachedHead ? 1 : 0) - 1;
             <td class="branch-tag-td">
                 @if (isDetachedHead) {

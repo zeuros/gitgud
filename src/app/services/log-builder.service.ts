@@ -21,7 +21,7 @@ import {
 } from '../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../models/edge';
-import {GitRepositoryStore} from '../stores/git-repos.store';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 
 type Column = ['taken' | 'free', rowCount: number];
 
@@ -42,7 +42,7 @@ export interface LogBuildResult {
 })
 export class LogBuilderService {
 
-  private readonly branches = inject(GitRepositoryStore).branches;
+  private readonly branches = inject(CurrentRepoStore).branches;
 
   buildDisplayLog(logs: Commit[], stashChildren: Commit[], indexParent?: DisplayRef): LogBuildResult {
     const stashMap = buildStashMap(stashChildren);

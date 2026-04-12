@@ -7,7 +7,7 @@ import {isEqual} from 'lodash-es';
 import {directory, fileName} from '../../../utils/utils';
 import {Tooltip} from 'primeng/tooltip';
 import {ChangeSet} from '../../../lib/github-desktop/model/change-set';
-import {GitRepositoryStore} from '../../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
 import {PopupService} from '../../../services/popup.service';
 import {FileDiffService} from '../../../services/file-diff.service';
@@ -47,14 +47,14 @@ export class CommitInfosComponent {
   protected isEqual = isEqual;
   protected directory = directory;
   protected fileName = fileName;
-  protected gitRepositoryStore = inject(GitRepositoryStore);
+  protected currentRepo = inject(CurrentRepoStore);
   private fileDiff = inject(FileDiffService);
   private gitWorkflow = inject(GitWorkflowService);
   private popup = inject(PopupService);
 
   constructor() {
     effect(() => {
-      const selectedCommit = this.gitRepositoryStore.selectedCommit();
+      const selectedCommit = this.currentRepo.selectedCommit();
 
       if (selectedCommit) {
         this.fileDiff.getChangedFilesForGivenCommit(selectedCommit.sha).subscribe(editedFiles => this.editedFiles.set(editedFiles));

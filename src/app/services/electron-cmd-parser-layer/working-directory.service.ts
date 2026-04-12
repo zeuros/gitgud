@@ -3,7 +3,7 @@ import {map, tap} from 'rxjs';
 import {parseRawLogWithNumstat, parseWorkingDirChanges} from '../../lib/github-desktop/commit-files-changes';
 import {FileWatcherService} from '../file-watcher.service';
 import {GitApiService} from './git-api.service';
-import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {WorkingDirectoryFileChange} from "../../lib/github-desktop/model/workdir";
 
 @Injectable({
@@ -12,7 +12,7 @@ import {WorkingDirectoryFileChange} from "../../lib/github-desktop/model/workdir
 export class WorkingDirectoryService {
 
 
-  private readonly gitRepositoryStore = inject(GitRepositoryStore);
+  private readonly currentRepo = inject(CurrentRepoStore);
   private readonly gitApi = inject(GitApiService);
   private readonly fileWatcher = inject(FileWatcherService);
   private readonly destroyRef = inject(DestroyRef);
@@ -46,7 +46,7 @@ export class WorkingDirectoryService {
     ])
       .pipe(
         map(parseWorkingDirChanges),
-        tap(workDirStatus => this.gitRepositoryStore.updateSelectedRepository({workDirStatus}))
+        tap(workDirStatus => this.currentRepo.update({workDirStatus}))
       );
 
   /**

@@ -2,19 +2,19 @@ import {inject, Injectable} from '@angular/core';
 import {delay, Observable, switchMap, tap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {workingDirHasChanges} from '../utils/utils';
-import {GitRepositoryStore} from '../stores/git-repos.store';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 
 @Injectable({
   providedIn: 'root',
 })
 export class StashService {
   private readonly gitApi = inject(GitApiService);
-  private readonly gitRepositoryStore = inject(GitRepositoryStore);
+  private readonly currentRepo = inject(CurrentRepoStore);
 
 
   stashAndRun = (operation$: Observable<unknown>, thenUnstash = true): Observable<unknown> => {
 
-    if (!workingDirHasChanges(this.gitRepositoryStore.workDirStatus())) return operation$;
+    if (!workingDirHasChanges(this.currentRepo.workDirStatus())) return operation$;
 
     const stashAndRun$ = this.gitApi.git(['stash', '-u']).pipe(tap(() => console.log('stashed')), delay(1), switchMap(() => operation$));
 

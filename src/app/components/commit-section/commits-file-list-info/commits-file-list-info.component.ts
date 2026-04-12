@@ -2,7 +2,7 @@ import {Component, effect, inject, signal} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {directory, fileName} from '../../../utils/utils';
 import {ChangeSet} from '../../../lib/github-desktop/model/change-set';
-import {GitRepositoryStore} from '../../../stores/git-repos.store';
+import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {FileDiffService} from '../../../services/file-diff.service';
 import {CommitCardComponent} from '../commit-line/commit-card.component';
 import {Divider} from 'primeng/divider';
@@ -29,12 +29,12 @@ export class CommitsFileListInfoComponent {
   protected directory = directory;
   protected fileName = fileName;
 
-  protected gitRepositoryStore = inject(GitRepositoryStore);
+  protected currentRepo = inject(CurrentRepoStore);
   private fileDiff = inject(FileDiffService);
 
   constructor() {
     effect(() => {
-      const selectedCommits = this.gitRepositoryStore.selectedCommits();
+      const selectedCommits = this.currentRepo.selectedCommits();
 
       if (selectedCommits && selectedCommits.length > 1) {
         this.fileDiff.getChangedFilesForGivenCommits(selectedCommits.map(c => c.sha))

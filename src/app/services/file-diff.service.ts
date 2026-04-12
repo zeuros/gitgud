@@ -9,7 +9,7 @@ import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {ChangeSet} from '../lib/github-desktop/model/change-set';
 import {forkJoin, map, Observable, of} from 'rxjs';
 import {parseRawLogWithNumstat} from '../lib/github-desktop/commit-files-changes';
-import {GitRepositoryStore} from '../stores/git-repos.store';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 import {mergeChangeSets} from '../lib/github-desktop/diff/diff-utils';
 
 // in which case s defaults to 1
@@ -442,7 +442,7 @@ export class DiffParser {
 export class FileDiffService {
 
   private gitApi = inject(GitApiService);
-  private gitRepositoryStore = inject(GitRepositoryStore);
+  private currentRepo = inject(CurrentRepoStore);
 
   /**
    * Render the difference between a file in the given commit and its parent
@@ -502,7 +502,7 @@ export class FileDiffService {
     }
 
     // Sort commits oldest to newest
-    const logs = this.gitRepositoryStore.logs();
+    const logs = this.currentRepo.logs();
     const sortedShas = [...shas].sort((a, b) =>
       logs.findIndex(l => l.sha === b) - logs.findIndex(l => l.sha === a),
     );

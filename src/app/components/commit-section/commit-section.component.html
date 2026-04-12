@@ -1,4 +1,4 @@
-@let selectedCommitsShas = gitRepositoryStore.selectedCommitsShas();
+@let selectedCommitsShas = currentRepo.selectedCommitsShas();
 @if (selectedCommitsShas && selectedCommitsShas?.length) {
     @if (selectedCommitsShas[0] == 'index') {
         <gitgud-make-a-commit class="p-2 h-full"/>
