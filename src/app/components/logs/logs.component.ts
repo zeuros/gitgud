@@ -1,7 +1,6 @@
 import {Table, TableModule} from 'primeng/table';
 import {RefType} from '../../enums/ref-type.enum';
 import {workingDirHasChanges} from '../../utils/utils';
-import {Branch} from '../../lib/github-desktop/model/branch';
 import {bySha} from '../../utils/log-utils';
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {Commit} from '../../lib/github-desktop/model/commit';
@@ -14,7 +13,7 @@ import {SearchLogsComponent} from '../search-logs/search-logs.component';
 import {afterNextRender, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
 import {DatePipe} from '@angular/common';
-import {local, remote} from '../../utils/branch-utils';
+import {local, normalizedBranchName, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {LogBuilderService} from '../../services/log-builder.service';
@@ -23,6 +22,7 @@ import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
 import {ContextMenu} from 'primeng/contextmenu';
 import {CommitContextMenuService} from './commit-context-menu.service';
 import {StashContextMenuService} from './stash-context-menu.service';
+import {Badge} from 'primeng/badge';
 
 @Component({
   selector: 'gitgud-logs',
@@ -33,6 +33,7 @@ import {StashContextMenuService} from './stash-context-menu.service';
     SearchLogsComponent,
     DatePipe,
     ContextMenu,
+    Badge,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -153,7 +154,7 @@ export class LogsComponent {
     }
   }
 
-  protected branchName = (b: Branch) => b.name.replace('origin/', '');
+  protected normalizedBranchName = normalizedBranchName;
 
   protected xPosition = xPosition;
 

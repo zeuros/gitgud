@@ -47,31 +47,45 @@
             [pContextMenuRow]="commit"
             [pContextMenuRowDisabled]="isIndex(commit)"
         >
+            @let branches = gitRepositoryStore.branchesByTip()[commit.sha] ?? [];
+            @let branchesGrouped = gitRepositoryStore.mergedBranchesByTip()[commit.sha] ?? [];
+            @let extraCount = branchesGrouped.length + (isDetachedHead ? 1 : 0) - 1;
             <td class="branch-tag-td">
                 @if (isDetachedHead) {
                     <div class="branch-tag">
-                        <div class="commit-branch" [style.top.px]="0" [style.filter]="commitColor(commit.indent!)">
+                        <div class="commit-branch" [style.filter]="commitColor(commit.indent!)">
                             <i class="fa fa-check mr-2"></i>
                             <span class="ellipsis branch-name">HEAD (detached)</span>
                             <i class="fa fa-unlink mr-2"></i>
+                            @if (extraCount > 0) {
+                                <p-badge [value]="'+'+extraCount" badgeSize="small"/>
+                            }
                         </div>
                     </div>
                 }
-                @for (branch of gitRepositoryStore.branchesByTip()[commit.sha] ?? []; track branch.name; let i = $index) {
+                @for (branchLocalAndDistant of branchesGrouped; track branchLocalAndDistant; let i = $index) {
+                    @let local = branchLocalAndDistant[0];
+                    @let distant = branchLocalAndDistant[1];
                     <div class="branch-tag">
-                        <div class="commit-branch" [style.top.px]="(isDetachedHead ? i + 1 : i) * 30"
+                        <div class="commit-branch"
+                             [style.--offset.px]="(isDetachedHead ? i + 1 : i) * 30"
+                             [style.z-index]="420 - (isDetachedHead ? i + 1 : i)"
                              [style.filter]="commitColor(commit.indent!)" pDraggable>
                             @if (commit.isPointedByLocalHead) {
-                                <i class="fa fa-check mr-2"></i>
+                                <i class="fa fa-check mr-2 with-padding"></i>
                             }
-                            <span class="ellipsis branch-name">{{ branchName(branch) }}</span>
+                            <span class="ellipsis branch-name">{{ normalizedBranchName(local ?? distant) }}</span>
                             <span class="float-icons">
-                                @if (remote(branch)) {
-                                    <i class="fa fa-github mr-2"></i>
-                                } @else if (local(branch)) {
-                                    <i class="fa fa-laptop mr-2"></i>
+                                @if (local) {
+                                    <i class="fa fa-laptop"></i>
+                                }
+                                @if (distant) {
+                                    <i class="fa fa-github"></i>
                                 }
                             </span>
+                            @if (extraCount > 0 && i == 0) {
+                                <p-badge [value]="'+'+extraCount" badgeSize="small" class="ml-2"/>
+                            }
                         </div>
                     </div>
                 }
