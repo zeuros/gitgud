@@ -4,10 +4,11 @@ import {ToastModule} from 'primeng/toast';
 import {GitRepositoryStore} from './stores/git-repos.store';
 import {AutoFetchService} from './services/auto-fetch.service';
 import {Router, RouterOutlet} from '@angular/router';
+import {SettingsComponent} from './components/settings/settings.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, RouterOutlet],
+  imports: [CommonModule, ToastModule, RouterOutlet, SettingsComponent],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

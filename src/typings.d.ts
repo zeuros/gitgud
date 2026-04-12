@@ -15,6 +15,7 @@ declare global {
         writeFileSync: (file: string, data: string, options?: WriteFileOptions) => void;
         readFileSync: (file: PathLike) => string;
         existsSync: (path: PathLike) => boolean;
+        mtimeMs: (path: string) => number;
       };
       path: {
         resolve: typeof resolve;

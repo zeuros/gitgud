@@ -4,6 +4,7 @@ import {Button} from 'primeng/button';
 import {RepositoryViewComponent} from '../repository-view/repository-view.component';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {GitRepositoryService} from '../../services/git-repository.service';
+import {ToolbarComponent} from '../toolbar/toolbar.component';
 
 @Component({
   selector: 'gitgud-repositories-view',
@@ -15,6 +16,7 @@ import {GitRepositoryService} from '../../services/git-repository.service';
     TabPanels,
     TabPanel,
     RepositoryViewComponent,
+    ToolbarComponent,
   ],
   templateUrl: './repositories-view.component.html',
   styleUrl: './repositories-view.component.scss',

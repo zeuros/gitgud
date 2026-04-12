@@ -23,6 +23,7 @@ function createMainWindow() {
     width,
     height,
     show: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,
