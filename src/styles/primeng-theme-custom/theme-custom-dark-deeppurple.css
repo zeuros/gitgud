@@ -57,9 +57,24 @@
     /* Layout stuff*/
     --p-divider-horizontal-margin: 0.5rem 0;
     --p-form-field-border-radius: var(--p-border-radius-xs);
+    --p-tabs-tab-border-width: 0 0 2px 0;
 }
 
 /* Make listboxes borders very slight */
 p-listbox {
     border: 1px solid #dfade61c;
+}
+
+.sober button {
+    padding: 4px 8px;
+    gap: 5px;
+    color: var(--huaaaaaGray);
+
+    &:hover {
+        color: var(--babedouGray);
+    }
+
+    &:not(:disabled):hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
 }

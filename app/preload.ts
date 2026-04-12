@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('electron', {
     writeFileSync: (file: string, data: string, options: WriteFileOptions = {encoding: 'utf-8'}) => fs.writeFileSync(file, data, options),
     readFileSync: (f: string, encoding: BufferEncoding = 'utf-8') => fs.readFileSync(f, encoding).toString(),
     existsSync: fs.existsSync.bind(fs),
+    mtimeMs: (f: string) => fs.statSync(f).mtimeMs,
   },
 
   path: {

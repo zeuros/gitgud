@@ -1,4 +1,7 @@
 @let selectedIndex = gitRepositoryStore.selectedIndex();
+
+<gitgud-toolbar/>
+
 <p-tabs [value]="selectedIndex" (valueChange)="gitRepositoryStore.selectRepository($event!)" scrollable>
 
     <p-tablist>

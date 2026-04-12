@@ -1,0 +1,61 @@
+@let repo = gitRepositoryStore.selectedRepository();
+
+<div class="repo-info">
+    <span class="repo-name">{{ repo?.name }}</span>
+    <span class="branch-badge">{{ gitRepositoryStore.headBranch()?.name ?? short(gitRepositoryStore.detachedHeadSha() ?? '') + ' (detached HEAD)' }}</span>
+</div>
+
+<p-divider layout="vertical"/>
+
+<div class="actions">
+    <p-button class="sober"
+            [text]="true"
+            [loading]="loading() === 'push'"
+            [disabled]="!!loading()"
+            (onClick)="push()"
+    >
+        <i class="fa fa-arrow-up"></i>
+        <span>Push</span>
+    </p-button>
+
+    <p-button class="sober"
+            [text]="true"
+            [loading]="loading() === 'pull'"
+            [disabled]="!!loading()"
+            (onClick)="pull()"
+    >
+        <i class="fa fa-arrow-down"></i>
+        <span>Pull</span>
+    </p-button>
+
+    <p-button class="sober"
+            [text]="true"
+            [loading]="loading() === 'fetch'"
+            [disabled]="!!loading()"
+            (onClick)="fetch()"
+    >
+        <i class="fa fa-refresh"></i>
+        <span>Fetch</span>
+        @if (fetchedAgo(); as ago) {
+            <span class="fetched-ago">{{ ago }}</span>
+        }
+    </p-button>
+
+    <p-button class="sober" icon="fa fa-download" [text]="true" [rounded]="true" pTooltip="Clone" tooltipPosition="bottom"/>
+    <p-button class="sober" icon="fa fa-history" [text]="true" [rounded]="true" pTooltip="Undo last action" tooltipPosition="bottom"/>
+    <p-button class="sober" icon="fa fa-terminal" [text]="true" [rounded]="true" pTooltip="Last git commands" tooltipPosition="bottom"/>
+    <p-button class="sober" icon="fa fa-cog" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (onClick)="openSettings()"/>
+</div>
+
+<p-select
+        [options]="zoomLevels"
+        [ngModel]="zoom()"
+        (ngModelChange)="setZoom($event)"
+        optionLabel="label"
+        optionValue="value"
+        style="margin-left: auto"
+>
+    <ng-template pTemplate="selectedItem" let-item>
+        Zoom ({{ item.label }})
+    </ng-template>
+</p-select>

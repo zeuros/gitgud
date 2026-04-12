@@ -1,0 +1,56 @@
+$spacing: 8px;
+
+:host {
+  display: flex;
+  align-items: center;
+  padding-left: $spacing;
+  background: var(--p-content-background);
+  border-bottom: 1px solid var(--p-content-border-color);
+  gap: 6px;
+}
+
+.repo-info {
+  display: flex;
+  align-items: center;
+  gap: $spacing;
+  padding: 0 4px;
+
+  .repo-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--babedouGray);
+    white-space: nowrap;
+  }
+
+  .branch-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: var(--p-primary-color);
+    color: var(--p-primary-contrast-color);
+    white-space: nowrap;
+  }
+}
+
+::ng-deep p-divider.p-divider-vertical {
+  margin: 4px 2px;
+}
+
+.actions {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+
+  ::ng-deep .p-button {
+    align-self: stretch;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .fetched-ago {
+    color: var(--hmmmmmmGray);
+    margin-left: 2px;
+    min-width: 53px; // avoid button width jitter when displaying seconds
+  }
+}

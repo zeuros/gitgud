@@ -1,0 +1,23 @@
+<p-dialog
+  header="Settings"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [modal]="true"
+  [style]="{width: '400px'}"
+>
+  <div class="settings-row">
+    <label>Auto-fetch interval (seconds)</label>
+    <p-input-number
+      [ngModel]="autoFetchInterval()"
+      (ngModelChange)="autoFetchInterval.set($event)"
+      [min]="10"
+      [max]="3600"
+      [showButtons]="true"
+    />
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" [text]="true" (onClick)="visible.set(false)"/>
+    <p-button label="Save" (onClick)="save()"/>
+  </ng-template>
+</p-dialog>
