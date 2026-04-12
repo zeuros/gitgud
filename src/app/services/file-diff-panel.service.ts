@@ -38,4 +38,6 @@ export class FileDiffPanelService {
 
   showWorkingDirDiffs = (f: WorkingDirectoryFileChange) => this.fileToDiffSubject$.next(f);
 
+  close = () => this.fileToDiffSubject$.next(null);
+
 }
