@@ -27,7 +27,10 @@ export class GitWorkflowService {
         switchMap(actions => this.rebase.finishRebase(actions.join('\n'))),
       ),
     ).pipe(
-      catchError(e => this.gitRefresh.refreshBranchesAndLogs().pipe(switchMap(() => throwError(() => e)))),
+      catchError(e => this.rebase.abortRebase().pipe(
+        switchMap(() => this.gitRefresh.refreshBranchesAndLogs()),
+        switchMap(() => throwError(() => e)),
+      )),
       switchMap(this.gitRefresh.refreshBranchesAndLogs),
     );
 

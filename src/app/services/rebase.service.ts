@@ -30,7 +30,7 @@ export class RebaseService {
     // Spawn process, it should create a file with all rebase stuff
     // Store the promise so finishRebase can wait on it
     this.cleanWaitFile();
-    if (this.isRebasing()) throwError(() => new Error('Rebase is already in progress')); // TODO: improve GUI so no call is possible here
+    if (this.isRebasing()) return throwError(() => new Error('Rebase is already in progress'));
     this.gitApi.spawn('git', ['rebase', '-i', ...(autosquash ? ['--autosquash'] : []), sha], {
       env: {
         ...window.electron.process.env,
