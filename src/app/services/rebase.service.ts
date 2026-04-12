@@ -15,7 +15,7 @@ export class RebaseService {
    * ```sh
    * spawn git rebase -i
    *   └─ git calls GIT_SEQUENCE_EDITOR with path to todo file
-   *        └─ script polls for "$1.done" (i.e. git-rebase-todo.done)
+   *        └─ script polls for "$0.done" (i.e. git-rebase-todo.done)
    *             └─ blocked here until .done exists
    *
    * finishRebase(contents)
@@ -74,8 +74,8 @@ export class RebaseService {
   // TODO: make it portable, test on other platforms (e.g: windaube without git bash)
   private waitForFileSaveScript = () =>
     window.electron.process.platform === 'win32'
-      ? 'sh -c "while [ ! -f \\"$1.done\\" ]; do sleep 0.3; done && rm \\"$1.done\\""'
-      : 'sh -c \'while [ ! -f "$1.done" ]; do sleep 0.3; done && rm "$1.done"\'';
+      ? 'sh -c "while [ ! -f \\"$0.done\\" ]; do sleep 0.3; done && rm \\"$0.done\\""' // Fixme: double check it's $0 and not $1 on git bash
+      : 'sh -c \'while [ ! -f "$0.done" ]; do sleep 0.3; done && rm "$0.done"\'';
 
   private rebaseFilePath = () => `${this.gitApi.cwd()}/.git/rebase-merge/git-rebase-todo`;
 
