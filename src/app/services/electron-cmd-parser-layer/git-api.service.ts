@@ -64,6 +64,11 @@ export class GitApiService {
         .catch(e => observer.error(e));
     });
 
+  /**
+   * Guards against external git processes, but:
+   * 1. The maxWaitMs / count duality is confusing — only one should drive the retry limit
+   * 2. 700ms may time out prematurely for longer external operations
+   */
   waitForLock = (maxWaitMs = 700, intervalMs = 100): Observable<void> => {
     const lockFile = `${this.cwd()}/.git/index.lock`;
     const start = Date.now();
