@@ -2,7 +2,7 @@ import type {PathLike, readdirSync, WriteFileOptions} from 'node:fs';
 import type {dirname, extname, resolve} from 'node:path';
 import type {dialog} from '@electron/remote';
 import type {ChokidarOptions} from 'chokidar';
-import type {ExecOptions, SpawnOptionsWithoutStdio} from 'node:child_process';
+import type {ExecOptions, SpawnOptionsWithoutStdio, SpawnSyncOptions, spawnSync} from 'node:child_process';
 import type {BrowserWindow} from 'electron';
 
 export {};
@@ -35,6 +35,7 @@ declare global {
       };
 
       execFile: (cmd: string, args: string[], options: ExecOptions) => Promise<{ stdout: string; stderr: string }>;
+      spawnSync: (cmd: string, args: string[], options: SpawnSyncOptions) => ReturnType<typeof spawnSync>;
       spawn:  (cmd: string, args: string[], options: SpawnOptionsWithoutStdio) => Promise<string>,
 
       onWindowFocus: (cb: () => void) => BrowserWindow;

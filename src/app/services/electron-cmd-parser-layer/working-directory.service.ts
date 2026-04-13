@@ -1,10 +1,10 @@
 import {DestroyRef, inject, Injectable} from '@angular/core';
 import {map, tap} from 'rxjs';
-import {parseRawLogWithNumstat, parseWorkingDirChanges} from '../../lib/github-desktop/commit-files-changes';
+import {parseWorkingDirChanges} from '../../lib/github-desktop/commit-files-changes';
 import {FileWatcherService} from '../file-watcher.service';
 import {GitApiService} from './git-api.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
-import {WorkingDirectoryFileChange} from "../../lib/github-desktop/model/workdir";
+import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
 
 @Injectable({
   providedIn: 'root',
@@ -28,6 +28,11 @@ export class WorkingDirectoryService {
   }
 
   readonly stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['add', '--', path]).subscribe(this.doFetchWorkingDirChanges);
+
+  /** Stage (or unstage) a patch via stdin, then refresh */
+  readonly stageChangesWithPatch = (patch: string, stage: boolean) =>
+    this.gitApi.gitWithInput(['apply', ...(stage ? [] : ['-R']), '--cached', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.doFetchWorkingDirChanges);
+
   readonly unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['reset', '--', path]).subscribe(this.doFetchWorkingDirChanges);
 
   readonly stageAll = () => this.gitApi.git(['add', '--all']).subscribe(this.doFetchWorkingDirChanges);
@@ -46,7 +51,7 @@ export class WorkingDirectoryService {
     ])
       .pipe(
         map(parseWorkingDirChanges),
-        tap(workDirStatus => this.currentRepo.update({workDirStatus}))
+        tap(workDirStatus => this.currentRepo.update({workDirStatus})),
       );
 
   /**

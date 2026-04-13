@@ -27,6 +27,9 @@ export enum DiffType {
   Unrenderable,
 }
 
+export const isTextDiff = (d: IDiff): d is ITextDiff | ILargeTextDiff =>
+  d.kind === DiffType.Text || d.kind === DiffType.LargeText;
+
 type LineEnding = 'CR' | 'LF' | 'CRLF'
 
 export type LineEndingsChange = {

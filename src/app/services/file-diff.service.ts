@@ -7,7 +7,7 @@ import {getHunkHeaderExpansionType} from '../lib/github-desktop/diff/diff-hunks'
 import {getLargestLineNumber} from '../lib/github-desktop/diff/diff-parser';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {ChangeSet} from '../lib/github-desktop/model/change-set';
-import {forkJoin, map, Observable, of} from 'rxjs';
+import {catchError, forkJoin, map, Observable, of} from 'rxjs';
 import {parseRawLogWithNumstat} from '../lib/github-desktop/commit-files-changes';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {mergeChangeSets} from '../lib/github-desktop/diff/diff-utils';
@@ -542,6 +542,10 @@ export class FileDiffService {
    * @returns An Observable emitting an array of file changes: added, modified, and deleted files,
    *          along with their statistics (e.g., lines added/removed).
    */
+  /** Full content of a file at a given git revision. Returns empty string if the file didn't exist. */
+  getFileAtRevision = (path: string, revision = 'HEAD') =>
+    this.gitApi.git(['show', `${revision}:${path}`]).pipe(catchError(() => of('')));
+
   getChangedFilesForGivenCommit = (sha: string) =>
     this.gitApi.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
       .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, [sha])));

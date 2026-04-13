@@ -127,14 +127,13 @@ export const parseWorkingDirChanges = (workingDirectoryChanges: string): WorkDir
       const unstagedStatus = rawStatus.charAt(1);
       const path = entry.substring(2).trim();
 
-      const fileChange = new WorkingDirectoryFileChange(
-        path,
-        {kind: mapPorcelainStatus(rawStatus)} as AppFileStatus,
-      );
+      const appStatus = {kind: mapPorcelainStatus(rawStatus)} as AppFileStatus;
 
       // Push to staged/unstaged arrays if the status is non-empty
-      if (['A', 'M', 'D', 'R', 'C'].includes(stagedStatus)) staged.push(fileChange);
-      if (['M', '?'].includes(unstagedStatus)) unstaged.push(fileChange);
+      if (['A', 'M', 'D', 'R', 'C'].includes(stagedStatus))
+        staged.push(new WorkingDirectoryFileChange(path, appStatus, undefined, true));
+      if (['M', '?'].includes(unstagedStatus))
+        unstaged.push(new WorkingDirectoryFileChange(path, appStatus));
     });
 
   return {unstaged, staged};

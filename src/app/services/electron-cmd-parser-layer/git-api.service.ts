@@ -37,6 +37,13 @@ export class GitApiService {
     this.waitForLock().pipe(switchMap(() =>
       this.exec('git', args?.filter(notUndefined) ?? [], {cwd: this.cwd(), env: window.electron.process.env, ...options})));
 
+  gitWithInput = (args: string[], input: string) =>
+    this.waitForLock().pipe(map(() => {
+      const result = window.electron.spawnSync('git', args, {cwd: this.cwd(), input, env: window.electron.process.env});
+      if (result.status !== 0) throw new Error(`Git exited ${result.status}\n${result.stderr}`);
+      return result.stdout;
+    }));
+
   clone = (url: string, repoName: string, dir: string) =>
     this.cd(dir).pipe(
       switchMap(() => this.git(['clone', url, repoName])),
@@ -54,7 +61,7 @@ export class GitApiService {
       );
 
   spawn = (cmd: string, args: string[] = [], options?: SpawnOptionsWithoutStdio) =>
-    new Observable(observer => {
+    this.waitForLock().pipe(switchMap(() => new Observable<string>(observer => {
       window.electron.spawn(`${cmd}`, args, {cwd: this.cwd(), env: window.electron.process.env, ...options})
         .then(out => {
           if (isDevMode()) showPerf(cmd, args, out);
@@ -62,7 +69,7 @@ export class GitApiService {
           observer.complete();
         })
         .catch(e => observer.error(e));
-    });
+    })));
 
   /**
    * Guards against external git processes, but:
