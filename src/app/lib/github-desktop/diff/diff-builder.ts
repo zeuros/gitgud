@@ -32,7 +32,7 @@ export function buildDiff(
     // we don't want to render by default
     // but we keep it as an option by
     // passing in text and hunks
-    const largeTextDiff: ILargeTextDiff = {
+    return {
       kind: DiffType.LargeText,
       text: diff.contents,
       beforeAfter: beforeAndAfterText(diff.contents, diff.hunks),
@@ -40,8 +40,6 @@ export function buildDiff(
       lineEndingsChange,
       maxLineNumber: diff.maxLineNumber,
     };
-
-    return largeTextDiff;
   }
 
   return convertDiff(file, diff, oldestCommitish, lineEndingsChange);
