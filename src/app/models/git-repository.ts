@@ -1,7 +1,8 @@
 import {Commit} from '../lib/github-desktop/model/commit';
 import {Branch} from '../lib/github-desktop/model/branch';
-import {ViewType} from '../components/monaco-editor-view/monaco-editor-view.component';
 import {WorkDirStatus} from '../lib/github-desktop/model/workdir';
+
+export type ViewType = 'hunk' | 'inline' | 'split';
 
 export class GitRepository {
   constructor(

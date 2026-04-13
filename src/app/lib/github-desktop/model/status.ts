@@ -305,15 +305,10 @@ export class FileChange {
   }
 }
 
-/**
- * An object encapsulating the changes to a committed file.
- *
- * @param status A commit SHA or some other identifier that ultimately
- *               dereferences to a commit. This is the pointer to the
- *               'after' version of this change. I.e. the parent of this
- *               commit will contain the 'before' (or nothing, if the
- *               file change represents a new file).
- */
+export const isCommittedFileChange = (file: FileChange): file is CommittedFileChange => 'commitish' in file;
+
+export const isWorkingDirectoryFileChange = (file: FileChange): file is WorkingDirectoryFileChange => !isCommittedFileChange(file);
+
 export class CommittedFileChange extends FileChange {
   public constructor(
     public readonly path: string,

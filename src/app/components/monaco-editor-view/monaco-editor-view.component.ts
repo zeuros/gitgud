@@ -1,28 +1,28 @@
-import {AfterViewInit, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal, ViewChild} from '@angular/core';
-import {CommittedFileChange, FileChange} from '../../lib/github-desktop/model/status';
+import {AfterViewInit, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal, untracked, ViewChild} from '@angular/core';
+import {CommittedFileChange, FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
-import {instanceOf} from '../../utils/utils';
 import {Button} from 'primeng/button';
 import {ButtonGroup} from 'primeng/buttongroup';
-import {IDiff} from '../../lib/github-desktop/model/diff/diff-data';
 import {Tooltip} from 'primeng/tooltip';
 import {Toolbar} from 'primeng/toolbar';
-import {buildDiff} from '../../lib/github-desktop/diff/diff-builder';
 import {FormsModule} from '@angular/forms';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
+import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
+import {combineLatest, of} from 'rxjs';
+import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
+import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
+import {ViewType} from '../../models/git-repository';
 import IEditorOptions = editor.IEditorOptions;
-import IDiffEditor = editor.IDiffEditor;
-
-// TODO: move
-export type ViewType = 'hunk' | 'inline' | 'split';
-
+import ITextModel = editor.ITextModel;
+import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 
 interface DiffModel {
   code: string;
   fileName: string;
 }
 
+// AAA
 interface DiffModels {
   before: DiffModel,
   after: DiffModel
@@ -40,12 +40,16 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
   diffModels = signal<DiffModels | undefined>(undefined);
 
-  protected readonly currentRepo = inject(CurrentRepoStore);
-  protected readonly viewType = computed(() => this.currentRepo.editorConfig()!.viewType);
+  protected currentRepo = inject(CurrentRepoStore);
+  protected viewType = computed(() => this.currentRepo.editorConfig()!.viewType);
 
   private fileDiffService = inject(FileDiffService);
-  private diffEditor = signal<IDiffEditor | undefined>(undefined);
-  private readonly editorOptions: IEditorOptions & { theme: string } = {
+  private gitApi = inject(GitApiService);
+  private hunkActionsService = inject(MonacoDiffRightClickActionsService);
+  private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void} | undefined>(undefined);
+  private ownedModels = new Set<ITextModel>(); // Models are cached for the component's lifetime — switching between already-viewed files hits the URI cache
+  private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
+  private editorOptions: IEditorOptions & { theme: string } = {
     theme: 'vs-dark',
     readOnly: true,
     // standalone: true,
@@ -61,6 +65,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     inlayHints: {enabled: 'off'},
     parameterHints: {enabled: false},
     hover: {enabled: false},
+    renderLineHighlight: 'all',
   };
 
   constructor() {
@@ -68,26 +73,40 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       const file = this.fileToDiff();
       if (!file) return;
 
-      const diff$ = instanceOf(file, CommittedFileChange)
-        ? this.fileDiffService.getCommitDiff(file, file.commitish)
-        : this.fileDiffService.getWorkingDirectoryDiff(file);
+      const before$ = isCommittedFileChange(file)
+        ? this.fileDiffService.getFileAtRevision(file.path, `${file.commitish}^`)
+        : ((file as WorkingDirectoryFileChange).staged
+            ? this.fileDiffService.getFileAtRevision(file.path)        // staged: HEAD vs index
+            : this.fileDiffService.getFileAtRevision(file.path, ''));  // unstaged: index vs workdir
 
-      diff$.subscribe(r => {
-        const diff = this.editorContents(buildDiff(r, file));
+      const after$ = isWorkingDirectoryFileChange(file)
+        ? (file.staged
+            ? this.fileDiffService.getFileAtRevision(file.path, '')   // git show :path  (index)
+            : of(window.electron.fs.readFileSync(window.electron.path.resolve(this.gitApi.cwd()!, file.path))))
+        : this.fileDiffService.getFileAtRevision(file.path, (file as CommittedFileChange).commitish);
+
+      combineLatest([before$, after$]).subscribe(([before, after]) => {
+        this.currentFile.set(isWorkingDirectoryFileChange(file) ? file : undefined);
 
         this.diffModels.set({
-          before: {code: diff.beforeAfter.before, fileName: file.path},
-          after: {code: diff.beforeAfter.after, fileName: file.path},
+          before: {code: before, fileName: file.path},
+          after: {code: after, fileName: file.path},
         });
       });
     });
 
     effect(() => {
-      const viewType = this.viewType();
-      const editor = this.diffEditor();
+      const file = this.currentFile();
+      const diffEditor = this.diffEditor();
+      if (diffEditor && file) diffEditor.contextMenuUpdater(file);
+    });
 
-      if (editor) {
-        editor.updateOptions({
+    effect(() => {
+      const viewType = this.viewType();
+      const diffEditor = this.diffEditor();
+
+      if (diffEditor) {
+        diffEditor.editor.updateOptions({
           renderSideBySide: viewType === 'split',
           hideUnchangedRegions: viewType === 'hunk'
             ? {enabled: true, revealLineCount: 15, minimumLineCount: 5, contextLineCount: 3}
@@ -106,21 +125,19 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     if (this.diffEditorContainer) {
-      this.diffEditor.set(editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions));
+      const diffEditorEditor = editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions);
+      this.diffEditor.set({editor: diffEditorEditor, contextMenuUpdater: this.hunkActionsService.registerEditorRightClick(diffEditorEditor)});
     }
   }
 
 
   ngOnDestroy(): void {
-    // TODO: dispose old models?
-    //   Note: disposing models here causes issues when switching between files, as the models are shared/reused
-    //   For now we let monaco handle the disposal when the editor is disposed; otherwise we get "Model is disposed" errors
-    //   this.diffEditor?.getModel()?.original.dispose();
-    //   this.diffEditor?.getModel()?.modified.dispose();
-    this.diffEditor()?.dispose();
+    this.diffEditor()?.editor.dispose();
+    this.ownedModels.forEach(m => m.dispose());
+    this.ownedModels.clear();
   }
 
-  protected readonly setViewType = (viewType: ViewType) => this.currentRepo.update({editorConfig: {viewType}});
+  protected setViewType = (viewType: ViewType) => this.currentRepo.update({editorConfig: {viewType}});
 
   private updateDiffEditor({before, after}: DiffModels) {
     const beforeUri = Uri.parse(`before-${before.fileName}`);
@@ -133,19 +150,17 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       original.setValue(before.code);
     } else {
       original = editor.createModel(before.code, undefined, beforeUri);
+      this.ownedModels.add(original);
     }
 
     if (modified) {
       modified.setValue(after.code);
     } else {
       modified = editor.createModel(after.code, undefined, afterUri);
+      this.ownedModels.add(modified);
     }
 
-    this.diffEditor()!.setModel({original, modified});
+    this.diffEditor()!.editor.setModel({original, modified});
   }
 
-  private editorContents(diffs: IDiff) {
-    if ('beforeAfter' in diffs) return diffs;
-    throw new Error('This type of diff cannot be displayed yet');
-  }
 }

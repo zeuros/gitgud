@@ -1,9 +1,10 @@
 import {inject, Injectable} from '@angular/core';
 import {CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
-import {EMPTY, of, Subject, switchMap} from 'rxjs';
+import {EMPTY, map, of, Subject, switchMap} from 'rxjs';
 import {instanceOf} from '../utils/utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {WorkingDirectoryFileChange} from "../lib/github-desktop/model/workdir";
+import {toObservable} from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root',
@@ -11,11 +12,12 @@ import {WorkingDirectoryFileChange} from "../lib/github-desktop/model/workdir";
 export class FileDiffPanelService {
 
 
-  private readonly currentRepo = inject(CurrentRepoStore);
-  private readonly fileToDiffSubject$ = new Subject<FileChange | null>();
+  private currentRepo = inject(CurrentRepoStore);
+  private fileToDiffSubject$ = new Subject<FileChange | null>();
+  private workDirStatus$ = toObservable(this.currentRepo.workDirStatus);
 
   // Here we update monaco view for commit files (no live changes) or for working dir changes (live update on file change)
-  readonly fileToDiff$ = this.fileToDiffSubject$.pipe(
+  fileToDiff$ = this.fileToDiffSubject$.pipe(
     switchMap(file => {
 
       // Explicit null → emit null
@@ -24,11 +26,9 @@ export class FileDiffPanelService {
       // Committed file → emit once, file won't change
       if (instanceOf(file, CommittedFileChange)) return of(file);
 
-      // Working directory file → re-emit on file diff update
-      if (instanceOf(file, WorkingDirectoryFileChange)) {
-        this.currentRepo.update({workDirStatus: {...this.currentRepo.workDirStatus()!}}); // FIXME: force new reference to update editor on file change
-        return of({...file});
-      }
+      // Working directory file → re-emit on every working dir status change (staging, file saves, etc.)
+      if (instanceOf(file, WorkingDirectoryFileChange))
+        return this.workDirStatus$.pipe(map(() => ({...file})));
 
       return EMPTY;
     }),

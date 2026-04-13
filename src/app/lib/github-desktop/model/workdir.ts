@@ -13,11 +13,13 @@ export class WorkingDirectoryFileChange extends FileChange {
    * @param path The relative path to the file in the repository.
    * @param status The status of the change to the file.
    * @param selection Contains the selection details for this file - all, nothing or partial.
+   * @param staged
    */
   public constructor(
     path: string,
     status: AppFileStatus,
     public readonly selection?: DiffSelection,
+    public readonly staged = false,
   ) {
     super(path, status);
   }
@@ -33,6 +35,6 @@ export class WorkingDirectoryFileChange extends FileChange {
 
   /** Create a new WorkingDirectoryFileChange with the given diff selection. */
   public withSelection(selection?: DiffSelection): WorkingDirectoryFileChange {
-    return new WorkingDirectoryFileChange(this.path, this.status, selection);
+    return new WorkingDirectoryFileChange(this.path, this.status, selection, this.staged);
   }
 }
