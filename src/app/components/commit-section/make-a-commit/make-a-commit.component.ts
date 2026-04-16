@@ -1,6 +1,6 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {Divider} from 'primeng/divider';
-import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
+import {FormBuilder, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
 import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
@@ -29,6 +29,7 @@ import {WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/work
         PrimeTemplate,
         Checkbox,
         Splitter,
+        FormsModule,
     ],
     templateUrl: './make-a-commit.component.html',
     styleUrl: './make-a-commit.component.scss',
@@ -75,6 +76,13 @@ export class MakeACommitComponent {
 
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
     this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, makeCommitPanel: sizes.map(Number)}});
+
+  protected selectedFile = signal<WorkingDirectoryFileChange | null>(null);
+
+  protected selectFile(file: WorkingDirectoryFileChange) {
+    this.selectedFile.set(file);
+    this.fileDiffPanelService.showWorkingDirDiffs(file);
+  }
 
   protected FileStatusesIcons = FileStatusesIcons;
   protected keys = Object.keys;

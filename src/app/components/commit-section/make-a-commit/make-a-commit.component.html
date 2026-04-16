@@ -25,7 +25,8 @@
                         optionLabel="path"
                         class="show-button-on-li-hover flex-1 overflow-hidden"
                         scrollHeight="flex"
-                        (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)">
+                        [ngModel]="selectedFile()"
+                        (onChange)="selectFile($event.value)">
                     <ng-template let-workingDirFileChanges pTemplate="item">
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
                         <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
@@ -64,7 +65,8 @@
                         optionLabel="path"
                         class="show-button-on-li-hover flex-1 overflow-hidden"
                         scrollHeight="flex"
-                        (onChange)="fileDiffPanelService.showWorkingDirDiffs($event.value)">
+                        [ngModel]="selectedFile()"
+                        (onChange)="selectFile($event.value)">
                     <ng-template let-workingDirFileChanges pTemplate="item">
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
                         <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
