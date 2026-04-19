@@ -7,6 +7,7 @@
     "name": "zeuros"
   },
   "main": "app/main.js",
+  "license": "GPL-3.0-only",
   "private": true,
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
