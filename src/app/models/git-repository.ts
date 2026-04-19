@@ -19,6 +19,7 @@
 import {Commit} from '../lib/github-desktop/model/commit';
 import {Branch} from '../lib/github-desktop/model/branch';
 import {WorkDirStatus} from '../lib/github-desktop/model/workdir';
+import {GitTag} from './git-tag';
 
 export type ViewType = 'hunk' | 'inline' | 'split';
 
@@ -26,10 +27,11 @@ export class GitRepository {
   constructor(
     public id: string, // = repository directory
     public name: string,
-    public panelSizes = {mainPanels: [20, 50, 30], leftPanel: [30, 30, 40], makeCommitPanel: [40, 40, 20]}, // panels sizes
+    public panelSizes = {mainPanels: [20, 50, 30], leftPanel: [25, 25, 25, 25], makeCommitPanel: [40, 40, 20]}, // panels sizes
     public selected = true, // This repository is selected
     public logs: Commit[] = [],
     public stashes: Commit[] = [],
+    public tags: GitTag[] = [],
     public branches: Branch[] = [],
     public detachedHeadSha?: string,
     public selectedCommitsShas: string[] = ['index'],
