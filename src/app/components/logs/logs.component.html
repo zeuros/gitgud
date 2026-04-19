@@ -96,7 +96,8 @@
                              [style.--offset.px]="tagOffset * 30"
                              [style.z-index]="420 - tagOffset"
                              [title]="tag.message ?? tag.name"
-                             pDraggable>
+                             pDraggable
+                             (contextmenu)="openTagContextMenu(tag, $event)">
                             <i class="fa fa-tag mr-2"></i>
                             <span class="ellipsis branch-name">{{ tag.name }}</span>
                         </div>
@@ -115,3 +116,4 @@
 
 <p-contextMenu #commitContextMenu [model]="commitContextMenuService.commitContextMenu()" appendTo="body"/>
 <p-contextMenu #stashContextMenu [model]="stashContextMenuService.stashContextMenu()" appendTo="body"/>
+<p-contextMenu #tagContextMenu [model]="tagContextMenuService.tagContextMenu()" appendTo="body"/>

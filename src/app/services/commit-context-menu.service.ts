@@ -18,14 +18,14 @@
 
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {MenuItem} from 'primeng/api';
-import {PopupService} from '../../services/popup.service';
+import {PopupService} from './popup.service';
 import {first, map, switchMap} from 'rxjs';
-import {CurrentRepoStore} from '../../stores/current-repo.store';
-import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
-import {short} from '../../utils/commit-utils';
-import {PromptService} from '../../services/prompt.service';
-import {notUndefined} from '../../utils/utils';
-import {GitWorkflowService} from '../../services/git-workflow.service';
+import {CurrentRepoStore} from '../stores/current-repo.store';
+import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {short} from '../utils/commit-utils';
+import {PromptService} from './prompt.service';
+import {notUndefined} from '../utils/utils';
+import {GitWorkflowService} from './git-workflow.service';
 
 @Injectable({
   providedIn: 'root',
@@ -104,7 +104,6 @@ export class CommitContextMenuService {
 
   protected reset = (mode: 'soft' | 'mixed' | 'hard') =>
     this.gitWorkflow.doRunAndRefresh(['reset', `--${mode}`, this.sha()], `Reset ${mode} to ${short(this.sha())}`, mode == 'hard', false);
-  // this.gitWorkflow.doRunAndRefresh(['status'], `Reset ${mode} to ${short(this.sha())}`, mode == 'hard', false);
 
   protected revertCommit = () => {
     this.gitWorkflow.doRunAndRefresh(['revert', '--no-edit', this.sha()], `Reverted ${short(this.sha())}`, true);
