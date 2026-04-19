@@ -89,6 +89,7 @@
     "webdriver-manager": "12.1.9"
   },
   "build": {
+    "icon": "build/icon.png",
     "linux": {
       "maintainer": "zeuros <13236310+zeuros@users.noreply.github.com>",
       "target": [
