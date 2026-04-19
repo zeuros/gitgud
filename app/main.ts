@@ -18,7 +18,6 @@
 
 import {app, BrowserWindow, screen} from 'electron';
 import {join} from 'node:path';
-import {existsSync} from 'node:fs';
 import {enable, initialize} from '@electron/remote/main';
 
 let mainWindow: BrowserWindow | null;
@@ -58,11 +57,7 @@ function createMainWindow() {
   if (isDev) {
     mainWindow.loadURL('http://localhost:4200');
   } else {
-    const indexPath = existsSync(join(__dirname, '../dist/index.html'))
-      ? join(__dirname, '../dist/index.html')
-      : join(__dirname, './index.html');
-
-    mainWindow.loadFile(indexPath);
+      mainWindow.loadFile(join(process.resourcesPath, 'dist/index.html'));
   }
 
   mainWindow.on('closed', () => {

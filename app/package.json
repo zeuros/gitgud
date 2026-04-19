@@ -7,6 +7,12 @@
   "version": "1.0.0",
   "main": "main.js",
   "private": true,
+  "files": [
+    "dist/**/*",
+    "main.js",
+    "preload.js",
+    "icons/**/*"
+  ],
   "dependencies": {
   }
 }

@@ -92,6 +92,9 @@
   "build": {
     "publish": { "provider": "github" },
     "icon": "build/icon.png",
+    "extraResources": [
+      { "from": "app/dist", "to": "dist" }
+    ],
     "linux": {
       "maintainer": "zeuros <13236310+zeuros@users.noreply.github.com>",
       "category": "Development;RevisionControl;",
