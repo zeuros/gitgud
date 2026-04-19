@@ -17,12 +17,11 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {ParserService} from '../parser.service';
+import {createForEachRefParser} from '../parser.service';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {Branch, BranchType, IBranchTip} from '../../lib/github-desktop/model/branch';
 import {catchError, map, Observable} from 'rxjs';
 import {PREFIXES} from '../../utils/constants';
-import {formatArg} from '../../utils/log-utils';
 import {GitApiService} from './git-api.service';
 import {PopupService} from '../popup.service';
 
@@ -41,23 +40,17 @@ export class BranchReaderService {
     head: '%(HEAD)',
   };
 
-  branchParser;
+  private readonly parser = createForEachRefParser(this.fields);
   remoteHeadPointer?: string;
 
   private popupService = inject(PopupService);
   private gitApi = inject(GitApiService);
 
-  constructor(
-    parserService: ParserService,
-  ) {
-    this.branchParser = parserService.createForEachRefParser(this.fields);
-  }
-
   getBranches = (): Observable<Branch[]> =>
-    this.gitApi.git(['for-each-ref', ...PREFIXES, formatArg(this.fields)])
+    this.gitApi.git(['for-each-ref', ...PREFIXES, this.parser.formatArg])
       .pipe(map(result =>
 
-        this.branchParser(result)
+        this.parser.parse(result)
           .map(branch => {
 
             // Exclude symbolic refs from the branch list (but use it to guess the origin/HEAD branch)

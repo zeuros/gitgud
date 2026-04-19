@@ -17,11 +17,10 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {map, Observable} from 'rxjs';
+import {map} from 'rxjs';
 import {GitApiService} from './git-api.service';
 import {GitTag} from '../../models/git-tag';
-import {ParserService} from '../parser.service';
-import {formatArg} from '../../utils/log-utils';
+import {createForEachRefParser} from '../parser.service';
 
 @Injectable({providedIn: 'root'})
 export class TagReaderService {
@@ -35,12 +34,12 @@ export class TagReaderService {
     message: '%(subject)',
   };
 
-  private readonly tagParser = inject(ParserService).createForEachRefParser(this.fields);
+  private readonly parser = createForEachRefParser(this.fields);
 
   getTags = () =>
-    this.gitApi.git(['for-each-ref', 'refs/tags', formatArg(this.fields)])
+    this.gitApi.git(['for-each-ref', 'refs/tags', this.parser.formatArg])
       .pipe(map(output =>
-        this.tagParser(output).map((t): GitTag => ({
+        this.parser.parse(output).map((t): GitTag => ({
           name: t.name,
           sha: t.sha || t.objectSha, // annotated tags have dereferenced sha, lightweight don't
           message: t.message || undefined,
