@@ -70,7 +70,7 @@ $row-spacing: 8px;
         &:hover {
 
           .branch-tag {
-            .commit-branch {
+            .commit-branch, .commit-tag {
               transform: translateY(var(--offset)) scale(1);
               max-width: 300px;
               z-index: 420;
@@ -80,22 +80,25 @@ $row-spacing: 8px;
 
         .branch-tag {
 
-          .commit-branch {
+          .commit-branch, .commit-tag {
             transition: all 0.2s ease;
             transform: translateY(0) scale(0.95);
-            cursor: grab;
             z-index: 300; // Display this over commit graph
             position: absolute;
             left: 8px;
             top: 0;
             display: flex;
             max-width: 90%;
-            border: 1px solid rgba(119, 87, 126, 0.9);
-            background-color: var(--primeng-purple-line);
             border-radius: 3px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
             padding: 1.5px 4px;
             align-items: center;
+          }
+
+          .commit-branch {
+            cursor: grab;
+            border: 1px solid rgba(119, 87, 126, 0.9);
+            background-color: var(--primeng-purple-line);
 
             .branch-name {
               font-size: 13px;
@@ -108,6 +111,17 @@ $row-spacing: 8px;
 
             .float-icons {
               font-size: 16px;
+            }
+          }
+
+          .commit-tag {
+            cursor: grab;
+            border: 1px solid rgba(180, 140, 30, 0.9);
+            background-color: rgba(120, 90, 10, 0.85);
+
+            .branch-name {
+              font-size: 13px;
+              margin-right: 4px;
             }
           }
         }

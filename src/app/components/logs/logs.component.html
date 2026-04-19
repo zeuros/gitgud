@@ -48,7 +48,8 @@
             [pContextMenuRowDisabled]="isIndex(commit)"
         >
             @let branchesGrouped = currentRepo.mergedBranchesByTip()[commit.sha] ?? [];
-            @let extraCount = branchesGrouped.length + (isDetachedHead ? 1 : 0) - 1;
+            @let commitTags = currentRepo.tagsByCommitSha()[commit.sha] ?? [];
+            @let extraCount = branchesGrouped.length + commitTags.length + (isDetachedHead ? 1 : 0) - 1;
             <td class="branch-tag-td">
                 @if (isDetachedHead) {
                     <div class="branch-tag">
@@ -85,6 +86,19 @@
                             @if (extraCount > 0 && i == 0) {
                                 <p-badge [value]="'+'+extraCount" badgeSize="small" class="ml-2"/>
                             }
+                        </div>
+                    </div>
+                }
+                @for (tag of commitTags; track tag.name; let i = $index) {
+                    @let tagOffset = branchesGrouped.length + (isDetachedHead ? 1 : 0) + i;
+                    <div class="branch-tag">
+                        <div class="commit-tag"
+                             [style.--offset.px]="tagOffset * 30"
+                             [style.z-index]="420 - tagOffset"
+                             [title]="tag.message ?? tag.name"
+                             pDraggable>
+                            <i class="fa fa-tag mr-2"></i>
+                            <span class="ellipsis branch-name">{{ tag.name }}</span>
                         </div>
                     </div>
                 }
