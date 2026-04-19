@@ -89,12 +89,21 @@
     "webdriver-manager": "12.1.9"
   },
   "build": {
+    "publish": { "provider": "github" },
     "icon": "build/icon.png",
     "linux": {
       "maintainer": "zeuros <13236310+zeuros@users.noreply.github.com>",
+      "category": "Development;RevisionControl;",
       "target": [
-        "deb"
+        { "target": "deb", "arch": ["x64", "arm64"] },
+        { "target": "rpm", "arch": ["x64", "arm64"] }
       ]
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }]
     }
   }
 }
