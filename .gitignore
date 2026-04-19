@@ -139,6 +139,9 @@ out/
 # AI shit
 .claude
 
-# Generated
+# For electron packaging
+app/main.js.map
+app/preload.js.map
 app/main.js
 app/preload.js
+app/dist
