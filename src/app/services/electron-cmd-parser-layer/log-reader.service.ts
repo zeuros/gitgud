@@ -18,10 +18,9 @@
 
 import {inject, Injectable} from '@angular/core';
 import {Commit, parseRawUnfoldedTrailers} from '../../lib/github-desktop/model/commit';
-import {ParserService} from '../parser.service';
+import {createLogParser} from '../parser.service';
 import {map, Observable} from 'rxjs';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
-import {formatArg} from '../../utils/log-utils';
 import {GitApiService} from './git-api.service';
 import {short} from '../../utils/commit-utils';
 
@@ -47,7 +46,7 @@ export class LogReaderService {
     refs: '%D',
   };
   private gitApi = inject(GitApiService);
-  private logParser = inject(ParserService).createParser(this.fields);
+  private readonly parser = createLogParser(this.fields);
 
 
   /**
@@ -79,14 +78,14 @@ export class LogReaderService {
       '--date=raw',
       '--all',
       '-z', // Separate lines with NUL character
-      formatArg(this.fields),
+      this.parser.formatArg,
       '--no-show-signature',
       '--no-color',
       ...additionalArgs,
       '--',
     );
     return this.gitApi.git(args)
-      .pipe(map(log => this.logParser(log).map(commit => {
+      .pipe(map(log => this.parser.parse(log).map(commit => {
         // Ref is of the format: (HEAD -> master, tag: some-tag-name, tag: some-other-tag,with-a-comma, origin/master, origin/HEAD)
         // Refs are comma separated, but some like tags can also contain commas in the name, so we split on the pattern ", " and then
         // check each ref for the tag prefix. We used to use the regex /tag: ([^\s,]+)/g)`, but will clip a tag with a comma short.
