@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject, signal} from '@angular/core';
+import {Component, computed, inject, signal, viewChild} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
 import {Tree, TreeNodeDoubleClickEvent} from 'primeng/tree';
 import {ContextMenu} from 'primeng/contextmenu';
@@ -32,6 +32,7 @@ import {FormsModule} from '@angular/forms';
 import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
 import {BranchReaderService} from '../../services/electron-cmd-parser-layer/branch-reader.service';
 import {GitTag} from '../../models/git-tag';
+import {TagContextMenuService} from '../../services/tag-context-menu.service';
 
 
 @Component({
@@ -52,6 +53,7 @@ import {GitTag} from '../../models/git-tag';
 export class LeftPanelComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
+  protected tagContextMenuService = inject(TagContextMenuService);
   protected localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
   protected remoteBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
   protected selectedBranchNode = computed(() => {
@@ -60,6 +62,7 @@ export class LeftPanelComponent {
     return findNode([...this.localBranches(), ...this.remoteBranches()], sha);
   });
   private popupService = inject(PopupService);
+  private tagContextMenu = viewChild<ContextMenu>('tagContextMenu');
   contextMenu: MenuItem[] = [
     {label: 'Pull (fast-forward if possible)', icon: 'pi pi-cloud-download', command: () => this.popupService.info('Pull (fast-forward if possible) selected')},
     {label: 'Push (Set Upstream)', icon: 'pi pi-cloud-upload', command: () => this.popupService.info('Push (Set Upstream) selected')},
@@ -87,6 +90,12 @@ export class LeftPanelComponent {
 
   protected selectTag = (tag?: GitTag) => {
     if (tag) this.currentRepo.update({selectedCommitsShas: [tag.sha]});
+  };
+
+  protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
+    event.preventDefault();
+    this.tagContextMenuService.selectedTag.set(tag);
+    this.tagContextMenu()?.show(event);
   };
 
   protected checkoutBranch = (branch?: Branch) => {

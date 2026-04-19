@@ -38,8 +38,10 @@ import {LogBuilderService} from '../../services/log-builder.service';
 import {CANVAS_MARGIN, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
 import {ContextMenu} from 'primeng/contextmenu';
-import {CommitContextMenuService} from './commit-context-menu.service';
-import {StashContextMenuService} from './stash-context-menu.service';
+import {CommitContextMenuService} from '../../services/commit-context-menu.service';
+import {StashContextMenuService} from '../../services/stash-context-menu.service';
+import {TagContextMenuService} from '../../services/tag-context-menu.service';
+import {GitTag} from '../../models/git-tag';
 import {Badge} from 'primeng/badge';
 
 @Component({
@@ -62,6 +64,7 @@ export class LogsComponent {
   protected currentRepo = inject(CurrentRepoStore);
   protected commitContextMenuService = inject(CommitContextMenuService);
   protected stashContextMenuService = inject(StashContextMenuService);
+  protected tagContextMenuService = inject(TagContextMenuService);
   protected contextMenuActiveCommit = signal<DisplayRef | undefined>(undefined);
   protected commitsSelection = computed(() => {
     const selectedCommitsShas = this.currentRepo.selectedCommitsShas();
@@ -85,6 +88,7 @@ export class LogsComponent {
   private logTable = viewChild<Table<DisplayRef>>('logTable');
   private commitContextMenu = viewChild<ContextMenu>('commitContextMenu');
   private stashContextMenu = viewChild<ContextMenu>('stashContextMenu');
+  private tagContextMenu = viewChild<ContextMenu>('tagContextMenu');
   private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
   private logTableContainer = computed(() => this.logTableRef()?.querySelector<HTMLElement>('.p-datatable-table-container'));
   protected visibleCommitsCount = computed(() => {
@@ -263,9 +267,18 @@ export class LogsComponent {
     }
   };
 
+  protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
+    event.stopPropagation();
+    this.tagContextMenuService.selectedTag.set(tag);
+    this.commitContextMenu()?.hide();
+    this.stashContextMenu()?.hide();
+    this.tagContextMenu()?.show(event);
+  };
+
   protected hideContextMenus = () => {
     this.commitContextMenu()?.hide();
     this.stashContextMenu()?.hide();
+    this.tagContextMenu()?.hide();
   };
 
   protected remote = remote;
