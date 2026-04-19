@@ -24,6 +24,7 @@ function createMainWindow() {
     height,
     show: false,
     autoHideMenuBar: true,
+    icon: join(__dirname, 'icons/gitgud-logo.png'),
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -60,6 +61,7 @@ function createSplashWindow() {
   let splashWindow: BrowserWindow | null = new BrowserWindow({
     width: 512,
     height: 270,
+    icon: join(__dirname, 'icons/gitgud-logo.png'),
     frame: false,
     transparent: true,
     alwaysOnTop: true,
