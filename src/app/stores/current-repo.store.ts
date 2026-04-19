@@ -35,6 +35,7 @@ export class CurrentRepoStore {
 
   readonly logs = computed(() => this.reposStore.selectedRepository()?.logs ?? [], {equal: logsComparison});
   readonly stashes = computed(() => this.reposStore.selectedRepository()?.stashes ?? [], {equal: logsComparison});
+  readonly tags = computed(() => this.reposStore.selectedRepository()?.tags ?? [], {equal: isEqual});
   readonly branches = computed(() => this.reposStore.selectedRepository()?.branches ?? [], {equal: isEqual});
   readonly branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha), {equal: keyComparison});
   // Group branches by commit SHA, then merge local/remote branches by normalized name
@@ -66,6 +67,10 @@ export class CurrentRepoStore {
   readonly selectedStash = computed(() => {
     const sha = this.selectedCommitSha();
     return this.stashes().find(s => s.parentSHAs?.[1] && s.parentSHAs?.[1] === sha);
+  });
+  readonly selectedTag = computed(() => {
+    const sha = this.selectedCommitSha();
+    return this.tags().find(s => s.sha == sha);
   });
   readonly headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
 

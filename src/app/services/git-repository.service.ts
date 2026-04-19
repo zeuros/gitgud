@@ -23,6 +23,7 @@ import {isRootDirectory, throwEx} from '../utils/utils';
 import {createRepository, filterOutStashes} from '../utils/repository-utils';
 import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
 import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
+import {TagReaderService} from './electron-cmd-parser-layer/tag-reader.service';
 import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {FileWatcherService} from './file-watcher.service';
@@ -49,6 +50,7 @@ export class GitRepositoryService {
   private readonly logReader = inject(LogReaderService);
   private readonly branchReader = inject(BranchReaderService);
   private readonly stashReader = inject(StashReaderService);
+  private readonly tagReader = inject(TagReaderService);
   private readonly gitApi = inject(GitApiService);
   private readonly fileWatcher = inject(FileWatcherService);
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
@@ -136,9 +138,10 @@ export class GitRepositoryService {
         switchMap(stashes => forkJoin({
           logs: this.logReader.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', ...stashes.map(s => s.sha)])
             .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
-          branches: this.branchReader.getBranches(), // Source will show which branch the  commit is in
-          detachedHeadSha: this.branchReader.detachedHeadSha(), // Source will show which branch the  commit is in
-          stashes: of(stashes), // Source will show which branch commit is in
+          branches: this.branchReader.getBranches(),
+          detachedHeadSha: this.branchReader.detachedHeadSha(),
+          stashes: of(stashes),
+          tags: this.tagReader.getTags(),
         })),
         tap((r: Partial<GitRepository>) => this.gitRepositoryStore.updateSelectedRepository(r)),
       );

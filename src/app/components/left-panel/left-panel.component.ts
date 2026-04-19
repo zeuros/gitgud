@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
 import {Tree, TreeNodeDoubleClickEvent} from 'primeng/tree';
 import {ContextMenu} from 'primeng/contextmenu';
@@ -31,6 +31,7 @@ import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
 import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
 import {BranchReaderService} from '../../services/electron-cmd-parser-layer/branch-reader.service';
+import {GitTag} from '../../models/git-tag';
 
 
 @Component({
@@ -50,8 +51,15 @@ import {BranchReaderService} from '../../services/electron-cmd-parser-layer/bran
 })
 export class LeftPanelComponent {
 
-  private readonly popupService = inject(PopupService);
-
+  protected currentRepo = inject(CurrentRepoStore);
+  protected localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
+  protected remoteBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
+  protected selectedBranchNode = computed(() => {
+    const sha = this.currentRepo.selectedCommitSha();
+    if (!sha) return null;
+    return findNode([...this.localBranches(), ...this.remoteBranches()], sha);
+  });
+  private popupService = inject(PopupService);
   contextMenu: MenuItem[] = [
     {label: 'Pull (fast-forward if possible)', icon: 'pi pi-cloud-download', command: () => this.popupService.info('Pull (fast-forward if possible) selected')},
     {label: 'Push (Set Upstream)', icon: 'pi pi-cloud-upload', command: () => this.popupService.info('Push (Set Upstream) selected')},
@@ -67,23 +75,18 @@ export class LeftPanelComponent {
     {label: 'Copy branch name', icon: 'pi pi-copy', command: () => this.popupService.info('Copy branch name selected')},
     {label: 'Copy commit sha', icon: 'pi pi-receipt', command: () => this.popupService.info('Copy commit sha selected')},
   ];
+  private branchReader = inject(BranchReaderService);
 
-  protected readonly currentRepo = inject(CurrentRepoStore);
-  private readonly branchReader = inject(BranchReaderService);
-  protected readonly localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
-  protected readonly remoteBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
-  protected readonly selectedBranchNode = computed(() => {
-    const sha = this.currentRepo.selectedCommitSha();
-    if (!sha) return null;
-    return findNode([...this.localBranches(), ...this.remoteBranches()], sha);
-  });
-
-  protected readonly selectBranchCommit = (branch?: Branch) => {
+  protected selectBranchCommit = (branch?: Branch) => {
     if (branch) this.currentRepo.update({selectedCommitsShas: [branch.tip.sha]});
   };
 
-  protected readonly selectStash = (stash?: Commit) => {
+  protected selectStash = (stash?: Commit) => {
     if (stash) this.currentRepo.update({selectedCommitsShas: [stash.parentSHAs[1]]});
+  };
+
+  protected selectTag = (tag?: GitTag) => {
+    if (tag) this.currentRepo.update({selectedCommitsShas: [tag.sha]});
   };
 
   protected checkoutBranch = (branch?: Branch) => {
@@ -93,7 +96,9 @@ export class LeftPanelComponent {
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
     this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, leftPanel: sizes.map(Number)}});
 
-  protected readonly $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
-  protected readonly $stash = (stash: Commit) => stash;
+
+  protected $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
+  protected $stash = (stash: Commit) => stash;
+  protected $tag = (tag: GitTag) => tag;
 
 }
