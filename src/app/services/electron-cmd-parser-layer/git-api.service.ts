@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Injectable, isDevMode, signal} from '@angular/core';
+import {inject, Injectable, isDevMode, signal} from '@angular/core';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting JavaScript file will look as if you never imported the module at all.
@@ -24,6 +24,7 @@ import {Injectable, isDevMode, signal} from '@angular/core';
 import {defer, from, map, Observable, of, retry, switchMap, tap, throwError} from 'rxjs';
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
 import {ExecOptions, SpawnOptionsWithoutStdio} from 'node:child_process';
+import {GitCommandHistoryService} from '../git-command-history.service';
 
 @Injectable({
   providedIn: 'root',
@@ -32,6 +33,7 @@ export class GitApiService {
 
   // When a repository is opened / loaded, set the cwd for future git commands
   readonly cwd = signal<string | undefined>(undefined);
+  private readonly history = inject(GitCommandHistoryService);
 
   constructor() {
     // Notes :
@@ -51,9 +53,16 @@ export class GitApiService {
       .subscribe(console.log);
   }
 
-  git = (args: (string | undefined)[] | undefined, options?: ExecOptions) =>
-    this.waitForLock().pipe(switchMap(() =>
-      this.exec('git', args?.filter(notUndefined) ?? [], {cwd: this.cwd(), env: window.electron.process.env, ...options})));
+  git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
+    const filteredArgs = args?.filter(notUndefined) ?? [];
+    return this.waitForLock().pipe(
+      switchMap(() => this.exec('git', filteredArgs, {cwd: this.cwd(), env: window.electron.process.env, ...options})),
+      tap({
+        next: () => this.history.record(filteredArgs, this.cwd(), true),
+        error: () => this.history.record(filteredArgs, this.cwd(), false),
+      }),
+    );
+  };
 
   gitWithInput = (args: string[], input: string) =>
     this.waitForLock().pipe(map(() => {

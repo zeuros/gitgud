@@ -1,0 +1,26 @@
+<p-dialog
+  header="Git Command History"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [modal]="true"
+  [style]="{width: '700px', maxHeight: '80vh'}"
+>
+  <div class="shell-history">
+    @if (!historyService.history().length) {
+      <span class="empty">No commands recorded yet.</span>
+    }
+    @for (entry of historyService.history(); track entry.timestamp) {
+      <div class="entry" [class.error]="!entry.success">
+        <span class="timestamp">{{ entry.timestamp | date:'HH:mm:ss' }}</span>
+        <span class="command">git {{ entry.args.join(' ') }}</span>
+        <span class="status-icon">
+          <i [class]="entry.success ? 'fa fa-check' : 'fa fa-times'"></i>
+        </span>
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Close" [text]="true" (onClick)="visible.set(false)"/>
+  </ng-template>
+</p-dialog>
