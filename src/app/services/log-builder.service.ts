@@ -161,11 +161,15 @@ export class LogBuilderService {
     // In order to indent commits for this new tree, we clear the saved commits refs and restart commits indentation from column 0
     if (isRootCommit(commit)) {
 
-      // Free tree main column
-      // this.setColumnFree(children[0].indent!, colState);
+      // Solo commit, is root but has no children
+      if (!children[0]) {
+        const col = this.findFreeColumnOrPushNewColumn(0, colState);
+        this.setColumnFree(col, colState);
+        return col;
+      }
 
       // The column of a root commit will remain taken since it doesn't have a parent to free the column
-      return children[0].indent!;
+      return children[0]?.indent ?? 0;
     }
 
     if (children.length > 1 && leftChildOfSameBranch) {
