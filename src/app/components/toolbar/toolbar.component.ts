@@ -27,17 +27,17 @@ import {FormsModule} from '@angular/forms';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {PopupService} from '../../services/popup.service';
-import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {PrimeTemplate} from 'primeng/api';
 import {AutoFetchService} from '../../services/auto-fetch.service';
 import {SettingsComponent} from '../settings/settings.component';
+import {SettingsService} from '../../services/settings.service';
 import {short} from '../../utils/commit-utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 @Component({
   selector: 'gitgud-toolbar',
   standalone: true,
-  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate],
+  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, SettingsComponent],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
 })
@@ -45,10 +45,10 @@ export class ToolbarComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
   protected autoFetchService = inject(AutoFetchService);
+  protected settingsService = inject(SettingsService);
   protected loading = signal<'push' | 'pull' | 'fetch' | undefined>(undefined);
   protected readonly short = short;
   protected readonly zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
-  protected zoom = signal(parseFloat(localStorage.getItem('zoom') ?? '1'));
   private gitApi = inject(GitApiService);
   private gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);

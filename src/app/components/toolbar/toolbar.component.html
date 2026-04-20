@@ -1,4 +1,3 @@
-
 <div class="repo-info">
     <span class="repo-name">{{ currentRepo.name() }}</span>
     <span class="branch-badge">{{ currentRepo.headBranch()?.name ?? short(currentRepo.detachedHeadSha() ?? '') + ' (detached HEAD)' }}</span>
@@ -8,30 +7,30 @@
 
 <div class="actions">
     <p-button class="sober"
-            [text]="true"
-            [loading]="loading() === 'push'"
-            [disabled]="!!loading()"
-            (onClick)="push()"
+              [text]="true"
+              [loading]="loading() === 'push'"
+              [disabled]="!!loading()"
+              (onClick)="push()"
     >
         <i class="fa fa-arrow-up"></i>
         <span>Push</span>
     </p-button>
 
     <p-button class="sober"
-            [text]="true"
-            [loading]="loading() === 'pull'"
-            [disabled]="!!loading()"
-            (onClick)="pull()"
+              [text]="true"
+              [loading]="loading() === 'pull'"
+              [disabled]="!!loading()"
+              (onClick)="pull()"
     >
         <i class="fa fa-arrow-down"></i>
         <span>Pull</span>
     </p-button>
 
     <p-button class="sober"
-            [text]="true"
-            [loading]="loading() === 'fetch'"
-            [disabled]="!!loading()"
-            (onClick)="fetch()"
+              [text]="true"
+              [loading]="loading() === 'fetch'"
+              [disabled]="!!loading()"
+              (onClick)="fetch()"
     >
         <i class="fa fa-refresh"></i>
         <span>Fetch</span>
@@ -48,8 +47,7 @@
 
 <p-select
         [options]="zoomLevels"
-        [ngModel]="zoom()"
-        (ngModelChange)="setZoom($event)"
+        [(ngModel)]="settingsService.zoom"
         optionLabel="label"
         optionValue="value"
         style="margin-left: auto"
@@ -58,3 +56,5 @@
         Zoom ({{ item.label }})
     </ng-template>
 </p-select>
+
+<gitgud-settings/>
