@@ -1,0 +1,70 @@
+<div class="resolver-root">
+
+  <div class="resolver-header">
+    <span class="file-path">{{ filePath() }}</span>
+    <span class="hunk-counter">
+      {{ unresolvedCount() }} conflict{{ unresolvedCount() !== 1 ? 's' : '' }} remaining
+    </span>
+    <div class="batch-actions">
+      <p-button label="Accept All Ours" severity="secondary" size="small" [text]="true" (onClick)="acceptAllOurs()"/>
+      <p-button label="Accept All Theirs" severity="secondary" size="small" [text]="true" (onClick)="acceptAllTheirs()"/>
+    </div>
+    <p-button
+      label="Save & Stage"
+      icon="fa fa-check"
+      size="small"
+      [disabled]="!canSave()"
+      pTooltip="Resolve all conflicts first"
+      (onClick)="saveResolved()"
+    />
+  </div>
+
+  <!-- Conflict navigation pills -->
+  @if (hunks().length > 1) {
+    <div class="hunk-nav">
+      @for (hunk of hunks(); track hunk.index) {
+        <button
+          class="hunk-pill"
+          [class.active]="currentHunkIndex() === hunk.index"
+          [class.resolved]="hunk.resolution !== undefined"
+          (click)="navigateTo(hunk.index)"
+        >
+          {{ hunk.index + 1 }}
+          @if (hunk.resolution !== undefined) { <i class="fa fa-check"></i> }
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Three-pane diff -->
+  <div class="three-pane">
+    <div class="pane">
+      <div class="pane-header ours-header">
+        <span>Current (HEAD)</span>
+      </div>
+      <div class="editor-container" #oursContainer></div>
+    </div>
+
+    <div class="pane result-pane">
+      <div class="pane-header result-header">
+        <span>Result</span>
+        <p-button-group>
+          <p-button icon="fa fa-arrow-left" size="small" [text]="true" pTooltip="Accept Current" (onClick)="acceptOurs()"/>
+          <p-button icon="fa fa-arrows-h" size="small" [text]="true" pTooltip="Accept Both" (onClick)="acceptBoth()"/>
+          <p-button icon="fa fa-ban" size="small" [text]="true" pTooltip="Accept None" (onClick)="acceptNone()"/>
+          <p-button icon="fa fa-arrow-right" size="small" [text]="true" pTooltip="Accept Incoming" (onClick)="acceptTheirs()"/>
+        </p-button-group>
+        <p-button label="Apply" size="small" [text]="true" pTooltip="Use what's in the editor" (onClick)="applyCurrentResult()"/>
+      </div>
+      <div class="editor-container" #resultContainer></div>
+    </div>
+
+    <div class="pane">
+      <div class="pane-header theirs-header">
+        <span>Incoming</span>
+      </div>
+      <div class="editor-container" #theirsContainer></div>
+    </div>
+  </div>
+
+</div>

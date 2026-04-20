@@ -31,6 +31,9 @@ import {combineLatest, of} from 'rxjs';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {ViewType} from '../../models/git-repository';
+import {ConflictParserService} from '../../services/conflict-parser.service';
+import {ConflictResolverComponent} from '../conflict-resolver/conflict-resolver.component';
+import {GitRefreshService} from '../../services/git-refresh.service';
 import IEditorOptions = editor.IEditorOptions;
 import ITextModel = editor.ITextModel;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
@@ -49,7 +52,7 @@ interface DiffModels {
 @Component({
   standalone: true,
   selector: 'gitgud-monaco-editor-view',
-  imports: [Button, ButtonGroup, Tooltip, Toolbar, FormsModule],
+  imports: [Button, ButtonGroup, Tooltip, Toolbar, FormsModule, ConflictResolverComponent],
   templateUrl: './monaco-editor-view.component.html',
   styleUrl: './monaco-editor-view.component.scss',
 })
@@ -61,9 +64,14 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   protected currentRepo = inject(CurrentRepoStore);
   protected viewType = computed(() => this.currentRepo.editorConfig()!.viewType);
 
+  protected conflictFileContent = signal<string | undefined>(undefined);
+  protected conflictFilePath = signal<string | undefined>(undefined);
+
   private fileDiffService = inject(FileDiffService);
   private gitApi = inject(GitApiService);
+  private gitRefresh = inject(GitRefreshService);
   private hunkActionsService = inject(MonacoDiffRightClickActionsService);
+  private conflictParser = inject(ConflictParserService);
   private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void} | undefined>(undefined);
   private ownedModels = new Set<ITextModel>(); // Models are cached for the component's lifetime — switching between already-viewed files hits the URI cache
   private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
@@ -91,15 +99,31 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       const file = this.fileToDiff();
       if (!file) return;
 
+      // Check for merge conflicts in unstaged working-dir files
+      if (isWorkingDirectoryFileChange(file) && !file.staged) {
+        const absPath = window.electron.path.resolve(this.gitApi.cwd()!, file.path);
+        try {
+          const content = window.electron.fs.readFileSync(absPath);
+          if (ConflictParserService.hasConflicts(content)) {
+            this.conflictFileContent.set(content);
+            this.conflictFilePath.set(file.path);
+            return;
+          }
+        } catch { /* file might not exist */ }
+      }
+
+      this.conflictFileContent.set(undefined);
+      this.conflictFilePath.set(undefined);
+
       const before$ = isCommittedFileChange(file)
         ? this.fileDiffService.getFileAtRevision(file.path, `${file.commitish}^`)
         : ((file as WorkingDirectoryFileChange).staged
-            ? this.fileDiffService.getFileAtRevision(file.path)        // staged: HEAD vs index
-            : this.fileDiffService.getFileAtRevision(file.path, ''));  // unstaged: index vs workdir
+            ? this.fileDiffService.getFileAtRevision(file.path)
+            : this.fileDiffService.getFileAtRevision(file.path, ''));
 
       const after$ = isWorkingDirectoryFileChange(file)
         ? (file.staged
-            ? this.fileDiffService.getFileAtRevision(file.path, '')   // git show :path  (index)
+            ? this.fileDiffService.getFileAtRevision(file.path, '')
             : of(window.electron.fs.readFileSync(window.electron.path.resolve(this.gitApi.cwd()!, file.path))))
         : this.fileDiffService.getFileAtRevision(file.path, (file as CommittedFileChange).commitish);
 
@@ -156,6 +180,12 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   }
 
   protected setViewType = (viewType: ViewType) => this.currentRepo.update({editorConfig: {viewType}});
+
+  protected onConflictResolved = () => {
+    this.conflictFileContent.set(undefined);
+    this.conflictFilePath.set(undefined);
+    this.gitRefresh.doRefreshBranchesAndLogs();
+  };
 
   private updateDiffEditor({before, after}: DiffModels) {
     const beforeUri = Uri.parse(`before-${before.fileName}`);
