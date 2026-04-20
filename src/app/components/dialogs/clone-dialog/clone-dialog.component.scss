@@ -1,0 +1,18 @@
+.clone-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 0;
+}
+
+.dir-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clone-path {
+  font-size: 11px;
+  color: var(--hmmmmmmGray);
+  font-family: monospace;
+}

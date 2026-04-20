@@ -33,11 +33,13 @@ import {AutoFetchService} from '../../services/auto-fetch.service';
 import {SettingsComponent} from '../settings/settings.component';
 import {short} from '../../utils/commit-utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
+import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.component';
+import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 
 @Component({
   selector: 'gitgud-toolbar',
   standalone: true,
-  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate],
+  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, CloneDialogComponent, ShellHistoryDialogComponent],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
 })
@@ -53,6 +55,8 @@ export class ToolbarComponent {
   private gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);
   private settings = viewChild.required(SettingsComponent);
+  private cloneDialog = viewChild.required(CloneDialogComponent);
+  private shellHistoryDialog = viewChild.required(ShellHistoryDialogComponent);
   private now = toSignal(interval(1000).pipe(map(() => Date.now())), {initialValue: Date.now()});
   protected fetchedAgo = computed(() => {
     const at = this.autoFetchService.lastFetchedAt();
@@ -112,9 +116,23 @@ export class ToolbarComponent {
   };
 
   protected openSettings = () => this.settings().open();
+  protected openClone = () => this.cloneDialog().open();
+  protected openShellHistory = () => this.shellHistoryDialog().open();
+
+  protected undo = () => {
+    const head = this.currentRepo.logs()?.[0];
+    const message = head?.summary ?? 'last commit';
+    if (!confirm(`Undo "${message}"?\n\nThis will soft-reset HEAD~1 (changes stay staged).`)) return;
+    this.gitApi.git(['reset', '--soft', 'HEAD~1'])
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
+      .subscribe({
+        next: () => this.popup.success('Undone successfully'),
+        error: (e) => this.popup.err(e),
+      });
+  };
 
   protected setZoom(factor: number) {
-    // TODO: window.electron.zoom.set(factor);
+    window.electron.zoom?.setFactor(factor);
     localStorage.setItem('zoom', String(factor));
     this.zoom.set(factor);
   }
