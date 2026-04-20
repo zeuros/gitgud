@@ -4,6 +4,23 @@ html, body {
   padding: 0;
 }
 
+/* Disable text selection by default — GUI apps don't need click-drag selecting labels */
+* {
+  user-select: none;
+}
+
+/* Re-enable in areas where text selection is useful */
+input, textarea, [contenteditable] {
+  user-select: text;
+}
+
+/* Allow copying commit messages, file paths, dialog content */
+.p-dialog .p-dialog-content,
+.commit-body,
+.selectable {
+  user-select: text;
+}
+
 app-root {
   height: 100%;
   overflow: hidden;
