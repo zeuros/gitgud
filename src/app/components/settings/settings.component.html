@@ -3,17 +3,74 @@
   [visible]="visible()"
   (visibleChange)="visible.set($event)"
   [modal]="true"
-  [style]="{width: '400px'}"
+  [style]="{width: '460px'}"
 >
-  <div class="settings-row">
-    <label>Auto-fetch interval (seconds)</label>
-    <p-input-number
-      [ngModel]="autoFetchInterval()"
-      (ngModelChange)="autoFetchInterval.set($event)"
-      [min]="10"
-      [max]="3600"
-      [showButtons]="true"
-    />
+  <div class="settings-rows">
+
+    <div class="settings-section-title">General</div>
+
+    <div class="settings-row">
+      <label>Theme</label>
+      <p-select
+        [options]="themeOptions"
+        [ngModel]="theme()"
+        (ngModelChange)="theme.set($event)"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="settings-select"
+      />
+    </div>
+
+    <div class="settings-row">
+      <label>Auto-fetch interval (seconds)</label>
+      <p-input-number
+        [ngModel]="autoFetchInterval()"
+        (ngModelChange)="autoFetchInterval.set($event)"
+        [min]="10"
+        [max]="3600"
+        [showButtons]="true"
+      />
+    </div>
+
+    <div class="settings-section-title">Git</div>
+
+    <div class="settings-row">
+      <label>Git binary path</label>
+      <div class="row-with-browse">
+        <input
+          type="text"
+          pInputText
+          [ngModel]="gitBinaryPath()"
+          (ngModelChange)="gitBinaryPath.set($event)"
+          placeholder="git"
+          style="flex: 1"
+        />
+        <p-button icon="fa fa-folder-open" [text]="true" pTooltip="Browse" (onClick)="pickGitBinary()"/>
+      </div>
+    </div>
+
+    <div class="settings-section-title">Identity</div>
+
+    <div class="settings-row">
+      <label>User name (global)</label>
+      <input type="text" pInputText [ngModel]="globalUserName()" (ngModelChange)="globalUserName.set($event)" style="flex: 1"/>
+    </div>
+    <div class="settings-row">
+      <label>Email (global)</label>
+      <input type="text" pInputText [ngModel]="globalUserEmail()" (ngModelChange)="globalUserEmail.set($event)" style="flex: 1"/>
+    </div>
+
+    @if (hasRepo()) {
+      <div class="settings-row">
+        <label>User name (local repo)</label>
+        <input type="text" pInputText [ngModel]="localUserName()" (ngModelChange)="localUserName.set($event)" placeholder="— same as global —" style="flex: 1"/>
+      </div>
+      <div class="settings-row">
+        <label>Email (local repo)</label>
+        <input type="text" pInputText [ngModel]="localUserEmail()" (ngModelChange)="localUserEmail.set($event)" placeholder="— same as global —" style="flex: 1"/>
+      </div>
+    }
+
   </div>
 
   <ng-template pTemplate="footer">

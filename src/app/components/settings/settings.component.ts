@@ -16,36 +16,99 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {Button} from 'primeng/button';
 import {Dialog} from 'primeng/dialog';
 import {InputNumber} from 'primeng/inputnumber';
+import {InputText} from 'primeng/inputtext';
+import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import {PrimeTemplate} from 'primeng/api';
-import {GitRepositoryStore} from '../../stores/git-repos.store';
+import {GitRepositoryStore, ThemeMode} from '../../stores/git-repos.store';
+import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
+import {PopupService} from '../../services/popup.service';
+import {forkJoin} from 'rxjs';
 
 @Component({
   selector: 'gitgud-settings',
   standalone: true,
-  imports: [Button, Dialog, InputNumber, FormsModule, PrimeTemplate],
+  imports: [Button, Dialog, InputNumber, InputText, Select, FormsModule, PrimeTemplate],
   templateUrl: './settings.component.html',
+  styleUrl: './settings.component.scss',
 })
 export class SettingsComponent {
 
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
+  private readonly gitApi = inject(GitApiService);
+  private readonly popup = inject(PopupService);
 
   protected readonly visible = signal(false);
   protected readonly autoFetchInterval = signal(0);
-  protected readonly zoom = signal(1);
+  protected readonly theme = signal<ThemeMode>('system');
+  protected readonly gitBinaryPath = signal('');
+  protected readonly globalUserName = signal('');
+  protected readonly globalUserEmail = signal('');
+  protected readonly localUserName = signal('');
+  protected readonly localUserEmail = signal('');
+  protected readonly hasRepo = computed(() => !!this.gitApi.cwd());
+
+  protected readonly themeOptions = [
+    {label: 'System', value: 'system'},
+    {label: 'Dark', value: 'dark'},
+    {label: 'Light', value: 'light'},
+  ];
 
   open() {
-    this.autoFetchInterval.set(this.gitRepositoryStore.config().autoFetchInterval / 1000);
+    const config = this.gitRepositoryStore.config();
+    this.autoFetchInterval.set(config.autoFetchInterval / 1000);
+    this.theme.set(config.theme ?? 'system');
+    this.gitBinaryPath.set(config.gitBinaryPath ?? '');
+
+    forkJoin({
+      globalName: this.gitApi.git(['config', '--global', 'user.name']),
+      globalEmail: this.gitApi.git(['config', '--global', 'user.email']),
+      ...(this.hasRepo() ? {
+        localName: this.gitApi.git(['config', '--local', 'user.name']),
+        localEmail: this.gitApi.git(['config', '--local', 'user.email']),
+      } : {}),
+    }).subscribe({
+      next: (r: any) => {
+        this.globalUserName.set((r.globalName ?? '').trim());
+        this.globalUserEmail.set((r.globalEmail ?? '').trim());
+        this.localUserName.set((r.localName ?? '').trim());
+        this.localUserEmail.set((r.localEmail ?? '').trim());
+      },
+      error: () => {},
+    });
+
     this.visible.set(true);
   }
 
+  protected pickGitBinary() {
+    const picked = window.electron.dialog.showOpenDialogSync({
+      properties: ['openFile'],
+      filters: [{name: 'Executables', extensions: ['*']}],
+    });
+    if (picked?.[0]) this.gitBinaryPath.set(picked[0]);
+  }
+
   protected save() {
-    this.gitRepositoryStore.updateAppConfig({autoFetchInterval: this.autoFetchInterval() * 1000});
-    localStorage.setItem('zoom', String(this.zoom()));
+    this.gitRepositoryStore.updateAppConfig({
+      autoFetchInterval: this.autoFetchInterval() * 1000,
+      theme: this.theme(),
+      gitBinaryPath: this.gitBinaryPath() || undefined,
+    });
+
+    const globalName = this.globalUserName().trim();
+    const globalEmail = this.globalUserEmail().trim();
+    const localName = this.localUserName().trim();
+    const localEmail = this.localUserEmail().trim();
+
+    if (globalName) this.gitApi.git(['config', '--global', 'user.name', globalName]).subscribe();
+    if (globalEmail) this.gitApi.git(['config', '--global', 'user.email', globalEmail]).subscribe();
+    if (this.hasRepo() && localName) this.gitApi.git(['config', '--local', 'user.name', localName]).subscribe();
+    if (this.hasRepo() && localEmail) this.gitApi.git(['config', '--local', 'user.email', localEmail]).subscribe();
     this.visible.set(false);
+    this.popup.success('Settings saved');
   }
 }

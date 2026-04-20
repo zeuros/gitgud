@@ -1,0 +1,90 @@
+/* Light theme — applies when body has class "theme-light" */
+body.theme-light {
+    --background: #f0eef5;
+    --p-surface-0: #ffffff;
+    --p-zinc-50: #f8f5ff;
+    --p-zinc-100: #ede8f8;
+    --p-zinc-200: #ddd5f0;
+    --p-zinc-300: #c9bde6;
+    --p-zinc-400: #b0a2d4;
+    --p-zinc-500: #8b7ab8;
+    --p-zinc-600: #6c5e9a;
+    --p-zinc-700: #4e4472;
+    --p-zinc-800: #e8e2f5;
+    --p-zinc-900: var(--background);
+    --p-zinc-950: rgba(240, 238, 245, 0.92);
+
+    --p-primary-color: #7b3fa0;
+    --p-primary-50: #f3e8fb;
+    --p-primary-100: #e2c8f5;
+    --p-primary-200: #cda5ed;
+    --p-primary-300: #b47fe3;
+    --p-primary-400: var(--p-primary-color);
+    --p-primary-500: #6a309a;
+    --p-primary-600: #572891;
+    --p-primary-700: #451f80;
+    --p-primary-800: #35176e;
+    --p-primary-900: #25105c;
+    --p-primary-950: #f0eef5;
+
+    --p-text-color: #1c1a2e;
+    --p-text-color-secondary: rgba(28, 26, 46, 0.65);
+    --p-highlight-text-color: var(--p-primary-color);
+    --p-highlight-focus-color: #1c1a2e;
+    --p-content-background: #f0eef5;
+    --p-content-border-color: #d5cce8;
+
+    --hmmmmmmGray: #7a7690;
+    --huaaaaaGray: #4a4660;
+    --wowowowGray: #1c1a2e;
+    --babedouGray: #0d0c1a;
+    --row-selected-background-color: rgba(123, 63, 160, 0.15);
+
+    color-scheme: light;
+}
+
+/* Dotted background for light mode body */
+body.theme-light {
+    background-color: var(--background);
+    background-image: radial-gradient(circle, #c4b8d8 1px, transparent 1px);
+    background-size: 22px 22px;
+}
+
+body.theme-light app-root {
+    background: transparent;
+}
+
+/* Light toolbar */
+body.theme-light .p-toolbar,
+body.theme-light gitgud-toolbar {
+    background: rgba(240, 238, 245, 0.92);
+    backdrop-filter: blur(8px);
+}
+
+/* Light scrollbars */
+body.theme-light ::-webkit-scrollbar-track {
+    background: #e0d9f0;
+}
+
+body.theme-light ::-webkit-scrollbar-thumb {
+    background: #b09ad0;
+}
+
+body.theme-light ::-webkit-scrollbar-thumb:hover {
+    background: #7b3fa0;
+}
+
+/* Sober buttons in light mode */
+body.theme-light .sober button {
+    color: var(--huaaaaaGray);
+}
+
+body.theme-light .sober button:hover {
+    color: var(--babedouGray);
+    background: rgba(0, 0, 0, 0.06);
+}
+
+/* p-listbox border */
+body.theme-light p-listbox {
+    border: 1px solid #c4b8d830;
+}

@@ -1,0 +1,44 @@
+.settings-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.settings-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hmmmmmmGray);
+  padding-top: 8px;
+  border-top: 1px solid var(--p-content-border-color);
+
+  &:first-child {
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  label {
+    min-width: 200px;
+    font-size: 13px;
+    color: var(--p-text-color);
+  }
+}
+
+.row-with-browse {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+::ng-deep .settings-select {
+  min-width: 120px;
+}

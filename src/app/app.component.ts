@@ -23,6 +23,7 @@ import {GitRepositoryStore} from './stores/git-repos.store';
 import {AutoFetchService} from './services/auto-fetch.service';
 import {Router, RouterOutlet} from '@angular/router';
 import {SettingsComponent} from './components/settings/settings.component';
+import {ThemeService} from './services/theme.service'; // bootstraps theme reactivity
 
 @Component({
   standalone: true,
@@ -38,6 +39,10 @@ export class AppComponent {
 
   constructor() {
     inject(AutoFetchService); // Starts auto-fetch
+    inject(ThemeService);    // Applies theme from config
+
+    const savedZoom = parseFloat(localStorage.getItem('zoom') ?? '1');
+    window.electron.zoom?.setFactor(savedZoom);
 
     effect(() => this.router.navigate([this.gitRepositoryStore.hasRepositories() ? 'repo' : 'welcome-screen']));
 

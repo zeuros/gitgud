@@ -23,8 +23,12 @@ import {StorageName} from '../enums/storage-name.enum';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
 import {syncToStorage} from '../utils/store.utils';
 
+export type ThemeMode = 'dark' | 'light' | 'system';
+
 export interface AppConfig {
   autoFetchInterval: number;
+  theme?: ThemeMode;
+  gitBinaryPath?: string;
 }
 
 const DEFAULT_APP_CONFIG: AppConfig = {
