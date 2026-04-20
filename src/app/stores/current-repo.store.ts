@@ -23,6 +23,7 @@ import {Branch} from '../lib/github-desktop/model/branch';
 import {groupBy, isEqual, mapValues, values} from 'lodash-es';
 import {keyComparison, logsComparison, shallowArrayEqual} from '../utils/utils';
 import {normalizedBranchName} from '../utils/branch-utils';
+import {GitTag} from '../models/git-tag';
 
 /**
  * Exposes reactive state for the currently selected repository.
@@ -36,7 +37,7 @@ export class CurrentRepoStore {
   readonly logs = computed(() => this.reposStore.selectedRepository()?.logs ?? [], {equal: logsComparison});
   readonly stashes = computed(() => this.reposStore.selectedRepository()?.stashes ?? [], {equal: logsComparison});
   readonly tags = computed(() => this.reposStore.selectedRepository()?.tags ?? [], {equal: isEqual});
-  readonly tagsByCommitSha = computed(() => groupBy(this.tags(), t => t.sha), {equal: keyComparison});
+  readonly tagsByCommitSha = computed<Record<string, GitTag[] | undefined>>(() => groupBy(this.tags(), t => t.sha), {equal: keyComparison});
   readonly branches = computed(() => this.reposStore.selectedRepository()?.branches ?? [], {equal: isEqual});
   readonly branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha), {equal: keyComparison});
   // Group branches by commit SHA, then merge local/remote branches by normalized name
