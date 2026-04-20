@@ -56,6 +56,11 @@ declare global {
       spawnSync: (cmd: string, args: string[], options: SpawnSyncOptions) => ReturnType<typeof spawnSync>;
       spawn:  (cmd: string, args: string[], options: SpawnOptionsWithoutStdio) => Promise<string>,
 
+      zoom?: {
+        setFactor: (factor: number) => void;
+        getFactor: () => number;
+      };
+
       onWindowFocus: (cb: () => void) => BrowserWindow;
       offWindowFocus: (cb: () => void) => BrowserWindow;
       process: NodeJS.Process;

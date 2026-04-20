@@ -92,6 +92,11 @@ contextBridge.exposeInMainWorld('electron', {
     showOpenDialogSync: dialog.showOpenDialogSync.bind(dialog),
   },
 
+  zoom: {
+    setFactor: (factor: number) => getCurrentWindow().webContents.setZoomFactor(factor),
+    getFactor: () => getCurrentWindow().webContents.getZoomFactor(),
+  },
+
   // Window events
   onWindowFocus: (cb: () => void): BrowserWindow => getCurrentWindow().on('focus', cb),
   offWindowFocus: (cb: () => void) => getCurrentWindow().off('focus', cb),

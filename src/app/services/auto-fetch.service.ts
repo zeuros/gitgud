@@ -20,6 +20,7 @@ import {effect, inject, Injectable, signal, untracked} from '@angular/core';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRepositoryService} from './git-repository.service';
+import {SettingsService} from './settings.service';
 
 @Injectable({
   providedIn: 'root',
@@ -29,6 +30,7 @@ export class AutoFetchService {
   private readonly gitRepository = inject(GitRepositoryService);
   private readonly gitApi = inject(GitApiService);
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
+  private readonly settingsService = inject(SettingsService);
 
   readonly lastFetchedAt = signal<number | undefined>(undefined);
 
@@ -37,7 +39,7 @@ export class AutoFetchService {
   constructor() {
     effect(() => {
       clearInterval(this.intervalId);
-      this.intervalId = setInterval(this.autoFetch, this.gitRepositoryStore.config().autoFetchInterval);
+      this.intervalId = setInterval(this.autoFetch, this.settingsService.autoFetchInterval);
     });
 
     // Initialize last-fetched time from .git/FETCH_HEAD mtime when repo changes
