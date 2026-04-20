@@ -29,6 +29,7 @@ import {spawn, spawnSync, SpawnOptionsWithoutStdio, SpawnSyncOptions} from 'node
 
 const watchers = new Map<string, FSWatcher>();
 
+// To sync with electron-api.ts
 contextBridge.exposeInMainWorld('electron', {
   fs: {
     readdirSync: fs.readdirSync.bind(fs),
