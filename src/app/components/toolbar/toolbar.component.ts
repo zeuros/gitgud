@@ -119,4 +119,15 @@ export class ToolbarComponent {
   protected openCloneDialog = () => this.cloneDialog().open();
   protected openShellHistoryDialog = () => this.shellHistoryDialog().open();
 
+  protected undo = () => {
+    this.gitApi.git(['reflog', '-1', '--format=%gs']).pipe(
+      switchMap(action => this.popup.confirm$(`Undo "${action.trim()}"?<br>Changes will stay staged (soft reset).`, 'Undo')),
+      switchMap(() => this.gitApi.git(['reset', '--soft', 'HEAD@{1}'])),
+      switchMap(this.gitRefresh.refreshBranchesAndLogs),
+    ).subscribe({
+      next: () => this.popup.success('Undone'),
+      error: e => this.popup.err(e),
+    });
+  };
+
 }

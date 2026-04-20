@@ -19,6 +19,7 @@
 import {Component, effect, inject} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ToastModule} from 'primeng/toast';
+import {ConfirmDialog} from 'primeng/confirmdialog';
 import {GitRepositoryStore} from './stores/git-repos.store';
 import {AutoFetchService} from './services/auto-fetch.service';
 import {Router, RouterOutlet} from '@angular/router';
@@ -26,7 +27,7 @@ import {SettingsDialogComponent} from './components/dialogs/settings-dialog/sett
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, RouterOutlet, SettingsDialogComponent],
+  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, SettingsDialogComponent],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
