@@ -74,14 +74,16 @@ export class GitRepositoryService {
     this.gitApi.cwd.set(id);
   };
 
+  pickFolderAndOpenRepository = () => {
+    this.openRepository(this.pickGitFolder()).subscribe();
+  }
   /**
    * Opens or retrieve repository after user picks a repo folder
    * - Reuses an existing repo if already opened
    * - Marks it as selected
    * - Refreshes logs, branches, and stashes
    */
-  openRepository = () => {
-    const repoDirectory = this.pickGitFolder();
+  openRepository = (repoDirectory: string) => {
 
     const repos = this.gitRepositoryStore.repositories();
 
@@ -97,7 +99,7 @@ export class GitRepositoryService {
     this.gitRepositoryStore.selectRepository(repoDirectory);
 
     // Refresh git data
-    this.doUpdateLogsAndBranches();
+    return this.updateLogsAndBranches();
   };
 
   pickGitFolder = () => {

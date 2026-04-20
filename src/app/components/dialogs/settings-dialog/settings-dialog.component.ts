@@ -20,18 +20,18 @@ import {Component, inject, signal} from '@angular/core';
 import {Dialog} from 'primeng/dialog';
 import {InputNumber} from 'primeng/inputnumber';
 import {FormsModule} from '@angular/forms';
-import {SettingsService} from '../../services/settings.service';
+import {SettingsService} from '../../../services/settings.service';
 
 @Component({
-  selector: 'gitgud-settings',
+  selector: 'gitgud-settings-dialog',
   standalone: true,
   imports: [Dialog, InputNumber, FormsModule],
-  templateUrl: './settings.component.html',
+  templateUrl: './settings-dialog.component.html',
 })
-export class SettingsComponent {
+export class SettingsDialogComponent {
 
-  readonly settingsService = inject(SettingsService);
-  protected readonly visible = signal(false);
+  settings = inject(SettingsService);
+  protected visible = signal(false);
 
   open() {
     this.visible.set(true);

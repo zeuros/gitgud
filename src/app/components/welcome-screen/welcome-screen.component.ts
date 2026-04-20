@@ -16,26 +16,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject} from '@angular/core';
-import {CloneOrOpenDirectoryDialogComponent} from '../dialogs/clone-or-open-directory-dialog/clone-or-open-directory-dialog.component';
+import {Component, inject, viewChild} from '@angular/core';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {ButtonModule} from 'primeng/button';
 import {DialogModule} from 'primeng/dialog';
-import {DialogService} from 'primeng/dynamicdialog';
+import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.component';
 
 @Component({
   selector: 'gitgud-welcome-screen',
   standalone: true,
-  imports: [ButtonModule, DialogModule],
+  imports: [ButtonModule, DialogModule, CloneDialogComponent],
   templateUrl: './welcome-screen.component.html',
   styleUrl: './welcome-screen.component.scss',
 })
 export class WelcomeScreenComponent {
 
-  protected readonly gitRepositoryService = inject(GitRepositoryService);
-  private readonly dialogService = inject(DialogService);
+  protected gitRepositoryService = inject(GitRepositoryService);
+  private cloneDialog = viewChild.required(CloneDialogComponent);
 
-  protected readonly showOpenOrCloneModal = () =>
-    this.dialogService.open(CloneOrOpenDirectoryDialogComponent, {header: 'Clone a repository', width: '50vw', modal: true});
+  protected openCloneDialog = () => this.cloneDialog().open();
 
 }

@@ -63,13 +63,8 @@ export class GitApiService {
     }));
 
   clone = (url: string, repoName: string, dir: string) =>
-    this.cd(dir).pipe(
-      switchMap(() => this.git(['clone', url, repoName])),
-      tap(() => this.cwd.set(`${dir}/${repoName}`)),
-    );
-
-
-  cd = (dir: string) => this.exec('cd', [dir]).pipe(tap(() => this.cwd.set(dir)));
+    this.git(['clone', url, repoName], {cwd: dir, env: window.electron.process.env})
+      .pipe(tap(() => this.cwd.set(`${dir}/${repoName}`)));
 
   exec = (cmd: string, args: string[] = [], options?: any) =>
     from(window.electron.execFile(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
