@@ -16,54 +16,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type {PathLike, readdirSync, WriteFileOptions} from 'node:fs';
-import type {dirname, extname, resolve} from 'node:path';
-import type {dialog} from '@electron/remote';
-import type {ChokidarOptions} from 'chokidar';
-import type {ExecOptions, SpawnOptionsWithoutStdio, SpawnSyncOptions, spawnSync} from 'node:child_process';
-import type {BrowserWindow} from 'electron';
+import type {ElectronApi} from './electron-api';
 
-export {};
 declare global {
   interface Window {
-    electron: {
-      fs: {
-        readdirSync: typeof readdirSync;
-        isFile: (file: PathLike) => boolean;
-        writeFileSync: (file: string, data: string, options?: WriteFileOptions) => void;
-        readFileSync: (file: PathLike) => string;
-        existsSync: (path: PathLike) => boolean;
-        mtimeMs: (path: string) => number;
-      };
-      path: {
-        resolve: typeof resolve;
-        dirname: typeof dirname;
-        extname: typeof extname;
-      };
-      chokidar: {
-        watch: (id: string, paths: string | string[], options?: ChokidarOptions) => void;
-        on: (id: string, event: string, cb: (...args: unknown[]) => void) => void;
-        close: (id: string) => void;
-      };
-      crypto: {
-        md5: (data: string) => string;
-      };
-      dialog: {
-        showOpenDialogSync: typeof dialog.showOpenDialogSync;
-      };
-
-      execFile: (cmd: string, args: string[], options: ExecOptions) => Promise<{ stdout: string; stderr: string }>;
-      spawnSync: (cmd: string, args: string[], options: SpawnSyncOptions) => ReturnType<typeof spawnSync>;
-      spawn:  (cmd: string, args: string[], options: SpawnOptionsWithoutStdio) => Promise<string>,
-
-      zoom?: {
-        setFactor: (factor: number) => void;
-        getFactor: () => number;
-      };
-
-      onWindowFocus: (cb: () => void) => BrowserWindow;
-      offWindowFocus: (cb: () => void) => BrowserWindow;
-      process: NodeJS.Process;
-    };
+    electron: ElectronApi;
   }
 }
