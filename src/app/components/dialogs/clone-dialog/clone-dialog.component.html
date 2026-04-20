@@ -1,0 +1,76 @@
+<p-dialog
+        header="Clone Repository"
+        [visible]="visible()"
+        (visibleChange)="visible.set($event)"
+        [modal]="true"
+        [style]="{width: '480px'}"
+>
+    <div class="clone-form">
+        <p-float-label>
+            <input
+                    id="clone-url"
+                    type="text"
+                    pInputText
+                    [ngModel]="url()"
+                    (ngModelChange)="onUrlChange($event)"
+                    style="width: 100%"
+            />
+            <label for="clone-url">Repository URL</label>
+        </p-float-label>
+
+        <div class="dir-row">
+            <p-float-label style="flex: 1">
+                <input
+                        id="clone-dir"
+                        type="text"
+                        pInputText
+                        [ngModel]="targetDir()"
+                        (ngModelChange)="targetDir.set($event)"
+                        style="width: 100%"
+                />
+                <label for="clone-dir">Target directory</label>
+            </p-float-label>
+            <p-button icon="fa fa-folder-open" [text]="true" pTooltip="Browse" (onClick)="pickDirectory()"/>
+        </div>
+
+        <p-float-label>
+            <input
+                    id="clone-name"
+                    type="text"
+                    pInputText
+                    [ngModel]="repoName()"
+                    (ngModelChange)="repoName.set($event)"
+                    style="width: 100%"
+            />
+            <label for="clone-name">Repository name</label>
+        </p-float-label>
+
+        @if (targetDir() && repoName()) {
+            <span class="clone-path" [class.exists]="repoExists()">
+                <span class="arrow">→</span> {{ repoPath() }}
+                @if (repoExists()) { <i class="fa fa-check-circle"></i> already exists }
+            </span>
+        }
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" [text]="true" (onClick)="visible.set(false)"/>
+        @if (repoExists()) {
+            <p-button
+                    label="Open"
+                    icon="fa fa-folder-open"
+                    [loading]="loading()"
+                    [disabled]="!targetDir().length || !repoName().length"
+                    (onClick)="openExisting()"
+            />
+        } @else {
+            <p-button
+                    label="Clone"
+                    icon="fa fa-download"
+                    [loading]="loading()"
+                    [disabled]="!url().length || !targetDir().length || !repoName().length"
+                    (onClick)="clone()"
+            />
+        }
+    </ng-template>
+</p-dialog>

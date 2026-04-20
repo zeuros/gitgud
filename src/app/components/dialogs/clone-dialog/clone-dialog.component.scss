@@ -1,0 +1,26 @@
+.clone-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 0 8px; /* top room for floating labels */
+}
+
+.dir-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clone-path {
+  font-size: 13px;
+  color: var(--huaaaaaGray);
+  font-family: monospace;
+
+  &.exists {
+    color: #81c784;
+  }
+}
+
+.arrow {
+  font-size: 25px;
+}

@@ -1,5 +1,7 @@
 
 <div class="flex gap-3">
-    <p-button label="Open" icon="pi pi-folder" (onClick)="gitRepositoryService.openRepository()"/>
-    <p-button label="Clone" icon="pi pi-cloud-download" (onClick)="showOpenOrCloneModal()"/>
+    <p-button label="Open" icon="pi pi-folder" (onClick)="gitRepositoryService.pickFolderAndOpenRepository()"/>
+    <p-button label="Clone" icon="pi pi-cloud-download" (onClick)="openCloneDialog()"/>
 </div>
+
+<gitgud-clone-dialog/>
