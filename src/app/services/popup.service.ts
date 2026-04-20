@@ -17,7 +17,8 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {MessageService, ToastMessageOptions} from 'primeng/api';
+import {ConfirmationService, MessageService, ToastMessageOptions} from 'primeng/api';
+import {Observable} from 'rxjs';
 import {errorMessage} from '../utils/utils';
 
 const defaultMessageConfig: ToastMessageOptions = {styleClass: 'headLess', text: '', life: 5000};
@@ -28,6 +29,7 @@ const defaultMessageConfig: ToastMessageOptions = {styleClass: 'headLess', text:
 export class PopupService {
 
   private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService);
 
   success = (message: Error | string) => this.messageService.add({...defaultMessageConfig, severity: 'success', detail: message.toString()});
 
@@ -36,5 +38,14 @@ export class PopupService {
   warn = (message: Error | string) => this.messageService.add({...defaultMessageConfig, severity: 'warn', detail: errorMessage(message)});
 
   err = (message: Error | string) => this.messageService.add({...defaultMessageConfig, severity: 'error', detail: errorMessage(message)});
+
+  confirm$ = (message: string, header = 'Confirm') => new Observable<void>(observer => {
+    this.confirmationService.confirm({
+      message,
+      header,
+      accept: () => { observer.next(); observer.complete(); },
+      reject: () => observer.complete(),
+    });
+  });
 
 }
