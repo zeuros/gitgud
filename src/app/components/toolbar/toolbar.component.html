@@ -41,8 +41,8 @@
 
     <p-button class="sober" icon="fa fa-download" [text]="true" [rounded]="true" pTooltip="Clone" tooltipPosition="bottom" (onClick)="openCloneDialog()"/>
     <p-button class="sober" icon="fa fa-history" [text]="true" [rounded]="true" pTooltip="Undo last action" tooltipPosition="bottom"/>
-    <p-button class="sober" icon="fa fa-terminal" [text]="true" [rounded]="true" pTooltip="Last git commands" tooltipPosition="bottom"/>
-    <p-button class="sober" icon="fa fa-cog" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (onClick)="openSettings()"/>
+    <p-button class="sober" icon="fa fa-terminal" [text]="true" [rounded]="true" pTooltip="Git command history" tooltipPosition="bottom" (onClick)="openShellHistoryDialog()"/>
+    <p-button class="sober" icon="fa fa-cog" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (onClick)="openSettingsDialog()"/>
 </div>
 
 <p-select
@@ -59,3 +59,4 @@
 
 <gitgud-settings-dialog/>
 <gitgud-clone-dialog/>
+<gitgud-shell-history-dialog/>

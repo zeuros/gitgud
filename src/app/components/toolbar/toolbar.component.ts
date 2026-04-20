@@ -29,16 +29,17 @@ import {GitRefreshService} from '../../services/git-refresh.service';
 import {PopupService} from '../../services/popup.service';
 import {PrimeTemplate} from 'primeng/api';
 import {AutoFetchService} from '../../services/auto-fetch.service';
+import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {SettingsService} from '../../services/settings.service';
 import {short} from '../../utils/commit-utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.component';
-import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
+import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 
 @Component({
   selector: 'gitgud-toolbar',
   standalone: true,
-  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, SettingsDialogComponent, CloneDialogComponent],
+  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, CloneDialogComponent, ShellHistoryDialogComponent, SettingsDialogComponent],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
 })
@@ -55,6 +56,7 @@ export class ToolbarComponent {
   private popup = inject(PopupService);
   private settingsDialog = viewChild.required(SettingsDialogComponent);
   private cloneDialog = viewChild.required(CloneDialogComponent);
+  private shellHistoryDialog = viewChild.required(ShellHistoryDialogComponent);
   private now = toSignal(interval(1000).pipe(map(() => Date.now())), {initialValue: Date.now()});
   protected fetchedAgo = computed(() => {
     const at = this.autoFetchService.lastFetchedAt();
@@ -113,7 +115,8 @@ export class ToolbarComponent {
       });
   };
 
+  protected openSettingsDialog = () => this.settingsDialog().open();
   protected openCloneDialog = () => this.cloneDialog().open();
-  protected openSettings = () => this.settingsDialog().open();
+  protected openShellHistoryDialog = () => this.shellHistoryDialog().open();
 
 }
