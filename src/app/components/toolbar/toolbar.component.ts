@@ -16,9 +16,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject, signal, viewChild} from '@angular/core';
+import {Component, computed, inject, OnInit, signal, viewChild} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
-import {interval, map, switchMap, throwError} from 'rxjs';
+import {finalize, interval, map, switchMap} from 'rxjs';
 import {Button} from 'primeng/button';
 import {Divider} from 'primeng/divider';
 import {Tooltip} from 'primeng/tooltip';
@@ -43,12 +43,15 @@ import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
 })
-export class ToolbarComponent {
+export class ToolbarComponent implements OnInit {
 
   protected currentRepo = inject(CurrentRepoStore);
   protected autoFetchService = inject(AutoFetchService);
   protected settingsService = inject(SettingsService);
   protected loading = signal<'push' | 'pull' | 'fetch' | undefined>(undefined);
+  protected undoTooltip = signal('Undo last action');
+  protected redoTooltip = signal('Nothing to redo');
+  protected redoAvailable = signal(false);
   protected readonly short = short;
   protected readonly zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
@@ -70,48 +73,32 @@ export class ToolbarComponent {
   protected push = () => {
     this.loading.set('push');
     this.gitApi.git(['push'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
-      .subscribe({
-        next: () => {
-          this.loading.set(undefined);
-          this.popup.success('Pushed successfully');
-        },
-        error: (e) => {
-          this.loading.set(undefined);
-          this.popup.err(e);
-        },
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .subscribe(() => {
+        this.popup.success('Pushed successfully');
+        this.redoAvailable.set(false);
+        this.loadReflogState();
       });
   };
 
   protected pull = () => {
     this.loading.set('pull');
     this.gitApi.git(['pull'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
-      .subscribe({
-        next: () => {
-          this.loading.set(undefined);
-          this.popup.success('Pulled successfully');
-        },
-        error: (e) => {
-          this.loading.set(undefined);
-          this.popup.err(e);
-        },
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .subscribe(() => {
+        this.popup.success('Pulled successfully');
+        this.redoAvailable.set(false);
+        this.loadReflogState();
       });
   };
 
   protected fetch = () => {
     this.loading.set('fetch');
     this.gitApi.git(['fetch'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
-      .subscribe({
-        next: () => {
-          this.loading.set(undefined);
-          this.autoFetchService.lastFetchedAt.set(Date.now());
-        },
-        error: (e) => {
-          this.loading.set(undefined);
-          this.popup.err(e);
-        },
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .subscribe(() => {
+        this.autoFetchService.lastFetchedAt.set(Date.now());
+        this.loadReflogState();
       });
   };
 
@@ -119,33 +106,29 @@ export class ToolbarComponent {
   protected openCloneDialog = () => this.cloneDialog().open();
   protected openShellHistoryDialog = () => this.shellHistoryDialog().open();
 
+  ngOnInit() {
+    this.loadReflogState();
+  }
+
+  private loadReflogState = () =>
+    this.gitApi.git(['reflog', '-2', '--format=%gs'])
+      .subscribe(output => {
+        const lines = output.trim().split('\n');
+        const last = lines[0]?.trim() ?? '';
+        const prev = lines[1]?.trim() ?? '';
+        this.undoTooltip.set(last ? `Undo ${last}` : 'Undo last action');
+        this.redoTooltip.set(this.redoAvailable() ? `Redo ${prev}` : 'Nothing to redo');
+      });
+
   protected undo = () => {
-    this.gitApi.git(['reflog', '-1', '--format=%gs']).pipe(
-      switchMap(action => this.popup.confirm$(`Undo "${action.trim()}"?<br>Changes will stay staged (soft reset).`, 'Undo')),
-      switchMap(() => this.gitApi.git(['reset', '--soft', 'HEAD@{1}'])),
-      switchMap(this.gitRefresh.refreshBranchesAndLogs),
-    ).subscribe({
-      next: () => this.popup.success('Undone'),
-      // error: e => this.popup.err(e),
-    });
+    this.gitApi.git(['reset', '--soft', 'HEAD@{1}'])
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
+      .subscribe(() => { this.popup.success('Undone'); this.redoAvailable.set(true); this.loadReflogState(); });
   };
 
-  protected redo = () => {
-    this.gitApi.git(['reflog', '-2', '--format=%gs']).pipe(
-      switchMap(output => {
-        const lines = output.trim().split('\n');
-        if (!lines[0]?.startsWith('reset:')) {
-          return throwError(() => 'Nothing to redo');
-        }
-        const action = lines[1]?.trim() ?? 'last action';
-        return this.popup.confirm$(`Redo "${action}"?<br>Changes will stay staged (soft reset).`, 'Redo');
-      }),
-      switchMap(() => this.gitApi.git(['reset', '--soft', 'HEAD@{1}'])),
-      switchMap(this.gitRefresh.refreshBranchesAndLogs),
-    ).subscribe({
-      next: () => this.popup.success('Redone'),
-      // error: e => this.popup.err(e),
-    });
-  };
+  protected redo = () =>
+    this.gitApi.git(['reset', '--soft', 'HEAD@{1}'])
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
+      .subscribe(() => { this.popup.success('Redone'); this.redoAvailable.set(false); this.loadReflogState(); });
 
 }
