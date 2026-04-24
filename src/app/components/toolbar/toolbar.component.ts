@@ -18,7 +18,7 @@
 
 import {Component, computed, inject, signal, viewChild} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
-import {interval, map, switchMap} from 'rxjs';
+import {interval, map, switchMap, throwError} from 'rxjs';
 import {Button} from 'primeng/button';
 import {Divider} from 'primeng/divider';
 import {Tooltip} from 'primeng/tooltip';
@@ -126,7 +126,25 @@ export class ToolbarComponent {
       switchMap(this.gitRefresh.refreshBranchesAndLogs),
     ).subscribe({
       next: () => this.popup.success('Undone'),
-      error: e => this.popup.err(e),
+      // error: e => this.popup.err(e),
+    });
+  };
+
+  protected redo = () => {
+    this.gitApi.git(['reflog', '-2', '--format=%gs']).pipe(
+      switchMap(output => {
+        const lines = output.trim().split('\n');
+        if (!lines[0]?.startsWith('reset:')) {
+          return throwError(() => 'Nothing to redo');
+        }
+        const action = lines[1]?.trim() ?? 'last action';
+        return this.popup.confirm$(`Redo "${action}"?<br>Changes will stay staged (soft reset).`, 'Redo');
+      }),
+      switchMap(() => this.gitApi.git(['reset', '--soft', 'HEAD@{1}'])),
+      switchMap(this.gitRefresh.refreshBranchesAndLogs),
+    ).subscribe({
+      next: () => this.popup.success('Redone'),
+      // error: e => this.popup.err(e),
     });
   };
 
