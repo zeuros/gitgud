@@ -105,6 +105,10 @@ $row-spacing: 8px;
               margin-right: 4px;
             }
 
+            &.checked-out {
+              color: var(--babedouGray);
+            }
+
             i.with-padding {
               padding: 0 3px;
             }
