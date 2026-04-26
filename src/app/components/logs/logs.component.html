@@ -68,6 +68,7 @@
                     @let distant = branchLocalAndDistant[1];
                     <div class="branch-tag">
                         <div class="commit-branch"
+                             [class.checked-out]="commit.isPointedByLocalHead"
                              [style.--offset.px]="(isDetachedHead ? i + 1 : i) * 30"
                              [style.z-index]="420 - (isDetachedHead ? i + 1 : i)"
                              [style.filter]="commitColor(commit.indent!)" pDraggable>
