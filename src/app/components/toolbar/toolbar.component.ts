@@ -35,6 +35,7 @@ import {short} from '../../utils/commit-utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
+import {UndoService} from '../../services/undo.service';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -48,10 +49,8 @@ export class ToolbarComponent implements OnInit {
   protected currentRepo = inject(CurrentRepoStore);
   protected autoFetchService = inject(AutoFetchService);
   protected settingsService = inject(SettingsService);
+  protected undoService = inject(UndoService);
   protected loading = signal<'push' | 'pull' | 'fetch' | undefined>(undefined);
-  protected undoTooltip = signal('Undo last action');
-  protected redoTooltip = signal('Nothing to redo');
-  protected redoAvailable = signal(false);
   protected readonly short = short;
   protected readonly zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
@@ -76,8 +75,7 @@ export class ToolbarComponent implements OnInit {
       .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
       .subscribe(() => {
         this.popup.success('Pushed successfully');
-        this.redoAvailable.set(false);
-        this.loadReflogState();
+        this.undoService.clearRedoStack();
       });
   };
 
@@ -87,8 +85,8 @@ export class ToolbarComponent implements OnInit {
       .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
       .subscribe(() => {
         this.popup.success('Pulled successfully');
-        this.redoAvailable.set(false);
-        this.loadReflogState();
+        this.undoService.clearRedoStack();
+        this.undoService.refreshTooltip();
       });
   };
 
@@ -96,10 +94,7 @@ export class ToolbarComponent implements OnInit {
     this.loading.set('fetch');
     this.gitApi.git(['fetch'])
       .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => {
-        this.autoFetchService.lastFetchedAt.set(Date.now());
-        this.loadReflogState();
-      });
+      .subscribe(() => this.autoFetchService.lastFetchedAt.set(Date.now()));
   };
 
   protected openSettingsDialog = () => this.settingsDialog().open();
@@ -107,28 +102,7 @@ export class ToolbarComponent implements OnInit {
   protected openShellHistoryDialog = () => this.shellHistoryDialog().open();
 
   ngOnInit() {
-    this.loadReflogState();
+    this.undoService.refreshTooltip();
   }
-
-  private loadReflogState = () =>
-    this.gitApi.git(['reflog', '-2', '--format=%gs'])
-      .subscribe(output => {
-        const lines = output.trim().split('\n');
-        const last = lines[0]?.trim() ?? '';
-        const prev = lines[1]?.trim() ?? '';
-        this.undoTooltip.set(last ? `Undo ${last}` : 'Undo last action');
-        this.redoTooltip.set(this.redoAvailable() ? `Redo ${prev}` : 'Nothing to redo');
-      });
-
-  protected undo = () => {
-    this.gitApi.git(['reset', '--soft', 'HEAD@{1}'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
-      .subscribe(() => { this.popup.success('Undone'); this.redoAvailable.set(true); this.loadReflogState(); });
-  };
-
-  protected redo = () =>
-    this.gitApi.git(['reset', '--soft', 'HEAD@{1}'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
-      .subscribe(() => { this.popup.success('Redone'); this.redoAvailable.set(false); this.loadReflogState(); });
 
 }
