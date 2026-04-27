@@ -1,0 +1,42 @@
+.settings-rows {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 0.5rem;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 0.85rem;
+
+    label {
+      font-size: 13px;
+      color: var(--text-color-secondary);
+
+      .git-version {
+        font-size: 11px;
+        opacity: 0.6;
+      }
+    }
+
+    .row-with-browse {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+
+      input { flex: 1; }
+    }
+  }
+}
+
+.settings-section-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-color-secondary);
+  opacity: 0.65;
+  padding: 1rem 0 0.4rem;
+  border-bottom: 1px solid var(--surface-border);
+  margin-bottom: 0.75rem;
+}

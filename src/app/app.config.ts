@@ -38,6 +38,7 @@ export const appConfig: ApplicationConfig = {
             name: 'primeng',
             order: 'primeng, my-theme',
           },
+          darkModeSelector: '.dark',
         },
       },
     }),

@@ -16,24 +16,123 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
+import {Button} from 'primeng/button';
 import {Dialog} from 'primeng/dialog';
 import {InputNumber} from 'primeng/inputnumber';
+import {InputText} from 'primeng/inputtext';
+import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import {SettingsService} from '../../../services/settings.service';
+import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
+import {ThemeService} from '../../../services/theme.service';
+import {catchError, forkJoin, of, throwError} from 'rxjs';
+import {Tooltip} from 'primeng/tooltip';
+import {emptyStringOnFail} from '../../../utils/utils';
+import {PopupService} from '../../../services/popup.service';
 
 @Component({
   selector: 'gitgud-settings-dialog',
   standalone: true,
-  imports: [Dialog, InputNumber, FormsModule],
+  imports: [Button, Dialog, InputNumber, InputText, Select, FormsModule, Tooltip],
   templateUrl: './settings-dialog.component.html',
+  styleUrl: './settings-dialog.component.scss',
 })
 export class SettingsDialogComponent {
 
-  settings = inject(SettingsService);
-  protected visible = signal(false);
+  private readonly gitApi = inject(GitApiService);
+  private popup = inject(PopupService);
+
+  protected readonly settings = inject(SettingsService);
+  protected readonly theme = inject(ThemeService);
+  protected readonly visible = signal(false);
+  protected readonly globalUserName = signal('');
+  protected readonly globalUserEmail = signal('');
+  protected readonly localUserName = signal('');
+  protected readonly localUserEmail = signal('');
+  protected readonly hasRepo = computed(() => !!this.gitApi.cwd());
+  protected readonly pendingGitPath = signal('');
+  protected readonly gitPathDirty = computed(() => this.pendingGitPath() !== this.settings.gitBin);
+  protected readonly gitVersion = signal('');
 
   open() {
     this.visible.set(true);
+
+    this.pendingGitPath.set(this.settings.gitBin);
+    this.gitApi.git(['--version']).pipe(emptyStringOnFail).subscribe(v => this.gitVersion.set(v.trim()));
+    forkJoin({
+      globalName: this.gitApi.git(['config', '--global', 'user.name']).pipe(emptyStringOnFail),
+      globalEmail: this.gitApi.git(['config', '--global', 'user.email']).pipe(emptyStringOnFail),
+      ...(this.hasRepo() ? {
+        localName: this.gitApi.git(['config', '--local', 'user.name']).pipe(emptyStringOnFail),
+        localEmail: this.gitApi.git(['config', '--local', 'user.email']).pipe(emptyStringOnFail),
+      } : {}),
+    }).subscribe(({globalName, globalEmail, localEmail, localName}) => {
+      console.log({localName, globalName});
+      this.globalUserName.set(globalName.trim());
+      this.globalUserEmail.set(globalEmail.trim());
+      this.localUserName.set((localName ?? '').trim());
+      this.localUserEmail.set((localEmail ?? '').trim());
+    });
   }
+
+  protected pickGitBinaryPath() {
+    const picked = window.electron.dialog.showOpenDialogSync({
+      properties: ['openFile'],
+      filters: [{name: 'Executables', extensions: ['*']}],
+    });
+
+    if (!picked?.[0]) return;
+
+    this.checkGitPathIsValid(picked[0]);
+  }
+
+  protected validateGitPath() {
+    const candidate = this.pendingGitPath().trim();
+    if (!candidate) return;
+    this.checkGitPathIsValid(candidate);
+  }
+
+  protected saveGlobalName() {
+    const v = this.globalUserName().trim();
+    if (v) this.gitApi.git(['config', '--global', 'user.name', v]).subscribe();
+  }
+
+  protected saveGlobalEmail() {
+    const v = this.globalUserEmail().trim();
+    if (v) this.gitApi.git(['config', '--global', 'user.email', v]).subscribe();
+  }
+
+  protected saveLocalName() {
+    if (!this.hasRepo()) return;
+    const v = this.localUserName().trim();
+    const args = v ? ['config', '--local', 'user.name', v] : ['config', '--local', '--unset', 'user.name'];
+    this.gitApi.git(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
+      .subscribe({error: e => this.popup.err(`Failed to set local user name: ${e?.message ?? e}`)});
+  }
+
+  protected saveLocalEmail() {
+    if (!this.hasRepo()) return;
+    const v = this.localUserEmail().trim();
+    const args = v ? ['config', '--local', 'user.email', v] : ['config', '--local', '--unset', 'user.email'];
+    this.gitApi.git(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
+      .subscribe({error: e => this.popup.err(`Failed to set local email: ${e?.message ?? e}`)});
+  }
+
+  private checkGitPathIsValid(candidate: string) {
+    const previous = this.settings.gitBin;
+
+    this.gitApi.git(['--version']).subscribe({
+      next: v => {
+        this.settings.gitBin = candidate;
+        this.gitVersion.set(v.trim())
+      },
+      error: () => {
+        this.settings.gitBin = previous;
+        this.pendingGitPath.set(previous);
+        this.popup.err('The entered path does not appear to be a valid git executable.');
+      },
+    });
+  }
+
 }

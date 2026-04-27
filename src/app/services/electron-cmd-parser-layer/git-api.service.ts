@@ -25,6 +25,7 @@ import {defer, from, map, Observable, of, retry, switchMap, tap, throwError} fro
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
 import {ExecOptions, SpawnOptionsWithoutStdio} from 'node:child_process';
 import {GitCommandHistoryService} from '../git-command-history.service';
+import {SettingsService} from '../settings.service';
 
 @Injectable({
   providedIn: 'root',
@@ -34,6 +35,7 @@ export class GitApiService {
   // When a repository is opened / loaded, set the cwd for future git commands
   readonly cwd = signal<string | undefined>(undefined);
   private readonly history = inject(GitCommandHistoryService);
+  private readonly settingsService = inject(SettingsService);
 
   constructor() {
     // Notes :
@@ -48,15 +50,13 @@ export class GitApiService {
     // ipcRenderer.invoke can serve many common use cases.
     // https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrendererinvokechannel-args
 
-    this.git(['--version'])
-      .pipe(map(version => `Git version: ${version}`))
-      .subscribe(console.log);
+    this.git(['--version']).pipe(map(v => `Git binary: ${this.settingsService.gitBin}, version: ${v.trim()}`)).subscribe(console.log);
   }
 
   git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
     return this.waitForLock().pipe(
-      switchMap(() => this.exec('git', filteredArgs, {cwd: this.cwd(), env: window.electron.process.env, ...options})),
+      switchMap(() => this.exec(this.settingsService.gitBin, filteredArgs, {cwd: this.cwd(), env: window.electron.process.env, ...options})),
       tap({
         next: () => this.history.record(filteredArgs, this.cwd(), true),
         error: () => this.history.record(filteredArgs, this.cwd(), false),
@@ -66,7 +66,7 @@ export class GitApiService {
 
   gitWithInput = (args: string[], input: string) =>
     this.waitForLock().pipe(map(() => {
-      const result = window.electron.spawnSync('git', args, {cwd: this.cwd(), input, env: window.electron.process.env});
+      const result = window.electron.spawnSync(this.settingsService.gitBin, args, {cwd: this.cwd(), input, env: window.electron.process.env});
       if (result.status !== 0) throw new Error(`Git exited ${result.status}\n${result.stderr}`);
       return result.stdout;
     }));
@@ -84,7 +84,7 @@ export class GitApiService {
 
   spawn = (cmd: string, args: string[] = [], options?: SpawnOptionsWithoutStdio) =>
     this.waitForLock().pipe(switchMap(() => new Observable<string>(observer => {
-      window.electron.spawn(`${cmd}`, args, {cwd: this.cwd(), env: window.electron.process.env, ...options})
+      window.electron.spawn(cmd === 'git' ? this.settingsService.gitBin : cmd, args, {cwd: this.cwd(), env: window.electron.process.env, ...options})
         .then(out => {
           if (isDevMode()) showPerf(cmd, args, out);
           observer.next(out);
