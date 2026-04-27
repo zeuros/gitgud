@@ -16,17 +16,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Injectable, signal} from '@angular/core';
+import {effect, Injectable, signal} from '@angular/core';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
+
+export type ThemeMode = 'dark' | 'light' | 'system';
 
 @Injectable({providedIn: 'root'})
 export class SettingsService {
 
   private _zoom = signal(parseFloat(localStorage.getItem('zoom') ?? '1'));
-  private _autoFetchInterval = signal(parseFloat(localStorage.getItem('auto-fetch-interval') ?? DEFAULT_AUTO_FETCH_INTERVAL)); // seconds, for UI binding
+  private _autoFetchInterval = signal(parseFloat(localStorage.getItem('auto-fetch-interval') ?? DEFAULT_AUTO_FETCH_INTERVAL));
+  private _theme = signal<ThemeMode>((localStorage.getItem('theme') as ThemeMode) ?? 'system');
+  private _gitBin = signal(localStorage.getItem('git-binary-path') ?? 'git');
 
-  get zoom() {return this._zoom();}
-  get autoFetchInterval () {return this._autoFetchInterval();}
+  get zoom() { return this._zoom(); }
+  get autoFetchInterval() { return this._autoFetchInterval(); }
+  get autoFetchIntervalSeconds() { return this._autoFetchInterval() / 1000; }
+  get theme() { return this._theme(); }
+  get gitBin() { return this._gitBin(); }
 
   constructor() {
     window.electron.zoom?.setFactor(this._zoom());
@@ -38,9 +45,21 @@ export class SettingsService {
     localStorage.setItem('zoom', String(factor));
   }
 
-  set autoFetchInterval(autoFetchInterval: number) {
-    this._autoFetchInterval.set(autoFetchInterval);
-    localStorage.setItem('auto-fetch-interval', String(autoFetchInterval));
+  set autoFetchInterval(v: number) {
+    this._autoFetchInterval.set(v);
+    localStorage.setItem('auto-fetch-interval', String(v));
+  }
+
+  set autoFetchIntervalSeconds(v: number) { this.autoFetchInterval = v * 1000; }
+
+  set theme(v: ThemeMode) {
+    this._theme.set(v);
+    localStorage.setItem('theme', v);
+  }
+
+  set gitBin(v: string) {
+    this._gitBin.set(v);
+    localStorage.setItem('git-binary-path', v);
   }
 
 }

@@ -18,9 +18,9 @@
 
 import {isUndefined, omitBy} from 'lodash-es';
 import {Commit} from '../lib/github-desktop/model/commit';
-import {Branch} from '../lib/github-desktop/model/branch';
 
-import {WorkDirStatus, WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
+import {WorkDirStatus} from '../lib/github-desktop/model/workdir';
+import {catchError, of, OperatorFunction} from 'rxjs';
 
 export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
 
@@ -61,3 +61,5 @@ export const workingDirHasChanges = (status?: WorkDirStatus) => (status?.unstage
 export const logsComparison = (a: Commit[], b: Commit[]) => a.length === b.length && a.every((c, i) => c.sha === b[i].sha);
 export const keyComparison = (a?: object, b?: object) => !!a && !!b && shallowArrayEqual(Object.keys(a), Object.keys(b));
 export const shallowArrayEqual = <T>(a?: T[], b?: T[]) => a === b || (!!a && !!b && a.length === b.length && a.every((v, i) => v === b[i]));
+
+export const emptyStringOnFail: OperatorFunction<string, string> = catchError(() => of(''));

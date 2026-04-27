@@ -24,6 +24,7 @@ import {GitRepositoryStore} from './stores/git-repos.store';
 import {AutoFetchService} from './services/auto-fetch.service';
 import {Router, RouterOutlet} from '@angular/router';
 import {SettingsDialogComponent} from './components/dialogs/settings-dialog/settings-dialog.component';
+import {ThemeService} from './services/theme.service'; // bootstraps theme reactivity
 
 @Component({
   standalone: true,
@@ -39,6 +40,8 @@ export class AppComponent {
 
   constructor() {
     inject(AutoFetchService); // Starts auto-fetch
+    inject(ThemeService);    // Applies theme from config
+
 
     effect(() => this.router.navigate([this.gitRepositoryStore.hasRepositories() ? 'repo' : 'welcome-screen']));
 

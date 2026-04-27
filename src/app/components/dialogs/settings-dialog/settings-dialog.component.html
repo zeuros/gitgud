@@ -1,17 +1,80 @@
 <p-dialog
-  header="Settings"
-  [visible]="visible()"
-  (visibleChange)="visible.set($event)"
-  [modal]="true"
-  [style]="{width: '400px'}"
+        header="Settings"
+        [visible]="visible()"
+        (visibleChange)="visible.set($event)"
+        [modal]="true"
+        [style]="{width: '460px'}"
 >
-  <div class="settings-row">
-    <label>Auto-fetch interval (seconds)</label>
-    <p-input-number
-      [(ngModel)]="settings.autoFetchInterval"
-      [min]="10"
-      [max]="3600"
-      [showButtons]="true"
-    />
-  </div>
+    <div class="settings-rows">
+
+        <div class="settings-section-title">General</div>
+
+        <div>
+            <label>Theme</label>
+            <p-select
+                    [options]="theme.themeOptions"
+                    [(ngModel)]="settings.theme"
+                    optionLabel="label"
+                    optionValue="value"
+                    class="settings-select"
+            />
+        </div>
+
+        <div>
+            <label>Auto-fetch interval (seconds)</label>
+            <p-input-number
+                    [(ngModel)]="settings.autoFetchIntervalSeconds"
+                    [min]="10"
+                    [max]="3600"
+                    [showButtons]="true"
+            />
+        </div>
+
+        <div class="settings-section-title">Git</div>
+
+        <div>
+            <label>Git binary path <span class="git-version">— {{ gitVersion() }}</span></label>
+            <div class="row-with-browse">
+                <input
+                        type="text"
+                        pInputText
+                        [ngModel]="pendingGitPath()"
+                        (ngModelChange)="pendingGitPath.set($event)"
+                        placeholder="git"
+                        style="flex: 1"
+                />
+                @if (gitPathDirty()) {
+                    <p-button icon="fa fa-check" [text]="true" severity="success" pTooltip="Validate & apply" (onClick)="validateGitPath()"/>
+                }
+                <p-button icon="fa fa-folder-open" [text]="true" pTooltip="Browse" (onClick)="pickGitBinaryPath()"/>
+            </div>
+        </div>
+
+        <div class="settings-section-title">Identity</div>
+
+        <div>
+            <label>User name (global)</label>
+            <input type="text" pInputText [ngModel]="globalUserName()" (ngModelChange)="globalUserName.set($event)" (blur)="saveGlobalName()" style="flex: 1"/>
+        </div>
+        <div>
+            <label>Email (global)</label>
+            <input type="text" pInputText [ngModel]="globalUserEmail()" (ngModelChange)="globalUserEmail.set($event)" (blur)="saveGlobalEmail()" style="flex: 1"/>
+        </div>
+
+        @if (hasRepo()) {
+            <div>
+                <label>User name (local repo)</label>
+                <input type="text" pInputText [ngModel]="localUserName()" (ngModelChange)="localUserName.set($event)" (blur)="saveLocalName()"
+                       [placeholder]="'Same as global ('+globalUserName()+')'"
+                       style="flex: 1"/>
+            </div>
+            <div>
+                <label>Email (local repo)</label>
+                <input type="text" pInputText [ngModel]="localUserEmail()" (ngModelChange)="localUserEmail.set($event)" (blur)="saveLocalEmail()"
+                       [placeholder]="'Same as global ('+globalUserEmail()+')'"
+                       style="flex: 1"/>
+            </div>
+        }
+
+    </div>
 </p-dialog>
