@@ -58,7 +58,7 @@
                 >
                     <ng-template #item let-s>
                         @let stash = $stash(s);
-                        <div class="flex align-items-center gap-2 ellipsis">
+                        <div class="flex align-items-center gap-2 ellipsis" (contextmenu)="openStashContextMenu(stash, $event)">
                             <img src="assets/images/chest.svg" width="16" height="16" alt="stash" class="black-and-white"/>
                             <span class="ellipsis text-gray">{{ stash.summary }}</span>
                         </div>
@@ -93,4 +93,5 @@
     </p-splitter>
 }
 <p-contextMenu #branchesContextMenu [model]="contextMenu" appendTo="body"/>
+<p-contextMenu #stashContextMenu [model]="stashContextMenuService.stashContextMenu()" appendTo="body"/>
 <p-contextMenu #tagContextMenu [model]="tagContextMenuService.tagContextMenu()" appendTo="body"/>

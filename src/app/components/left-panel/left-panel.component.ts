@@ -33,6 +33,8 @@ import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
 import {BranchReaderService} from '../../services/electron-cmd-parser-layer/branch-reader.service';
 import {GitTag} from '../../models/git-tag';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
+import {StashContextMenuService} from '../../services/stash-context-menu.service';
+import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 
 
 @Component({
@@ -54,6 +56,8 @@ export class LeftPanelComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
   protected tagContextMenuService = inject(TagContextMenuService);
+  protected stashContextMenuService = inject(StashContextMenuService);
+  private stashContextMenu = viewChild<ContextMenu>('stashContextMenu');
   protected localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
   protected remoteBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
   protected selectedBranchNode = computed(() => {
@@ -90,6 +94,12 @@ export class LeftPanelComponent {
 
   protected selectTag = (tag?: GitTag) => {
     if (tag) this.currentRepo.update({selectedCommitsShas: [tag.sha]});
+  };
+
+  protected openStashContextMenu = (stash: Commit, event: MouseEvent) => {
+    event.preventDefault();
+    this.stashContextMenuService.selectedCommit.set(stash as unknown as DisplayRef);
+    this.stashContextMenu()?.show(event);
   };
 
   protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
