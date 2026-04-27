@@ -23,6 +23,7 @@ import {RepositoryViewComponent} from '../repository-view/repository-view.compon
 import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {ToolbarComponent} from '../toolbar/toolbar.component';
+import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'gitgud-repositories-view',
@@ -35,6 +36,8 @@ import {ToolbarComponent} from '../toolbar/toolbar.component';
     TabPanel,
     RepositoryViewComponent,
     ToolbarComponent,
+    CdkDropList,
+    CdkDrag,
   ],
   templateUrl: './repositories-view.component.html',
   styleUrl: './repositories-view.component.scss',
@@ -45,36 +48,9 @@ import {ToolbarComponent} from '../toolbar/toolbar.component';
 export class RepositoriesViewComponent {
   protected readonly gitRepositoryStore = inject(GitRepositoryStore);
   protected readonly gitRepositoryService = inject(GitRepositoryService);
-  private draggedIndex: number | null = null;
-  private throttled = false;
 
-  protected onDragStart(event: DragEvent, index: number): void {
-    this.draggedIndex = index;
-    event.dataTransfer!.effectAllowed = 'linkMove';
-  }
-
-  protected onDragOver(event: DragEvent, targetIndex: number): void {
-    event.preventDefault();
-    if (this.draggedIndex === null || targetIndex === this.draggedIndex || this.throttled) return;
-
-    this.throttled = true;
-    this.gitRepositoryStore.reorderRepositories(this.draggedIndex, targetIndex);
-    this.draggedIndex = targetIndex;
-    setTimeout(() => this.throttled = false, 300);
-  }
-
-  protected onDrop(event: DragEvent): void {
-    event.preventDefault();
-    this.cleanup();
-  }
-
-  protected onDragEnd(): void {
-    this.cleanup();
-  }
-
-  private cleanup(): void {
-    this.draggedIndex = null;
-    this.throttled = false;
+  protected drop({previousIndex, currentIndex}: CdkDragDrop<string[]>): void {
+    this.gitRepositoryStore.reorderRepositories(previousIndex, currentIndex);
   }
 
   protected onMiddleClick(event: MouseEvent, index: number): void {

@@ -4,17 +4,9 @@
 
 <p-tabs [value]="selectedIndex" (valueChange)="gitRepositoryStore.selectRepository($event!)" scrollable>
 
-    <p-tablist>
+    <p-tablist cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
         @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
-            <p-tab
-                    [value]="i"
-                    draggable="true"
-                    (dragstart)="onDragStart($event, i)"
-                    (dragover)="onDragOver($event, i)"
-                    (drop)="onDrop($event)"
-                    (dragend)="onDragEnd()"
-                    (auxclick)="onMiddleClick($event, i)"
-            >
+            <p-tab [value]="i" cdkDrag cdkDragLockAxis="x" (auxclick)="onMiddleClick($event, i)">
                 <i class="fa fa-code-fork"></i>
                 {{ repository.name }}
                 <p-button
