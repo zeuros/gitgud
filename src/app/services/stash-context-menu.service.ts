@@ -55,14 +55,16 @@ export class StashContextMenuService {
       .pipe(switchMap(() => this.gitRepository.updateLogsAndBranches()))
       .subscribe(() => successMsg && this.popup.success(successMsg));
 
+  private stashSummary = computed(() => this.selectedCommit()?.summary ?? this.stashRef());
+
   private applyStash = () =>
-    this.run(['stash', 'apply', this.stashRef()], `Applied ${this.stashRef()}`);
+    this.run(['stash', 'apply', this.stashRef()], `Applied stash "${this.stashSummary()}"`);
 
   private popStash = () =>
-    this.run(['stash', 'pop', this.stashRef()], `Popped ${this.stashRef()}`);
+    this.run(['stash', 'pop', this.stashRef()], `Popped stash "${this.stashSummary()}"`);
 
   private dropStash = () =>
-    this.run(['stash', 'drop', this.stashRef()], `Dropped ${this.stashRef()}`);
+    this.run(['stash', 'drop', this.stashRef()], `Dropped stash "${this.stashSummary()}"`);
 
   private copyCommitSha = () => {
     navigator.clipboard.writeText(this.sha());

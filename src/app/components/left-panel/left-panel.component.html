@@ -81,8 +81,7 @@
                 >
                     <ng-template #item let-t>
                         @let tag = $tag(t);
-                        <div class="flex align-items-center gap-2 ellipsis"
-                             (contextmenu)="openTagContextMenu(tag, $event)">
+                        <div class="flex align-items-center gap-2 ellipsis" (contextmenu)="openTagContextMenu(tag, $event)">
                             <i class="fa fa-tag text-gray"></i>
                             <span class="ellipsis text-gray">{{ tag.name }}</span>
                         </div>
