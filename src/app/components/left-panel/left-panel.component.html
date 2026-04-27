@@ -19,6 +19,7 @@
                             [selection]="selectedBranchNode()"
                             (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
+                            (onNodeContextMenuSelect)="branchContextMenuService.selectedNode.set($event.node)"
                             [contextMenu]="branchesContextMenu"
                     />
                 </div>
@@ -91,6 +92,6 @@
         </ng-template>
     </p-splitter>
 }
-<p-contextMenu #branchesContextMenu [model]="contextMenu" appendTo="body"/>
+<p-contextMenu #branchesContextMenu [model]="branchContextMenuService.branchContextMenu()" appendTo="body"/>
 <p-contextMenu #stashContextMenu [model]="stashContextMenuService.stashContextMenu()" appendTo="body"/>
 <p-contextMenu #tagContextMenu [model]="tagContextMenuService.tagContextMenu()" appendTo="body"/>
