@@ -12,6 +12,15 @@
       display: flex;
       flex-direction: column;
       min-height: 0;
+
+      .p-listbox-option {
+        padding: 0;
+
+        > div {
+          flex: 1;
+          padding: 0.5rem 0.75rem;
+        }
+      }
     }
 
     .p-splitterpanel {
