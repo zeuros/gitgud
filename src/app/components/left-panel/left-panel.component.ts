@@ -59,7 +59,9 @@ export class LeftPanelComponent {
   protected stashContextMenuService = inject(StashContextMenuService);
   private stashContextMenu = viewChild<ContextMenu>('stashContextMenu');
   protected localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
-  protected remoteBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(remote) ?? []));
+  protected remoteBranches = computed(() =>
+    toBranchTree(this.currentRepo.branches().filter(remote) ?? [])
+      .map(node => ({...node, type: 'remote-root'})));
   protected selectedBranchNode = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
     if (!sha) return null;
