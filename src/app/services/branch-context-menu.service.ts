@@ -18,10 +18,14 @@
 
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {MenuItem, TreeNode} from 'primeng/api';
+import {first, map, switchMap} from 'rxjs';
 import {Branch} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {PopupService} from './popup.service';
+import {notUndefined} from '../utils/utils';
 import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
+import {GitWorkflowService} from './git-workflow.service';
+import {PopupService} from './popup.service';
+import {PromptService} from './prompt.service';
 
 @Injectable({providedIn: 'root'})
 export class BranchContextMenuService {
@@ -29,8 +33,13 @@ export class BranchContextMenuService {
   private currentRepo = inject(CurrentRepoStore);
   private popup = inject(PopupService);
   private branchReader = inject(BranchReaderService);
+  private gitWorkflow = inject(GitWorkflowService);
+  private prompt = inject(PromptService);
 
   selectedNode = signal<TreeNode<Branch> | undefined>(undefined);
+
+  private name = computed(() => this.selectedNode()?.data?.name ?? '…');
+  private head = computed(() => this.currentRepo.headBranch()?.name ?? 'HEAD');
 
   private countLeaves = (node: TreeNode<Branch>): number =>
     node.children?.length ? node.children.reduce((n, c) => n + this.countLeaves(c), 0) : 1;
@@ -45,36 +54,99 @@ export class BranchContextMenuService {
       return [{label: `Remove ${count} branches in ${label}`, icon: 'fa fa-trash', command: () => this.popup.info(`Remove ${count} branches in ${label}`)}];
     }
 
-    const name = node.data?.name ?? '…';
-    const head = this.currentRepo.headBranch()?.name ?? 'HEAD';
+    const name = this.name();
+    const head = this.head();
     return [
       // Remote
-      {label: 'Pull (fast-forward if possible)', icon: 'fa fa-cloud-download', command: () => this.popup.info('Pull selected')},
-      {label: 'Push', icon: 'fa fa-cloud-upload', command: () => this.popup.info('Push selected')},
-      {label: 'Set Upstream', icon: 'fa fa-link', command: () => this.popup.info('Set Upstream selected')},
+      {label: 'Pull (fast-forward if possible)', icon: 'fa fa-cloud-download', command: this.pullBranch},
+      {label: 'Push', icon: 'fa fa-cloud-upload', command: this.pushBranch},
+      {label: 'Set Upstream', icon: 'fa fa-link', command: this.setUpstream},
       {separator: true},
       // Integration
-      {label: `Merge ${name} into ${head}`, icon: 'fa fa-compress', command: () => this.popup.info(`Merge ${name} into ${head}`)},
-      {label: `Rebase ${head} onto ${name}`, icon: 'fa fa-code-fork', command: () => this.popup.info(`Rebase ${head} onto ${name}`)},
-      {label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.popup.info(`Interactive Rebase ${head} onto ${name}`)},
+      {label: `Merge ${name} into ${head}`, icon: 'fa fa-compress', command: this.mergeBranch},
+      {label: `Rebase ${head} onto ${name}`, icon: 'fa fa-code-fork', command: this.rebaseBranch},
+      {label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.popup.info('Interactive rebase requires a terminal')},
       {separator: true},
       // Checkout
       {label: `Checkout ${name}`, icon: 'fa fa-sign-in', command: () => node.data && this.branchReader.checkoutBranch(node.data)},
       {separator: true},
       // Commit ops
-      {label: 'Create branch here', icon: 'fa fa-plus', command: () => this.popup.info('Create branch here selected')},
-      {label: `Reset ${head} to this commit`, icon: 'fa fa-history', command: () => this.popup.info(`Reset ${head} to this commit`)},
+      {label: 'Create branch here', icon: 'fa fa-plus', command: this.createBranchHere},
+      {
+        label: `Reset ${head} to this commit`,
+        icon: 'fa fa-history',
+        items: [
+          {
+            label: 'Soft — Undo commits, keep changes staged',
+            command: () => this.resetBranch('soft'),
+            tooltipOptions: {tooltipLabel: 'All commits between this commit and HEAD are uncommitted, their changes are put staged in working directory', tooltipPosition: 'right'},
+          },
+          {
+            label: 'Mixed — Undo commits, keep changes in files',
+            command: () => this.resetBranch('mixed'),
+            tooltipOptions: {tooltipLabel: 'All commits between this commit and HEAD are uncommitted, their changes are put unstaged in working directory', tooltipPosition: 'right'},
+          },
+          {
+            label: 'Hard — discard commits changes',
+            command: () => this.resetBranch('hard'),
+            tooltipOptions: {tooltipLabel: 'All commits between this commit and HEAD are discarded', tooltipPosition: 'right'},
+          },
+        ],
+      },
       {separator: true},
       // Branch management
-      {label: `Rename ${name}`, icon: 'fa fa-pencil', command: () => this.popup.info(`Rename ${name}`)},
-      {label: `Delete ${name}`, icon: 'fa fa-trash', command: () => this.popup.info(`Delete ${name}`)},
+      {label: `Rename ${name}`, icon: 'fa fa-pencil', command: this.renameBranch},
+      {label: `Delete ${name}`, icon: 'fa fa-trash', command: this.deleteBranch},
       {separator: true},
       // Copy
       {label: 'Copy branch name', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(name)},
       {label: 'Copy commit SHA', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(node.data?.tip.sha ?? '')},
       {separator: true},
       // Tags
-      {label: 'Create tag here', icon: 'fa fa-tag', command: () => this.popup.info('Create tag here selected')},
+      {label: 'Create tag here', icon: 'fa fa-tag', command: this.createTagHere},
     ];
   });
+
+  private pullBranch = () =>
+    this.gitWorkflow.doRunAndRefresh(['fetch', 'origin', `${this.name()}:${this.name()}`], `Pulled ${this.name()}`);
+
+  private pushBranch = () =>
+    this.gitWorkflow.doRunAndRefresh(['push', 'origin', this.name()], `Pushed ${this.name()}`);
+
+  private setUpstream = () =>
+    this.gitWorkflow.doRunAndRefresh(
+      ['branch', `--set-upstream-to=origin/${this.name()}`, this.name()],
+      `Upstream set to origin/${this.name()}`
+    );
+
+  private mergeBranch = () =>
+    this.gitWorkflow.doRunAndRefresh(['merge', this.name()], `Merged ${this.name()} into ${this.head()}`, true, true);
+
+  private rebaseBranch = () =>
+    this.gitWorkflow.doRunAndRefresh(['rebase', this.name()], `Rebased ${this.head()} onto ${this.name()}`, true, false);
+
+  private createBranchHere = () =>
+    this.prompt.open('Branch name:')
+      .pipe(first(notUndefined))
+      .subscribe(newName => this.gitWorkflow.doRunAndRefresh(['checkout', '-b', newName, this.name()], `Branch ${newName} created from ${this.name()}`));
+
+  private resetBranch = (mode: 'soft' | 'mixed' | 'hard') =>
+    this.gitWorkflow.doRunAndRefresh(['reset', `--${mode}`, this.name()], `Reset ${mode} to ${this.name()}`, mode === 'hard', false);
+
+  private renameBranch = () =>
+    this.prompt.open(`New name for ${this.name()}:`)
+      .pipe(first(notUndefined))
+      .subscribe(newName => this.gitWorkflow.doRunAndRefresh(['branch', '-m', this.name(), newName], `Renamed ${this.name()} to ${newName}`));
+
+  private deleteBranch = () =>
+    this.gitWorkflow.doRunAndRefresh(['branch', '-d', this.name()], `Deleted branch ${this.name()}`, true, false);
+
+  private createTagHere = () =>
+    this.prompt.open('Tag name:').pipe(
+      first(notUndefined),
+      switchMap(tagName => this.prompt.open('Tag message (leave empty for lightweight tag):', false)
+        .pipe(map(message => ({tagName, message: message ?? null})))),
+    ).subscribe(({tagName, message}) => message?.trim()?.length
+      ? this.gitWorkflow.doRunAndRefresh(['tag', '-a', tagName, '-m', message, this.name()], `Annotated tag ${tagName} created`)
+      : this.gitWorkflow.doRunAndRefresh(['tag', tagName, this.name()], `Tag ${tagName} created`));
 }
