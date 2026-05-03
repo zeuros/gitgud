@@ -18,7 +18,7 @@
 
 import {Component, computed, inject, OnInit, signal, viewChild} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
-import {finalize, interval, map, switchMap} from 'rxjs';
+import {catchError, EMPTY, finalize, interval, map, of, switchMap} from 'rxjs';
 import {Button} from 'primeng/button';
 import {Divider} from 'primeng/divider';
 import {Tooltip} from 'primeng/tooltip';
@@ -36,6 +36,9 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 import {UndoService} from '../../services/undo.service';
+import {DialogService} from 'primeng/dynamicdialog';
+import {SetUpstreamDialogComponent, SetUpstreamResult} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
+import {BehindRemoteDialogComponent, BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -56,6 +59,7 @@ export class ToolbarComponent implements OnInit {
   private gitApi = inject(GitApiService);
   private gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);
+  private dialog = inject(DialogService);
   private settingsDialog = viewChild.required(SettingsDialogComponent);
   private cloneDialog = viewChild.required(CloneDialogComponent);
   private shellHistoryDialog = viewChild.required(ShellHistoryDialogComponent);
@@ -71,12 +75,67 @@ export class ToolbarComponent implements OnInit {
 
   protected push = () => {
     this.loading.set('push');
-    this.gitApi.git(['push'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => {
-        this.popup.success('Pushed successfully');
-        this.undoService.clearRedoStack();
-      });
+    this.upstreamMatchesLocal().pipe(
+      switchMap(ok => ok ? this.checkBehindThenPush() : this.openSetUpstreamDialog()),
+      switchMap(this.gitRefresh.refreshBranchesAndLogs),
+      finalize(() => this.loading.set(undefined)),
+    ).subscribe(() => {
+      this.popup.success('Pushed successfully');
+      this.undoService.clearRedoStack();
+    });
+  };
+
+  private checkBehindThenPush = () =>
+    this.isLocalBehind().pipe(
+      switchMap(behind => behind ? this.openBehindRemoteDialog() : this.gitApi.git(['push'])),
+    );
+
+  // Counts commits in @{u} not in HEAD — locale-independent plumbing output.
+  private isLocalBehind = () =>
+    this.gitApi.git(['rev-list', '--count', 'HEAD..@{u}']).pipe(
+      map(out => parseInt(out.trim(), 10) > 0),
+      catchError(() => of(false)),
+    );
+
+  private openBehindRemoteDialog = () => {
+    const branch = this.currentRepo.headBranch()!;
+    return this.dialog.open(BehindRemoteDialogComponent, {
+      header: 'Branch is behind remote',
+      width: '600px',
+      modal: true,
+      data: {localRef: branch.ref, remoteRef: `refs/remotes/${branch.upstream}`},
+    })!.onClose.pipe(
+      switchMap((action: BehindRemoteAction) => {
+        if (action === 'pull') return this.gitApi.git(['pull', '--ff-only']);
+        if (action === 'force-push') return this.gitApi.git(['push', '--force-with-lease']);
+        return EMPTY;
+      }),
+    );
+  };
+
+  // Returns false when there is no upstream or the upstream branch name differs from the local branch name.
+  // Uses rev-parse @{u} — plumbing output (refs only), locale-independent.
+  private upstreamMatchesLocal = () => {
+    const localBranch = this.currentRepo.headBranch()?.name;
+    if (!localBranch) return of(true); // detached HEAD — let git decide
+    return this.gitApi.git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']).pipe(
+      map(out => out.trim().split('/').slice(1).join('/') === localBranch),
+      catchError(() => of(false)), // @{u} fails when no upstream is configured
+    );
+  };
+
+  private openSetUpstreamDialog = () => {
+    const branchName = this.currentRepo.headBranch()?.name ?? '';
+    return this.dialog.open(SetUpstreamDialogComponent, {
+      header: `Set upstream for "${branchName}"`,
+      width: '500px',
+      modal: true,
+      data: {branchName},
+    })!.onClose.pipe(
+      switchMap((result: SetUpstreamResult | null) =>
+        result ? this.gitApi.git(['push', '--set-upstream', result.remote, result.branch]) : EMPTY
+      ),
+    );
   };
 
   protected pull = () => {
