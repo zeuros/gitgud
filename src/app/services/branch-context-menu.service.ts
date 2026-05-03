@@ -26,6 +26,8 @@ import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.ser
 import {GitWorkflowService} from './git-workflow.service';
 import {PopupService} from './popup.service';
 import {PromptService} from './prompt.service';
+import {DialogService} from 'primeng/dynamicdialog';
+import {EditRemoteComponent} from '../components/dialogs/edit-remote/edit-remote.component';
 
 @Injectable({providedIn: 'root'})
 export class BranchContextMenuService {
@@ -35,6 +37,7 @@ export class BranchContextMenuService {
   private branchReader = inject(BranchReaderService);
   private gitWorkflow = inject(GitWorkflowService);
   private prompt = inject(PromptService);
+  private dialog = inject(DialogService);
 
   selectedNode = signal<TreeNode<Branch> | undefined>(undefined);
 
@@ -47,6 +50,11 @@ export class BranchContextMenuService {
   branchContextMenu = computed<MenuItem[]>(() => {
     const node = this.selectedNode();
     if (!node) return [];
+
+    if (node.type === 'remote-root') {
+      const remoteName = node.label ?? '…';
+      return [{label: `Edit ${remoteName}`, icon: 'fa fa-pencil', command: () => this.editRemote(remoteName)}];
+    }
 
     if (node.children?.length) {
       const label = node.label ?? '…';
@@ -149,4 +157,12 @@ export class BranchContextMenuService {
     ).subscribe(({tagName, message}) => message?.trim()?.length
       ? this.gitWorkflow.doRunAndRefresh(['tag', '-a', tagName, '-m', message, this.name()], `Annotated tag ${tagName} created`)
       : this.gitWorkflow.doRunAndRefresh(['tag', tagName, this.name()], `Tag ${tagName} created`));
+
+  private editRemote = (remoteName: string) =>
+    this.dialog.open(EditRemoteComponent, {
+      header: `Edit remote: ${remoteName}`,
+      width: '450px',
+      modal: true,
+      data: {remoteName},
+    })?.onClose.subscribe(() => this.dialog.dialogComponentRefMap.clear());
 }
