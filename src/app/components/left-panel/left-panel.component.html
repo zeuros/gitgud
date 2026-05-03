@@ -38,6 +38,7 @@
                             [selection]="selectedBranchNode()"
                             (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
+                            (onNodeContextMenuSelect)="branchContextMenuService.selectedNode.set($event.node)"
                             [contextMenu]="branchesContextMenu"
                     />
                 </div>

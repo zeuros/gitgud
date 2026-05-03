@@ -22,7 +22,7 @@ import {Tree} from 'primeng/tree';
 import {ContextMenu} from 'primeng/contextmenu';
 import {TreeNode} from 'primeng/api';
 import {Branch} from '../../lib/github-desktop/model/branch';
-import {findNode, local, remote, removeRemotePrefix, toBranchTree} from '../../utils/branch-utils';
+import {findNode, local, remote, toBranchTree} from '../../utils/branch-utils';
 import {Commit} from '../../lib/github-desktop/model/commit';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {TableModule} from 'primeng/table';
@@ -59,7 +59,7 @@ export class LeftPanelComponent {
   protected stashContextMenuService = inject(StashContextMenuService);
   private stashContextMenu = viewChild<ContextMenu>('stashContextMenu');
   protected localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
-  protected remoteBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(remote) ?? [], (n) => removeRemotePrefix(n) ?? n));
+  protected remoteBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(remote) ?? []));
   protected selectedBranchNode = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
     if (!sha) return null;
