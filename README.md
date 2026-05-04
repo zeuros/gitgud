@@ -34,7 +34,6 @@ A cross-platform Git GUI that doesn't get in your way.
 
 - Fix some commit right-click actions that leave git in a broken state
 - Close to amend checkbox → add a fixup button, it will make user pick a commit to fixup, use the staged changes, then run corresponding workflow, it will stash (if possible), fixup one commit and interactive rebase, then unstash (if stashed before)
-- Clean right click context menu in monaco (keep only necessary entries)
 - fix all monaco viewer displays (untested)
 - add shortcut ctrl+return to commit (shortcut should work for other forms, settings for example)
 - Make diff editor disappear once all contents moved to staging area
