@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {AfterViewInit, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal, untracked, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, computed, effect, ElementRef, HostListener, inject, input, OnDestroy, signal, untracked, ViewChild} from '@angular/core';
 import {CommittedFileChange, FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
@@ -30,6 +30,7 @@ import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir
 import {combineLatest, of} from 'rxjs';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
+import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {ViewType} from '../../models/git-repository';
 import IEditorOptions = editor.IEditorOptions;
 import ITextModel = editor.ITextModel;
@@ -64,6 +65,10 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   private fileDiffService = inject(FileDiffService);
   private gitApi = inject(GitApiService);
   private hunkActionsService = inject(MonacoDiffRightClickActionsService);
+  private fileDiffPanel = inject(FileDiffPanelService);
+
+  @HostListener('document:keydown.escape')
+  protected onEscape = () => this.fileDiffPanel.close();
   private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void} | undefined>(undefined);
   private ownedModels = new Set<ITextModel>(); // Models are cached for the component's lifetime — switching between already-viewed files hits the URI cache
   private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
