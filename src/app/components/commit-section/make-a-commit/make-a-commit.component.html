@@ -98,7 +98,7 @@
                     <p-checkbox [binary]="true" (onChange)="amendMode($event.checked)"/>
                 </label>
             </div>
-            <form class="flex flex-column flex-1" [formGroup]="commitForm">
+            <form class="flex flex-column flex-1" [formGroup]="commitForm" (keydown.control.enter)="commit()">
                 <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
                 <textarea pTextarea placeholder="Description" rows="3" class="flex-1 commit-description" formControlName="description"></textarea>
                 <p-button
