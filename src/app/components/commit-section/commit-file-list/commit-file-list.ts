@@ -18,18 +18,20 @@
 
 import {Component, inject, input} from '@angular/core';
 import {directory, fileName} from '../../../utils/utils';
-import {Listbox, ListboxChangeEvent} from 'primeng/listbox';
+import {FormsModule} from '@angular/forms';
+import {Listbox} from 'primeng/listbox';
 import {CommittedFileChange, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 
 @Component({
   selector: 'gitgud-commit-file-list',
   standalone: true,
-  imports: [Listbox],
+  imports: [Listbox, FormsModule],
   template: `
     <p-listbox animate.enter="fade-slide-in-out-enter"
                [options]="files().slice()"
-               (onChange)="onFileChange($event)"
+               [ngModel]="fileDiffPanelService.selectedFile()"
+               (ngModelChange)="fileDiffPanelService.showCommittedFileDiffs($event)"
                scrollHeight="auto"
                optionLabel="path"
                class="fill-height">
@@ -56,10 +58,7 @@ export class CommitFileListComponent {
   protected directory = directory;
   protected fileName = fileName;
   protected FileStatusesIcons = FileStatusesIcons;
-  private fileDiffPanelService = inject(FileDiffPanelService);
+  protected fileDiffPanelService = inject(FileDiffPanelService);
 
-  protected onFileChange(event: ListboxChangeEvent) {
-    this.fileDiffPanelService.showCommittedFileDiffs(event.value);
-  }
   protected file$ = (f: CommittedFileChange) => f;
 }

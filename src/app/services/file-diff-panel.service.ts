@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {inject, Injectable} from '@angular/core';
+import {inject, Injectable, signal} from '@angular/core';
 import {CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
 import {EMPTY, map, of, Subject, switchMap} from 'rxjs';
 import {instanceOf} from '../utils/utils';
@@ -52,10 +52,12 @@ export class FileDiffPanelService {
     }),
   );
 
-  showCommittedFileDiffs = (f: CommittedFileChange) => this.fileToDiffSubject$.next(f);
+  selectedFile = signal<FileChange | null>(null);
 
-  showWorkingDirDiffs = (f: WorkingDirectoryFileChange) => this.fileToDiffSubject$.next(f);
+  showCommittedFileDiffs = (f: CommittedFileChange) => { this.selectedFile.set(f); this.fileToDiffSubject$.next(f); };
 
-  close = () => this.fileToDiffSubject$.next(null);
+  showWorkingDirDiffs = (f: WorkingDirectoryFileChange) => { this.selectedFile.set(f); this.fileToDiffSubject$.next(f); };
+
+  close = () => { this.selectedFile.set(null); this.fileToDiffSubject$.next(null); };
 
 }
