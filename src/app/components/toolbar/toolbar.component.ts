@@ -86,27 +86,34 @@ export class ToolbarComponent implements OnInit {
   };
 
   private checkBehindThenPush = () =>
-    this.isLocalBehind().pipe(
-      switchMap(behind => behind ? this.openBehindRemoteDialog() : this.gitApi.git(['push'])),
+    this.aheadBehind().pipe(
+      switchMap(({behind, diverged}) =>
+        behind === 0 ? this.gitApi.git(['push']) : this.openBehindRemoteDialog(diverged)
+      ),
     );
 
-  // Counts commits in @{u} not in HEAD — locale-independent plumbing output.
-  private isLocalBehind = () =>
-    this.gitApi.git(['rev-list', '--count', 'HEAD..@{u}']).pipe(
-      map(out => parseInt(out.trim(), 10) > 0),
-      catchError(() => of(false)),
+  // Single plumbing call: --left-right gives ahead (left) and behind (right) counts.
+  private aheadBehind = () =>
+    this.gitApi.git(['rev-list', '--count', '--left-right', 'HEAD...@{u}']).pipe(
+      map(out => {
+        const [ahead, behind] = out.trim().split('\t').map(Number);
+        return {ahead, behind, diverged: ahead > 0 && behind > 0};
+      }),
+      catchError(() => of({ahead: 0, behind: 0, diverged: false})),
     );
 
-  private openBehindRemoteDialog = () => {
+  private openBehindRemoteDialog = (diverged: boolean) => {
     const branch = this.currentRepo.headBranch()!;
     return this.dialog.open(BehindRemoteDialogComponent, {
-      header: 'Branch is behind remote',
+      header: diverged ? 'Branches have diverged' : 'Branch is behind remote',
       width: '600px',
       modal: true,
-      data: {localRef: branch.ref, remoteRef: `refs/remotes/${branch.upstream}`},
+      data: {localRef: branch.ref, remoteRef: `refs/remotes/${branch.upstream}`, diverged},
     })!.onClose.pipe(
       switchMap((action: BehindRemoteAction) => {
         if (action === 'pull') return this.gitApi.git(['pull', '--ff-only']);
+        if (action === 'merge') return this.gitApi.git(['pull', '--no-ff']);
+        if (action === 'rebase') return this.gitApi.git(['pull', '--rebase']);
         if (action === 'force-push') return this.gitApi.git(['push', '--force-with-lease']);
         return EMPTY;
       }),
