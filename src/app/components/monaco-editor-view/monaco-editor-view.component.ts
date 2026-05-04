@@ -66,9 +66,6 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   private gitApi = inject(GitApiService);
   private hunkActionsService = inject(MonacoDiffRightClickActionsService);
   private fileDiffPanel = inject(FileDiffPanelService);
-
-  @HostListener('document:keydown.escape')
-  protected onEscape = () => this.fileDiffPanel.close();
   private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void} | undefined>(undefined);
   private ownedModels = new Set<ITextModel>(); // Models are cached for the component's lifetime — switching between already-viewed files hits the URI cache
   private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
@@ -90,6 +87,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     hover: {enabled: false},
     renderLineHighlight: 'all',
   };
+  private lastRevealedPath: string | undefined;
 
   constructor() {
     effect(() => {
@@ -160,6 +158,9 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     this.ownedModels.clear();
   }
 
+  @HostListener('document:keydown.escape')
+  protected onEscape = () => this.fileDiffPanel.close();
+
   protected setViewType = (viewType: ViewType) => this.currentRepo.update({editorConfig: {viewType}});
 
   private updateDiffEditor({before, after}: DiffModels) {
@@ -183,7 +184,18 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       this.ownedModels.add(modified);
     }
 
-    this.diffEditor()!.editor.setModel({original, modified});
+    const diffEditor = this.diffEditor()!.editor;
+    diffEditor.setModel({original, modified});
+
+    // Scroll editor to first edited lines on first show
+    if (after.fileName !== this.lastRevealedPath) {
+      this.lastRevealedPath = after.fileName;
+      const disposable = diffEditor.onDidUpdateDiff(() => {
+        disposable.dispose();
+        const firstChange = diffEditor.getLineChanges()?.[0];
+        if (firstChange) diffEditor.getModifiedEditor().revealLineInCenter(firstChange.modifiedStartLineNumber);
+      });
+    }
   }
 
 }
