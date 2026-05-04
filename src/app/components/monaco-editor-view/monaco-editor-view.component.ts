@@ -148,6 +148,12 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     if (this.diffEditorContainer) {
       const diffEditorEditor = editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions);
       this.diffEditor.set({editor: diffEditorEditor, contextMenuUpdater: this.hunkActionsService.registerEditorRightClick(diffEditorEditor)});
+
+      diffEditorEditor.onDidUpdateDiff(() => {
+        const changes = diffEditorEditor.getLineChanges();
+        if (this.currentFile() && changes !== null && changes.length === 0)
+          this.fileDiffPanel.close();
+      });
     }
   }
 
