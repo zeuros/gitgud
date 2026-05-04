@@ -24,6 +24,7 @@ import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import ITextModel = editor.ITextModel;
 import ILineChange = editor.ILineChange;
+import {idsToHide} from '../../utils/diff-editor.utils';
 
 @Injectable({providedIn: 'root'})
 export class MonacoDiffRightClickActionsService {
@@ -39,7 +40,7 @@ export class MonacoDiffRightClickActionsService {
 
     // Context keys must exist on both sub-editors — each has its own context scope
     const isStagedOrig = diffEditor.getOriginalEditor().createContextKey<boolean>('isFileStaged', false);
-    const isStagedMod  = diffEditor.getModifiedEditor().createContextKey<boolean>('isFileStaged', false);
+    const isStagedMod = diffEditor.getModifiedEditor().createContextKey<boolean>('isFileStaged', false);
 
     const stageLines = (stage: boolean) => (ed: IStandaloneCodeEditor) => {
       const selection = ed.getSelection();
@@ -57,8 +58,9 @@ export class MonacoDiffRightClickActionsService {
     };
 
     for (const ed of [diffEditor.getOriginalEditor(), diffEditor.getModifiedEditor()]) {
-      ed.addAction({id: 'stage-lines',   label: 'Stage lines',   contextMenuGroupId: 'modification', contextMenuOrder: 1, precondition: '!isFileStaged', run: stageLines(true)});
-      ed.addAction({id: 'unstage-lines', label: 'Unstage lines', contextMenuGroupId: 'modification', contextMenuOrder: 1, precondition: 'isFileStaged',  run: stageLines(false)});
+      ed.addAction({id: 'stage-lines', label: 'Stage lines', contextMenuGroupId: 'modification', contextMenuOrder: 1, precondition: '!isFileStaged', run: stageLines(true)});
+      ed.addAction({id: 'unstage-lines', label: 'Unstage lines', contextMenuGroupId: 'modification', contextMenuOrder: 1, precondition: 'isFileStaged', run: stageLines(false)});
+      this.removeDefaultContextMenuActions(ed);
     }
 
     // Returned updater — call whenever the selected file changes
@@ -67,6 +69,13 @@ export class MonacoDiffRightClickActionsService {
       isStagedOrig.set(file.staged ?? false);
       isStagedMod.set(file.staged ?? false);
     };
+  };
+
+  private removeDefaultContextMenuActions = (ed: IStandaloneCodeEditor) => {
+    // Re-bind context menu actions getter
+    const contextmenu = ed.getContribution<any>('editor.contrib.contextmenu');
+    const realMethod = contextmenu._getMenuActions.bind(contextmenu);
+    contextmenu._getMenuActions = (...args: unknown[]) => realMethod(...args).filter((item: { id: string }) => !idsToHide.has(item.id));
   };
 
   private attachGutterSelectionHighlight(modified: IStandaloneCodeEditor, original: IStandaloneCodeEditor): void {
