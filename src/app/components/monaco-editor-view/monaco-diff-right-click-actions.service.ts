@@ -20,11 +20,11 @@ import {inject, Injectable} from '@angular/core';
 import {editor} from 'monaco-editor';
 import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
+import {idsToHide} from '../../utils/diff-editor.utils';
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import ITextModel = editor.ITextModel;
 import ILineChange = editor.ILineChange;
-import {idsToHide} from '../../utils/diff-editor.utils';
 
 @Injectable({providedIn: 'root'})
 export class MonacoDiffRightClickActionsService {
@@ -121,8 +121,8 @@ export class MonacoDiffRightClickActionsService {
       const modStart = change.modifiedStartLineNumber;
       const modEnd = change.modifiedEndLineNumber;
 
-      const isPureInsertion = origEnd === 0; // lines added, nothing deleted
-      const isPureDeletion = modEnd === 0;  // lines deleted, nothing added
+      const isPureInsertion = origEnd === 0; // hunk has nothing removed in original side
+      const isPureDeletion = modEnd === 0;  // hunk has nothing added in modified side
 
       if (stage) {
         if (isPureDeletion) continue; // nothing to stage on the add side
@@ -149,7 +149,18 @@ export class MonacoDiffRightClickActionsService {
           hunks.push(`@@ -${origStart}${countSuffix(oldCount)} +${modStart}${countSuffix(newCount)} @@\n${[...oldLines, ...newLines].join('\n')}\n`);
         }
       } else {
-        if (isPureInsertion) continue; // nothing to unstage on the delete side
+        if (isPureInsertion) {
+          // Lines added to index but not in HEAD; user selects them in the modified editor
+          if (endLine < modStart || startLine > modEnd) continue;
+          const selStart = Math.max(startLine, modStart);
+          const selEnd   = Math.min(endLine,   modEnd);
+          const lines = [];
+          for (let i = selStart ; i <= selEnd ; i++) lines.push('+' + modifiedModel.getLineContent(i));
+          const insertAfter = Math.max(0, origStart - 1);
+          // Forward patch; git apply -R --cached reverses it → removes lines from index
+          hunks.push(`@@ -${insertAfter},0 +${selStart}${countSuffix(lines.length)} @@\n${lines.join('\n')}\n`);
+          continue;
+        }
         if (endLine < origStart || startLine > origEnd) continue; // selection doesn't overlap
 
         if (isPureDeletion) {
