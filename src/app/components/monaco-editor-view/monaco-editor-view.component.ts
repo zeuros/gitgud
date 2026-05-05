@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {AfterViewInit, Component, computed, effect, ElementRef, HostListener, inject, input, OnDestroy, signal, untracked, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, computed, effect, ElementRef, HostListener, inject, input, OnDestroy, signal, ViewChild} from '@angular/core';
 import {CommittedFileChange, FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
@@ -66,7 +66,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   private gitApi = inject(GitApiService);
   private hunkActionsService = inject(MonacoDiffRightClickActionsService);
   private fileDiffPanel = inject(FileDiffPanelService);
-  private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void} | undefined>(undefined);
+  private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void } | undefined>(undefined);
   private ownedModels = new Set<ITextModel>(); // Models are cached for the component's lifetime — switching between already-viewed files hits the URI cache
   private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
   private editorOptions: IEditorOptions & { theme: string } = {
@@ -97,13 +97,13 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       const before$ = isCommittedFileChange(file)
         ? this.fileDiffService.getFileAtRevision(file.path, `${file.commitish}^`)
         : ((file as WorkingDirectoryFileChange).staged
-            ? this.fileDiffService.getFileAtRevision(file.path)        // staged: HEAD vs index
-            : this.fileDiffService.getFileAtRevision(file.path, ''));  // unstaged: index vs workdir
+          ? this.fileDiffService.getFileAtRevision(file.path)        // staged: HEAD vs index
+          : this.fileDiffService.getFileAtRevision(file.path, ''));  // unstaged: index vs workdir
 
       const after$ = isWorkingDirectoryFileChange(file)
         ? (file.staged
-            ? this.fileDiffService.getFileAtRevision(file.path, '')   // git show :path  (index)
-            : of(window.electron.fs.readFileSync(window.electron.path.resolve(this.gitApi.cwd()!, file.path))))
+          ? this.fileDiffService.getFileAtRevision(file.path, '')   // git show :path  (index)
+          : of(window.electron.fs.readFileSync(window.electron.path.resolve(this.gitApi.cwd()!, file.path))))
         : this.fileDiffService.getFileAtRevision(file.path, (file as CommittedFileChange).commitish);
 
       combineLatest([before$, after$]).subscribe(([before, after]) => {
@@ -149,11 +149,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       const diffEditorEditor = editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions);
       this.diffEditor.set({editor: diffEditorEditor, contextMenuUpdater: this.hunkActionsService.registerEditorRightClick(diffEditorEditor)});
 
-      diffEditorEditor.onDidUpdateDiff(() => {
-        const changes = diffEditorEditor.getLineChanges();
-        if (this.currentFile() && changes !== null && changes.length === 0)
-          this.fileDiffPanel.close();
-      });
+      diffEditorEditor.onDidUpdateDiff(this.clearEditorWhenNoChangesToDisplay(diffEditorEditor));
     }
   }
 
@@ -168,6 +164,14 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   protected onEscape = () => this.fileDiffPanel.close();
 
   protected setViewType = (viewType: ViewType) => this.currentRepo.update({editorConfig: {viewType}});
+
+  private clearEditorWhenNoChangesToDisplay = (diffEditorEditor: IStandaloneDiffEditor) => () => {
+    const changes = diffEditorEditor.getLineChanges();
+    if (this.currentFile() && changes !== null && changes.length === 0) {
+      this.diffEditor()?.editor.dispose();
+      this.fileDiffPanel.close();
+    }
+  };
 
   private updateDiffEditor({before, after}: DiffModels) {
     const beforeUri = Uri.parse(`before-${before.fileName}`);

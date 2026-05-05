@@ -44,6 +44,10 @@ A cross-platform Git GUI that doesn't get in your way.
 - Use aheadBehind() to show the count of commits to catch on for each branch
 - Manage merge conflicts / rebase conflicts
 
+## BUGs
+
+- reset mixed to previous commit doesn't refresh log correctly
+
 ---
 
 ## Many thanks & references
