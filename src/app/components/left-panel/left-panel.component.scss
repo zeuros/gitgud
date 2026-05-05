@@ -3,9 +3,14 @@
   height: 100%;
 
   ::ng-deep {
+    .p-tree {
+      padding: 0;
+    }
+
     .p-tree .p-tree-container .p-treenode .p-treenode-content {
       padding: 0;
       color: var(--hmmmmmmGray);
+      font-size: 0.8rem;
     }
 
     p-listbox {
