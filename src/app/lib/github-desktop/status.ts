@@ -19,7 +19,7 @@
 import {RebaseInternalState} from './model/rebase';
 import {WorkingDirectoryStatus} from './model/status';
 import {IStatusEntry, StatusHeader} from './status-parser';
-import {IAheadBehind} from './model/branch';
+import {AheadBehind} from './model/branch';
 import {getFilesWithConflictMarkers} from './diff/diff-check';
 import {catchError, forkJoin, Observable} from 'rxjs';
 import {getBinaryPaths} from './diff/diff';
@@ -38,7 +38,7 @@ export interface IStatusResult {
   /** How many commits ahead and behind
    *  the `currentBranch` is compared to the `currentUpstreamBranch`
    */
-  readonly branchAheadBehind?: IAheadBehind
+  readonly branchAheadBehind?: AheadBehind
 
   /** true if the repository exists at the given location */
   readonly exists: boolean
@@ -66,7 +66,7 @@ interface IStatusHeadersData {
   currentBranch?: string
   currentUpstreamBranch?: string
   currentTip?: string
-  branchAheadBehind?: IAheadBehind
+  branchAheadBehind?: AheadBehind
   match: RegExpMatchArray | null
 }
 

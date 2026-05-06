@@ -21,7 +21,20 @@
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
                             (onNodeContextMenuSelect)="branchContextMenuService.selectedNode.set($event.node)"
                             [contextMenu]="branchesContextMenu"
-                    />
+                    >
+                        <ng-template pTemplate="default" let-node>
+                            <span class="flex align-items-center">
+                                <span class="ellipsis flex-1 gap-1">{{ node.label }}</span>
+                                @let ab = aheadBehind.aheadBehindMap()[node.data?.name];
+                                @if (ab?.ahead) {
+                                    <span class="ahead-behind"><i class="fa fa-arrow-up"></i>{{ ab.ahead }}</span>
+                                }
+                                @if (ab?.behind) {
+                                    <span class="ahead-behind"><i class="fa fa-arrow-down"></i>{{ ab.behind }}</span>
+                                }
+                            </span>
+                        </ng-template>
+                    </p-tree>
                 </div>
             </div>
         </ng-template>
