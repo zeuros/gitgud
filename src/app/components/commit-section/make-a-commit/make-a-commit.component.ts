@@ -32,6 +32,7 @@ import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {CommitService} from '../../../services/commit.service';
 import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
+import {WorkDirStatus} from '../../../lib/github-desktop/model/workdir';
 import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
 import {WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
 
@@ -91,6 +92,8 @@ export class MakeACommitComponent {
       }
     }
   }
+
+  protected commitReady = (workDirStatus?: WorkDirStatus) => !!(this.commitForm.value.summary?.length && workDirStatus?.staged?.length)
 
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
     this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, makeCommitPanel: sizes.map(Number)}});

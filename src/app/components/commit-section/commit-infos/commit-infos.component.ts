@@ -99,4 +99,5 @@ export class CommitInfosComponent {
         this.popup.success('Commit message updated');
       });
 
+  protected commitFormValueChanged = () => !isEqual(this.editCommitForm.value, this.initialValue)
 }
