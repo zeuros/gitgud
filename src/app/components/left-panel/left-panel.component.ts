@@ -35,6 +35,7 @@ import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
+import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 
 
 @Component({
@@ -69,6 +70,7 @@ export class LeftPanelComponent {
   });
   private tagContextMenu = viewChild<ContextMenu>('tagContextMenu');
   protected branchContextMenuService = inject(BranchContextMenuService);
+  protected aheadBehind = inject(BranchAheadBehindService);
   private branchReader = inject(BranchReaderService);
 
   protected selectBranchCommit = (branch?: Branch) => {

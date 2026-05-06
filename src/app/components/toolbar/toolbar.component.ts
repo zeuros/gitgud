@@ -39,6 +39,7 @@ import {UndoService} from '../../services/undo.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {SetUpstreamDialogComponent, SetUpstreamResult} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
 import {BehindRemoteDialogComponent, BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
+import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -57,6 +58,7 @@ export class ToolbarComponent implements OnInit {
   protected readonly short = short;
   protected readonly zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
+  private branchAheadBehindService = inject(BranchAheadBehindService);
   private gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);
   private dialog = inject(DialogService);
@@ -92,15 +94,7 @@ export class ToolbarComponent implements OnInit {
       ),
     );
 
-  // Single plumbing call: --left-right gives ahead (left) and behind (right) counts.
-  private aheadBehind = () =>
-    this.gitApi.git(['rev-list', '--count', '--left-right', 'HEAD...@{u}']).pipe(
-      map(out => {
-        const [ahead, behind] = out.trim().split('\t').map(Number);
-        return {ahead, behind, diverged: ahead > 0 && behind > 0};
-      }),
-      catchError(() => of({ahead: 0, behind: 0, diverged: false})),
-    );
+  private aheadBehind = () => this.branchAheadBehindService.aheadBehindForHead();
 
   private openBehindRemoteDialog = (diverged: boolean) => {
     const branch = this.currentRepo.headBranch()!;
