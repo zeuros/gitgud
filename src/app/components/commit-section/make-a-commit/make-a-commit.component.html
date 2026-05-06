@@ -1,4 +1,4 @@
-@let workingDirFilesChanges = currentRepo.workDirStatus();
+@let workDirStatus = currentRepo.workDirStatus();
 @let panelSizes = currentRepo.panelSizes()?.makeCommitPanel ?? [];
 
 <p-splitter
@@ -12,16 +12,16 @@
         <!-- Unstaged files -->
         <div class="flex flex-column h-full">
             <div class="flex align-items-center justify-content-between h-3rem">
-                <h4 class="m-0">Unstaged files ({{ workingDirFilesChanges?.unstaged?.length ?? 0 }})</h4>
-                @if (workingDirFilesChanges?.unstaged?.length) {
+                <h4 class="m-0">Unstaged files ({{ workDirStatus?.unstaged?.length ?? 0 }})</h4>
+                @if (workDirStatus?.unstaged?.length) {
                     <p-button styleClass="p-button-sm" (click)="workingDirectoryService.stageAll()" label="Stage all"/>
                 }
             </div>
             <p-divider class="mt-0"/>
-            @if (workingDirFilesChanges && workingDirFilesChanges.unstaged.length) {
+            @if (workDirStatus && workDirStatus.unstaged.length) {
                 <p-listbox
                         animate.enter="slight-slide-in"
-                        [options]="workingDirFilesChanges.unstaged"
+                        [options]="workDirStatus.unstaged"
                         optionLabel="path"
                         class="show-button-on-li-hover flex-1 overflow-hidden"
                         scrollHeight="flex"
@@ -52,16 +52,16 @@
         <!-- Staged files -->
         <div class="flex flex-column h-full">
             <div class="flex align-items-center justify-content-between h-3rem">
-                <h4 class="m-0">Staged files ({{ workingDirFilesChanges?.staged?.length ?? 0 }})</h4>
-                @if (workingDirFilesChanges?.staged?.length) {
+                <h4 class="m-0">Staged files ({{ workDirStatus?.staged?.length ?? 0 }})</h4>
+                @if (workDirStatus?.staged?.length) {
                     <p-button styleClass="p-button-sm" (click)="workingDirectoryService.unstageAll()" label="Unstage all"/>
                 }
             </div>
             <p-divider class="mt-0"/>
-            @if (workingDirFilesChanges && workingDirFilesChanges.staged.length) {
+            @if (workDirStatus && workDirStatus.staged.length) {
                 <p-listbox
                         animate.enter="slight-slide-in"
-                        [options]="workingDirFilesChanges.staged"
+                        [options]="workDirStatus.staged"
                         optionLabel="path"
                         class="show-button-on-li-hover flex-1 overflow-hidden"
                         scrollHeight="flex"
@@ -98,12 +98,12 @@
                     <p-checkbox [binary]="true" (onChange)="amendMode($event.checked)"/>
                 </label>
             </div>
-            <form class="flex flex-column flex-1" [formGroup]="commitForm" (keydown.control.enter)="commit()">
+            <form class="flex flex-column flex-1" (ngSubmit)="commit()" [formGroup]="commitForm" (keydown.control.enter)="commitReady(workDirStatus) && commit()">
                 <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
                 <textarea pTextarea placeholder="Description" rows="3" class="flex-1 commit-description" formControlName="description"></textarea>
                 <p-button
-                        [disabled]="!commitForm.value.summary?.length || !workingDirFilesChanges?.staged?.length"
-                        (click)="commit()"
+                        type="submit"
+                        [disabled]="!commitReady(workDirStatus)"
                         class="mt-2"
                         styleClass="w-full border-round-xs"
                         [label]="amend ? 'Amend last commit' : 'Commit staged changes'"/>
