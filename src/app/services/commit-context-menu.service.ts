@@ -26,6 +26,7 @@ import {short} from '../utils/commit-utils';
 import {PromptService} from './prompt.service';
 import {notUndefined} from '../utils/utils';
 import {GitWorkflowService} from './git-workflow.service';
+import {CreateBranchService} from './create-branch.service';
 
 @Injectable({
   providedIn: 'root',
@@ -36,6 +37,7 @@ export class CommitContextMenuService {
   private currentRepo = inject(CurrentRepoStore);
   protected prompt = inject(PromptService);
   protected gitWorkflow = inject(GitWorkflowService);
+  private createBranchService = inject(CreateBranchService);
 
   selectedCommit = signal<DisplayRef | undefined>(undefined);
   private sha = computed(() => this.selectedCommit()!.sha);
@@ -94,10 +96,7 @@ export class CommitContextMenuService {
   protected checkoutCommit = () =>
     this.gitWorkflow.doRunAndRefresh(['checkout', this.sha()], `Checked out ${short(this.sha())}`, true, false);
 
-  protected createBranch = () =>
-    this.prompt.open('Branch name:')
-      .pipe(first(notUndefined))
-      .subscribe(name => this.gitWorkflow.doRunAndRefresh(['checkout', '-b', name, this.sha()], `Branch ${name} created`));
+  protected createBranch = () => this.createBranchService.createBranchAtSha(this.sha());
 
   protected cherryPick = () =>
     this.gitWorkflow.doRunAndRefresh(['cherry-pick', this.sha()], `Cherry picked ${short(this.sha())}`, true, true);
