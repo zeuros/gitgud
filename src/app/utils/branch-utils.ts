@@ -87,3 +87,6 @@ export const findNode = (nodes: TreeNode<Branch>[], sha: string): TreeNode<Branc
 
 // Normalize origin / local branch name origin/main → main
 export const normalizedBranchName = (b: Branch) => b.name.replace('origin/', '')
+
+// Used to sort groups of branches [local, distant][] by putting the head pointed local branches groups first
+export const isHeadPointed = (branches: Branch[]) => branches.some(b => b.isHeadPointed)
