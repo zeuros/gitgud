@@ -16,32 +16,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild} from '@angular/core';
+import {Component, output} from '@angular/core';
+import {AutofocusDirective} from '../../directives/autofocus.directive';
 
 @Component({
   selector: 'gitgud-search-logs',
   standalone: true,
-  imports: [],
+  imports: [AutofocusDirective],
   templateUrl: './search-logs.component.html',
-  styleUrl: './search-logs.component.scss'
+  styleUrl: './search-logs.component.scss',
 })
-export class SearchLogsComponent implements AfterViewInit, OnChanges {
+export class SearchLogsComponent {
 
-  @Output() onSearch = new EventEmitter<string>();
+  onSearch = output<string>();
 
-  @ViewChild("search", {static: false}) private search?: ElementRef<HTMLCanvasElement>;
-  @Input() focus!: {};
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.focus) this.focusSearchInput();
-  }
-
-  ngAfterViewInit(): void {
-    this.focusSearchInput()
-  }
-
-  private focusSearchInput = () => {
-    this.search?.nativeElement?.focus();
-  }
-  console = console;
 }

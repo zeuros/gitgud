@@ -40,6 +40,7 @@ import {DialogService} from 'primeng/dynamicdialog';
 import {SetUpstreamDialogComponent, SetUpstreamResult} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
 import {BehindRemoteDialogComponent, BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
+import {CreateBranchService} from '../../services/create-branch.service';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -51,14 +52,15 @@ import {BranchAheadBehindService} from '../../services/branch-ahead-behind.servi
 export class ToolbarComponent implements OnInit {
 
   protected currentRepo = inject(CurrentRepoStore);
-  protected autoFetchService = inject(AutoFetchService);
-  protected settingsService = inject(SettingsService);
-  protected undoService = inject(UndoService);
+  protected autoFetch = inject(AutoFetchService);
+  protected settings = inject(SettingsService);
+  protected undo = inject(UndoService);
+  protected createBranch = inject(CreateBranchService);
   protected loading = signal<'push' | 'pull' | 'fetch' | undefined>(undefined);
-  protected readonly short = short;
-  protected readonly zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
+  protected short = short;
+  protected zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
-  private branchAheadBehindService = inject(BranchAheadBehindService);
+  private branchAheadBehind = inject(BranchAheadBehindService);
   private gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);
   private dialog = inject(DialogService);
@@ -67,13 +69,17 @@ export class ToolbarComponent implements OnInit {
   private shellHistoryDialog = viewChild.required(ShellHistoryDialogComponent);
   private now = toSignal(interval(1000).pipe(map(() => Date.now())), {initialValue: Date.now()});
   protected fetchedAgo = computed(() => {
-    const at = this.autoFetchService.lastFetchedAt();
+    const at = this.autoFetch.lastFetchedAt();
     if (!at) return undefined;
     const secs = Math.floor((this.now()! - at) / 1000);
     if (secs < 60) return `${secs}s ago`;
     if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
     return `${Math.floor(secs / 3600)}h ago`;
   });
+
+  ngOnInit() {
+    this.undo.refreshTooltip();
+  }
 
   protected push = () => {
     this.loading.set('push');
@@ -83,9 +89,35 @@ export class ToolbarComponent implements OnInit {
       finalize(() => this.loading.set(undefined)),
     ).subscribe(() => {
       this.popup.success('Pushed successfully');
-      this.undoService.clearRedoStack();
+      this.undo.clearRedoStack();
     });
   };
+
+  protected pull = () => {
+    this.loading.set('pull');
+    this.gitApi.git(['pull'])
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .subscribe(() => {
+        this.popup.success('Pulled successfully');
+        this.undo.clearRedoStack();
+        this.undo.refreshTooltip();
+      });
+  };
+
+  protected fetch = () => {
+    this.loading.set('fetch');
+    this.gitApi.git(['fetch'])
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .subscribe(() => this.autoFetch.lastFetchedAt.set(Date.now()));
+  };
+
+  // Returns false when there is no upstream or the upstream branch name differs from the local branch name.
+
+  protected openSettingsDialog = () => this.settingsDialog().open();
+
+  protected openCloneDialog = () => this.cloneDialog().open();
+
+  protected openShellHistoryDialog = () => this.shellHistoryDialog().open();
 
   private checkBehindThenPush = () =>
     this.aheadBehind().pipe(
@@ -94,7 +126,7 @@ export class ToolbarComponent implements OnInit {
       ),
     );
 
-  private aheadBehind = () => this.branchAheadBehindService.aheadBehindForHead();
+  private aheadBehind = () => this.branchAheadBehind.aheadBehindForHead();
 
   private openBehindRemoteDialog = (diverged: boolean) => {
     const branch = this.currentRepo.headBranch()!;
@@ -114,7 +146,6 @@ export class ToolbarComponent implements OnInit {
     );
   };
 
-  // Returns false when there is no upstream or the upstream branch name differs from the local branch name.
   // Uses rev-parse @{u} — plumbing output (refs only), locale-independent.
   private upstreamMatchesLocal = () => {
     const localBranch = this.currentRepo.headBranch()?.name;
@@ -138,31 +169,5 @@ export class ToolbarComponent implements OnInit {
       ),
     );
   };
-
-  protected pull = () => {
-    this.loading.set('pull');
-    this.gitApi.git(['pull'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => {
-        this.popup.success('Pulled successfully');
-        this.undoService.clearRedoStack();
-        this.undoService.refreshTooltip();
-      });
-  };
-
-  protected fetch = () => {
-    this.loading.set('fetch');
-    this.gitApi.git(['fetch'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => this.autoFetchService.lastFetchedAt.set(Date.now()));
-  };
-
-  protected openSettingsDialog = () => this.settingsDialog().open();
-  protected openCloneDialog = () => this.cloneDialog().open();
-  protected openShellHistoryDialog = () => this.shellHistoryDialog().open();
-
-  ngOnInit() {
-    this.undoService.refreshTooltip();
-  }
 
 }

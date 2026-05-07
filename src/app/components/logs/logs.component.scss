@@ -298,3 +298,15 @@ $row-spacing: 8px;
     }
   }
 }
+
+.branch-name-input {
+  z-index: 500; // over log branches
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 8px;
+  height: 100%;
+  width: 94%;
+  font-size: 0.75rem;
+  padding: 0 0.5rem;
+}

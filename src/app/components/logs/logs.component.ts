@@ -43,6 +43,10 @@ import {StashContextMenuService} from '../../services/stash-context-menu.service
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {GitTag} from '../../models/git-tag';
 import {Badge} from 'primeng/badge';
+import {CreateBranchService} from '../../services/create-branch.service';
+import {InputText} from 'primeng/inputtext';
+import {FormsModule} from '@angular/forms';
+import {AutofocusDirective} from '../../directives/autofocus.directive';
 
 @Component({
   selector: 'gitgud-logs',
@@ -54,6 +58,9 @@ import {Badge} from 'primeng/badge';
     DatePipe,
     ContextMenu,
     Badge,
+    InputText,
+    FormsModule,
+    AutofocusDirective,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -62,6 +69,7 @@ export class LogsComponent {
 
   private logBuilder = inject(LogBuilderService);
   protected currentRepo = inject(CurrentRepoStore);
+  protected createBranchService = inject(CreateBranchService);
   protected commitContextMenuService = inject(CommitContextMenuService);
   protected stashContextMenuService = inject(StashContextMenuService);
   protected tagContextMenuService = inject(TagContextMenuService);
@@ -72,7 +80,6 @@ export class LogsComponent {
   });
 
   protected showSearchBar = false;
-  protected searchBarFocus = {};
   protected graphColumnCount = signal(0);
   protected untrackedStashes = signal<string[]>([]); // Unused (edge case)
   protected computedDisplayLog = signal<DisplayRef[]>([]); // Commits ready for display
@@ -169,7 +176,6 @@ export class LogsComponent {
   handleKeyboardEvent({ctrlKey, code}: KeyboardEvent) {
     if (ctrlKey && code == 'KeyF') {
       this.showSearchBar = true;
-      this.searchBarFocus = {}; // Triggers change detection on search bar component
     } else if (code == 'Escape') {
       this.showSearchBar = false;
       this.search('');
