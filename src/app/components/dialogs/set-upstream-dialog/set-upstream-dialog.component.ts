@@ -21,13 +21,22 @@ import {FormControl, ReactiveFormsModule} from '@angular/forms';
 import {Button} from 'primeng/button';
 import {Select} from 'primeng/select';
 import {InputText} from 'primeng/inputtext';
-import {DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
+import {DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
+import {Observable} from 'rxjs';
 
 export interface SetUpstreamResult {
   remote: string;
   branch: string;
 }
+
+export const openSetUpstreamDialog = (dialog: DialogService, branchName: string): Observable<SetUpstreamResult | null> =>
+  dialog.open(SetUpstreamDialogComponent, {
+    header: `Set upstream for "${branchName}"`,
+    width: '500px',
+    modal: true,
+    data: {branchName},
+  })!.onClose
 
 @Component({
   selector: 'gitgud-set-upstream-dialog',
@@ -54,7 +63,7 @@ export interface SetUpstreamResult {
   `,
 })
 export class SetUpstreamDialogComponent implements OnInit {
-  private readonly ref = inject(DynamicDialogRef);
+  private readonly ref = inject(DynamicDialogRef<SetUpstreamResult>);
   private readonly config = inject(DynamicDialogConfig);
   private readonly gitApi = inject(GitApiService);
 

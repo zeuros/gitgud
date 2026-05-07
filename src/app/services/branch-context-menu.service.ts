@@ -28,6 +28,7 @@ import {PopupService} from './popup.service';
 import {PromptService} from './prompt.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {EditRemoteComponent} from '../components/dialogs/edit-remote/edit-remote.component';
+import {openSetUpstreamDialog} from '../components/dialogs/set-upstream-dialog/set-upstream-dialog.component';
 
 @Injectable({providedIn: 'root'})
 export class BranchContextMenuService {
@@ -124,10 +125,10 @@ export class BranchContextMenuService {
     this.gitWorkflow.doRunAndRefresh(['push', 'origin', this.name()], `Pushed ${this.name()}`);
 
   private setUpstream = () =>
-    this.gitWorkflow.doRunAndRefresh(
-      ['branch', `--set-upstream-to=origin/${this.name()}`, this.name()],
-      `Upstream set to origin/${this.name()}`
-    );
+    openSetUpstreamDialog(this.dialog, this.name())
+      .pipe(first(notUndefined))
+      .subscribe(({remote, branch}) => this.gitWorkflow.doRunAndRefresh(['branch', `--set-upstream-to=${remote}/${branch}`, this.name()], `Upstream set to ${remote}/${branch}`));
+
 
   private mergeBranch = () =>
     this.gitWorkflow.doRunAndRefresh(['merge', this.name()], `Merged ${this.name()} into ${this.head()}`, true, true);
