@@ -20,9 +20,9 @@ import {computed, inject, Injectable} from '@angular/core';
 import {GitRepositoryStore} from './git-repos.store';
 import {GitRepository} from '../models/git-repository';
 import {Branch} from '../lib/github-desktop/model/branch';
-import {groupBy, isEqual, mapValues, values} from 'lodash-es';
+import {groupBy, isEqual, mapValues, orderBy, values} from 'lodash-es';
 import {keyComparison, logsComparison, shallowArrayEqual} from '../utils/utils';
-import {normalizedBranchName} from '../utils/branch-utils';
+import {isHeadPointed, normalizedBranchName} from '../utils/branch-utils';
 import {GitTag} from '../models/git-tag';
 
 /**
@@ -42,7 +42,7 @@ export class CurrentRepoStore {
   readonly branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha), {equal: keyComparison});
   // Group branches by commit SHA, then merge local/remote branches by normalized name
   readonly mergedBranchesByTip = computed<Record<string, Branch[][] | undefined>>(() =>
-    mapValues(this.branchesByTip(), branchesAtSha => values(groupBy(branchesAtSha, normalizedBranchName))));
+    mapValues(this.branchesByTip(), branchesAtSha => orderBy(values(groupBy(branchesAtSha, normalizedBranchName)), isHeadPointed, 'desc')));
 
 
   readonly startCommit = computed(() => this.reposStore.selectedRepository()?.startCommit ?? 0);
