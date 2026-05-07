@@ -41,7 +41,9 @@ import {ContextMenu} from 'primeng/contextmenu';
 import {CommitContextMenuService} from '../../services/commit-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
+import {BranchContextMenuService} from '../../services/branch-context-menu.service';
 import {GitTag} from '../../models/git-tag';
+import {Branch} from '../../lib/github-desktop/model/branch';
 import {Badge} from 'primeng/badge';
 import {CreateBranchService} from '../../services/create-branch.service';
 import {InputText} from 'primeng/inputtext';
@@ -73,7 +75,7 @@ export class LogsComponent {
   protected commitContextMenuService = inject(CommitContextMenuService);
   protected stashContextMenuService = inject(StashContextMenuService);
   protected tagContextMenuService = inject(TagContextMenuService);
-  protected contextMenuActiveCommit = signal<DisplayRef | undefined>(undefined);
+  protected branchContextMenuService = inject(BranchContextMenuService);
   protected commitsSelection = computed(() => {
     const selectedCommitsShas = this.currentRepo.selectedCommitsShas();
     return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
@@ -96,6 +98,7 @@ export class LogsComponent {
   private commitContextMenu = viewChild<ContextMenu>('commitContextMenu');
   private stashContextMenu = viewChild<ContextMenu>('stashContextMenu');
   private tagContextMenu = viewChild<ContextMenu>('tagContextMenu');
+  private branchContextMenu = viewChild<ContextMenu>('branchContextMenu');
   private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
   private logTableContainer = computed(() => this.logTableRef()?.querySelector<HTMLElement>('.p-datatable-table-container'));
   protected visibleCommitsCount = computed(() => {
@@ -261,31 +264,38 @@ export class LogsComponent {
   private isOnView = (commitIndex: number, startCommit: number, endCommit: number) =>
     commitIndex > startCommit && commitIndex < endCommit;
 
-  protected openContextMenu = (commit: DisplayRef, $event: PointerEvent) => {
-    this.contextMenuActiveCommit.set(commit);
+  protected openCommitContextMenu = (commit: DisplayRef, event: PointerEvent) => {
+    event.stopPropagation();
+    this.hideContextMenus();
+
     if (isCommit(commit)) {
-      this.stashContextMenu()?.hide();
       this.commitContextMenuService.selectedCommit.set(commit);
-      this.commitContextMenu()?.show($event);
+      this.commitContextMenu()?.show(event);
     } else if (isStash(commit)) {
-      this.commitContextMenu()?.hide();
       this.stashContextMenuService.selectedCommit.set(commit);
-      this.stashContextMenu()?.show($event);
+      this.stashContextMenu()?.show(event);
     }
   };
 
   protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
     event.stopPropagation();
     this.tagContextMenuService.selectedTag.set(tag);
-    this.commitContextMenu()?.hide();
-    this.stashContextMenu()?.hide();
+    this.hideContextMenus();
     this.tagContextMenu()?.show(event);
+  };
+
+  protected openBranchContextMenu = (branch: Branch, event: MouseEvent) => {
+    event.stopPropagation();
+    this.branchContextMenuService.selectBranch(branch);
+    this.hideContextMenus();
+    this.branchContextMenu()?.show(event);
   };
 
   protected hideContextMenus = () => {
     this.commitContextMenu()?.hide();
     this.stashContextMenu()?.hide();
     this.tagContextMenu()?.hide();
+    this.branchContextMenu()?.hide();
   };
 
   protected remote = remote;
