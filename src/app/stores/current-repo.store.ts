@@ -76,5 +76,7 @@ export class CurrentRepoStore {
   });
   readonly headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
 
+  readonly headSha = () => this.headBranch()?.tip?.sha ?? this.detachedHeadSha()
+
   readonly update = (updates: Partial<GitRepository>) => this.reposStore.updateSelectedRepository(updates);
 }

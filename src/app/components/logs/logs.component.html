@@ -1,5 +1,5 @@
 @if (showSearchBar) {
-    <gitgud-search-logs [focus]="searchBarFocus" (onSearch)="search($event)"/>
+    <gitgud-search-logs (onSearch)="search($event)"/>
 }
 @let displayLog = computedDisplayLog();
 @let graphColCount = graphColumnCount();
@@ -51,6 +51,17 @@
             @let commitTags = currentRepo.tagsByCommitSha()[commit.sha] ?? [];
             @let extraCount = branchesGrouped.length + commitTags.length + (isDetachedHead ? 1 : 0) - 1;
             <td class="branch-tag-td">
+                @if (commit.sha == createBranchService.newBranchSha()) {
+                    <input pInputText
+                           class="branch-name-input"
+                           placeholder="New branch name"
+                           autofocus
+                           [(ngModel)]="createBranchService.name"
+                           (keydown.enter)="createBranchService.confirm()"
+                           (keydown.escape)="createBranchService.cancel()"
+                           (blur)="createBranchService.cancel()"
+                    />
+                }
                 @if (isDetachedHead) {
                     <div class="branch-tag">
                         <div class="commit-branch" [style.filter]="commitColor(commit.indent!)">

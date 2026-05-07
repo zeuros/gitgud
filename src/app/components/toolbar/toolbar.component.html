@@ -28,6 +28,14 @@
 
     <p-button class="sober"
               [text]="true"
+              (onClick)="createBranch.createBranchAtSha(currentRepo.headSha()!)"
+    >
+        <i class="fa fa-code-fork"></i>
+        <span>Branch</span>
+    </p-button>
+
+    <p-button class="sober"
+              [text]="true"
               [loading]="loading() === 'fetch'"
               [disabled]="!!loading()"
               (onClick)="fetch()"
@@ -40,15 +48,15 @@
     </p-button>
 
     <p-button class="sober" icon="fa fa-download" [text]="true" [rounded]="true" pTooltip="Clone" tooltipPosition="bottom" (onClick)="openCloneDialog()"/>
-    <p-button class="sober" icon="fa fa-history" [text]="true" [rounded]="true" [pTooltip]="undoService.undoTooltip()" tooltipPosition="bottom" (onClick)="undoService.undo()"/>
-    <p-button class="sober" icon="fa fa-repeat" [text]="true" [rounded]="true" [pTooltip]="undoService.redoTooltip()" tooltipPosition="bottom" [disabled]="!undoService.redoAvailable()" (onClick)="undoService.redo()"/>
+    <p-button class="sober" icon="fa fa-history" [text]="true" [rounded]="true" [pTooltip]="undo.undoTooltip()" tooltipPosition="bottom" (onClick)="undo.undo()"/>
+    <p-button class="sober" icon="fa fa-repeat" [text]="true" [rounded]="true" [pTooltip]="undo.redoTooltip()" tooltipPosition="bottom" [disabled]="!undo.redoAvailable()" (onClick)="undo.redo()"/>
     <p-button class="sober" icon="fa fa-terminal" [text]="true" [rounded]="true" pTooltip="Git command history" tooltipPosition="bottom" (onClick)="openShellHistoryDialog()"/>
     <p-button class="sober" icon="fa fa-cog" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (onClick)="openSettingsDialog()"/>
 </div>
 
 <p-select
         [options]="zoomLevels"
-        [(ngModel)]="settingsService.zoom"
+        [(ngModel)]="settings.zoom"
         optionLabel="label"
         optionValue="value"
         style="margin-left: auto"
