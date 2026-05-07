@@ -29,19 +29,21 @@
                         (onChange)="selectFile($event.value)">
                     <ng-template let-workingDirFileChanges pTemplate="item">
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
-                        <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
-                           [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
-                           [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
-                        @let dir = directory(fileChanges.path);
-                        @if (dir.length) {
-                            <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
-                        }
-                        <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
-                        <p-button
-                                class="stick-right-button"
-                                styleClass="file-row-stage-button p-button-sm"
-                                (click)="workingDirectoryService.stageFile(fileChanges); $event.stopPropagation()"
-                                label="Stage"/>
+                        <div class="flex align-items-center w-full" (contextmenu)="openFileContextMenu(fileChanges, false, $event)">
+                            <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
+                               [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
+                               [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
+                            @let dir = directory(fileChanges.path);
+                            @if (dir.length) {
+                                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+                            }
+                            <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+                            <p-button
+                                    class="stick-right-button"
+                                    styleClass="file-row-stage-button p-button-sm"
+                                    (click)="workingDirectoryService.stageFile(fileChanges); $event.stopPropagation()"
+                                    label="Stage"/>
+                        </div>
                     </ng-template>
                 </p-listbox>
             }
@@ -69,19 +71,21 @@
                         (onChange)="selectFile($event.value)">
                     <ng-template let-workingDirFileChanges pTemplate="item">
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
-                        <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
-                           [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
-                           [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
-                        @let dir = directory(fileChanges.path);
-                        @if (dir.length) {
-                            <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
-                        }
-                        <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
-                        <p-button
-                                class="stick-right-button"
-                                styleClass="file-row-stage-button p-button-sm"
-                                (click)="workingDirectoryService.unstageFile(fileChanges); $event.stopPropagation()"
-                                label="Unstage"/>
+                        <div class="flex align-items-center w-full" (contextmenu)="openFileContextMenu(fileChanges, true, $event)">
+                            <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
+                               [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
+                               [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
+                            @let dir = directory(fileChanges.path);
+                            @if (dir.length) {
+                                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+                            }
+                            <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+                            <p-button
+                                    class="stick-right-button"
+                                    styleClass="file-row-stage-button p-button-sm"
+                                    (click)="workingDirectoryService.unstageFile(fileChanges); $event.stopPropagation()"
+                                    label="Unstage"/>
+                        </div>
                     </ng-template>
                 </p-listbox>
             }
@@ -112,3 +116,5 @@
     </ng-template>
 
 </p-splitter>
+
+<p-contextMenu #unstagedCtxMenu [model]="unstagedContextMenu.contextMenu()" appendTo="body"/>
