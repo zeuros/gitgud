@@ -124,10 +124,11 @@ export class LogsComponent {
     });
 
 
-    // When repository changes its logs, stashes, working dir (index commit) => recompute the log graph
+    // When repository changes its logs, stashes, branches, or working dir => recompute the log graph
     effect(() => {
       const logs = this.currentRepo.logs();
       const stashes = this.currentRepo.stashes();
+      this.currentRepo.branches(); // FIXME: test this: if branches change, we want to update logs.commit.isPointedByLocalHead
       const workDirStatus = this.currentRepo.workDirStatus();
       // Wait for stash image before drawing stashes in the graph
       if (!this.stashImg() || !logs.length || !workDirStatus) return;
