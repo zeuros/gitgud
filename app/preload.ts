@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {BrowserWindow, contextBridge} from 'electron';
+import {BrowserWindow, contextBridge, shell} from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import {createHash} from 'crypto';
@@ -97,6 +97,8 @@ contextBridge.exposeInMainWorld('electron', {
     setFactor: (factor: number) => getCurrentWindow().webContents.setZoomFactor(factor),
     getFactor: () => getCurrentWindow().webContents.getZoomFactor(),
   },
+
+  showItemInFolder: (fullPath: string) => shell.showItemInFolder(fullPath),
 
   // Window events
   onWindowFocus: (cb: () => void): BrowserWindow => getCurrentWindow().on('focus', cb),

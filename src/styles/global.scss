@@ -103,3 +103,10 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
 .text-gray {
   color: var(--huaaaaaGray);
 }
+
+.danger-menuitem {
+  .p-contextmenu-item-label,
+  .p-contextmenu-item-icon {
+    color: var(--p-red-400);
+  }
+}

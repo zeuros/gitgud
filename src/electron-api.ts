@@ -56,6 +56,7 @@ export interface ElectronApi {
     setFactor: (factor: number) => void;
     getFactor: () => number;
   };
+  showItemInFolder: (fullPath: string) => void;
   onWindowFocus: (cb: () => void) => BrowserWindow;
   offWindowFocus: (cb: () => void) => BrowserWindow;
   process: NodeJS.Process;
