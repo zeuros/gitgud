@@ -37,7 +37,7 @@ import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.compone
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 import {UndoService} from '../../services/undo.service';
 import {DialogService} from 'primeng/dynamicdialog';
-import {SetUpstreamDialogComponent, SetUpstreamResult} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
+import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
 import {BehindRemoteDialogComponent, BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
@@ -156,18 +156,9 @@ export class ToolbarComponent implements OnInit {
     );
   };
 
-  private openSetUpstreamDialog = () => {
-    const branchName = this.currentRepo.headBranch()?.name ?? '';
-    return this.dialog.open(SetUpstreamDialogComponent, {
-      header: `Set upstream for "${branchName}"`,
-      width: '500px',
-      modal: true,
-      data: {branchName},
-    })!.onClose.pipe(
-      switchMap((result: SetUpstreamResult | null) =>
-        result ? this.gitApi.git(['push', '--set-upstream', result.remote, result.branch]) : EMPTY
-      ),
+  private openSetUpstreamDialog = () =>
+    openSetUpstreamDialog(this.dialog, this.currentRepo.headBranch()?.name ?? '').pipe(
+      switchMap(result => result ? this.gitApi.git(['push', '--set-upstream', result.remote, result.branch]) : EMPTY),
     );
-  };
 
 }
