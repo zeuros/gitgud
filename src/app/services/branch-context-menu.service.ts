@@ -41,6 +41,8 @@ export class BranchContextMenuService {
 
   selectedNode = signal<TreeNode<Branch> | undefined>(undefined);
 
+  selectBranch = (branch: Branch) => this.selectedNode.set({data: branch, label: branch.name});
+
   private name = computed(() => this.selectedNode()?.data?.name ?? '…');
   private head = computed(() => this.currentRepo.headBranch()?.name ?? 'HEAD');
 

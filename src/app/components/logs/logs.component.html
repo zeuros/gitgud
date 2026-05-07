@@ -42,8 +42,7 @@
             [pSelectableRow]="commit"
             [pSelectableRowIndex]="rowIndex"
             [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2"
-            (contextmenu)="openContextMenu(commit, $event)"
-            [class.p-highlight-contextmenu]="contextMenuActiveCommit() === commit"
+            (contextmenu)="openCommitContextMenu(commit, $event)"
             [pContextMenuRow]="commit"
             [pContextMenuRowDisabled]="isIndex(commit)"
         >
@@ -82,7 +81,8 @@
                              [class.checked-out]="commit.isPointedByLocalHead"
                              [style.--offset.px]="(isDetachedHead ? i + 1 : i) * 30"
                              [style.z-index]="420 - (isDetachedHead ? i + 1 : i)"
-                             [style.filter]="commitColor(commit.indent!)" pDraggable>
+                             [style.filter]="commitColor(commit.indent!)" pDraggable
+                             (contextmenu)="openBranchContextMenu((local ?? distant)!, $event)">
                             @if (commit.isPointedByLocalHead) {
                                 <i class="fa fa-check mr-2 with-padding"></i>
                             }
@@ -129,3 +129,4 @@
 <p-contextMenu #commitContextMenu [model]="commitContextMenuService.commitContextMenu()" appendTo="body"/>
 <p-contextMenu #stashContextMenu [model]="stashContextMenuService.stashContextMenu()" appendTo="body"/>
 <p-contextMenu #tagContextMenu [model]="tagContextMenuService.tagContextMenu()" appendTo="body"/>
+<p-contextMenu #branchContextMenu [model]="branchContextMenuService.branchContextMenu()" appendTo="body"/>
