@@ -83,7 +83,7 @@
                              [style.z-index]="420 - (isDetachedHead ? i + 1 : i)"
                              [style.filter]="commitColor(commit.indent!)" pDraggable
                              (contextmenu)="openBranchContextMenu((local ?? distant)!, $event)">
-                            @if (commit.isPointedByLocalHead) {
+                            @if (local.isHeadPointed) {
                                 <i class="fa fa-check mr-2 with-padding"></i>
                             }
                             <span class="ellipsis branch-name">{{ normalizedBranchName(local ?? distant) }}</span>
