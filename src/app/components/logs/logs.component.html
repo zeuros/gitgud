@@ -68,7 +68,7 @@
                             <span class="ellipsis branch-name">HEAD (detached)</span>
                             <i class="fa fa-unlink mr-2"></i>
                             @if (extraCount > 0) {
-                                <p-badge [value]="'+'+extraCount" badgeSize="small"/>
+                                <p-badge [value]="'+'+extraCount" size="small" class="extra-count-badge"/>
                             }
                         </div>
                     </div>
@@ -96,7 +96,7 @@
                                 }
                             </span>
                             @if (extraCount > 0 && i == 0) {
-                                <p-badge [value]="'+'+extraCount" badgeSize="small" class="ml-2"/>
+                                <p-badge [value]="'+'+extraCount" size="small" class="extra-count-badge"/>
                             }
                         </div>
                     </div>
