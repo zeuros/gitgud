@@ -70,6 +70,8 @@ $row-spacing: 8px;
         &:hover {
 
           .branch-tag {
+            opacity: 1;
+
             .commit-branch, .commit-tag {
               transform: translateY(var(--offset)) scale(1.05);
               max-width: 300px;
@@ -79,6 +81,12 @@ $row-spacing: 8px;
         }
 
         .branch-tag {
+          transition: all 0.3s ease;
+          opacity: 0;
+
+          &:first-child {
+            opacity: 1;
+          }
 
           .commit-branch, .commit-tag {
             transition: all 0.2s ease;
