@@ -16,33 +16,37 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, effect, inject} from '@angular/core';
+import {Component, effect, inject, viewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ToastModule} from 'primeng/toast';
 import {ConfirmDialog} from 'primeng/confirmdialog';
+import {ContextMenu} from 'primeng/contextmenu';
 import {GitRepositoryStore} from './stores/git-repos.store';
 import {AutoFetchService} from './services/auto-fetch.service';
 import {Router, RouterOutlet} from '@angular/router';
 import {SettingsDialogComponent} from './components/dialogs/settings-dialog/settings-dialog.component';
 import {ThemeService} from './services/theme.service'; // bootstraps theme reactivity
+import {ActiveContextMenuService} from './services/active-context-menu.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, SettingsDialogComponent],
+  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, SettingsDialogComponent, ContextMenu],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
 
-  private readonly gitRepositoryStore = inject(GitRepositoryStore);
-  private readonly router = inject(Router);
+  protected activeContextMenu = inject(ActiveContextMenuService);
+  private gitRepositoryStore = inject(GitRepositoryStore);
+  private router = inject(Router);
+  private globalMenu = viewChild.required<ContextMenu>('globalMenu');
 
   constructor() {
     inject(AutoFetchService); // Starts auto-fetch
-    inject(ThemeService);    // Applies theme from config
+    inject(ThemeService);     // Applies theme from config
 
-
+    effect(() => this.activeContextMenu.register(this.globalMenu()));
     effect(() => this.router.navigate([this.gitRepositoryStore.hasRepositories() ? 'repo' : 'welcome-screen']));
 
     console.log('Process env: ', window.electron.process.env);

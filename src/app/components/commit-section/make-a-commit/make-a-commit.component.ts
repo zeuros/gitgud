@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject, signal, viewChild} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {Divider} from 'primeng/divider';
 import {FormBuilder, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
@@ -34,7 +34,7 @@ import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
 import {WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
 import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
-import {ContextMenu} from 'primeng/contextmenu';
+import {ActiveContextMenuService} from '../../../services/active-context-menu.service';
 import {UnstagedFileContextMenuService} from '../../../services/unstaged-file-context-menu.service';
 
 @Component({
@@ -50,7 +50,6 @@ import {UnstagedFileContextMenuService} from '../../../services/unstaged-file-co
     Checkbox,
     Splitter,
     FormsModule,
-    ContextMenu,
   ],
   templateUrl: './make-a-commit.component.html',
   styleUrl: './make-a-commit.component.scss',
@@ -69,8 +68,8 @@ export class MakeACommitComponent {
   protected keys = Object.keys;
   protected directory = directory;
   protected fileName = fileName;
-  private unstagedContextMenuRef = viewChild.required<ContextMenu>('unstagedCtxMenu');
   private commitService = inject(CommitService);
+  private activeContextMenu = inject(ActiveContextMenuService);
   private savedFormState?: typeof this.commitForm.value;
 
   protected commit() {
@@ -116,7 +115,7 @@ export class MakeACommitComponent {
     event.preventDefault();
     this.unstagedContextMenu.selectedFile.set(file);
     this.unstagedContextMenu.staged.set(staged);
-    this.unstagedContextMenuRef().show(event);
+    this.activeContextMenu.show(this.unstagedContextMenu.contextMenu(), event);
   };
 
   protected $WorkDirFileChanges = (w: WorkingDirectoryFileChange) => w;
