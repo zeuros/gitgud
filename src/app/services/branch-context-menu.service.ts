@@ -29,6 +29,7 @@ import {PromptService} from './prompt.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {EditRemoteComponent} from '../components/dialogs/edit-remote/edit-remote.component';
 import {openSetUpstreamDialog} from '../components/dialogs/set-upstream-dialog/set-upstream-dialog.component';
+import {CreateBranchService} from './create-branch.service';
 
 @Injectable({providedIn: 'root'})
 export class BranchContextMenuService {
@@ -39,6 +40,7 @@ export class BranchContextMenuService {
   private gitWorkflow = inject(GitWorkflowService);
   private prompt = inject(PromptService);
   private dialog = inject(DialogService);
+  private createBranch = inject(CreateBranchService);
 
   selectedNode = signal<TreeNode<Branch> | undefined>(undefined);
 
@@ -136,10 +138,7 @@ export class BranchContextMenuService {
   private rebaseBranch = () =>
     this.gitWorkflow.doRunAndRefresh(['rebase', this.name()], `Rebased ${this.head()} onto ${this.name()}`, true, false);
 
-  private createBranchHere = () =>
-    this.prompt.open('Branch name:')
-      .pipe(first(notUndefined))
-      .subscribe(newName => this.gitWorkflow.doRunAndRefresh(['checkout', '-b', newName, this.name()], `Branch ${newName} created from ${this.name()}`));
+  private createBranchHere = () => this.createBranch.createBranchAtSha(this.selectedNode()!.data!.tip!.sha!);
 
   private resetBranch = (mode: 'soft' | 'mixed' | 'hard') =>
     this.gitWorkflow.doRunAndRefresh(['reset', `--${mode}`, this.name()], `Reset ${mode} to ${this.name()}`, mode === 'hard', false);
