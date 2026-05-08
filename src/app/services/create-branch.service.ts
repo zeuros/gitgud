@@ -17,7 +17,7 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {switchMap} from 'rxjs';
+import {catchError, EMPTY, finalize, switchMap, tap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {PopupService} from './popup.service';
@@ -44,8 +44,12 @@ export class CreateBranchService {
     this.newBranchSha.set(undefined);
     this.name.set('');
     if (!name) return;
-    this.gitApi.git(['checkout', '-b', name, sha])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
-      .subscribe(() => this.popup.success(`Branch "${name}" created`));
+    this.gitApi.git(['branch', name, sha])
+      .pipe(
+        tap(() => this.popup.success(`Branch "${name}" created`)),
+        switchMap(() => this.gitApi.git(['checkout', name])),
+        finalize(this.gitRefresh.doRefreshBranchesAndLogs),
+      )
+      .subscribe();
   };
 }
