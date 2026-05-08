@@ -37,11 +37,11 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {LogBuilderService} from '../../services/log-builder.service';
 import {CANVAS_MARGIN, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
-import {ContextMenu} from 'primeng/contextmenu';
 import {CommitContextMenuService} from '../../services/commit-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
+import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import {GitTag} from '../../models/git-tag';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {Badge} from 'primeng/badge';
@@ -58,7 +58,6 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
     DragDropModule,
     SearchLogsComponent,
     DatePipe,
-    ContextMenu,
     Badge,
     InputText,
     FormsModule,
@@ -76,6 +75,7 @@ export class LogsComponent {
   protected stashContextMenuService = inject(StashContextMenuService);
   protected tagContextMenuService = inject(TagContextMenuService);
   protected branchContextMenuService = inject(BranchContextMenuService);
+  private activeContextMenu = inject(ActiveContextMenuService);
   protected commitsSelection = computed(() => {
     const selectedCommitsShas = this.currentRepo.selectedCommitsShas();
     return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
@@ -95,10 +95,6 @@ export class LogsComponent {
   private _tableHeight = signal(0);
   private canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   private logTable = viewChild<Table<DisplayRef>>('logTable');
-  private commitContextMenu = viewChild<ContextMenu>('commitContextMenu');
-  private stashContextMenu = viewChild<ContextMenu>('stashContextMenu');
-  private tagContextMenu = viewChild<ContextMenu>('tagContextMenu');
-  private branchContextMenu = viewChild<ContextMenu>('branchContextMenu');
   private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
   private logTableContainer = computed(() => this.logTableRef()?.querySelector<HTMLElement>('.p-datatable-table-container'));
   protected visibleCommitsCount = computed(() => {
@@ -241,7 +237,7 @@ export class LogsComponent {
   });
 
   private onTableScroll: EventListener = ({target}) => {
-    this.hideContextMenus();
+    this.activeContextMenu.hide();
     this.firstCommitOffsetPx.set((target as HTMLElement).scrollTop % ROW_HEIGHT); // Update pixel-based scroll for smooth canvas drawing
     const startCommit = Math.floor((target as HTMLElement).scrollTop / ROW_HEIGHT);
     this.currentRepo.update({startCommit}); // First commit to raw
@@ -266,36 +262,26 @@ export class LogsComponent {
 
   protected openCommitContextMenu = (commit: DisplayRef, event: PointerEvent) => {
     event.stopPropagation();
-    this.hideContextMenus();
 
     if (isCommit(commit)) {
       this.commitContextMenuService.selectedCommit.set(commit);
-      this.commitContextMenu()?.show(event);
+      this.activeContextMenu.show(this.commitContextMenuService.commitContextMenu(), event);
     } else if (isStash(commit)) {
       this.stashContextMenuService.selectedCommit.set(commit);
-      this.stashContextMenu()?.show(event);
+      this.activeContextMenu.show(this.stashContextMenuService.stashContextMenu(), event);
     }
   };
 
   protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
     event.stopPropagation();
     this.tagContextMenuService.selectedTag.set(tag);
-    this.hideContextMenus();
-    this.tagContextMenu()?.show(event);
+    this.activeContextMenu.show(this.tagContextMenuService.tagContextMenu(), event);
   };
 
   protected openBranchContextMenu = (branch: Branch, event: MouseEvent) => {
     event.stopPropagation();
     this.branchContextMenuService.selectBranch(branch);
-    this.hideContextMenus();
-    this.branchContextMenu()?.show(event);
-  };
-
-  protected hideContextMenus = () => {
-    this.commitContextMenu()?.hide();
-    this.stashContextMenu()?.hide();
-    this.tagContextMenu()?.hide();
-    this.branchContextMenu()?.hide();
+    this.activeContextMenu.show(this.branchContextMenuService.branchContextMenu(), event);
   };
 
   protected remote = remote;

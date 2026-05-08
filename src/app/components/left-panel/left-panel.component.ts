@@ -16,10 +16,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject, signal, viewChild} from '@angular/core';
+import {Component, computed, inject} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
 import {Tree} from 'primeng/tree';
-import {ContextMenu} from 'primeng/contextmenu';
+import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import {TreeNode} from 'primeng/api';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {findNode, local, remote, toBranchTree} from '../../utils/branch-utils';
@@ -43,7 +43,6 @@ import {BranchAheadBehindService} from '../../services/branch-ahead-behind.servi
   standalone: true,
   imports: [
     Tree,
-    ContextMenu,
     TableModule,
     Listbox,
     FormsModule,
@@ -58,7 +57,6 @@ export class LeftPanelComponent {
   protected currentRepo = inject(CurrentRepoStore);
   protected tagContextMenuService = inject(TagContextMenuService);
   protected stashContextMenuService = inject(StashContextMenuService);
-  private stashContextMenu = viewChild<ContextMenu>('stashContextMenu');
   protected localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
   protected remoteBranches = computed(() =>
     toBranchTree(this.currentRepo.branches().filter(remote) ?? [])
@@ -68,9 +66,9 @@ export class LeftPanelComponent {
     if (!sha) return null;
     return findNode([...this.localBranches(), ...this.remoteBranches()], sha);
   });
-  private tagContextMenu = viewChild<ContextMenu>('tagContextMenu');
   protected branchContextMenuService = inject(BranchContextMenuService);
   protected aheadBehind = inject(BranchAheadBehindService);
+  protected activeContextMenu = inject(ActiveContextMenuService);
   private branchReader = inject(BranchReaderService);
 
   protected selectBranchCommit = (branch?: Branch) => {
@@ -88,25 +86,28 @@ export class LeftPanelComponent {
   protected openStashContextMenu = (stash: Commit, event: MouseEvent) => {
     event.preventDefault();
     this.stashContextMenuService.selectedCommit.set(stash as unknown as DisplayRef);
-    this.stashContextMenu()?.show(event);
+    this.activeContextMenu.show(this.stashContextMenuService.stashContextMenu(), event);
   };
 
   protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
     event.preventDefault();
     this.tagContextMenuService.selectedTag.set(tag);
-    this.tagContextMenu()?.show(event);
+    this.activeContextMenu.show(this.tagContextMenuService.tagContextMenu(), event);
   };
 
   protected checkoutBranch = (branch?: Branch) => {
-      if (branch) this.branchReader.checkoutBranch(branch);
+    if (branch) this.branchReader.checkoutBranch(branch);
   };
 
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
     this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, leftPanel: sizes.map(Number)}});
 
+  protected prepareBranchContextMenu = (node: TreeNode<Branch>) => {
+    this.branchContextMenuService.selectedNode.set(node);
+    this.activeContextMenu.contextMenu.set(this.branchContextMenuService.branchContextMenu());
+  };
 
   protected $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
   protected $stash = (stash: Commit) => stash;
   protected $tag = (tag: GitTag) => tag;
-
 }

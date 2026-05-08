@@ -19,8 +19,8 @@
                             [selection]="selectedBranchNode()"
                             (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
-                            (onNodeContextMenuSelect)="branchContextMenuService.selectedNode.set($event.node)"
-                            [contextMenu]="branchesContextMenu"
+                            [contextMenu]="activeContextMenu.menuRef"
+                            (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
                     >
                         <ng-template pTemplate="default" let-node>
                             <span class="flex align-items-center">
@@ -51,8 +51,8 @@
                             [selection]="selectedBranchNode()"
                             (onNodeSelect)="selectBranchCommit($branchNode($event.node).data)"
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
-                            (onNodeContextMenuSelect)="branchContextMenuService.selectedNode.set($event.node)"
-                            [contextMenu]="branchesContextMenu"
+                            [contextMenu]="activeContextMenu.menuRef"
+                            (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
                     />
                 </div>
             </div>
@@ -106,6 +106,3 @@
         </ng-template>
     </p-splitter>
 }
-<p-contextMenu #branchesContextMenu [model]="branchContextMenuService.branchContextMenu()" appendTo="body"/>
-<p-contextMenu #stashContextMenu [model]="stashContextMenuService.stashContextMenu()" appendTo="body"/>
-<p-contextMenu #tagContextMenu [model]="tagContextMenuService.tagContextMenu()" appendTo="body"/>
