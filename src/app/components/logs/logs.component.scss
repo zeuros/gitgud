@@ -71,7 +71,7 @@ $row-spacing: 8px;
 
           .branch-tag {
             .commit-branch, .commit-tag {
-              transform: translateY(var(--offset)) scale(1);
+              transform: translateY(var(--offset)) scale(1.05);
               max-width: 300px;
               z-index: 420;
             }
@@ -82,7 +82,7 @@ $row-spacing: 8px;
 
           .commit-branch, .commit-tag {
             transition: all 0.2s ease;
-            transform: translateY(0) scale(0.95);
+            transform: translateY(0) scale(1);
             z-index: 300; // Display this over commit graph
             position: absolute;
             left: 8px;
@@ -309,4 +309,11 @@ $row-spacing: 8px;
   width: 94%;
   font-size: 0.75rem;
   padding: 0 0.5rem;
+}
+
+.extra-count-badge {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translate(110%, -50%);
 }
