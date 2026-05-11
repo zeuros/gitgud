@@ -1,3 +1,5 @@
+@let draggingBranch = branchDragDrop.draggingBranch();
+@let isDragging = !!draggingBranch;
 @if (showSearchBar) {
     <gitgud-search-logs (onSearch)="search($event)"/>
 }
@@ -77,27 +79,36 @@
                     @let local = branchLocalAndDistant[0];
                     @let distant = branchLocalAndDistant[1];
                     <div class="branch-tag">
+                        <!-- cdkDropList creates a ghost on destinations when dragging -->
                         <div class="commit-branch"
+                             cdkDropList
+                             cdkDropListSortingDisabled
+                             (pointerenter)="branchDragDrop.onMouseEnter(local ?? distant)"
+                             (pointerleave)="branchDragDrop.onMouseLeave()"
+
+                             [class.drop-target-active]="isDragging && draggingBranch != local"
+                             [class.drop-target-hover]="branchDragDrop.hoveredBranch() === (local ?? distant)"
+
                              [class.checked-out]="commit.isPointedByLocalHead"
                              [style.--offset.px]="(isDetachedHead ? i + 1 : i) * 30"
                              [style.z-index]="420 - (isDetachedHead ? i + 1 : i)"
-                             [style.filter]="commitColor(commit.indent!)" pDraggable
-                             (contextmenu)="openBranchContextMenu((local ?? distant)!, $event)">
-                            @if (local.isHeadPointed) {
-                                <i class="fa fa-check mr-2 with-padding"></i>
-                            }
-                            <span class="ellipsis branch-name">{{ normalizedBranchName(local ?? distant) }}</span>
-                            <span class="float-icons">
-                                @if (local) {
-                                    <i class="fa fa-laptop"></i>
-                                }
-                                @if (distant) {
-                                    <i class="fa fa-github"></i>
-                                }
-                            </span>
-                            @if (extraCount > 0 && i == 0) {
-                                <p-badge [value]="'+'+extraCount" size="small" class="extra-count-badge"/>
-                            }
+                             [style.filter]="commitColor(commit.indent!)"
+                             (contextmenu)="openBranchContextMenu((local ?? distant)!, $event)"
+                        >
+                            <div class="draggable-branch"
+                                 cdkDrag
+                                 [cdkDragData]="local ?? distant"
+                                 (cdkDragStarted)="branchDragDrop.onDragStarted(local ?? distant)"
+                                 (cdkDragEnded)="branchDragDrop.completeDrop($event)">
+                                <!-- ghost clone shown while dragging -->
+                                <ng-template cdkDragPreview>
+                                    <div class="draggable-branch dragging-clone">
+                                        <gitgud-log-branch-tag [local]="local" [distant]="distant" [extraCount]="extraCount" [positionInBranchList]="i"/>
+                                    </div>
+                                </ng-template>
+
+                                <gitgud-log-branch-tag [local]="local" [distant]="distant" [extraCount]="extraCount" [positionInBranchList]="i"/>
+                            </div>
                         </div>
                     </div>
                 }
@@ -108,7 +119,6 @@
                              [style.--offset.px]="tagOffset * 30"
                              [style.z-index]="420 - tagOffset"
                              [title]="tag.message ?? tag.name"
-                             pDraggable
                              (contextmenu)="openTagContextMenu(tag, $event)">
                             <i class="fa fa-tag mr-2"></i>
                             <span class="ellipsis branch-name">{{ tag.name }}</span>
