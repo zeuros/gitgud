@@ -43,10 +43,7 @@ export class BranchDragDropService {
     ];
   });
 
-  mergeBranch = () => undefined;
-
-  // requestAnimationFrame prevents CDK’s internal drag setup frame from seeing inconsistent state.
-  onDragStarted = (branch: Branch) => requestAnimationFrame(() => this.draggingBranch.set(branch));
+  onDragStarted = (branch: Branch | null) => this.draggingBranch.set(branch);
 
   completeDrop = (event: CdkDragEnd<Branch>) => {
     const source = this.draggingBranch();
@@ -66,9 +63,12 @@ export class BranchDragDropService {
     this.activeContextMenu.show(this.menu(), event.event);
   };
 
-  onMouseEnter = (branch: Branch) => {
+  onMouseEnter = (branch: Branch | null) => {
+    if(!branch) return;
+
     const dragging = this.draggingBranch();
     if (!dragging || branch.tip.sha === dragging.tip.sha) return;
+
     this.hoveredBranch.set(branch);
   };
 

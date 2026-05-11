@@ -16,6 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {groupBy, orderBy, values} from 'lodash-es';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {TreeNode} from 'primeng/api';
 
@@ -88,5 +89,17 @@ export const findNode = (nodes: TreeNode<Branch>[], sha: string): TreeNode<Branc
 // Normalize origin / local branch name origin/main → main
 export const normalizedBranchName = (b: Branch | null) => b?.name.replace('origin/', '')
 
-// Used to sort groups of branches [local, distant][] by putting the head pointed local branches groups first
-export const isHeadPointed = (branches: Branch[]) => branches.some(b => b.isHeadPointed)
+/** A pair of branches sharing the same normalized name. local is index 0, distant is index 1. */
+export type LocalAndDistant = [local: Branch | null, distant: Branch | null];
+
+// Used to sort LocalAndDistant pairs by putting the head-pointed group first
+export const isHeadPointed = ([local, distant]: LocalAndDistant) =>
+  local?.isHeadPointed ?? distant?.isHeadPointed ?? false;
+
+export const toLocalAndDistantPairs = (branches: Branch[]): LocalAndDistant[] =>
+  orderBy(
+    values(groupBy(branches, normalizedBranchName))
+      .map(group => [group.find(local) ?? null, group.find(remote) ?? null] as LocalAndDistant),
+    isHeadPointed,
+    'desc',
+  );
