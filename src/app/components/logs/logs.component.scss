@@ -65,6 +65,8 @@ $row-spacing: 8px;
         position: relative;
         padding: 0 !important;
         overflow: visible;
+        display: flex;
+        align-items: center;
 
         // Other branches will appear below on hovering the branch <td>
         &:hover {
@@ -286,7 +288,7 @@ $row-spacing: 8px;
   transition: all 0.2s ease;
   border-radius: 3px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-  padding: 1.5px 4px;
+  padding: 2.5px 4px;
   align-items: center;
 }
 

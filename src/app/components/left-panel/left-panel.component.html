@@ -1,6 +1,5 @@
 @let panelSizes = currentRepo.panelSizes()?.leftPanel;
-@let draggingBranch = branchDragDrop.draggingBranch();
-@let isDragging = !!draggingBranch;
+
 @if (panelSizes) {
     <p-splitter
             [style]="{ height: '100%' }"
@@ -31,7 +30,7 @@
                                       cdkDropListSortingDisabled
                                       (pointerenter)="branchDragDrop.onMouseEnter(node.data)"
                                       (pointerleave)="branchDragDrop.onMouseLeave()"
-                                      [class.drop-target-active]="isDragging && node.data.tip.sha !== draggingBranch?.tip?.sha"
+                                      [class.drop-target-active]="branchDragDrop.isValidDropTarget(node.data)"
                                       [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
                                     <span class="ellipsis flex-1 gap-1">{{ node.label }}</span>
                                     @let ab = aheadBehind.aheadBehindMap()[node.data.name];
@@ -73,7 +72,7 @@
                                       cdkDropListSortingDisabled
                                       (pointerenter)="branchDragDrop.onMouseEnter(node.data)"
                                       (pointerleave)="branchDragDrop.onMouseLeave()"
-                                      [class.drop-target-active]="isDragging && node.data.tip.sha !== draggingBranch?.tip?.sha"
+                                      [class.drop-target-active]="branchDragDrop.isValidDropTarget(node.data)"
                                       [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
                                     <span class="ellipsis flex-1">{{ node.label }}</span>
                                 </span>

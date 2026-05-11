@@ -65,6 +65,16 @@ export class GitWorkflowService {
   doRunAndRefresh = (args: (string | undefined)[], successMsg?: string, stashBefore = false, thenUnstash = true) =>
     this.runAndRefresh(args, successMsg, stashBefore, thenUnstash).subscribe();
 
+  // Checks out branchName, runs args, then refreshes. Always stashes first.
+  checkoutThenRun = (branchName: string, args: string[], msg?: string, thenUnstash = true) => {
+    const action$ = this.gitApi.git(['checkout', branchName]).pipe(
+      switchMap(() => this.gitApi.git(args)),
+      finalize(this.gitRefresh.doRefreshBranchesAndLogs),
+      tap(() => msg && this.popup.success(msg)),
+    );
+    this.stash.stashAndRun(action$, thenUnstash).subscribe();
+  };
+
 
   rewordCommit = ({summary, description}: { summary: string, description: string }) => {
     const selectedCommitSha = this.currentRepo.selectedCommitSha()!;

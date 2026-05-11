@@ -74,6 +74,11 @@ export const toBranchTree = (branches: Branch[], branchNameTransform = (n: strin
 
 export const removeRemotePrefix = (name: string): string => name.match(/.*?\/(.*)/)?.[1] ?? name;
 
+export const parseRemote = (name: string): {remote: string; branch: string} => {
+  const slash = name.indexOf('/');
+  return {remote: name.substring(0, slash), branch: name.substring(slash + 1)};
+};
+
 
 export const findNode = (nodes: TreeNode<Branch>[], sha: string): TreeNode<Branch> | null => {
   for (const node of nodes) {

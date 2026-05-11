@@ -1,11 +1,10 @@
-@let draggingBranch = branchDragDrop.draggingBranch();
-@let isDragging = !!draggingBranch;
-@if (showSearchBar) {
-    <gitgud-search-logs (onSearch)="search($event)"/>
-}
 @let displayLog = computedDisplayLog();
 @let graphColCount = graphColumnCount();
 @let visibleCommitsCnt = visibleCommitsCount();
+
+@if (showSearchBar) {
+    <gitgud-search-logs (onSearch)="search($event)"/>
+}
 @if (graphColCount && visibleCommitsCnt && visibleCommitsCnt > 0) {
     <canvas #canvas
             id="commit-graph-canvas"
@@ -86,7 +85,7 @@
                              (pointerenter)="branchDragDrop.onMouseEnter(local ?? distant)"
                              (pointerleave)="branchDragDrop.onMouseLeave()"
 
-                             [class.drop-target-active]="isDragging && (local ?? distant)?.tip?.sha !== draggingBranch?.tip?.sha"
+                             [class.drop-target-active]="branchDragDrop.isValidDropTarget(local ?? distant)"
                              [class.drop-target-hover]="branchDragDrop.hoveredBranch() === (local ?? distant)"
 
                              [class.checked-out]="commit.isPointedByLocalHead"
