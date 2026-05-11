@@ -18,7 +18,7 @@
 
 import {inject, Injectable, signal} from '@angular/core';
 import {AppFileStatusKind, CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
-import {EMPTY, map, of, Subject, switchMap} from 'rxjs';
+import {EMPTY, map, of, Subject, switchMap, tap} from 'rxjs';
 import {instanceOf} from '../utils/utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {WorkingDirectoryFileChange} from "../lib/github-desktop/model/workdir";
@@ -44,9 +44,16 @@ export class FileDiffPanelService {
       // Committed file → emit once, file won't change
       if (instanceOf(file, CommittedFileChange)) return of(file);
 
-      // Working directory file → re-emit on every working dir status change (staging, file saves, etc.)
-      if (instanceOf(file, WorkingDirectoryFileChange))
-        return this.workDirStatus$.pipe(map(() => ({...file})));
+      // Working directory file → re-emit on status change, or emit null if file left its list
+      if (instanceOf(file, WorkingDirectoryFileChange)) {
+        return this.workDirStatus$.pipe(
+          map(status => {
+            const list = file.staged ? status?.staged : status?.unstaged;
+            return list?.some(f => f.path === file.path) ? {...file} : null;
+          }),
+          tap(f => { if (!f) this.selectedFile.set(null); }),
+        );
+      }
 
       return EMPTY;
     }),
