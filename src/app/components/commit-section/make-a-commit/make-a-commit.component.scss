@@ -4,6 +4,12 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%;
+
+  p-splitter {
+    flex: 1;
+    min-height: 0;
+  }
 
   ::ng-deep {
     .max-size-bottom .p-splitterpanel:last-child {
@@ -28,6 +34,15 @@
       }
     }
   }
+}
+
+.conflicted-section {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 120px;
+  max-height: 30%;
+  border-bottom: 1px solid var(--p-content-border-color);
 }
 
 .conflict-header {
