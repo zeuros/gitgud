@@ -6,6 +6,28 @@
 <p-divider layout="vertical"/>
 
 <div class="actions">
+    @if (isRebasing()) {
+        <span class="rebase-label">Rebase in progress</span>
+        <p-button class="sober rebase-continue"
+                  [text]="true"
+                  [loading]="loading() === 'rebase-continue'"
+                  [disabled]="!!loading() || !!currentRepo.workDirStatus()?.conflicted?.length"
+                  (onClick)="continueRebase()"
+        >
+            <i class="fa fa-play"></i>
+            <span>Continue</span>
+        </p-button>
+        <p-button class="sober rebase-abort"
+                  [text]="true"
+                  [loading]="loading() === 'rebase-abort'"
+                  [disabled]="!!loading()"
+                  (onClick)="abortRebase()"
+        >
+            <i class="fa fa-times"></i>
+            <span>Abort</span>
+        </p-button>
+        <p-divider layout="vertical"/>
+    }
     <p-button class="sober"
               [text]="true"
               [loading]="loading() === 'push'"
