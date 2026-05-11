@@ -98,7 +98,8 @@
                                  cdkDrag
                                  [cdkDragData]="local ?? distant"
                                  (cdkDragStarted)="branchDragDrop.onDragStarted(local ?? distant)"
-                                 (cdkDragEnded)="branchDragDrop.completeDrop($event)">
+                                 (cdkDragEnded)="branchDragDrop.completeDrop($event)"
+                                 (dblclick)="checkoutBranch(local ?? distant, $event)">
                                 <!-- ghost clone shown while dragging -->
                                 <ng-template cdkDragPreview>
                                     <div class="draggable-branch dragging-clone">
