@@ -48,6 +48,7 @@ import {GitTag} from '../../models/git-tag';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {Badge} from 'primeng/badge';
 import {CreateBranchService} from '../../services/create-branch.service';
+import {ConflictService} from '../../services/conflict.service';
 import {InputText} from 'primeng/inputtext';
 import {FormsModule} from '@angular/forms';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
@@ -82,6 +83,7 @@ export class LogsComponent {
   private activeContextMenu = inject(ActiveContextMenuService);
   protected branchDragDrop = inject(BranchDragDropService);
   private branchReader = inject(BranchReaderService);
+  private conflict = inject(ConflictService);
 
   protected checkoutBranch = (branch: Branch | null, event: MouseEvent) => {
     event.stopPropagation();
@@ -228,6 +230,8 @@ export class LogsComponent {
       : undefined;
 
     const {displayLog, edges, untrackedStashes, graphColumnCount} = this.logBuilder.buildDisplayLog(logs, stashes, indexParent);
+
+    this.conflict.markWorkDirCommitConflicted(displayLog);
 
     this.computedDisplayLog.set(displayLog);
     this.edges.set(edges);

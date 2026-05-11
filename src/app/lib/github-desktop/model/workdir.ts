@@ -23,6 +23,7 @@ import {AppFileStatus, FileChange} from './status';
 export interface WorkDirStatus {
   unstaged: WorkingDirectoryFileChange[];
   staged: WorkingDirectoryFileChange[];
+  conflictCount: number;
 }
 
 /** encapsulate the changes to a file in the working directory */

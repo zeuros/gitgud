@@ -411,3 +411,5 @@ function getIncludeAllState(
 // List of known conflicted index entries for a file, extracted from mapStatus
 // inside `app/src/lib/status-parser.ts` for convenience
 export const conflictStatusCodes = ['DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU'];
+
+export const isConflictedStatusCode = (xy: string) => xy[0] === 'U' || xy[1] === 'U' || xy === 'AA' || xy === 'DD';
