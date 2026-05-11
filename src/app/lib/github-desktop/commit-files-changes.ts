@@ -46,7 +46,7 @@
  */
 
 import {ChangeSet} from './model/change-set';
-import {AppFileStatus, CommittedFileChange} from './model/status';
+import {AppFileStatus, CommittedFileChange, isConflictedStatusCode} from './model/status';
 import {forceUnwrap} from './throw-ex';
 import {isCopyOrRename, mapPorcelainStatus, mapStatus} from './log';
 import {WorkDirStatus, WorkingDirectoryFileChange} from './model/workdir';
@@ -131,9 +131,11 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, shas: string[]): 
  * @param workingDirectoryChanges The raw output from Git.
  * @returns An object containing staged and unstaged changes.
  */
+
 export const parseWorkingDirChanges = (workingDirectoryChanges: string): WorkDirStatus => {
   const staged: WorkingDirectoryFileChange[] = [];
   const unstaged: WorkingDirectoryFileChange[] = [];
+  let conflictCount = 0;
 
   workingDirectoryChanges
     .split('\0')
@@ -147,6 +149,11 @@ export const parseWorkingDirChanges = (workingDirectoryChanges: string): WorkDir
 
       const appStatus = {kind: mapPorcelainStatus(rawStatus)} as AppFileStatus;
 
+      if (isConflictedStatusCode(rawStatus)) {
+        conflictCount++;
+        return;
+      }
+
       // Push to staged/unstaged arrays if the status is non-empty
       if (['A', 'M', 'D', 'R', 'C'].includes(stagedStatus))
         staged.push(new WorkingDirectoryFileChange(path, appStatus, undefined, true));
@@ -154,5 +161,5 @@ export const parseWorkingDirChanges = (workingDirectoryChanges: string): WorkDir
         unstaged.push(new WorkingDirectoryFileChange(path, appStatus));
     });
 
-  return {unstaged, staged};
+  return {unstaged, staged, conflictCount};
 };

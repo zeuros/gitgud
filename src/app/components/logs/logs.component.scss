@@ -44,6 +44,22 @@ $row-spacing: 8px;
             color: var(--babedouGray);
           }
         }
+
+        // Conflicted working dir
+        &.conflict {
+          td.summary, td.author, td.date, .commit-highlight-background {
+            background: var(--row-warning-background-color);
+          }
+          td.summary {
+            color: #ffb07a;
+            font-style: italic;
+          }
+          &.p-datatable-row-selected, &.p-highlight:hover {
+            td.summary, td.author, td.date, .commit-highlight-background {
+              background: var(--row-warning-selected-background-color);
+            }
+          }
+        }
       }
 
       .p-datatable-thead {
@@ -138,6 +154,7 @@ $row-spacing: 8px;
           color: rgba(253, 247, 255, 0.17);
         }
       }
+
     }
   }
 }
