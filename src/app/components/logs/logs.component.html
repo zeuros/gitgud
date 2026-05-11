@@ -75,7 +75,7 @@
                         </div>
                     </div>
                 }
-                @for (branchLocalAndDistant of branchesGrouped; track branchLocalAndDistant[0].ref; let i = $index) {
+                @for (branchLocalAndDistant of branchesGrouped; track (branchLocalAndDistant[0] ?? branchLocalAndDistant[1])!.ref; let i = $index) {
                     @let local = branchLocalAndDistant[0];
                     @let distant = branchLocalAndDistant[1];
                     <div class="branch-tag">
