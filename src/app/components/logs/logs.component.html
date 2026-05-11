@@ -86,7 +86,7 @@
                              (pointerenter)="branchDragDrop.onMouseEnter(local ?? distant)"
                              (pointerleave)="branchDragDrop.onMouseLeave()"
 
-                             [class.drop-target-active]="isDragging && draggingBranch != local"
+                             [class.drop-target-active]="isDragging && (local ?? distant)?.tip?.sha !== draggingBranch?.tip?.sha"
                              [class.drop-target-hover]="branchDragDrop.hoveredBranch() === (local ?? distant)"
 
                              [class.checked-out]="commit.isPointedByLocalHead"

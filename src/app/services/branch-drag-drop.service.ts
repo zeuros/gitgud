@@ -67,8 +67,8 @@ export class BranchDragDropService {
   };
 
   onMouseEnter = (branch: Branch) => {
-    if (!this.draggingBranch() || branch === this.draggingBranch()) return;
-
+    const dragging = this.draggingBranch();
+    if (!dragging || branch.tip.sha === dragging.tip.sha) return;
     this.hoveredBranch.set(branch);
   };
 

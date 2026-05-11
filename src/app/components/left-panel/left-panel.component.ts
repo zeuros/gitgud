@@ -19,6 +19,7 @@
 import {Component, computed, inject} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
 import {Tree} from 'primeng/tree';
+import {CdkDropList} from '@angular/cdk/drag-drop';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import {TreeNode} from 'primeng/api';
 import {Branch} from '../../lib/github-desktop/model/branch';
@@ -36,6 +37,7 @@ import {StashContextMenuService} from '../../services/stash-context-menu.service
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
+import {BranchDragDropService} from '../../services/branch-drag-drop.service';
 
 
 @Component({
@@ -47,6 +49,7 @@ import {BranchAheadBehindService} from '../../services/branch-ahead-behind.servi
     Listbox,
     FormsModule,
     Splitter,
+    CdkDropList,
   ],
   providers: [TerminalService],
   templateUrl: './left-panel.component.html',
@@ -68,6 +71,7 @@ export class LeftPanelComponent {
   });
   protected branchContextMenuService = inject(BranchContextMenuService);
   protected aheadBehind = inject(BranchAheadBehindService);
+  protected branchDragDrop = inject(BranchDragDropService);
   protected activeContextMenu = inject(ActiveContextMenuService);
   private branchReader = inject(BranchReaderService);
 

@@ -111,16 +111,3 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
   }
 }
 
-//.cdk-drop-list-dragging {
-//  transition: none !important; // When dragging ghost, no transition (it would smooth movement uglily)
-//}
-
-.drop-target-active {
-  transition: all 120ms ease;
-  outline: 1px dashed var(--p-primary-color);
-}
-
-.drop-target-hover {
-  box-shadow: 0 0 12px var(--p-primary-color);
-  outline: 2px solid var(--p-primary-color);
-}

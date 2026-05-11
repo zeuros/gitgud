@@ -1,4 +1,6 @@
 @let panelSizes = currentRepo.panelSizes()?.leftPanel;
+@let draggingBranch = branchDragDrop.draggingBranch();
+@let isDragging = !!draggingBranch;
 @if (panelSizes) {
     <p-splitter
             [style]="{ height: '100%' }"
@@ -23,16 +25,26 @@
                             (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
                     >
                         <ng-template pTemplate="default" let-node>
-                            <span class="flex align-items-center">
-                                <span class="ellipsis flex-1 gap-1">{{ node.label }}</span>
-                                @let ab = aheadBehind.aheadBehindMap()[node.data?.name];
-                                @if (ab?.ahead) {
-                                    <span class="ahead-behind"><i class="fa fa-arrow-up"></i>{{ ab.ahead }}</span>
-                                }
-                                @if (ab?.behind) {
-                                    <span class="ahead-behind"><i class="fa fa-arrow-down"></i>{{ ab.behind }}</span>
-                                }
-                            </span>
+                            @if (node.data) {
+                                <span class="flex align-items-center flex-1 branch-drop-target"
+                                      cdkDropList
+                                      cdkDropListSortingDisabled
+                                      (pointerenter)="branchDragDrop.onMouseEnter(node.data)"
+                                      (pointerleave)="branchDragDrop.onMouseLeave()"
+                                      [class.drop-target-active]="isDragging && node.data.tip.sha !== draggingBranch?.tip?.sha"
+                                      [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
+                                    <span class="ellipsis flex-1 gap-1">{{ node.label }}</span>
+                                    @let ab = aheadBehind.aheadBehindMap()[node.data.name];
+                                    @if (ab?.ahead) {
+                                        <span class="ahead-behind"><i class="fa fa-arrow-up"></i>{{ ab.ahead }}</span>
+                                    }
+                                    @if (ab?.behind) {
+                                        <span class="ahead-behind"><i class="fa fa-arrow-down"></i>{{ ab.behind }}</span>
+                                    }
+                                </span>
+                            } @else {
+                                <span class="ellipsis flex-1">{{ node.label }}</span>
+                            }
                         </ng-template>
                     </p-tree>
                 </div>
@@ -53,7 +65,23 @@
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
                             [contextMenu]="activeContextMenu.menuRef"
                             (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
-                    />
+                    >
+                        <ng-template pTemplate="default" let-node>
+                            @if (node.data) {
+                                <span class="flex align-items-center flex-1 branch-drop-target"
+                                      cdkDropList
+                                      cdkDropListSortingDisabled
+                                      (pointerenter)="branchDragDrop.onMouseEnter(node.data)"
+                                      (pointerleave)="branchDragDrop.onMouseLeave()"
+                                      [class.drop-target-active]="isDragging && node.data.tip.sha !== draggingBranch?.tip?.sha"
+                                      [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
+                                    <span class="ellipsis flex-1">{{ node.label }}</span>
+                                </span>
+                            } @else {
+                                <span class="ellipsis flex-1">{{ node.label }}</span>
+                            }
+                        </ng-template>
+                    </p-tree>
                 </div>
             </div>
         </ng-template>
