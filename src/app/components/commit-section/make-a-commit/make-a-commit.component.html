@@ -1,13 +1,49 @@
 @let workDirStatus = currentRepo.workDirStatus();
 @let panelSizes = currentRepo.panelSizes()?.makeCommitPanel ?? [];
+@let conflicted = workDirStatus?.conflicted ?? [];
+@let hasConflicts = conflicted.length > 0;
 
 <p-splitter
         [style]="{ height: '100%' }"
         layout="vertical"
         [panelSizes]="panelSizes"
         (onResizeEnd)="savePanelSizes($event)"
-        [minSizes]="[20, 20, 20]"
+        [minSizes]="hasConflicts ? [15, 15, 15, 20] : [20, 20, 20]"
 >
+    @if (hasConflicts) {
+        <ng-template pTemplate="panel">
+            <!-- Conflicted files -->
+            <div class="flex flex-column h-full">
+                <div class="flex align-items-center justify-content-between h-3rem">
+                    <h4 class="m-0 conflict-header">Conflicted files ({{ conflicted.length }})</h4>
+                </div>
+                <p-divider class="mt-0"/>
+                <p-listbox
+                        animate.enter="slight-slide-in"
+                        [options]="conflicted"
+                        optionLabel="path"
+                        class="show-button-on-li-hover flex-1 overflow-hidden"
+                        scrollHeight="flex"
+                        [ngModel]="selectedFile()"
+                        (onChange)="selectFile($event.value)">
+                    <ng-template let-workingDirFileChanges pTemplate="item">
+                        @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
+                        <div class="flex align-items-center w-full">
+                            <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
+                               [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
+                               [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
+                            @let dir = directory(fileChanges.path);
+                            @if (dir.length) {
+                                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+                            }
+                            <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+                        </div>
+                    </ng-template>
+                </p-listbox>
+            </div>
+        </ng-template>
+    }
+
     <ng-template pTemplate="panel">
         <!-- Unstaged files -->
         <div class="flex flex-column h-full">
@@ -54,7 +90,7 @@
         <!-- Staged files -->
         <div class="flex flex-column h-full">
             <div class="flex align-items-center justify-content-between h-3rem">
-                <h4 class="m-0">Staged files ({{ workDirStatus?.staged?.length ?? 0 }})</h4>
+                <h4 class="m-0">{{ hasConflicts ? 'Resolved files' : 'Staged files' }} ({{ workDirStatus?.staged?.length ?? 0 }})</h4>
                 @if (workDirStatus?.staged?.length) {
                     <p-button styleClass="p-button-sm" (click)="workingDirectoryService.unstageAll()" label="Unstage all"/>
                 }
