@@ -23,12 +23,14 @@ import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-direc
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {PopupService} from './popup.service';
 import {AppFileStatusKind} from '../lib/github-desktop/model/status';
+import {FileDiffPanelService} from './file-diff-panel.service';
 
 @Injectable({providedIn: 'root'})
 export class UnstagedFileContextMenuService {
   private workingDir = inject(WorkingDirectoryService);
   private gitApi = inject(GitApiService);
   private popup = inject(PopupService);
+  private fileDiffPanel = inject(FileDiffPanelService);
 
   readonly selectedFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
   readonly staged = signal(false);
@@ -49,6 +51,9 @@ export class UnstagedFileContextMenuService {
 
   private discard = () => {
     const file = this.selectedFile()!;
+    if (this.fileDiffPanel.selectedFile()?.path === file.path) {
+      this.fileDiffPanel.close();
+    }
     const isUntracked = file.status.kind === AppFileStatusKind.Untracked;
     const args = isUntracked
       ? ['clean', '-f', '--', file.path]
