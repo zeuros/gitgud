@@ -41,6 +41,7 @@ import {CommitContextMenuService} from '../../services/commit-context-menu.servi
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
+import {BranchReaderService} from '../../services/electron-cmd-parser-layer/branch-reader.service';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import {BranchDragDropService} from '../../services/branch-drag-drop.service';
 import {GitTag} from '../../models/git-tag';
@@ -80,6 +81,12 @@ export class LogsComponent {
   protected branchContextMenuService = inject(BranchContextMenuService);
   private activeContextMenu = inject(ActiveContextMenuService);
   protected branchDragDrop = inject(BranchDragDropService);
+  private branchReader = inject(BranchReaderService);
+
+  protected checkoutBranch = (branch: Branch | null, event: MouseEvent) => {
+    event.stopPropagation();
+    if (branch) this.branchReader.checkoutBranch(branch);
+  };
   protected commitsSelection = computed(() => {
     const selectedCommitsShas = this.currentRepo.selectedCommitsShas();
     return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
