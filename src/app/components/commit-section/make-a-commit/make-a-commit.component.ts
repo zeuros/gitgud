@@ -107,8 +107,13 @@ export class MakeACommitComponent {
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
     this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, makeCommitPanel: sizes.map(Number)}});
 
-  protected selectFile(file: WorkingDirectoryFileChange) {
+  protected selectFile(file: WorkingDirectoryFileChange | null) {
     this.selectedFile.set(file);
+    if (!file) {
+      this.fileDiffPanelService.close();
+      this.fileDiffPanelService.closeConflict();
+      return;
+    }
     this.fileDiffPanelService.showWorkingDirDiffs(file);
   }
 
