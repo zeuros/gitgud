@@ -42,6 +42,8 @@ import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream
 import {BehindRemoteDialogComponent, BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
+import {RebaseService} from '../../services/rebase.service';
+import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -57,15 +59,18 @@ export class ToolbarComponent implements OnInit {
   protected settings = inject(SettingsService);
   protected undo = inject(UndoService);
   protected createBranch = inject(CreateBranchService);
-  protected loading = signal<'push' | 'pull' | 'fetch' | 'stash' | 'pop' | undefined>(undefined);
+  protected loading = signal<'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-continue' | 'rebase-abort' | undefined>(undefined);
   protected hasWorkDirChanges = computed(() => workingDirHasChanges(this.currentRepo.workDirStatus()));
   protected hasStashes = computed(() => this.currentRepo.stashes().length > 0);
+  protected isRebasing = computed(() => { this.currentRepo.workDirStatus(); return this.rebase.isRebasing(); });
   protected short = short;
   protected zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
   private branchAheadBehind = inject(BranchAheadBehindService);
   private gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);
+  private rebase = inject(RebaseService);
+  private workingDir = inject(WorkingDirectoryService);
   private dialog = inject(DialogService);
   private settingsDialog = viewChild.required(SettingsDialogComponent);
   private cloneDialog = viewChild.required(CloneDialogComponent);
@@ -126,6 +131,22 @@ export class ToolbarComponent implements OnInit {
     this.gitApi.git(['fetch'])
       .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
       .subscribe(() => this.autoFetch.lastFetchedAt.set(Date.now()));
+  };
+
+  protected continueRebase = () => {
+    this.loading.set('rebase-continue');
+    this.gitApi.git(['rebase', '--continue']).pipe(
+      switchMap(this.gitRefresh.refreshBranchesAndLogs),
+      finalize(() => { this.loading.set(undefined); this.workingDir.doFetchWorkingDirChanges(); }),
+    ).subscribe(() => this.popup.success('Rebase continued'));
+  };
+
+  protected abortRebase = () => {
+    this.loading.set('rebase-abort');
+    this.rebase.abortRebase().pipe(
+      switchMap(this.gitRefresh.refreshBranchesAndLogs),
+      finalize(() => { this.loading.set(undefined); this.workingDir.doFetchWorkingDirChanges(); }),
+    ).subscribe(() => this.popup.success('Rebase aborted'));
   };
 
   // Returns false when there is no upstream or the upstream branch name differs from the local branch name.

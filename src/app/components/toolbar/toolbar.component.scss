@@ -68,4 +68,16 @@ $spacing: 8px;
     margin-left: 2px;
     min-width: 53px; // avoid button width jitter when displaying seconds
   }
+
+  .rebase-label {
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--warning-text-color);
+    align-self: center;
+    white-space: nowrap;
+    padding: 0 4px;
+  }
+
+  .rebase-continue ::ng-deep .p-button { color: #6abf69; }
+  .rebase-abort    ::ng-deep .p-button { color: var(--warning-text-color); }
 }

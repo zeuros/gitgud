@@ -25,6 +25,7 @@ import {RebaseService} from './rebase.service';
 import {GitRefreshService} from './git-refresh.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {rewordCommitAction} from '../utils/rebase.utils';
+import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-directory.service';
 
 // High-level workflows combining services
 @Injectable({
@@ -37,6 +38,7 @@ export class GitWorkflowService {
   private popup = inject(PopupService);
   private gitRefresh = inject(GitRefreshService);
   private currentRepo = inject(CurrentRepoStore);
+  private workingDir = inject(WorkingDirectoryService);
 
   rebaseAndEditActions = (rebaseFrom: string, mapActions: (actions: string[]) => string[], autosquash = false) =>
     this.stash.stashAndRun(
@@ -45,10 +47,19 @@ export class GitWorkflowService {
         switchMap(actions => this.rebase.finishRebase(actions.join('\n'))),
       ),
     ).pipe(
-      catchError(e => this.rebase.abortRebase().pipe(
-        switchMap(() => this.gitRefresh.refreshBranchesAndLogs()),
-        switchMap(() => throwError(() => e)),
-      )),
+      catchError(e => {
+        // Conflict: git left rebase-merge in place — don't abort, refresh and let user resolve
+        if (this.rebase.isRebasing()) {
+          return this.gitRefresh.refreshBranchesAndLogs().pipe(
+            tap(() => this.workingDir.doFetchWorkingDirChanges()),
+            switchMap(() => throwError(() => e)),
+          );
+        }
+        return this.rebase.abortRebase().pipe(
+          switchMap(() => this.gitRefresh.refreshBranchesAndLogs()),
+          switchMap(() => throwError(() => e)),
+        );
+      }),
       switchMap(this.gitRefresh.refreshBranchesAndLogs),
     );
 
