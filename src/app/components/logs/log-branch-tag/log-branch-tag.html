@@ -1,0 +1,15 @@
+@if (local()?.isHeadPointed) {
+    <i class="fa fa-check mr-2 with-padding"></i>
+}
+<span class="ellipsis branch-name">{{ normalizedBranchName(local() ?? distant()) }}</span>
+<span class="float-icons">
+    @if (local()) {
+        <i class="fa fa-laptop"></i>
+    }
+    @if (distant()) {
+        <i class="fa fa-github"></i>
+    }
+</span>
+@if (extraCount() > 0 && positionInBranchList() == 0) {
+    <p-badge [value]="'+'+extraCount()" size="small" class="extra-count-badge"/>
+}
