@@ -26,6 +26,30 @@
         <span>Pull</span>
     </p-button>
 
+    <p-divider layout="vertical"/>
+
+    <p-button class="sober"
+              [text]="true"
+              [loading]="loading() === 'stash'"
+              [disabled]="!!loading() || !hasWorkDirChanges()"
+              (onClick)="stash()"
+    >
+        <i class="fa fa-archive"></i>
+        <span>Stash</span>
+    </p-button>
+
+    <p-button class="sober"
+              [text]="true"
+              [loading]="loading() === 'pop'"
+              [disabled]="!!loading() || !hasStashes()"
+              (onClick)="pop()"
+    >
+        <i class="fa fa-inbox"></i>
+        <span>Pop</span>
+    </p-button>
+
+    <p-divider layout="vertical"/>
+
     <p-button class="sober"
               [text]="true"
               (onClick)="createBranch.createBranchAtSha(currentRepo.headSha()!)"

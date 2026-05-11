@@ -32,6 +32,7 @@ import {AutoFetchService} from '../../services/auto-fetch.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {SettingsService} from '../../services/settings.service';
 import {short} from '../../utils/commit-utils';
+import {workingDirHasChanges} from '../../utils/utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
@@ -56,7 +57,9 @@ export class ToolbarComponent implements OnInit {
   protected settings = inject(SettingsService);
   protected undo = inject(UndoService);
   protected createBranch = inject(CreateBranchService);
-  protected loading = signal<'push' | 'pull' | 'fetch' | undefined>(undefined);
+  protected loading = signal<'push' | 'pull' | 'fetch' | 'stash' | 'pop' | undefined>(undefined);
+  protected hasWorkDirChanges = computed(() => workingDirHasChanges(this.currentRepo.workDirStatus()));
+  protected hasStashes = computed(() => this.currentRepo.stashes().length > 0);
   protected short = short;
   protected zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
@@ -102,6 +105,20 @@ export class ToolbarComponent implements OnInit {
         this.undo.clearRedoStack();
         this.undo.refreshTooltip();
       });
+  };
+
+  protected stash = () => {
+    this.loading.set('stash');
+    this.gitApi.git(['stash', '-u'])
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .subscribe(() => this.popup.success('Stashed successfully'));
+  };
+
+  protected pop = () => {
+    this.loading.set('pop');
+    this.gitApi.git(['stash', 'pop'])
+      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .subscribe(() => this.popup.success('Stash popped successfully'));
   };
 
   protected fetch = () => {

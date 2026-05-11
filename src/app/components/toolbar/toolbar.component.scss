@@ -3,10 +3,11 @@ $spacing: 8px;
 :host {
   display: flex;
   align-items: center;
-  padding-left: $spacing;
+  padding: 3px $spacing 3px $spacing;
   background: var(--p-content-background);
   border-bottom: 1px solid var(--p-content-border-color);
   gap: 6px;
+  font-size: 0.9rem;
 }
 
 .repo-info {
