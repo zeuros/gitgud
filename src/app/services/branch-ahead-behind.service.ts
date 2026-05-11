@@ -17,7 +17,7 @@
  */
 
 import {effect, inject, Injectable, signal} from '@angular/core';
-import {catchError, from, map, mergeMap, Observable, of} from 'rxjs';
+import {catchError, EMPTY, from, map, mergeMap, Observable, of} from 'rxjs';
 import {AheadBehind, Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
@@ -39,7 +39,7 @@ export class BranchAheadBehindService {
       const localTrackedBranches = this.currentRepo.branches().filter(b => b.type === BranchType.Local && b.upstream);
 
       from(localTrackedBranches)
-        .pipe(mergeMap(this.fetchForBranch))
+        .pipe(mergeMap(this.aheadBehindCountsForBranch))
         .subscribe(([branch, aheadBehind]) => this.aheadBehindMap.update(map => ({...map, [branch]: aheadBehind})));
     });
   }
@@ -51,14 +51,17 @@ export class BranchAheadBehindService {
         const [ahead, behind] = out.trim().split('\t').map(Number);
         return {ahead, behind, diverged: ahead > 0 && behind > 0};
       }),
-      catchError(() => of({ahead: 0, behind: 0, diverged: false})),
+      // If head branch is not present on remote, git throws an error, which can be silenced
+      catchError(() => EMPTY),
     );
 
-  private fetchForBranch = (branch: Branch): Observable<[string, AheadBehind]> =>
+  private aheadBehindCountsForBranch = (branch: Branch): Observable<[string, AheadBehind]> =>
     this.gitApi.git(['rev-list', '--count', '--left-right', `${branch.ref}...refs/remotes/${branch.upstream}`]).pipe(
       map(out => {
         const [ahead, behind] = out.trim().split('\t').map(Number);
-        return [branch.name, {ahead, behind}];
+        return [branch.name, {ahead, behind}] as [string, AheadBehind];
       }),
+      // If remote branch doesn't exist, git throws an error, which can be silenced
+      catchError(() => EMPTY),
     );
 }
