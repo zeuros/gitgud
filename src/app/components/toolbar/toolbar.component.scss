@@ -17,10 +17,24 @@ $spacing: 8px;
   padding: 0 4px;
 
   .repo-name {
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--babedouGray);
+    font-family: 'Cinzel Decorative', 'Palatino Linotype', serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.06em;
     white-space: nowrap;
+
+    background: linear-gradient(
+            180deg,
+            #fff6f7 0%,
+            #ffe8b0 18%,
+            #f3c86b 40%,
+            #d77838 62%,
+            #9b5cf2 100%
+    );
+
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   .branch-badge {
