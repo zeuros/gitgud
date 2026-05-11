@@ -66,7 +66,7 @@ $row-spacing: 8px;
         padding: 0 !important;
         overflow: visible;
 
-        // Other branches will appear below on hover
+        // Other branches will appear below on hovering the branch <td>
         &:hover {
 
           .branch-tag {
@@ -88,42 +88,16 @@ $row-spacing: 8px;
             opacity: 1;
           }
 
-          .commit-branch, .commit-tag {
-            transition: all 0.2s ease;
+          .commit-branch {
+            display: flex;
+            max-width: 90%;
             transform: translateY(0) scale(1);
             z-index: 300; // Display this over commit graph
             position: absolute;
             left: 8px;
             top: 0;
-            display: flex;
-            max-width: 90%;
+            padding: 0;
             border-radius: 3px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-            padding: 1.5px 4px;
-            align-items: center;
-          }
-
-          .commit-branch {
-            cursor: grab;
-            border: 1px solid rgba(119, 87, 126, 0.9);
-            background-color: var(--primeng-purple-line);
-
-            .branch-name {
-              font-size: 13px;
-              margin-right: 4px;
-            }
-
-            &.checked-out {
-              color: var(--babedouGray);
-            }
-
-            i.with-padding {
-              padding: 0 3px;
-            }
-
-            .float-icons {
-              font-size: 16px;
-            }
           }
 
           .commit-tag {
@@ -304,6 +278,38 @@ $row-spacing: 8px;
         }
       }
     }
+  }
+}
+
+.draggable-branch, .commit-tag {
+  display: flex;
+  transition: all 0.2s ease;
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+  padding: 1.5px 4px;
+  align-items: center;
+}
+
+.draggable-branch {
+  cursor: grab;
+  border: 1px solid rgba(119, 87, 126, 0.9);
+  background-color: var(--primeng-purple-line);
+
+  .branch-name {
+    font-size: 13px;
+    margin-right: 4px;
+  }
+
+  &.checked-out {
+    color: var(--babedouGray);
+  }
+
+  i.with-padding {
+    padding: 0 3px;
+  }
+
+  .float-icons {
+    font-size: 16px;
   }
 }
 

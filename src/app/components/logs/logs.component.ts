@@ -26,9 +26,9 @@ import {once} from 'lodash-es';
 import {commitColor, isCommit, isIndex, isStash} from '../../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
-import {DragDropModule} from 'primeng/dragdrop';
+import {CdkDrag, CdkDragHandle, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup, DragDropModule} from '@angular/cdk/drag-drop';
 import {SearchLogsComponent} from '../search-logs/search-logs.component';
-import {afterNextRender, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild} from '@angular/core';
+import {afterNextRender, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild, viewChildren} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
 import {DatePipe} from '@angular/common';
 import {local, normalizedBranchName, remote} from '../../utils/branch-utils';
@@ -42,6 +42,7 @@ import {StashContextMenuService} from '../../services/stash-context-menu.service
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
+import {BranchDragDropService} from '../../services/branch-drag-drop.service';
 import {GitTag} from '../../models/git-tag';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {Badge} from 'primeng/badge';
@@ -49,6 +50,7 @@ import {CreateBranchService} from '../../services/create-branch.service';
 import {InputText} from 'primeng/inputtext';
 import {FormsModule} from '@angular/forms';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
+import {LogBranchTag} from './log-branch-tag/log-branch-tag';
 
 @Component({
   selector: 'gitgud-logs',
@@ -62,6 +64,7 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
     InputText,
     FormsModule,
     AutofocusDirective,
+    LogBranchTag,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -76,6 +79,7 @@ export class LogsComponent {
   protected tagContextMenuService = inject(TagContextMenuService);
   protected branchContextMenuService = inject(BranchContextMenuService);
   private activeContextMenu = inject(ActiveContextMenuService);
+  protected branchDragDrop = inject(BranchDragDropService);
   protected commitsSelection = computed(() => {
     const selectedCommitsShas = this.currentRepo.selectedCommitsShas();
     return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
@@ -181,8 +185,6 @@ export class LogsComponent {
       this.search('');
     }
   }
-
-  protected normalizedBranchName = normalizedBranchName;
 
   protected xPosition = xPosition;
 
