@@ -294,6 +294,7 @@ $row-spacing: 8px;
   cursor: grab;
   border: 1px solid rgba(119, 87, 126, 0.9);
   background-color: var(--primeng-purple-line);
+  max-width: 100%; // Text ellipsis needs this
 
   .branch-name {
     font-size: 13px;

@@ -6,6 +6,7 @@ import { normalizedBranchName } from "../../../utils/branch-utils";
 @Component({
   selector: 'gitgud-log-branch-tag',
   templateUrl: './log-branch-tag.html',
+  styleUrl: './log-branch-tag.scss',
   standalone: true,
   imports: [
     Badge,
