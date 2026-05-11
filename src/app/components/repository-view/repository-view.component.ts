@@ -25,12 +25,13 @@ import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {AsyncPipe} from '@angular/common';
 import {sum} from 'lodash-es';
 import {MonacoEditorViewComponent} from '../monaco-editor-view/monaco-editor-view.component';
+import {MergeEditorComponent} from '../merge-editor/merge-editor.component';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 @Component({
   selector: 'gitgud-repository-view',
   standalone: true,
-  imports: [LeftPanelComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe, MonacoEditorViewComponent],
+  imports: [LeftPanelComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe, MonacoEditorViewComponent, MergeEditorComponent],
   templateUrl: './repository-view.component.html',
   styleUrl: './repository-view.component.scss',
   host: {

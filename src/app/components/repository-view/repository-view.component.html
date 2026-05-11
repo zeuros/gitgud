@@ -19,4 +19,10 @@
                 [style.right]="'calc(100vw * ' + (sizes[2] / sum(sizes)) + ' + 3px)'"
         />
     }
+    @if (fileDiffPanelService.conflictedFile()) {
+        <gitgud-merge-editor
+                class="absolute left-0 bottom-0 wuuuu"
+                [style.right]="'calc(100vw * ' + (sizes[2] / sum(sizes)) + ' + 3px)'"
+        />
+    }
 }

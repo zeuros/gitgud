@@ -1,0 +1,37 @@
+@if (file(); as f) {
+    <div class="merge-editor-overlay">
+        <div class="merge-editor-header">
+            <span class="merge-file-name">
+                <i class="fa fa-code-fork mr-2" style="color: var(--warning-text-color)"></i>
+                Resolve conflict: {{ fileName(f.path) }}
+            </span>
+            <div class="merge-editor-actions">
+                <p-button
+                        label="Save & Mark Resolved"
+                        styleClass="p-button-sm p-button-success"
+                        icon="fa fa-check"
+                        [loading]="saving()"
+                        (click)="saveAndMarkResolved()"/>
+                <p-button
+                        styleClass="p-button-sm p-button-text p-button-secondary"
+                        icon="fa fa-times"
+                        (click)="close()"/>
+            </div>
+        </div>
+        <div class="merge-editor-labels">
+            <span>Ours</span>
+            <span>Base (common ancestor)</span>
+            <span>Theirs</span>
+        </div>
+        <mis-merge3
+                #mergeEl
+                class="merge-component"
+                [lhs]="lhs()"
+                [ctr]="ctr()"
+                [rhs]="rhs()"
+                [colors]="gitgudColors"
+                [highlight]="highlightFn()"
+                [wrapLines]="false"
+        ></mis-merge3>
+    </div>
+}
