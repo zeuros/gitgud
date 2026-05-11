@@ -101,7 +101,8 @@ export class MakeACommitComponent {
     }
   }
 
-  protected commitReady = (workDirStatus?: WorkDirStatus) => !!(this.commitForm.value.summary?.length && workDirStatus?.staged?.length);
+  protected commitReady = (workDirStatus?: WorkDirStatus) =>
+    !!(this.commitForm.value.summary?.length && workDirStatus?.staged?.length && !workDirStatus.conflicted.length);
 
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
     this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, makeCommitPanel: sizes.map(Number)}});

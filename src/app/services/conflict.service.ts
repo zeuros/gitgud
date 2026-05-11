@@ -28,7 +28,7 @@ export class ConflictService {
 
   /** Annotates the WIP commit in-place when a merge conflict is in progress. */
   markWorkDirCommitConflicted(displayLog: DisplayRef[]): void {
-    const conflictCount = this.currentRepo.workDirStatus()?.conflictCount ?? 0;
+    const conflictCount = this.currentRepo.workDirStatus()?.conflicted.length ?? 0;
     if (conflictCount === 0 || displayLog[0]?.refType !== RefType.INDEX) return;
 
     const branch = this.currentRepo.headBranch()?.name ?? 'HEAD';

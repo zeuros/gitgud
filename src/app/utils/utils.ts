@@ -56,7 +56,7 @@ export const showPerf = (cmd: string, args: string[] = [], out?: any) => {
 };
 
 export const workingDirHasChanges = (status?: WorkDirStatus) =>
-  (status?.unstaged.length ?? 0) > 0 || (status?.staged.length ?? 0) > 0 || (status?.conflictCount ?? 0) > 0;
+  (status?.unstaged.length ?? 0) > 0 || (status?.staged.length ?? 0) > 0 || (status?.conflicted.length ?? 0) > 0;
 
 // Signals diff comparators
 export const logsComparison = (a: Commit[], b: Commit[]) => a.length === b.length && a.every((c, i) => c.sha === b[i].sha);

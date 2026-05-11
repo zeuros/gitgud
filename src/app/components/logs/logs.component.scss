@@ -51,7 +51,7 @@ $row-spacing: 8px;
             background: var(--row-warning-background-color);
           }
           td.summary {
-            color: #ffb07a;
+            color: var(--warning-text-color);
             font-style: italic;
           }
           &.p-datatable-row-selected, &.p-highlight:hover {

@@ -39,7 +39,7 @@ export class GitRepository {
     public remotes: { remote: string; url: string }[] = [],
     // Editor config
     public editorConfig: { viewType: ViewType } = {viewType: 'split'},
-    public workDirStatus: WorkDirStatus = {unstaged: [], staged: [], conflictCount: 0},
+    public workDirStatus: WorkDirStatus = {unstaged: [], staged: [], conflicted: []},
   ) {
   }
 }
