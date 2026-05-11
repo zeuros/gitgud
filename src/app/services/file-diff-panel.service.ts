@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable, signal} from '@angular/core';
-import {CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
+import {AppFileStatusKind, CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
 import {EMPTY, map, of, Subject, switchMap} from 'rxjs';
 import {instanceOf} from '../utils/utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -53,10 +53,24 @@ export class FileDiffPanelService {
   );
 
   selectedFile = signal<FileChange | null>(null);
+  conflictedFile = signal<WorkingDirectoryFileChange | null>(null);
 
   showCommittedFileDiffs = (f: CommittedFileChange) => { this.selectedFile.set(f); this.fileToDiffSubject$.next(f); };
 
-  showWorkingDirDiffs = (f: WorkingDirectoryFileChange) => { this.selectedFile.set(f); this.fileToDiffSubject$.next(f); };
+  showWorkingDirDiffs = (f: WorkingDirectoryFileChange | null) => {
+    if (!f) return;
+    if (f.status.kind === AppFileStatusKind.Conflicted) {
+      // Toggle: re-clicking the active conflicted file closes the merge editor
+      this.conflictedFile.set(this.conflictedFile()?.path === f.path ? null : f);
+      return;
+    }
+    // Switching to a regular file always closes the merge editor
+    this.conflictedFile.set(null);
+    this.selectedFile.set(f);
+    this.fileToDiffSubject$.next(f);
+  };
+
+  closeConflict = () => this.conflictedFile.set(null);
 
   close = () => { this.selectedFile.set(null); this.fileToDiffSubject$.next(null); };
 
