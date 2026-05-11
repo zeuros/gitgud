@@ -137,13 +137,11 @@ export class ToolbarComponent implements OnInit {
   protected openShellHistoryDialog = () => this.shellHistoryDialog().open();
 
   private checkBehindThenPush = () =>
-    this.aheadBehind().pipe(
+    this.branchAheadBehind.aheadBehindForHead().pipe(
       switchMap(({behind, diverged}) =>
         behind === 0 ? this.gitApi.git(['push']) : this.openBehindRemoteDialog(diverged)
       ),
     );
-
-  private aheadBehind = () => this.branchAheadBehind.aheadBehindForHead();
 
   private openBehindRemoteDialog = (diverged: boolean) => {
     const branch = this.currentRepo.headBranch()!;
