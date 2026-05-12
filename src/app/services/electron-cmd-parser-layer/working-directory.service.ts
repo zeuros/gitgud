@@ -16,12 +16,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {DestroyRef, inject, Injectable} from '@angular/core';
-import {map, tap} from 'rxjs';
-import {parseWorkingDirChanges} from '../../lib/github-desktop/commit-files-changes';
-import {FileWatcherService} from '../file-watcher.service';
+import {inject, Injectable} from '@angular/core';
 import {GitApiService} from './git-api.service';
-import {CurrentRepoStore} from '../../stores/current-repo.store';
+import {GitRefreshService} from '../git-refresh.service';
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
 
 @Injectable({
@@ -29,60 +26,25 @@ import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir
 })
 export class WorkingDirectoryService {
 
-
-  private currentRepo = inject(CurrentRepoStore);
   private gitApi = inject(GitApiService);
-  private fileWatcher = inject(FileWatcherService);
-  private destroyRef = inject(DestroyRef);
+  private gitRefresh = inject(GitRefreshService);
 
-  constructor() {
-    // Refresh working directory changes on app startup, window focus, or file system changes
-    this.doFetchWorkingDirChanges();
-
-    window.electron.onWindowFocus(this.doFetchWorkingDirChanges);
-    this.destroyRef.onDestroy(() => window.electron.offWindowFocus(this.doFetchWorkingDirChanges));
-
-    this.fileWatcher.onWorkingDirFileChange$.subscribe(this.doFetchWorkingDirChanges);
-  }
-
-  stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['add', '--', path]).subscribe(this.doFetchWorkingDirChanges);
+  stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['add', '--', path]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
   stageFiles = (files: WorkingDirectoryFileChange[]) =>
-    this.gitApi.git(['add', '--', ...files.map(f => f.path)]).subscribe(this.doFetchWorkingDirChanges);
+    this.gitApi.git(['add', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
   unstageFiles = (files: WorkingDirectoryFileChange[]) =>
-    this.gitApi.git(['reset', '--', ...files.map(f => f.path)]).subscribe(this.doFetchWorkingDirChanges);
+    this.gitApi.git(['reset', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
   /** Stage (or unstage) a patch via stdin, then refresh */
   stageChangesWithPatch = (patch: string, stage: boolean) =>
-    this.gitApi.gitWithInput(['apply', ...(stage ? [] : ['-R']), '--cached', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.doFetchWorkingDirChanges);
+    this.gitApi.gitWithInput(['apply', ...(stage ? [] : ['-R']), '--cached', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
-  unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['reset', '--', path]).subscribe(this.doFetchWorkingDirChanges);
+  unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['reset', '--', path]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
-  stageAll = () => this.gitApi.git(['add', '--all']).subscribe(this.doFetchWorkingDirChanges);
-  unstageAll = () => this.gitApi.git(['reset', 'HEAD', '--', '.']).subscribe(this.doFetchWorkingDirChanges);
+  stageAll = () => this.gitApi.git(['add', '--all']).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
-  /**
-   * Get a list of files which have recorded changes in the index as compared to
-   * HEAD along with the type of change.
-   */
-  fetchWorkingDirChanges = () =>
-    this.gitApi.git([
-      'status',
-      '--porcelain',
-      '-z',
-      '--',
-    ])
-      .pipe(
-        map(parseWorkingDirChanges),
-        tap(workDirStatus => this.currentRepo.update({workDirStatus})),
-      );
-
-  /**
-   * Get a list of files which have recorded changes in the index as compared to
-   * HEAD along with the type of change.
-   */
-  doFetchWorkingDirChanges = () => this.fetchWorkingDirChanges().subscribe();
+  unstageAll = () => this.gitApi.git(['reset', 'HEAD', '--', '.']).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
 }
-

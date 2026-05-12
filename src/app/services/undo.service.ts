@@ -69,7 +69,7 @@ export class UndoService {
         this.redoStack.update(s => [...s, {type: 'reset', sha, message: this.parseAction(gs, 'Redo')}]);
         return this.gitApi.git(['reset', '--soft', 'HEAD@{1}']);
       }),
-      switchMap(this.gitRefresh.refreshBranchesAndLogs),
+      switchMap(this.gitRefresh.refreshAll),
     ).subscribe(() => { this.popup.success('Undone'); this.refreshTooltip(); });
 
   redo = () => {
@@ -79,7 +79,7 @@ export class UndoService {
     const cmd = top.type === 'checkout'
       ? this.gitApi.git(['checkout', top.branch])
       : this.gitApi.git(['reset', '--soft', top.sha]);
-    cmd.pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
+    cmd.pipe(switchMap(this.gitRefresh.refreshAll))
       .subscribe(() => { this.popup.success('Redone'); this.refreshTooltip(); });
   };
 

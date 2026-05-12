@@ -22,7 +22,7 @@ import {Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, HostLis
 import {Button} from 'primeng/button';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
-import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
+import {GitRefreshService} from '../../services/git-refresh.service';
 import {catchError, combineLatest, finalize, of} from 'rxjs';
 import {fileName} from '../../utils/utils';
 import {detectLang} from '../../utils/language-detection';
@@ -60,7 +60,7 @@ export class MergeEditorComponent {
 
   private gitApi = inject(GitApiService);
   private currentRepo = inject(CurrentRepoStore);
-  private workingDir = inject(WorkingDirectoryService);
+  private gitRefresh = inject(GitRefreshService);
 
   protected gitgudColors = GitGudDarkColors;
   protected lhs = signal('');
@@ -111,7 +111,7 @@ export class MergeEditorComponent {
       .pipe(finalize(() => {
         this.saving.set(false);
         this.fileDiffPanel.closeConflictView();
-        this.workingDir.doFetchWorkingDirChanges();
+        this.gitRefresh.doUpdateWorkingDirChanges();
       }))
       .subscribe();
   }

@@ -19,18 +19,16 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {MenuItem} from 'primeng/api';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
-import {GitRepositoryService} from './git-repository.service';
+import {GitRefreshService} from './git-refresh.service';
 import {PopupService} from './popup.service';
-import {forkJoin, switchMap} from 'rxjs';
+import {switchMap} from 'rxjs';
 import {DisplayRef} from '../lib/github-desktop/model/display-ref';
-import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-directory.service';
 
 @Injectable({providedIn: 'root'})
 export class StashContextMenuService {
 
   private gitApi = inject(GitApiService);
-  private gitRepository = inject(GitRepositoryService);
-  private workingDirectory = inject(WorkingDirectoryService);
+  private gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);
 
   selectedCommit = signal<DisplayRef | undefined>(undefined);
@@ -54,7 +52,7 @@ export class StashContextMenuService {
 
   private run = (args: (string | undefined)[], successMsg?: string) =>
     this.gitApi.git(args)
-      .pipe(switchMap(() => forkJoin([this.gitRepository.updateLogsAndBranches(), this.workingDirectory.fetchWorkingDirChanges()])))
+      .pipe(switchMap(this.gitRefresh.refreshAll))
       .subscribe(() => successMsg && this.popup.success(successMsg));
 
   private stashSummary = computed(() => this.selectedCommit()?.summary ?? this.stashRef());

@@ -19,7 +19,7 @@
 import {effect, inject, Injectable, signal, untracked} from '@angular/core';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
-import {GitRepositoryService} from './git-repository.service';
+import {GitRefreshService} from './git-refresh.service';
 import {SettingsService} from './settings.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 
@@ -28,7 +28,7 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
 })
 export class AutoFetchService {
 
-  private gitRepository = inject(GitRepositoryService);
+  private gitRefresh = inject(GitRefreshService);
   private currentRepo = inject(CurrentRepoStore);
   private gitApi = inject(GitApiService);
   private gitRepositoryStore = inject(GitRepositoryStore);
@@ -59,7 +59,7 @@ export class AutoFetchService {
     if (untracked(() => this.gitRepositoryStore.selectedRepository())) {
       this.gitApi.git(['fetch']).subscribe(() => {
         this.lastFetchedAt.set(Date.now());
-        this.gitRepository.doUpdateLogsAndBranches();
+        this.gitRefresh.doUpdateLogsAndBranches();
       });
     }
   };
