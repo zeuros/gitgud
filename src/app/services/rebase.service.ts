@@ -43,38 +43,39 @@ export class RebaseService {
    *             └─ git proceeds with the rebase
    * ```
    */
-  startInteractiveRebase = (sha: string, autosquash = false) => {
+  startInteractiveRebase = (sha: string, autosquash = false) =>
+    defer(() => {
+      this.cleanWaitFile();
+      if (this.isRebasing()) throw new Error('Rebase is already in progress');
+      this.spawnRebaseProcess(sha, autosquash);
+      return this.readRebaseActionsFile();
+    });
 
-    // Spawn process, it should create a file with all rebase stuff
-    // Store the promise so finishRebase can wait on it
-    this.cleanWaitFile();
-    if (this.isRebasing()) return throwError(() => new Error('Rebase is already in progress'));
+  // Spawn a git rebase process, it should create a file with all rebase actions and wait for user input
+  // Once rebase actions file is created, we next pendingRebase$ finishRebase can change actions and ... finish the rebase
+  private spawnRebaseProcess = (sha: string, autosquash: boolean) =>
     this.gitApi.spawn('git', ['rebase', '-i', ...(autosquash ? ['--autosquash'] : []), sha], {
-      env: {
-        ...window.electron.process.env,
-        GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript(),
-      },
-    })
-      .pipe(
-        finalize(() => this.pendingRebase$.next()),
-        catchError(e => {
-          this.pendingRebase$.error(e);
-          return throwError(() => e);
-        })).subscribe();
+      env: {...window.electron.process.env, GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript()},
+    }).pipe(
+      finalize(() => this.pendingRebase$.next()),
+      catchError(e => {
+        this.pendingRebase$.error(e);
+        return throwError(() => e);
+      }),
+    ).subscribe();
 
-    // Wait for the file and reads the rebase file
-    return defer(() => of(this.parseInteractiveRebaseOutput(window.electron.fs.readFileSync(this.rebaseFilePath())))).pipe(
+  private readRebaseActionsFile = () =>
+    defer(() => of(this.parseInteractiveRebaseOutput(window.electron.fs.readFileSync(this.rebaseActionsFilePath())))).pipe(
       retry({count: 10, delay: 150}),
       catchError(e => this.abortRebase().pipe(switchMap(() => throwError(() => e)))),
     );
-  };
 
   isRebasing = () => window.electron.fs.existsSync(`${this.gitApi.cwd()}/.git/rebase-merge`);
 
   // FIXME: if main electron process (the one calling git rebase) crashes during a git operation,
   //  git could keep a lock file, we have to write the .done and git lock file on error so that git rebase can finish and state be ok
   finishRebase = (contents: string) => {
-    window.electron.fs.writeFileSync(this.rebaseFilePath(), contents);
+    window.electron.fs.writeFileSync(this.rebaseActionsFilePath(), contents);
     this.cleanWaitFile();
 
     return this.pendingRebase$.pipe(first());
@@ -83,7 +84,7 @@ export class RebaseService {
   // terminates the waitForFileSaveScript (process waiting for .done file) script and finishes the 'git rebase ...' spawned observable
   private cleanWaitFile = () => {
     try {
-      window.electron.fs.writeFileSync(this.rebaseFilePath() + '.done', '');
+      window.electron.fs.writeFileSync(this.rebaseActionsFilePath() + '.done', '');
     } catch (e) {
       console.warn(e);
     }
@@ -95,7 +96,7 @@ export class RebaseService {
       ? 'sh -c "while [ ! -f \\"$0.done\\" ]; do sleep 0.3; done && rm \\"$0.done\\""' // Fixme: double check it's $0 and not $1 on git bash
       : 'sh -c \'while [ ! -f "$0.done" ]; do sleep 0.3; done && rm "$0.done"\'';
 
-  private rebaseFilePath = () => `${this.gitApi.cwd()}/.git/rebase-merge/git-rebase-todo`;
+  private rebaseActionsFilePath = () => `${this.gitApi.cwd()}/.git/rebase-merge/git-rebase-todo`;
 
   abortRebase = () =>
     this.gitApi.git(['rebase', '--abort']).pipe(catchError(e => {

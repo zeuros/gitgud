@@ -53,10 +53,12 @@ import {InputText} from 'primeng/inputtext';
 import {FormsModule} from '@angular/forms';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {LogBranchTag} from './log-branch-tag/log-branch-tag';
+import {FixupService} from '../../services/fixup.service';
 
 @Component({
   selector: 'gitgud-logs',
   standalone: true,
+  host: {'[class.fixup-selection-mode]': 'fixupService.selectingFixupTarget()'},
   imports: [
     TableModule,
     DragDropModule,
@@ -84,6 +86,7 @@ export class LogsComponent {
   protected branchDragDrop = inject(BranchDragDropService);
   private branchReader = inject(BranchReaderService);
   private conflict = inject(ConflictService);
+  protected fixupService = inject(FixupService);
 
   protected checkoutBranch = (branch: Branch | null, event: MouseEvent) => {
     event.stopPropagation();
@@ -190,8 +193,12 @@ export class LogsComponent {
     if (ctrlKey && code == 'KeyF') {
       this.showSearchBar = true;
     } else if (code == 'Escape') {
-      this.showSearchBar = false;
-      this.search('');
+      if (this.fixupService.selectingFixupTarget()) {
+        this.fixupService.cancelFixupSelection();
+      } else {
+        this.showSearchBar = false;
+        this.search('');
+      }
     }
   }
 
@@ -267,8 +274,14 @@ export class LogsComponent {
     }
   };
 
-  protected onCommitsSelection = (selection: DisplayRef[]) =>
+  protected onCommitsSelection = (selection: DisplayRef[]) => {
+    if (this.fixupService.selectingFixupTarget()) {
+      const commit = selection[0];
+      if (commit && isCommit(commit)) this.fixupService.onCommitSelectedForFixup(commit);
+      return;
+    }
     this.currentRepo.update({selectedCommitsShas: selection.map(s => s.sha)});
+  };
 
   private isOnView = (commitIndex: number, startCommit: number, endCommit: number) =>
     commitIndex > startCommit && commitIndex < endCommit;

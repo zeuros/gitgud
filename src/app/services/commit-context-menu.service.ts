@@ -108,11 +108,6 @@ export class CommitContextMenuService {
     this.gitWorkflow.doRunAndRefresh(['revert', '--no-edit', this.sha()], `Reverted ${short(this.sha())}`, true);
   };
 
-  // TODO: make interface for this (late game)
-  // protected interactiveRebase = () => {
-  //   this.rebaseService.stashAndRun(this.rebaseService.startInteractiveRebase(this.selectedCommit()!.sha)).subscribe(console.warn);
-  // };
-
   protected dropCommit = () => {
     const isTip = this.currentRepo.headBranch()?.tip.sha === this.sha();
     const successMsg = `Dropped ${short(this.sha())}`;
@@ -155,11 +150,4 @@ export class CommitContextMenuService {
       ? this.gitWorkflow.doRunAndRefresh(['tag', '-a', tagName, '-m', message, this.sha()], `Annotated tag ${tagName} created`)
       : this.gitWorkflow.doRunAndRefresh(['tag', tagName, this.sha()], `Tag ${tagName} created`));
 
-  // TODO: make a quick action close to staged changes
-  fixupCommit = () =>
-    this.gitWorkflow.rebaseAndEditActions(
-      `${this.sha()}~1`,
-      actions => actions.map(a => a.includes(short(this.sha())) ? a.replace(/^pick/, 'fixup') : a),
-      true,
-    ).subscribe(() => this.popup.success(`Fixup applied to ${short(this.sha())}`));
 }

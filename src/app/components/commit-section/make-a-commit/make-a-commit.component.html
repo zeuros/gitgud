@@ -130,10 +130,18 @@
         <div class="flex flex-column h-full">
             <div class="flex align-items-center justify-content-between h-3rem">
                 <h4 class="m-0">Commit message</h4>
-                <label class="flex align-items-center gap-2 cursor-pointer">
-                    <span>Amend</span>
-                    <p-checkbox [binary]="true" (onChange)="amendMode($event.checked)"/>
-                </label>
+                <div class="flex align-items-center gap-3">
+                    <p-button
+                        styleClass="p-button-sm p-button-text p-button-warning"
+                        label="Fixup"
+                        icon="fa fa-wrench"
+                        [disabled]="!workDirStatus?.staged?.length"
+                        (click)="fixupService.openFixupPicker()"/>
+                    <label class="flex align-items-center gap-2 cursor-pointer">
+                        <span>Amend</span>
+                        <p-checkbox [binary]="true" (onChange)="amendMode($event.checked)"/>
+                    </label>
+                </div>
             </div>
             <form class="flex flex-column flex-1" (ngSubmit)="commit()" [formGroup]="commitForm" (keydown.control.enter)="commitReady(workDirStatus) && commit()">
                 <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>

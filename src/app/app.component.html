@@ -1,4 +1,7 @@
 <router-outlet/>
+@if (fixupService.selectingFixupTarget()) {
+  <div class="fixup-overlay-mask"></div>
+}
 
 <p-toast/>
 <p-confirmDialog/>

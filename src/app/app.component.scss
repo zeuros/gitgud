@@ -16,5 +16,12 @@
       font-size: 1rem;
     }
   }
+}
 
+.fixup-overlay-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0, 0, 0, 0.5);
+  cursor: not-allowed;
 }
