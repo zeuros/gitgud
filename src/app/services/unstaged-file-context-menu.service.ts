@@ -32,44 +32,54 @@ export class UnstagedFileContextMenuService {
   private popup = inject(PopupService);
   private fileDiffPanel = inject(FileDiffPanelService);
 
-  readonly selectedFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
+  readonly selectedFiles = signal<WorkingDirectoryFileChange[]>([]);
   readonly staged = signal(false);
 
-  readonly contextMenu = computed<MenuItem[]>(() => [
-    this.staged()
-      ? {label: 'Unstage', icon: 'fa fa-minus', command: this.unstage}
-      : {label: 'Stage', icon: 'fa fa-plus', command: this.stage},
-    {separator: true},
-    ...(this.staged() ? [] : [{label: 'Discard changes', icon: 'fa fa-trash', styleClass: 'danger-menuitem', command: this.discard}]),
-    {label: 'Copy file path', icon: 'fa fa-copy', command: this.copyPath},
-    {label: 'Show in folder', icon: 'fa fa-folder-open', command: this.showInFolder},
-  ]);
+  readonly contextMenu = computed<MenuItem[]>(() => {
+    const files = this.selectedFiles();
+    const count = files.length;
+    const multi = count > 1;
+    const label = (single: string) => multi ? `${single} ${count} files` : single;
 
-  private stage = () => this.workingDir.stageFile(this.selectedFile()!);
+    return [
+      this.staged()
+        ? {label: label('Unstage'), icon: 'fa fa-minus', command: this.unstage}
+        : {label: label('Stage'), icon: 'fa fa-plus', command: this.stage},
+      {separator: true},
+      ...(this.staged() ? [] : [{label: label('Discard changes'), icon: 'fa fa-trash', styleClass: 'danger-menuitem', command: this.discard}]),
+      ...(!multi ? [
+        {label: 'Copy file path', icon: 'fa fa-copy', command: this.copyPath},
+        {label: 'Show in folder', icon: 'fa fa-folder-open', command: this.showInFolder},
+      ] : []),
+    ];
+  });
 
-  private unstage = () => this.workingDir.unstageFile(this.selectedFile()!);
+  private stage = () => this.workingDir.stageFiles(this.selectedFiles());
+
+  private unstage = () => this.workingDir.unstageFiles(this.selectedFiles());
 
   private discard = () => {
-    const file = this.selectedFile()!;
-    if (this.fileDiffPanel.selectedFile()?.path === file.path) {
-      this.fileDiffPanel.close();
-    }
-    const isUntracked = file.status.kind === AppFileStatusKind.Untracked;
-    const args = isUntracked
-      ? ['clean', '-f', '--', file.path]
-      : ['checkout', '--', file.path];
-    this.gitApi.git(args).subscribe(this.workingDir.doFetchWorkingDirChanges);
+    const files = this.selectedFiles();
+    const displayedPath = this.fileDiffPanel.selectedFile()?.path;
+
+    if (files.some(f => f.path === displayedPath))
+      this.fileDiffPanel.closeDiffView();
+
+    const tracked = files.filter(f => f.status.kind !== AppFileStatusKind.Untracked);
+    const untracked = files.filter(f => f.status.kind === AppFileStatusKind.Untracked);
+    if (tracked.length) this.gitApi.git(['checkout', '--', ...tracked.map(f => f.path)]).subscribe(this.workingDir.doFetchWorkingDirChanges);
+    if (untracked.length) this.gitApi.git(['clean', '-f', '--', ...untracked.map(f => f.path)]).subscribe(this.workingDir.doFetchWorkingDirChanges);
   };
 
   private copyPath = () => {
-    const file = this.selectedFile()!;
+    const file = this.selectedFiles()[0];
     const fullPath = window.electron.path.resolve(this.gitApi.cwd()!, file.path);
     navigator.clipboard.writeText(fullPath);
     this.popup.success('Path copied');
   };
 
   private showInFolder = () => {
-    const file = this.selectedFile()!;
+    const file = this.selectedFiles()[0];
     const fullPath = window.electron.path.resolve(this.gitApi.cwd()!, file.path);
     window.electron.showItemInFolder(fullPath);
   };

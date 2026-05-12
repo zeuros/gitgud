@@ -23,7 +23,7 @@ import {Button} from 'primeng/button';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
-import {catchError, combineLatest, of} from 'rxjs';
+import {catchError, combineLatest, finalize, of} from 'rxjs';
 import {fileName} from '../../utils/utils';
 import {detectLang} from '../../utils/language-detection';
 import {createHighlighter, type Highlighter} from 'shiki';
@@ -52,7 +52,7 @@ type HighlightFn = (text: string) => string | Promise<string>;
 })
 export class MergeEditorComponent {
 
-  protected mergeEl = viewChild<ElementRef<HTMLElement & {ctr: string}>>('mergeEl');
+  protected mergeEl = viewChild<ElementRef<HTMLElement & { ctr: string }>>('mergeEl');
 
   protected fileDiffPanel = inject(FileDiffPanelService);
   protected fileName = fileName;
@@ -93,7 +93,7 @@ export class MergeEditorComponent {
 
   @HostListener('document:keydown.escape')
   protected close() {
-    this.fileDiffPanel.closeConflict();
+    this.fileDiffPanel.closeConflictView();
   }
 
   protected saveAndMarkResolved() {
@@ -105,11 +105,13 @@ export class MergeEditorComponent {
     const absPath = window.electron.path.resolve(this.gitApi.cwd()!, file.path);
     window.electron.fs.writeFileSync(absPath, merged);
 
-    this.gitApi.git(['add', '--', file.path]).subscribe(() => {
-      this.saving.set(false);
-      this.fileDiffPanel.closeConflict();
-      this.workingDir.doFetchWorkingDirChanges();
-    });
+    this.gitApi.git(['add', '--', file.path])
+      .pipe(finalize(() => {
+        this.saving.set(false);
+        this.fileDiffPanel.closeConflictView();
+        this.workingDir.doFetchWorkingDirChanges();
+      }))
+      .subscribe();
   }
 
   private async initHighlight(path: string) {

@@ -32,7 +32,6 @@ A cross-platform Git GUI that doesn't get in your way.
 
 ## TODOs
 
-- Multi file select in working directory panel (shift+click), with adapted context menu (stage X files, discard X files)
 - Fix some commit right-click actions that leave git in a broken state
 - fix all monaco viewer displays (untested)
 - add shortcut ctrl+return to commit (shortcut should work for other forms, settings for example)

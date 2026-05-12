@@ -9,28 +9,35 @@
             <h4 class="m-0 conflict-header">Conflicted files ({{ conflicted.length }})</h4>
         </div>
         <p-divider class="mt-0"/>
-        <p-listbox
-                animate.enter="slight-slide-in"
-                [options]="conflicted"
-                optionLabel="path"
-                class="show-button-on-li-hover flex-1 overflow-hidden"
+        <p-table
+                [value]="conflicted"
+                [selection]="selectedConflictFile() ? [selectedConflictFile()] : []"
+                (selectionChange)="onConflictFileSelect($event[0] ?? null)"
+                dataKey="path"
+                selectionMode="single"
+                [rowHover]="true"
+                [scrollable]="true"
                 scrollHeight="flex"
-                [ngModel]="selectedFile()"
-                (onChange)="selectFile($event.value)">
-            <ng-template let-workingDirFileChanges pTemplate="item">
+                size="small"
+                class="borderless flex-1">
+            <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
                 @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
-                <div class="flex align-items-center w-full">
-                    <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
-                       [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
-                       [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
-                    @let dir = directory(fileChanges.path);
-                    @if (dir.length) {
-                        <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
-                    }
-                    <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
-                </div>
+                <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex">
+                    <td>
+                        <div class="file-row-content">
+                            <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
+                               [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
+                               [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
+                            @let dir = directory(fileChanges.path);
+                            @if (dir.length) {
+                                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+                            }
+                            <span class="white-space-nowrap white">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+                        </div>
+                    </td>
+                </tr>
             </ng-template>
-        </p-listbox>
+        </p-table>
     </div>
 }
 
@@ -52,33 +59,43 @@
             </div>
             <p-divider class="mt-0"/>
             @if (workDirStatus && workDirStatus.unstaged.length) {
-                <p-listbox
-                        animate.enter="slight-slide-in"
-                        [options]="workDirStatus.unstaged"
-                        optionLabel="path"
-                        class="show-button-on-li-hover flex-1 overflow-hidden"
+                <p-table
+                        [value]="workDirStatus.unstaged"
+                        [selection]="selectedUnstagedFiles()"
+                        (selectionChange)="onSelectionChange($event, false)"
+                        dataKey="path"
+                        selectionMode="multiple"
+                        [metaKeySelection]="true"
+                        [rowHover]="true"
+                        [scrollable]="true"
                         scrollHeight="flex"
-                        [ngModel]="selectedFile()"
-                        (onChange)="selectFile($event.value)">
-                    <ng-template let-workingDirFileChanges pTemplate="item">
+                        size="small"
+                        class="borderless show-button-on-row-hover flex-1">
+                    <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
-                        <div class="flex align-items-center w-full" (contextmenu)="openFileContextMenu(fileChanges, false, $event)">
-                            <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
-                               [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
-                               [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
-                            @let dir = directory(fileChanges.path);
-                            @if (dir.length) {
-                                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
-                            }
-                            <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
-                            <p-button
-                                    class="stick-right-button"
-                                    styleClass="file-row-stage-button p-button-sm"
-                                    (click)="workingDirectoryService.stageFile(fileChanges); $event.stopPropagation()"
-                                    label="Stage"/>
-                        </div>
+                        <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex"
+                            (contextmenu)="openFileContextMenu(fileChanges, false, $event)">
+                            <td>
+                                <div class="file-row-content">
+                                    <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
+                                       [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
+                                       [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
+                                    @let dir = directory(fileChanges.path);
+                                    @if (dir.length) {
+                                        <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+                                    }
+                                    <span class="white-space-nowrap white">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+                                    <p-button
+                                            size="small"
+                                            class="stick-right-button"
+                                            styleClass="file-row-stage-button p-button-sm"
+                                            (click)="workingDirectoryService.stageFile(fileChanges); $event.stopPropagation()"
+                                            label="Stage"/>
+                                </div>
+                            </td>
+                        </tr>
                     </ng-template>
-                </p-listbox>
+                </p-table>
             }
         </div>
     </ng-template>
@@ -94,33 +111,43 @@
             </div>
             <p-divider class="mt-0"/>
             @if (workDirStatus && workDirStatus.staged.length) {
-                <p-listbox
-                        animate.enter="slight-slide-in"
-                        [options]="workDirStatus.staged"
-                        optionLabel="path"
-                        class="show-button-on-li-hover flex-1 overflow-hidden"
+                <p-table
+                        [value]="workDirStatus.staged"
+                        [selection]="selectedStagedFiles()"
+                        (selectionChange)="onSelectionChange($event, true)"
+                        dataKey="path"
+                        selectionMode="multiple"
+                        [metaKeySelection]="true"
+                        [rowHover]="true"
+                        [scrollable]="true"
                         scrollHeight="flex"
-                        [ngModel]="selectedFile()"
-                        (onChange)="selectFile($event.value)">
-                    <ng-template let-workingDirFileChanges pTemplate="item">
+                        size="small"
+                        class="borderless show-button-on-row-hover flex-1">
+                    <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
-                        <div class="flex align-items-center w-full" (contextmenu)="openFileContextMenu(fileChanges, true, $event)">
-                            <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
-                               [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
-                               [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
-                            @let dir = directory(fileChanges.path);
-                            @if (dir.length) {
-                                <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
-                            }
-                            <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
-                            <p-button
-                                    class="stick-right-button"
-                                    styleClass="file-row-stage-button p-button-sm"
-                                    (click)="workingDirectoryService.unstageFile(fileChanges); $event.stopPropagation()"
-                                    label="Unstage"/>
-                        </div>
+                        <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex"
+                            (contextmenu)="openFileContextMenu(fileChanges, true, $event)">
+                            <td>
+                                <div class="file-row-content">
+                                    <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
+                                       [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
+                                       [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[fileChanges.status.kind].color + ')'"></i>
+                                    @let dir = directory(fileChanges.path);
+                                    @if (dir.length) {
+                                        <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+                                    }
+                                    <span class="white-space-nowrap white">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+                                    <p-button
+                                            size="small"
+                                            class="stick-right-button"
+                                            styleClass="file-row-stage-button p-button-sm"
+                                            (click)="workingDirectoryService.unstageFile(fileChanges); $event.stopPropagation()"
+                                            label="Unstage"/>
+                                </div>
+                            </td>
+                        </tr>
                     </ng-template>
-                </p-listbox>
+                </p-table>
             }
         </div>
     </ng-template>
@@ -132,11 +159,11 @@
                 <h4 class="m-0">Commit message</h4>
                 <div class="flex align-items-center gap-3">
                     <p-button
-                        styleClass="p-button-sm p-button-text p-button-warning"
-                        label="Fixup"
-                        icon="fa fa-wrench"
-                        [disabled]="!workDirStatus?.staged?.length"
-                        (click)="fixupService.openFixupPicker()"/>
+                            styleClass="p-button-sm p-button-text p-button-warning"
+                            label="Fixup"
+                            icon="fa fa-wrench"
+                            [disabled]="!workDirStatus?.staged?.length"
+                            (click)="fixupService.openFixupPicker()"/>
                     <label class="flex align-items-center gap-2 cursor-pointer">
                         <span>Amend</span>
                         <p-checkbox [binary]="true" [(ngModel)]="amend" (onChange)="toggleAmendMode($event.checked)"/>

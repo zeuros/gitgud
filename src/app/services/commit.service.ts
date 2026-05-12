@@ -36,7 +36,7 @@ export class CommitService {
     this.gitApi.git(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])])
       .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
       .subscribe(({workDirStatus}) => {
-        this.fileDiffPanel.close();
+        this.fileDiffPanel.closeDiffView();
         if (!workingDirHasChanges(workDirStatus))
           this.headSha().subscribe(sha => this.currentRepo.update({selectedCommitsShas: [sha]}));
       });

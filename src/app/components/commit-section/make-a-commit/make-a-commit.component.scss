@@ -20,20 +20,42 @@
       min-height: 210px;
     }
 
-    .show-button-on-li-hover .p-listbox-option {
-      position: relative;
+    // force table to not exceed container
+    p-table .p-datatable-table {
+      table-layout: fixed;
+      width: 100%;
+    }
 
-      .file-row-stage-button {
-        opacity: 0;
-        transition: all 0.08s ease-in-out;
-      }
+    p-table.show-button-on-row-hover {
+      .file-row-content {
+        position: relative;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        flex: 1;
+        padding: 2px;
 
-      &:hover .file-row-stage-button {
-        opacity: 1;
-        pointer-events: auto;
+        .stick-right-button {
+          opacity: 0;
+          position: absolute;
+          right: 4px;
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+          transition: opacity 0.08s ease-in-out;
+        }
+
+        &:hover .stick-right-button {
+          opacity: 1;
+          pointer-events: auto;
+        }
       }
     }
   }
+}
+
+.white {
+  color: var(--babedouGrayPlus);
 }
 
 .conflicted-section {
@@ -47,12 +69,4 @@
 
 .conflict-header {
   color: var(--warning-text-color);
-}
-
-.stick-right-button {
-  height: 80%;
-  position: absolute;
-  right: 2.5px;
-  top: 50%;
-  transform: translateY(-50%);
 }
