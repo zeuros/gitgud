@@ -30,7 +30,7 @@ export class BranchAheadBehindService {
   private autoFetch = inject(AutoFetchService);
 
   /** Ahead/behind counts keyed by local branch name. Only branches with a tracked upstream are present. */
-  readonly aheadBehindMap = signal<Record<string, AheadBehind>>({});
+  aheadBehindMap = signal<Record<string, AheadBehind>>({});
 
   constructor() {
     effect(() => {

@@ -33,9 +33,9 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 })
 export class GitApiService {
 
-  private readonly currentRepo = inject(CurrentRepoStore);
-  private readonly history = inject(GitCommandHistoryService);
-  private readonly settingsService = inject(SettingsService);
+  private currentRepo = inject(CurrentRepoStore);
+  private history = inject(GitCommandHistoryService);
+  private settingsService = inject(SettingsService);
 
   constructor() {
     // Notes :

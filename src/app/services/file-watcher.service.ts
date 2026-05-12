@@ -30,7 +30,7 @@ export class FileWatcherService {
 
   onWorkingDirFileChange$ = this.fileChangeSubject$.pipe(debounceTime(50));
 
-  readonly setWatcher = (projectPath: string) => {
+  setWatcher = (projectPath: string) => {
 
     // Remove existing watcher if any
     this.watcher?.close();

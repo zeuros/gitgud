@@ -62,7 +62,7 @@ export class MergeEditorComponent {
   private currentRepo = inject(CurrentRepoStore);
   private workingDir = inject(WorkingDirectoryService);
 
-  protected readonly gitgudColors = GitGudDarkColors;
+  protected gitgudColors = GitGudDarkColors;
   protected lhs = signal('');
   protected ctr = signal('');
   protected rhs = signal('');

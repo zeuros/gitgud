@@ -60,7 +60,7 @@ export interface LogBuildResult {
 })
 export class LogBuilderService {
 
-  private readonly branches = inject(CurrentRepoStore).branches;
+  private branches = inject(CurrentRepoStore).branches;
 
   buildDisplayLog(logs: Commit[], stashChildren: Commit[], indexParent?: DisplayRef): LogBuildResult {
     const stashMap = buildStashMap(stashChildren);

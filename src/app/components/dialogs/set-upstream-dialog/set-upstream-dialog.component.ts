@@ -63,14 +63,14 @@ export const openSetUpstreamDialog = (dialog: DialogService, branchName: string)
   `,
 })
 export class SetUpstreamDialogComponent implements OnInit {
-  private readonly ref = inject(DynamicDialogRef<SetUpstreamResult>);
-  private readonly config = inject(DynamicDialogConfig);
-  private readonly gitApi = inject(GitApiService);
+  private ref = inject(DynamicDialogRef<SetUpstreamResult>);
+  private config = inject(DynamicDialogConfig);
+  private gitApi = inject(GitApiService);
 
-  readonly branchName: string = this.config.data.branchName;
-  readonly remotes = signal<string[]>([]);
-  readonly remoteControl = new FormControl('', {nonNullable: true});
-  readonly branchControl = new FormControl(this.branchName, {nonNullable: true});
+  branchName: string = this.config.data.branchName;
+  remotes = signal<string[]>([]);
+  remoteControl = new FormControl('', {nonNullable: true});
+  branchControl = new FormControl(this.branchName, {nonNullable: true});
 
   ngOnInit() {
     this.gitApi.git(['remote']).subscribe(output => {

@@ -32,9 +32,9 @@ export class UndoService {
   private popup = inject(PopupService);
 
   private redoStack = signal<RedoItem[]>([]);
-  readonly undoTooltip = signal('Undo last action');
-  readonly redoAvailable = computed(() => this.redoStack().length > 0);
-  readonly redoTooltip = computed(() => this.redoStack().at(-1)?.message ?? 'Nothing to redo');
+  undoTooltip = signal('Undo last action');
+  redoAvailable = computed(() => this.redoStack().length > 0);
+  redoTooltip = computed(() => this.redoStack().at(-1)?.message ?? 'Nothing to redo');
 
   private parseAction(reflogSubject: string, prefix: 'Undo' | 'Redo'): string {
     const body = reflogSubject.replace(/^[^:]+:\s*/, '');

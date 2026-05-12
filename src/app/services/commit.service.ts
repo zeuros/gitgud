@@ -27,10 +27,10 @@ import {FileDiffPanelService} from './file-diff-panel.service';
 @Injectable({providedIn: 'root'})
 export class CommitService {
 
-  private readonly gitApi = inject(GitApiService);
-  private readonly gitRefresh = inject(GitRefreshService);
-  private readonly currentRepo = inject(CurrentRepoStore);
-  private readonly fileDiffPanel = inject(FileDiffPanelService);
+  private gitApi = inject(GitApiService);
+  private gitRefresh = inject(GitRefreshService);
+  private currentRepo = inject(CurrentRepoStore);
+  private fileDiffPanel = inject(FileDiffPanelService);
 
   commit = (summary: string, description?: string, amend = false) =>
     this.gitApi.git(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])])

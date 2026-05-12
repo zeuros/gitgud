@@ -22,6 +22,6 @@
  * See git-interpret-trailers for more information.
  */
 export interface Trailer {
-  readonly token: string
-  readonly value: string
+  token: string
+  value: string
 }

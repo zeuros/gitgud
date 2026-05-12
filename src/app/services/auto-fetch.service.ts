@@ -28,13 +28,13 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
 })
 export class AutoFetchService {
 
-  private readonly gitRepository = inject(GitRepositoryService);
-  private readonly currentRepo = inject(CurrentRepoStore);
-  private readonly gitApi = inject(GitApiService);
-  private readonly gitRepositoryStore = inject(GitRepositoryStore);
-  private readonly settingsService = inject(SettingsService);
+  private gitRepository = inject(GitRepositoryService);
+  private currentRepo = inject(CurrentRepoStore);
+  private gitApi = inject(GitApiService);
+  private gitRepositoryStore = inject(GitRepositoryStore);
+  private settingsService = inject(SettingsService);
 
-  readonly lastFetchedAt = signal<number | undefined>(undefined);
+  lastFetchedAt = signal<number | undefined>(undefined);
 
   private intervalId?: ReturnType<typeof setInterval>;
 
@@ -55,7 +55,7 @@ export class AutoFetchService {
     });
   }
 
-  private readonly autoFetch = () => {
+  private autoFetch = () => {
     if (untracked(() => this.gitRepositoryStore.selectedRepository())) {
       this.gitApi.git(['fetch']).subscribe(() => {
         this.lastFetchedAt.set(Date.now());

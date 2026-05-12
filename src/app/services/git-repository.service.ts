@@ -46,13 +46,13 @@ const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 export class GitRepositoryService {
 
   // Services
-  private readonly logReader = inject(LogReaderService);
-  private readonly branchReader = inject(BranchReaderService);
-  private readonly stashReader = inject(StashReaderService);
-  private readonly tagReader = inject(TagReaderService);
-  private readonly fileWatcher = inject(FileWatcherService);
-  private readonly gitRepositoryStore = inject(GitRepositoryStore);
-  private readonly destroyRef = inject(DestroyRef);
+  private logReader = inject(LogReaderService);
+  private branchReader = inject(BranchReaderService);
+  private stashReader = inject(StashReaderService);
+  private tagReader = inject(TagReaderService);
+  private fileWatcher = inject(FileWatcherService);
+  private gitRepositoryStore = inject(GitRepositoryStore);
+  private destroyRef = inject(DestroyRef);
 
   constructor() {
 
