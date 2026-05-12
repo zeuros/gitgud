@@ -16,20 +16,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {bootstrapApplication} from '@angular/platform-browser';
-import {appConfig} from './app/app.config';
-import {AppComponent} from './app/app.component';
-import {ErrorHandler} from '@angular/core';
 import {editor} from 'monaco-editor';
+import ITextModel = editor.ITextModel;
 
-editor.setTheme('vs-dark');
+// Monaco consumes \r in \r\n as a line separator so it never reaches renderControlCharacters.
+// Replaced \r with ␍ (U+240D SYMBOL FOR CARRIAGE RETURN) so it survives as visible line content.
+export const renderWindowsShitEol = (s: string) => s.replace(/\r\n/g, '␍\n');
 
-bootstrapApplication(AppComponent, appConfig).then(appRef => {
-
-  const globalErrorHandler = appRef.injector.get(ErrorHandler);
-
-  window.addEventListener('unhandledrejection', (event) => {
-    globalErrorHandler.handleError(event.reason);
-    event.preventDefault();
-  });
-});
+// Undo the renderWindowsShitEol display transform: ␍ (U+240D) was substituted for \r before
+// feeding content to Monaco so it would render as visible content. Patch bytes must
+// contain the real \r, not the Unicode symbol.
+export const realLine = (model: ITextModel, i: number) => model.getLineContent(i).replace(/␍/g, '\r');

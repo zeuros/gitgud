@@ -21,11 +21,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {createHash} from 'crypto';
 import {execFile, ExecFileOptions} from 'child_process';
-import {promisify} from 'util';
 import {dialog, getCurrentWindow} from '@electron/remote';
 import {ChokidarOptions, FSWatcher, watch} from 'chokidar';
 import type {WriteFileOptions} from 'node:fs';
-import {spawn, spawnSync, SpawnOptionsWithoutStdio, SpawnSyncOptions} from 'node:child_process';
+import {spawn, SpawnOptionsWithoutStdio, spawnSync, SpawnSyncOptions} from 'node:child_process';
+import {promisify} from 'node:util';
 
 const watchers = new Map<string, FSWatcher>();
 
@@ -68,7 +68,7 @@ contextBridge.exposeInMainWorld('electron', {
   execFile: promisify(execFile) as (cmd: string, args: string[], input: string, options: ExecFileOptions) => Promise<{ stdout: string; stderr: string }>,
 
   // Blocks the event loop until exit; only use for fast, short-lived commands
-  spawnSync: (cmd: string, args: string[], options: SpawnSyncOptions)=> spawnSync(cmd, args, {...options, encoding: 'utf-8'}),
+  spawnSync: (cmd: string, args: string[], options: SpawnSyncOptions) => spawnSync(cmd, args, {...options, encoding: 'utf-8'}),
 
   // Streaming-safe; collects full output on exit — used to check file existence
   spawn: (cmd: string, args: string[], options: SpawnOptionsWithoutStdio): Promise<string> =>
