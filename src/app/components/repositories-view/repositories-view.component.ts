@@ -47,7 +47,7 @@ import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 })
 export class RepositoriesViewComponent {
   protected gitRepositoryStore = inject(GitRepositoryStore);
-  protected gitRepositoryService = inject(GitRepositoryService);
+  protected gitRepository = inject(GitRepositoryService);
 
   protected drop({previousIndex, currentIndex}: CdkDragDrop<string[]>): void {
     this.gitRepositoryStore.reorderRepositories(previousIndex, currentIndex);

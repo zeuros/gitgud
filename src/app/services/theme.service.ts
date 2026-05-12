@@ -25,13 +25,13 @@ export type {ThemeMode};
 export class ThemeService {
 
   private systemDarkMq = window.matchMedia('(prefers-color-scheme: dark)');
-  private settingsService = inject(SettingsService);
+  private settings = inject(SettingsService);
 
   constructor() {
-    effect(() => this.applyTheme(this.settingsService.theme));
+    effect(() => this.applyTheme(this.settings.theme));
 
     this.systemDarkMq.addEventListener('change', () => {
-      if (this.settingsService.theme === 'system') this.applyTheme('system');
+      if (this.settings.theme === 'system') this.applyTheme('system');
     });
   }
 

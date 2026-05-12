@@ -29,7 +29,7 @@ import {realLine} from './monaco-utils';
 
 @Injectable({providedIn: 'root'})
 export class MonacoDiffRightClickActionsService {
-  private workingDirService = inject(WorkingDirectoryService);
+  private workingDir = inject(WorkingDirectoryService);
 
   registerEditorRightClick = (diffEditor: IStandaloneDiffEditor) => {
     let currentFile: WorkingDirectoryFileChange | undefined;
@@ -55,7 +55,7 @@ export class MonacoDiffRightClickActionsService {
         selection.startLineNumber, selection.endLineNumber,
         currentFile.path, stage,
       );
-      if (patch) this.workingDirService.stageChangesWithPatch(patch, stage);
+      if (patch) this.workingDir.stageChangesWithPatch(patch, stage);
     };
 
     for (const ed of [diffEditor.getOriginalEditor(), diffEditor.getModifiedEditor()]) {

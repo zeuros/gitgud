@@ -58,7 +58,7 @@ import {FixupService} from '../../services/fixup.service';
 @Component({
   selector: 'gitgud-logs',
   standalone: true,
-  host: {'[class.fixup-selection-mode]': 'fixupService.selectingFixupTarget()'},
+  host: {'[class.fixup-selection-mode]': 'fixup.selectingFixupTarget()'},
   imports: [
     TableModule,
     DragDropModule,
@@ -75,18 +75,18 @@ import {FixupService} from '../../services/fixup.service';
 })
 export class LogsComponent {
 
-  private logBuilder = inject(LogBuilderService);
   protected currentRepo = inject(CurrentRepoStore);
-  protected createBranchService = inject(CreateBranchService);
-  protected commitContextMenuService = inject(CommitContextMenuService);
-  protected stashContextMenuService = inject(StashContextMenuService);
-  protected tagContextMenuService = inject(TagContextMenuService);
-  protected branchContextMenuService = inject(BranchContextMenuService);
-  private activeContextMenu = inject(ActiveContextMenuService);
+  protected createBranch = inject(CreateBranchService);
+  protected commitContextMenu = inject(CommitContextMenuService);
+  protected stashContextMenu = inject(StashContextMenuService);
+  protected tagContextMenu = inject(TagContextMenuService);
+  protected branchContextMenu = inject(BranchContextMenuService);
   protected branchDragDrop = inject(BranchDragDropService);
+  protected fixup = inject(FixupService);
+  private logBuilder = inject(LogBuilderService);
+  private activeContextMenu = inject(ActiveContextMenuService);
   private branchReader = inject(BranchReaderService);
   private conflict = inject(ConflictService);
-  protected fixupService = inject(FixupService);
 
   protected checkoutBranch = (branch: Branch | null, event: MouseEvent) => {
     event.stopPropagation();
@@ -193,8 +193,8 @@ export class LogsComponent {
     if (ctrlKey && code == 'KeyF') {
       this.showSearchBar = true;
     } else if (code == 'Escape') {
-      if (this.fixupService.selectingFixupTarget()) {
-        this.fixupService.cancelFixupSelection();
+      if (this.fixup.selectingFixupTarget()) {
+        this.fixup.cancelFixupSelection();
       } else {
         this.showSearchBar = false;
         this.search('');
@@ -275,9 +275,9 @@ export class LogsComponent {
   };
 
   protected onCommitsSelection = (selection: DisplayRef[]) => {
-    if (this.fixupService.selectingFixupTarget()) {
+    if (this.fixup.selectingFixupTarget()) {
       const commit = selection[0];
-      if (commit && isCommit(commit)) this.fixupService.onCommitSelectedForFixup(commit);
+      if (commit && isCommit(commit)) this.fixup.onCommitSelectedForFixup(commit);
       return;
     }
     this.currentRepo.update({selectedCommitsShas: selection.map(s => s.sha)});
@@ -290,24 +290,24 @@ export class LogsComponent {
     event.stopPropagation();
 
     if (isCommit(commit)) {
-      this.commitContextMenuService.selectedCommit.set(commit);
-      this.activeContextMenu.show(this.commitContextMenuService.commitContextMenu(), event);
+      this.commitContextMenu.selectedCommit.set(commit);
+      this.activeContextMenu.show(this.commitContextMenu.commitContextMenu(), event);
     } else if (isStash(commit)) {
-      this.stashContextMenuService.selectedCommit.set(commit);
-      this.activeContextMenu.show(this.stashContextMenuService.stashContextMenu(), event);
+      this.stashContextMenu.selectedCommit.set(commit);
+      this.activeContextMenu.show(this.stashContextMenu.stashContextMenu(), event);
     }
   };
 
   protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
     event.stopPropagation();
-    this.tagContextMenuService.selectedTag.set(tag);
-    this.activeContextMenu.show(this.tagContextMenuService.tagContextMenu(), event);
+    this.tagContextMenu.selectedTag.set(tag);
+    this.activeContextMenu.show(this.tagContextMenu.tagContextMenu(), event);
   };
 
   protected openBranchContextMenu = (branch: Branch, event: MouseEvent) => {
     event.stopPropagation();
-    this.branchContextMenuService.selectBranch(branch);
-    this.activeContextMenu.show(this.branchContextMenuService.branchContextMenu(), event);
+    this.branchContextMenu.selectBranch(branch);
+    this.activeContextMenu.show(this.branchContextMenu.branchContextMenu(), event);
   };
 
   protected remote = remote;

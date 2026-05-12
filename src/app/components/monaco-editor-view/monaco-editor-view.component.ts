@@ -24,7 +24,6 @@ import {FormsModule} from '@angular/forms';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
 import {combineLatest, of} from 'rxjs';
-import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {ViewType} from '../../models/git-repository';
@@ -54,6 +53,11 @@ interface DiffModels {
 })
 export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
+  protected currentRepo = inject(CurrentRepoStore);
+  private fileDiff = inject(FileDiffService);
+  private hunkActions = inject(MonacoDiffRightClickActionsService);
+  private fileDiffPanel = inject(FileDiffPanelService);
+
   protected viewOptions = Object.entries({
     hunk:   {label: 'Hunk',   icon: 'fa fa-list'},
     inline: {label: 'Inline', icon: 'fa fa-align-left'},
@@ -64,13 +68,8 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
   diffModels = signal<DiffModels | undefined>(undefined);
 
-  protected currentRepo = inject(CurrentRepoStore);
   protected viewType = computed(() => this.currentRepo.editorConfig()!.viewType);
 
-  private fileDiffService = inject(FileDiffService);
-  private gitApi = inject(GitApiService);
-  private hunkActionsService = inject(MonacoDiffRightClickActionsService);
-  private fileDiffPanel = inject(FileDiffPanelService);
   private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void } | undefined>(undefined);
   private ownedModels = new Set<ITextModel>(); // Models are cached for the component's lifetime — switching between already-viewed files hits the URI cache
   private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
@@ -102,16 +101,16 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       if (!file) return;
 
       const before$ = isCommittedFileChange(file)
-        ? this.fileDiffService.getFileAtRevision(file.path, `${file.commitish}^`)
+        ? this.fileDiff.getFileAtRevision(file.path, `${file.commitish}^`)
         : ((file as WorkingDirectoryFileChange).staged
-          ? this.fileDiffService.getFileAtRevision(file.path)        // staged: HEAD vs index
-          : this.fileDiffService.getFileAtRevision(file.path, ''));  // unstaged: index vs workdir
+          ? this.fileDiff.getFileAtRevision(file.path)        // staged: HEAD vs index
+          : this.fileDiff.getFileAtRevision(file.path, ''));  // unstaged: index vs workdir
 
       const after$ = isWorkingDirectoryFileChange(file)
         ? (file.staged
-          ? this.fileDiffService.getFileAtRevision(file.path, '')   // git show :path  (index)
+          ? this.fileDiff.getFileAtRevision(file.path, '')   // git show :path  (index)
           : of(window.electron.fs.readFileSync(window.electron.path.resolve(this.currentRepo.cwd()!, file.path))))
-        : this.fileDiffService.getFileAtRevision(file.path, (file as CommittedFileChange).commitish);
+        : this.fileDiff.getFileAtRevision(file.path, (file as CommittedFileChange).commitish);
 
       combineLatest([before$, after$]).subscribe(([before, after]) => {
         this.currentFile.set(isWorkingDirectoryFileChange(file) ? file : undefined);
@@ -154,7 +153,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     if (this.diffEditorContainer) {
       const diffEditorEditor = editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions);
-      this.diffEditor.set({editor: diffEditorEditor, contextMenuUpdater: this.hunkActionsService.registerEditorRightClick(diffEditorEditor)});
+      this.diffEditor.set({editor: diffEditorEditor, contextMenuUpdater: this.hunkActions.registerEditorRightClick(diffEditorEditor)});
 
       diffEditorEditor.onDidUpdateDiff(this.clearEditorWhenNoChangesToDisplay(diffEditorEditor));
     }

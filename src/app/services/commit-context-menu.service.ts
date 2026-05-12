@@ -33,10 +33,10 @@ import {CreateBranchService} from './create-branch.service';
 })
 export class CommitContextMenuService {
 
+  private prompt = inject(PromptService);
+  private gitWorkflow = inject(GitWorkflowService);
   private popup = inject(PopupService);
   private currentRepo = inject(CurrentRepoStore);
-  protected prompt = inject(PromptService);
-  protected gitWorkflow = inject(GitWorkflowService);
   private createBranchService = inject(CreateBranchService);
 
   selectedCommit = signal<DisplayRef | undefined>(undefined);

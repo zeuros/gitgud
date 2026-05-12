@@ -54,7 +54,7 @@
             <div class="flex align-items-center justify-content-between h-3rem">
                 <h4 class="m-0">Unstaged files ({{ workDirStatus?.unstaged?.length ?? 0 }})</h4>
                 @if (workDirStatus?.unstaged?.length) {
-                    <p-button styleClass="p-button-sm" (click)="workingDirectoryService.stageAll()" label="Stage all"/>
+                    <p-button styleClass="p-button-sm" (click)="workingDirectory.stageAll()" label="Stage all"/>
                 }
             </div>
             <p-divider class="mt-0"/>
@@ -89,7 +89,7 @@
                                             size="small"
                                             class="stick-right-button"
                                             styleClass="file-row-stage-button p-button-sm"
-                                            (click)="workingDirectoryService.stageFile(fileChanges); $event.stopPropagation()"
+                                            (click)="workingDirectory.stageFile(fileChanges); $event.stopPropagation()"
                                             label="Stage"/>
                                 </div>
                             </td>
@@ -106,7 +106,7 @@
             <div class="flex align-items-center justify-content-between h-3rem">
                 <h4 class="m-0">{{ hasConflicts ? 'Resolved files' : 'Staged files' }} ({{ workDirStatus?.staged?.length ?? 0 }})</h4>
                 @if (workDirStatus?.staged?.length) {
-                    <p-button styleClass="p-button-sm" (click)="workingDirectoryService.unstageAll()" label="Unstage all"/>
+                    <p-button styleClass="p-button-sm" (click)="workingDirectory.unstageAll()" label="Unstage all"/>
                 }
             </div>
             <p-divider class="mt-0"/>
@@ -141,7 +141,7 @@
                                             size="small"
                                             class="stick-right-button"
                                             styleClass="file-row-stage-button p-button-sm"
-                                            (click)="workingDirectoryService.unstageFile(fileChanges); $event.stopPropagation()"
+                                            (click)="workingDirectory.unstageFile(fileChanges); $event.stopPropagation()"
                                             label="Unstage"/>
                                 </div>
                             </td>
@@ -163,7 +163,7 @@
                             label="Fixup"
                             icon="fa fa-wrench"
                             [disabled]="!workDirStatus?.staged?.length"
-                            (click)="fixupService.openFixupPicker()"/>
+                            (click)="fixup.openFixupPicker()"/>
                     <label class="flex align-items-center gap-2 cursor-pointer">
                         <span>Amend</span>
                         <p-checkbox [binary]="true" [(ngModel)]="amend" (onChange)="toggleAmendMode($event.checked)"/>

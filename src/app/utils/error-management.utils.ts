@@ -21,13 +21,13 @@ import {PopupService} from '../services/popup.service';
 
 export class GlobalErrorHandler implements ErrorHandler {
 
-  private popupService = inject(PopupService);
+  private popup = inject(PopupService);
 
   handleError(error: unknown): void {
     console.error('[GlobalErrorHandler]', error);
 
     if (error instanceof Error) {
-      this.popupService.err(error.message);
+      this.popup.err(error.message);
     }
   }
 }

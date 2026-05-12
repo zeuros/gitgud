@@ -35,7 +35,7 @@ export class GitApiService {
 
   private currentRepo = inject(CurrentRepoStore);
   private history = inject(GitCommandHistoryService);
-  private settingsService = inject(SettingsService);
+  private settings = inject(SettingsService);
 
   constructor() {
     // Notes :
@@ -50,13 +50,13 @@ export class GitApiService {
     // ipcRenderer.invoke can serve many common use cases.
     // https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrendererinvokechannel-args
 
-    this.git(['--version']).pipe(map(v => `Git binary: ${this.settingsService.gitBin}, version: ${v.trim()}`)).subscribe(console.log);
+    this.git(['--version']).pipe(map(v => `Git binary: ${this.settings.gitBin}, version: ${v.trim()}`)).subscribe(console.log);
   }
 
   git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
     return this.waitForLock().pipe(
-      switchMap(() => this.exec(this.settingsService.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: window.electron.process.env, ...options})),
+      switchMap(() => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: window.electron.process.env, ...options})),
       tap({
         next: () => this.history.record(filteredArgs, this.currentRepo.cwd(), true),
         error: () => this.history.record(filteredArgs, this.currentRepo.cwd(), false),
@@ -66,7 +66,7 @@ export class GitApiService {
 
   gitWithInput = (args: string[], input: string) =>
     this.waitForLock().pipe(map(() => {
-      const result = window.electron.spawnSync(this.settingsService.gitBin, args, {cwd: this.currentRepo.cwd(), input, env: window.electron.process.env});
+      const result = window.electron.spawnSync(this.settings.gitBin, args, {cwd: this.currentRepo.cwd(), input, env: window.electron.process.env});
       if (result.status !== 0) throw new Error(`Git exited ${result.status}\n${result.stderr}`);
       return result.stdout;
     }));
@@ -83,7 +83,7 @@ export class GitApiService {
 
   spawn = (cmd: string, args: string[] = [], options?: SpawnOptionsWithoutStdio) =>
     this.waitForLock().pipe(switchMap(() => new Observable<string>(observer => {
-      window.electron.spawn(cmd === 'git' ? this.settingsService.gitBin : cmd, args, {cwd: this.currentRepo.cwd(), env: window.electron.process.env, ...options})
+      window.electron.spawn(cmd === 'git' ? this.settings.gitBin : cmd, args, {cwd: this.currentRepo.cwd(), env: window.electron.process.env, ...options})
         .then(out => {
           if (isDevMode()) showPerf(cmd, args, out);
           observer.next(out);

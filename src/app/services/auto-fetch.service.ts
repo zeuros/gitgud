@@ -32,7 +32,7 @@ export class AutoFetchService {
   private currentRepo = inject(CurrentRepoStore);
   private gitApi = inject(GitApiService);
   private gitRepositoryStore = inject(GitRepositoryStore);
-  private settingsService = inject(SettingsService);
+  private settings = inject(SettingsService);
 
   lastFetchedAt = signal<number | undefined>(undefined);
 
@@ -41,7 +41,7 @@ export class AutoFetchService {
   constructor() {
     effect(() => {
       clearInterval(this.intervalId);
-      this.intervalId = setInterval(this.autoFetch, this.settingsService.autoFetchInterval);
+      this.intervalId = setInterval(this.autoFetch, this.settings.autoFetchInterval);
     });
 
     // Initialize last-fetched time from .git/FETCH_HEAD mtime when repo changes

@@ -58,8 +58,8 @@ import {UnstagedFileContextMenuService} from '../../../services/unstaged-file-co
 })
 export class MakeACommitComponent {
 
-  protected fileDiffPanelService = inject(FileDiffPanelService);
-  protected workingDirectoryService = inject(WorkingDirectoryService);
+  protected fileDiffPanel = inject(FileDiffPanelService);
+  protected workingDirectory = inject(WorkingDirectoryService);
   protected currentRepo = inject(CurrentRepoStore);
   protected unstagedContextMenu = inject(UnstagedFileContextMenuService);
   protected commitForm = inject(FormBuilder).nonNullable.group({summary: '', description: ''});
@@ -72,7 +72,7 @@ export class MakeACommitComponent {
   protected directory = directory;
   protected fileName = fileName;
   private commitService = inject(CommitService);
-  protected fixupService = inject(FixupService);
+  protected fixup = inject(FixupService);
   private activeContextMenu = inject(ActiveContextMenuService);
   private savedFormState?: typeof this.commitForm.value;
 
@@ -106,10 +106,10 @@ export class MakeACommitComponent {
 
   protected onConflictFileSelect = (file: WorkingDirectoryFileChange | null) => {
     this.selectedConflictFile.set(file);
-    if (file) this.fileDiffPanelService.showWorkingDirDiffs(file);
+    if (file) this.fileDiffPanel.showWorkingDirDiffs(file);
     else {
-      this.fileDiffPanelService.closeDiffView();
-      this.fileDiffPanelService.closeConflictView();
+      this.fileDiffPanel.closeDiffView();
+      this.fileDiffPanel.closeConflictView();
     }
   };
 
@@ -120,16 +120,16 @@ export class MakeACommitComponent {
     const isReclick = files.length === 1 && current.length === 1 && current[0].path === files[0].path;
     if (isReclick) {
       (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set([]);
-      this.fileDiffPanelService.closeDiffView();
-      this.fileDiffPanelService.closeConflictView();
+      this.fileDiffPanel.closeDiffView();
+      this.fileDiffPanel.closeConflictView();
       return;
     }
     (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set(files);
     (staged ? this.selectedUnstagedFiles : this.selectedStagedFiles).set([]);
-    if (files.length === 1) this.fileDiffPanelService.showWorkingDirDiffs(files[0]);
+    if (files.length === 1) this.fileDiffPanel.showWorkingDirDiffs(files[0]);
     else {
-      this.fileDiffPanelService.closeDiffView();
-      this.fileDiffPanelService.closeConflictView();
+      this.fileDiffPanel.closeDiffView();
+      this.fileDiffPanel.closeConflictView();
     }
   };
 
