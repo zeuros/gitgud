@@ -75,10 +75,10 @@ export class GitApiService {
     this.git(['clone', url, repoName], {cwd: dir, env: window.electron.process.env})
       .pipe(tap(() => this.cwd.set(`${dir}/${repoName}`)));
 
-  exec = (cmd: string, args: string[] = [], options?: any) =>
+  exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
     from(window.electron.execFile(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
       .pipe(
-        map(({stdout}) => stdout.toString()),
+        map(({stdout}) => stdout),
         tap(isDevMode() ? showPerf(cmd, args) : () => 0),
       );
 

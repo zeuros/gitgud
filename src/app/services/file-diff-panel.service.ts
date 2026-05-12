@@ -21,7 +21,7 @@ import {AppFileStatusKind, CommittedFileChange, FileChange} from '../lib/github-
 import {EMPTY, map, of, Subject, switchMap, tap} from 'rxjs';
 import {instanceOf} from '../utils/utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {WorkingDirectoryFileChange} from "../lib/github-desktop/model/workdir";
+import {WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
 import {toObservable} from '@angular/core/rxjs-interop';
 
 @Injectable({

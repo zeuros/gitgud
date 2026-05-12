@@ -20,6 +20,9 @@ import {bootstrapApplication} from '@angular/platform-browser';
 import {appConfig} from './app/app.config';
 import {AppComponent} from './app/app.component';
 import {ErrorHandler} from '@angular/core';
+import {editor} from 'monaco-editor';
+
+editor.setTheme('vs-dark');
 
 bootstrapApplication(AppComponent, appConfig).then(appRef => {
 

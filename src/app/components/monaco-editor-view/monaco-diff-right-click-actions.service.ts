@@ -25,6 +25,7 @@ import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import ITextModel = editor.ITextModel;
 import ILineChange = editor.ILineChange;
+import {realLine} from './monaco-utils';
 
 @Injectable({providedIn: 'root'})
 export class MonacoDiffRightClickActionsService {
@@ -133,7 +134,7 @@ export class MonacoDiffRightClickActionsService {
           const selStart = Math.max(startLine, modStart);
           const selEnd = Math.min(endLine, modEnd);
           const lines = [];
-          for (let i = selStart ; i <= selEnd ; i++) lines.push('+' + modifiedModel.getLineContent(i));
+          for (let i = selStart ; i <= selEnd ; i++) lines.push('+' + realLine(modifiedModel, i));
           // origStart = first old line after the gap; subtract 1 → "insert after this line"
           const insertAfter = Math.max(0, origStart - 1);
           hunks.push(`@@ -${insertAfter},0 +${selStart}${countSuffix(lines.length)} @@\n${lines.join('\n')}\n`);
@@ -141,9 +142,9 @@ export class MonacoDiffRightClickActionsService {
           // Replacement: must include all old lines to delete + all new lines to add.
           // Partial replacements would leave the index inconsistent.
           const oldLines: string[] = [];
-          for (let i = origStart ; i <= origEnd ; i++) oldLines.push('-' + originalModel.getLineContent(i));
+          for (let i = origStart ; i <= origEnd ; i++) oldLines.push('-' + realLine(originalModel, i));
           const newLines: string[] = [];
-          for (let i = modStart ; i <= modEnd ; i++) newLines.push('+' + modifiedModel.getLineContent(i));
+          for (let i = modStart ; i <= modEnd ; i++) newLines.push('+' + realLine(modifiedModel, i));
           const oldCount = origEnd - origStart + 1;
           const newCount = modEnd - modStart + 1;
           hunks.push(`@@ -${origStart}${countSuffix(oldCount)} +${modStart}${countSuffix(newCount)} @@\n${[...oldLines, ...newLines].join('\n')}\n`);
@@ -155,7 +156,7 @@ export class MonacoDiffRightClickActionsService {
           const selStart = Math.max(startLine, modStart);
           const selEnd   = Math.min(endLine,   modEnd);
           const lines = [];
-          for (let i = selStart ; i <= selEnd ; i++) lines.push('+' + modifiedModel.getLineContent(i));
+          for (let i = selStart ; i <= selEnd ; i++) lines.push('+' + realLine(modifiedModel, i));
           const insertAfter = Math.max(0, origStart - 1);
           // Forward patch; git apply -R --cached reverses it → removes lines from index
           hunks.push(`@@ -${insertAfter},0 +${selStart}${countSuffix(lines.length)} @@\n${lines.join('\n')}\n`);
@@ -168,16 +169,16 @@ export class MonacoDiffRightClickActionsService {
           const selStart = Math.max(startLine, origStart);
           const selEnd = Math.min(endLine, origEnd);
           const lines = [];
-          for (let i = selStart ; i <= selEnd ; i++) lines.push('-' + originalModel.getLineContent(i));
+          for (let i = selStart ; i <= selEnd ; i++) lines.push('-' + realLine(originalModel, i));
           // modStart = first new line after the gap; subtract 1 → "insert after this line"
           const insertAfter = Math.max(0, modStart - 1);
           hunks.push(`@@ -${selStart}${countSuffix(lines.length)} +${insertAfter},0 @@\n${lines.join('\n')}\n`);
         } else {
           // Replacement: full hunk — git apply -R --cached will reverse it
           const oldLines: string[] = [];
-          for (let i = origStart ; i <= origEnd ; i++) oldLines.push('-' + originalModel.getLineContent(i));
+          for (let i = origStart ; i <= origEnd ; i++) oldLines.push('-' + realLine(originalModel, i));
           const newLines: string[] = [];
-          for (let i = modStart ; i <= modEnd ; i++) newLines.push('+' + modifiedModel.getLineContent(i));
+          for (let i = modStart ; i <= modEnd ; i++) newLines.push('+' + realLine(modifiedModel, i));
           const oldCount = origEnd - origStart + 1;
           const newCount = modEnd - modStart + 1;
           hunks.push(`@@ -${origStart}${countSuffix(oldCount)} +${modStart}${countSuffix(newCount)} @@\n${[...oldLines, ...newLines].join('\n')}\n`);

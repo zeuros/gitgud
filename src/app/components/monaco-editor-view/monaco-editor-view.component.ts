@@ -32,16 +32,17 @@ import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.se
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {ViewType} from '../../models/git-repository';
-import IEditorOptions = editor.IEditorOptions;
+import {renderWindowsShitEol} from './monaco-utils';
 import ITextModel = editor.ITextModel;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
+import IEditorOptions = editor.IEditorOptions;
+import IDiffEditorOptions = editor.IDiffEditorOptions;
 
 interface DiffModel {
   code: string;
   fileName: string;
 }
 
-// AAA
 interface DiffModels {
   before: DiffModel,
   after: DiffModel
@@ -69,16 +70,18 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void } | undefined>(undefined);
   private ownedModels = new Set<ITextModel>(); // Models are cached for the component's lifetime — switching between already-viewed files hits the URI cache
   private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
-  private editorOptions: IEditorOptions & { theme: string } = {
-    theme: 'vs-dark',
+  private editorOptions: IDiffEditorOptions = {
     readOnly: true,
-    // standalone: true,
     automaticLayout: true,
+    ignoreTrimWhitespace: false,
+    renderWhitespace: 'all',
+    renderControlCharacters: true,
+    unusualLineTerminators: 'off',
+    diffAlgorithm: 'advanced',
+    useInlineViewWhenSpaceIsLimited: true,
     cursorBlinking: 'smooth',
     cursorSmoothCaretAnimation: 'on',
     definitionLinkOpensInPeek: false,
-    // experimental: {useTrueInlineView: true},
-    // experimentalInlineEdit: {showToolbar: 'always'},
     inlineSuggest: {enabled: false},
     smoothScrolling: true,
     snippetSuggestions: 'none',
@@ -110,8 +113,8 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
         this.currentFile.set(isWorkingDirectoryFileChange(file) ? file : undefined);
 
         this.diffModels.set({
-          before: {code: before, fileName: file.path},
-          after: {code: after, fileName: file.path},
+          before: {code: renderWindowsShitEol(before), fileName: file.path},
+          after: {code: renderWindowsShitEol(after), fileName: file.path},
         });
       });
     });
