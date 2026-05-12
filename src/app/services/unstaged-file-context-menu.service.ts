@@ -24,11 +24,13 @@ import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {PopupService} from './popup.service';
 import {AppFileStatusKind} from '../lib/github-desktop/model/status';
 import {FileDiffPanelService} from './file-diff-panel.service';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 
 @Injectable({providedIn: 'root'})
 export class UnstagedFileContextMenuService {
   private workingDir = inject(WorkingDirectoryService);
   private gitApi = inject(GitApiService);
+  private currentRepo = inject(CurrentRepoStore);
   private popup = inject(PopupService);
   private fileDiffPanel = inject(FileDiffPanelService);
 
@@ -73,14 +75,14 @@ export class UnstagedFileContextMenuService {
 
   private copyPath = () => {
     const file = this.selectedFiles()[0];
-    const fullPath = window.electron.path.resolve(this.gitApi.cwd()!, file.path);
+    const fullPath = window.electron.path.resolve(this.currentRepo.cwd()!, file.path);
     navigator.clipboard.writeText(fullPath);
     this.popup.success('Path copied');
   };
 
   private showInFolder = () => {
     const file = this.selectedFiles()[0];
-    const fullPath = window.electron.path.resolve(this.gitApi.cwd()!, file.path);
+    const fullPath = window.electron.path.resolve(this.currentRepo.cwd()!, file.path);
     window.electron.showItemInFolder(fullPath);
   };
 }

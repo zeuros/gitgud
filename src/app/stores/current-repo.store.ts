@@ -34,6 +34,7 @@ export class CurrentRepoStore {
 
   private readonly reposStore = inject(GitRepositoryStore);
 
+  readonly cwd = computed(() => this.reposStore.selectedRepository()?.id);
   readonly logs = computed(() => this.reposStore.selectedRepository()?.logs ?? [], {equal: logsComparison});
   readonly stashes = computed(() => this.reposStore.selectedRepository()?.stashes ?? [], {equal: logsComparison});
   readonly tags = computed(() => this.reposStore.selectedRepository()?.tags ?? [], {equal: isEqual});
