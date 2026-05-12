@@ -80,8 +80,7 @@ export class MakeACommitComponent {
     this.commitService.commit(summary!, description?.length ? description : undefined, this.amend);
   }
 
-  protected amendMode(amend: boolean) {
-    this.amend = amend;
+  protected toggleAmendMode(amend: boolean) {
     if (amend) {
       // Save current form state
       this.savedFormState = this.commitForm.value;
