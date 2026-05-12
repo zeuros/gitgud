@@ -30,6 +30,7 @@ import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {PrimeTemplate} from 'primeng/api';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {CommitService} from '../../../services/commit.service';
+import {FixupService} from '../../../services/fixup.service';
 import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
 import {WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
@@ -69,6 +70,7 @@ export class MakeACommitComponent {
   protected directory = directory;
   protected fileName = fileName;
   private commitService = inject(CommitService);
+  protected fixupService = inject(FixupService);
   private activeContextMenu = inject(ActiveContextMenuService);
   private savedFormState?: typeof this.commitForm.value;
 

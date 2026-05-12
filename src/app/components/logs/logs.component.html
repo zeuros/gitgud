@@ -1,3 +1,10 @@
+@if (fixupService.selectingFixupTarget()) {
+  <div class="fixup-banner">
+    <i class="fa fa-wrench mr-2"></i>
+    Click a commit to fixup staged changes into it
+    <span class="fixup-banner-esc">Esc to cancel</span>
+  </div>
+}
 @let displayLog = computedDisplayLog();
 @let graphColCount = graphColumnCount();
 @let visibleCommitsCnt = visibleCommitsCount();

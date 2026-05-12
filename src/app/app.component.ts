@@ -27,6 +27,7 @@ import {Router, RouterOutlet} from '@angular/router';
 import {SettingsDialogComponent} from './components/dialogs/settings-dialog/settings-dialog.component';
 import {ThemeService} from './services/theme.service'; // bootstraps theme reactivity
 import {ActiveContextMenuService} from './services/active-context-menu.service';
+import {FixupService} from './services/fixup.service';
 
 @Component({
   standalone: true,
@@ -38,6 +39,7 @@ import {ActiveContextMenuService} from './services/active-context-menu.service';
 export class AppComponent {
 
   protected activeContextMenu = inject(ActiveContextMenuService);
+  protected fixupService = inject(FixupService);
   private gitRepositoryStore = inject(GitRepositoryStore);
   private router = inject(Router);
   private globalMenu = viewChild.required<ContextMenu>('globalMenu');

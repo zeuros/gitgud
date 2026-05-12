@@ -1,3 +1,37 @@
+:host.fixup-selection-mode {
+  position: relative;
+  z-index: 601;
+
+  ::ng-deep .p-datatable-tbody tr {
+    cursor: crosshair;
+  }
+}
+
+.fixup-banner {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 602;
+  background: var(--p-yellow-400, #facc15);
+  color: #1a1a1a;
+  font-weight: 600;
+  padding: 0.4rem 1.2rem;
+  border-radius: 0 0 6px 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+
+  .fixup-banner-esc {
+    margin-left: 1rem;
+    font-weight: 400;
+    font-size: 0.85em;
+    opacity: 0.7;
+  }
+}
+
 $row-height: 34px;
 $row-spacing: 8px;
 

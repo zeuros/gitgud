@@ -42,7 +42,7 @@ export class GitWorkflowService {
 
   rebaseAndEditActions = (rebaseFrom: string, mapActions: (actions: string[]) => string[], autosquash = false) =>
     this.stash.stashAndRun(
-      this.rebase.startInteractiveRebase(rebaseFrom).pipe(
+      this.rebase.startInteractiveRebase(rebaseFrom, autosquash).pipe(
         map(actions => mapActions(actions)),
         switchMap(actions => this.rebase.finishRebase(actions.join('\n'))),
       ),
