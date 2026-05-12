@@ -1,4 +1,4 @@
-@if (fixupService.selectingFixupTarget()) {
+@if (fixup.selectingFixupTarget()) {
   <div class="fixup-banner">
     <i class="fa fa-wrench mr-2"></i>
     Click a commit to fixup staged changes into it
@@ -58,15 +58,15 @@
             @let commitTags = currentRepo.tagsByCommitSha()[commit.sha] ?? [];
             @let extraCount = branchesGrouped.length + commitTags.length + (isDetachedHead ? 1 : 0) - 1;
             <td class="branch-tag-td">
-                @if (commit.sha == createBranchService.newBranchSha()) {
+                @if (commit.sha == createBranch.newBranchSha()) {
                     <input pInputText
                            class="branch-name-input"
                            placeholder="New branch name"
                            autofocus
-                           [(ngModel)]="createBranchService.name"
-                           (keydown.enter)="createBranchService.confirm()"
-                           (keydown.escape)="createBranchService.cancel()"
-                           (blur)="createBranchService.cancel()"
+                           [(ngModel)]="createBranch.name"
+                           (keydown.enter)="createBranch.confirm()"
+                           (keydown.escape)="createBranch.cancel()"
+                           (blur)="createBranch.cancel()"
                     />
                 }
                 @if (isDetachedHead) {

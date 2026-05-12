@@ -32,7 +32,7 @@ import {GitCommandHistoryService} from '../../../services/git-command-history.se
 })
 export class ShellHistoryDialogComponent {
 
-  protected historyService = inject(GitCommandHistoryService);
+  protected history = inject(GitCommandHistoryService);
   protected visible = signal(false);
 
   open() {

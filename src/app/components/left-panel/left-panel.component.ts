@@ -58,8 +58,8 @@ import {BranchDragDropService} from '../../services/branch-drag-drop.service';
 export class LeftPanelComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
-  protected tagContextMenuService = inject(TagContextMenuService);
-  protected stashContextMenuService = inject(StashContextMenuService);
+  protected tagContextMenu = inject(TagContextMenuService);
+  protected stashContextMenu = inject(StashContextMenuService);
   protected localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
   protected remoteBranches = computed(() =>
     toBranchTree(this.currentRepo.branches().filter(remote) ?? [])
@@ -69,7 +69,7 @@ export class LeftPanelComponent {
     if (!sha) return null;
     return findNode([...this.localBranches(), ...this.remoteBranches()], sha);
   });
-  protected branchContextMenuService = inject(BranchContextMenuService);
+  protected branchContextMenu = inject(BranchContextMenuService);
   protected aheadBehind = inject(BranchAheadBehindService);
   protected branchDragDrop = inject(BranchDragDropService);
   protected activeContextMenu = inject(ActiveContextMenuService);
@@ -89,14 +89,14 @@ export class LeftPanelComponent {
 
   protected openStashContextMenu = (stash: Commit, event: MouseEvent) => {
     event.preventDefault();
-    this.stashContextMenuService.selectedCommit.set(stash as unknown as DisplayRef);
-    this.activeContextMenu.show(this.stashContextMenuService.stashContextMenu(), event);
+    this.stashContextMenu.selectedCommit.set(stash as unknown as DisplayRef);
+    this.activeContextMenu.show(this.stashContextMenu.stashContextMenu(), event);
   };
 
   protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
     event.preventDefault();
-    this.tagContextMenuService.selectedTag.set(tag);
-    this.activeContextMenu.show(this.tagContextMenuService.tagContextMenu(), event);
+    this.tagContextMenu.selectedTag.set(tag);
+    this.activeContextMenu.show(this.tagContextMenu.tagContextMenu(), event);
   };
 
   protected checkoutBranch = (branch?: Branch) => {
@@ -107,8 +107,8 @@ export class LeftPanelComponent {
     this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, leftPanel: sizes.map(Number)}});
 
   protected prepareBranchContextMenu = (node: TreeNode<Branch>) => {
-    this.branchContextMenuService.selectedNode.set(node);
-    this.activeContextMenu.contextMenu.set(this.branchContextMenuService.branchContextMenu());
+    this.branchContextMenu.selectedNode.set(node);
+    this.activeContextMenu.contextMenu.set(this.branchContextMenu.branchContextMenu());
   };
 
   protected $branchNode = (branchNode: TreeNode<Branch>) => branchNode;

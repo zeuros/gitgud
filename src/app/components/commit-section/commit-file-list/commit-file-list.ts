@@ -30,8 +30,8 @@ import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
   template: `
     <p-listbox animate.enter="fade-slide-in-out-enter"
                [options]="files().slice()"
-               [ngModel]="fileDiffPanelService.selectedFile()"
-               (ngModelChange)="fileDiffPanelService.showCommittedFileDiffs($event)"
+               [ngModel]="fileDiffPanel.selectedFile()"
+               (ngModelChange)="fileDiffPanel.showCommittedFileDiffs($event)"
                scrollHeight="auto"
                optionLabel="path"
                class="fill-height">
@@ -58,7 +58,7 @@ export class CommitFileListComponent {
   protected directory = directory;
   protected fileName = fileName;
   protected FileStatusesIcons = FileStatusesIcons;
-  protected fileDiffPanelService = inject(FileDiffPanelService);
+  protected fileDiffPanel = inject(FileDiffPanelService);
 
   protected file$ = (f: CommittedFileChange) => f;
 }

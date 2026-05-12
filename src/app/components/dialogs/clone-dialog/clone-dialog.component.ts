@@ -38,7 +38,7 @@ import {finalize, switchMap} from 'rxjs';
 export class CloneDialogComponent {
 
   private gitApi = inject(GitApiService);
-  private gitRepositoryService = inject(GitRepositoryService);
+  private gitRepository = inject(GitRepositoryService);
   private popup = inject(PopupService);
 
   protected visible = signal(false);
@@ -75,7 +75,7 @@ export class CloneDialogComponent {
     this.loading.set(true);
     this.gitApi.clone(this.url(), this.repoName(), this.targetDir())
       .pipe(
-        switchMap(() => this.gitRepositoryService.openRepository(this.repoPath())),
+        switchMap(() => this.gitRepository.openRepository(this.repoPath())),
         finalize(() => this.loading.set(false)),
       )
       .subscribe(() => {
@@ -86,7 +86,7 @@ export class CloneDialogComponent {
 
   protected openExisting() {
     this.loading.set(true);
-    this.gitRepositoryService.openRepository(this.repoPath())
+    this.gitRepository.openRepository(this.repoPath())
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe(() => {
         this.visible.set(false);

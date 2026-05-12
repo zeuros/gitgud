@@ -6,10 +6,10 @@
   [style]="{width: '700px', maxHeight: '80vh'}"
 >
   <div class="shell-history">
-    @if (!historyService.history().length) {
+    @if (!history.history().length) {
       <span class="empty">No commands recorded yet.</span>
     }
-    @for (entry of historyService.history(); track entry.timestamp) {
+    @for (entry of history.history(); track entry.timestamp) {
       <div class="entry" [class.error]="!entry.success">
         <span class="timestamp">{{ entry.timestamp | date:'HH:mm:ss' }}</span>
         <span class="command">git {{ entry.args.join(' ') }}</span>

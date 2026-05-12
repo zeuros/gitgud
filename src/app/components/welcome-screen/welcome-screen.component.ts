@@ -31,7 +31,7 @@ import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.compone
 })
 export class WelcomeScreenComponent {
 
-  protected gitRepositoryService = inject(GitRepositoryService);
+  protected gitRepository = inject(GitRepositoryService);
   private cloneDialog = viewChild.required(CloneDialogComponent);
 
   protected openCloneDialog = () => this.cloneDialog().open();

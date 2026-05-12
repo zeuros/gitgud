@@ -39,11 +39,9 @@ export class BranchReaderService {
     symRef: '%(symref)',
     head: '%(HEAD)',
   };
-
-  private parser = createForEachRefParser(this.fields);
   remoteHeadPointer?: string;
-
-  private popupService = inject(PopupService);
+  private parser = createForEachRefParser(this.fields);
+  private popup = inject(PopupService);
   private gitApi = inject(GitApiService);
 
   getBranches = (): Observable<Branch[]> =>
@@ -88,7 +86,7 @@ export class BranchReaderService {
 
   checkoutBranch = (branch: Branch) => {
     if (branch.isHeadPointed) {
-      this.popupService.warn(`Branch ${branch.name} is already checked out`);
+      this.popup.warn(`Branch ${branch.name} is already checked out`);
       return;
     }
 

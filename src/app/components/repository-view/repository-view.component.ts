@@ -41,7 +41,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 export class RepositoryViewComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
-  protected fileDiffPanelService = inject(FileDiffPanelService);
+  protected fileDiffPanel = inject(FileDiffPanelService);
   protected sum = sum;
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
     this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, mainPanels: sizes.map(Number)}});

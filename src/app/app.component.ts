@@ -39,7 +39,7 @@ import {FixupService} from './services/fixup.service';
 export class AppComponent {
 
   protected activeContextMenu = inject(ActiveContextMenuService);
-  protected fixupService = inject(FixupService);
+  protected fixup = inject(FixupService);
   private gitRepositoryStore = inject(GitRepositoryStore);
   private router = inject(Router);
   private globalMenu = viewChild.required<ContextMenu>('globalMenu');
