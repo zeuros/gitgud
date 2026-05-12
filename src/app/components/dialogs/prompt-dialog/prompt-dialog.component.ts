@@ -36,11 +36,11 @@ import {DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
   `,
 })
 export class PromptDialogComponent {
-  private readonly ref = inject(DynamicDialogRef);
-  private readonly config = inject(DynamicDialogConfig);
+  private ref = inject(DynamicDialogRef);
+  private config = inject(DynamicDialogConfig);
 
-  protected readonly required: boolean = this.config.data?.required ?? true;
-  protected readonly textInput = new FormControl('', { nonNullable: true });
+  protected required: boolean = this.config.data?.required ?? true;
+  protected textInput = new FormControl('', { nonNullable: true });
 
   protected confirm = () => this.ref.close(this.textInput.value);
   protected cancel = () => this.ref.close(null);

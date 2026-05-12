@@ -21,7 +21,7 @@ import {PopupService} from '../services/popup.service';
 
 export class GlobalErrorHandler implements ErrorHandler {
 
-  private readonly popupService = inject(PopupService);
+  private popupService = inject(PopupService);
 
   handleError(error: unknown): void {
     console.error('[GlobalErrorHandler]', error);

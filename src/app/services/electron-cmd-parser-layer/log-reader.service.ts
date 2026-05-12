@@ -46,7 +46,7 @@ export class LogReaderService {
     refs: '%D',
   };
   private gitApi = inject(GitApiService);
-  private readonly parser = createLogParser(this.fields);
+  private parser = createLogParser(this.fields);
 
 
   /**

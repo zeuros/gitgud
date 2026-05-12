@@ -33,7 +33,7 @@ import {IdenticonPipe} from '../../../../services/identicon-pipe.service';
 })
 export class AvatarComponent {
 
-  readonly identity = input<CommitIdentity | undefined>(undefined);
+  identity = input<CommitIdentity | undefined>(undefined);
   protected avatarLoaded = false;
 
 }

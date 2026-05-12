@@ -24,5 +24,5 @@ import {identIcon} from '../utils/commit-utils';
   standalone: true,
 })
 export class IdenticonPipe implements PipeTransform {
-  readonly transform = (email: string) => `data:image/png;base64,${identIcon(email).toString()}`;
+  transform = (email: string) => `data:image/png;base64,${identIcon(email).toString()}`;
 }

@@ -54,10 +54,10 @@ export type BehindRemoteAction = 'pull' | 'merge' | 'rebase' | 'force-push' | nu
   `,
 })
 export class BehindRemoteDialogComponent {
-  protected readonly ref = inject(DynamicDialogRef);
-  private readonly config = inject(DynamicDialogConfig);
+  protected ref = inject(DynamicDialogRef);
+  private config = inject(DynamicDialogConfig);
 
-  readonly localRef: string = this.config.data.localRef;
-  readonly remoteRef: string = this.config.data.remoteRef;
-  readonly diverged: boolean = this.config.data.diverged;
+  localRef: string = this.config.data.localRef;
+  remoteRef: string = this.config.data.remoteRef;
+  diverged: boolean = this.config.data.diverged;
 }

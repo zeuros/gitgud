@@ -29,14 +29,14 @@ import {syncToStorage} from '../utils/store.utils';
 @Injectable({providedIn: 'root'})
 export class GitRepositoryStore {
 
-  private readonly localStorageService = inject(LocalStorageService);
+  private localStorageService = inject(LocalStorageService);
 
-  private readonly _repositories = signal<GitRepository[]>(this.localStorageService.get<GitRepository[]>(StorageName.GitRepositories) ?? []);
+  private _repositories = signal<GitRepository[]>(this.localStorageService.get<GitRepository[]>(StorageName.GitRepositories) ?? []);
 
-  readonly repositories = this._repositories.asReadonly();
-  readonly selectedRepository = computed(() => this._repositories().find(r => r.selected));
-  readonly selectedIndex = computed(() => this._repositories().findIndex(r => r.selected));
-  readonly hasRepositories = computed(() => this._repositories().length > 0);
+  repositories = this._repositories.asReadonly();
+  selectedRepository = computed(() => this._repositories().find(r => r.selected));
+  selectedIndex = computed(() => this._repositories().findIndex(r => r.selected));
+  hasRepositories = computed(() => this._repositories().length > 0);
 
   constructor() {
     syncToStorage(this._repositories, StorageName.GitRepositories, this.localStorageService);

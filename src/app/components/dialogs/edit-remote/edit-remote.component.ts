@@ -41,15 +41,14 @@ import {PopupService} from '../../../services/popup.service';
   `,
 })
 export class EditRemoteComponent implements OnInit {
-  private readonly ref = inject(DynamicDialogRef);
-  private readonly config = inject(DynamicDialogConfig);
-  private readonly gitApi = inject(GitApiService);
-  private readonly gitWorkflow = inject(GitWorkflowService);
+  private ref = inject(DynamicDialogRef);
+  private config = inject(DynamicDialogConfig);
+  private gitApi = inject(GitApiService);
+  private gitWorkflow = inject(GitWorkflowService);
+  private popup = inject(PopupService);
 
-  private readonly popup = inject(PopupService);
-
-  private readonly remoteName = this.config.data.remoteName;
-  protected readonly urlInput = new FormControl('', {nonNullable: true});
+  private remoteName = this.config.data.remoteName;
+  protected urlInput = new FormControl('', {nonNullable: true});
 
   ngOnInit() {
     this.gitApi.git(['remote', 'get-url', this.remoteName])

@@ -24,8 +24,8 @@ import { StorageName } from "../enums/storage-name.enum";
 })
 export class LocalStorageService {
 
-    readonly store = (where: StorageName, item: any) => localStorage.setItem(where, JSON.stringify(item));
+    store = (where: StorageName, item: any) => localStorage.setItem(where, JSON.stringify(item));
 
-    readonly get = <T>(where: StorageName): T | undefined => JSON.parse(localStorage.getItem(where)!);
+    get = <T>(where: StorageName): T | undefined => JSON.parse(localStorage.getItem(where)!);
 
 }

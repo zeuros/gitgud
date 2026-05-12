@@ -24,7 +24,7 @@ import {PromptDialogComponent} from '../components/dialogs/prompt-dialog/prompt-
 @Injectable({providedIn: 'root'})
 export class PromptService {
 
-  private readonly dialog = inject(DialogService);
+  private dialog = inject(DialogService);
 
   open = (label: string, required = true) =>
     this.dialog.open(PromptDialogComponent, {

@@ -24,8 +24,8 @@ export type {ThemeMode};
 @Injectable({providedIn: 'root'})
 export class ThemeService {
 
-  private readonly systemDarkMq = window.matchMedia('(prefers-color-scheme: dark)');
-  private readonly settingsService = inject(SettingsService);
+  private systemDarkMq = window.matchMedia('(prefers-color-scheme: dark)');
+  private settingsService = inject(SettingsService);
 
   constructor() {
     effect(() => this.applyTheme(this.settingsService.theme));
@@ -40,7 +40,7 @@ export class ThemeService {
     document.querySelector('html')?.classList?.toggle('dark', isDark);
   }
 
-  readonly themeOptions = Object.entries({
+  themeOptions = Object.entries({
     system: {label: 'System'},
     dark: {label: 'Dark'},
     light: {label: 'Light'},

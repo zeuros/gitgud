@@ -27,7 +27,7 @@ export interface GitCommandRecord {
 
 @Injectable({providedIn: 'root'})
 export class GitCommandHistoryService {
-  readonly history = signal<GitCommandRecord[]>([]);
+  history = signal<GitCommandRecord[]>([]);
 
   record(args: string[], cwd?: string, success = true) {
     this.history.update(h => [{args, cwd, timestamp: new Date(), success}, ...h].slice(0, 500));

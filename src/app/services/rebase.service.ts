@@ -26,8 +26,8 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
 })
 export class RebaseService {
 
-  private readonly gitApi = inject(GitApiService);
-  private readonly currentRepo = inject(CurrentRepoStore);
+  private gitApi = inject(GitApiService);
+  private currentRepo = inject(CurrentRepoStore);
   private pendingRebase$ = new Subject<void>();
 
   /**

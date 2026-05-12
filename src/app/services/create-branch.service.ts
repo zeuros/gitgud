@@ -28,8 +28,8 @@ export class CreateBranchService {
   private gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);
 
-  readonly newBranchSha = signal<string | undefined>(undefined);
-  readonly name = signal('');
+  newBranchSha = signal<string | undefined>(undefined);
+  name = signal('');
 
   createBranchAtSha = (sha: string) => this.newBranchSha.set(sha);
 

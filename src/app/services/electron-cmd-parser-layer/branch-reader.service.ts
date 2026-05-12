@@ -30,7 +30,7 @@ import {PopupService} from '../popup.service';
 })
 export class BranchReaderService {
 
-  readonly fields = {
+  fields = {
     fullName: '%(refname)',
     shortName: '%(refname:short)',
     upstreamShortName: '%(upstream:short)',
@@ -40,7 +40,7 @@ export class BranchReaderService {
     head: '%(HEAD)',
   };
 
-  private readonly parser = createForEachRefParser(this.fields);
+  private parser = createForEachRefParser(this.fields);
   remoteHeadPointer?: string;
 
   private popupService = inject(PopupService);

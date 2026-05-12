@@ -41,6 +41,6 @@ import {CommitsFileListInfoComponent} from './commits-file-list-info/commits-fil
 })
 export class CommitSectionComponent {
 
-  protected readonly currentRepo = inject(CurrentRepoStore);
+  protected currentRepo = inject(CurrentRepoStore);
 
 }

@@ -25,16 +25,16 @@ import {createForEachRefParser} from '../parser.service';
 @Injectable({providedIn: 'root'})
 export class TagReaderService {
 
-  private readonly gitApi = inject(GitApiService);
+  private gitApi = inject(GitApiService);
 
-  private readonly fields = {
+  private fields = {
     name: '%(refname:short)',
     sha: '%(*objectname)',       // dereferenced commit sha (annotated tags)
     objectSha: '%(objectname)',  // tag object sha (lightweight tags)
     message: '%(subject)',
   };
 
-  private readonly parser = createForEachRefParser(this.fields);
+  private parser = createForEachRefParser(this.fields);
 
   getTags = () =>
     this.gitApi.git(['for-each-ref', 'refs/tags', this.parser.formatArg])

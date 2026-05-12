@@ -34,10 +34,10 @@ export class UnstagedFileContextMenuService {
   private popup = inject(PopupService);
   private fileDiffPanel = inject(FileDiffPanelService);
 
-  readonly selectedFiles = signal<WorkingDirectoryFileChange[]>([]);
-  readonly staged = signal(false);
+  selectedFiles = signal<WorkingDirectoryFileChange[]>([]);
+  staged = signal(false);
 
-  readonly contextMenu = computed<MenuItem[]>(() => {
+  contextMenu = computed<MenuItem[]>(() => {
     const files = this.selectedFiles();
     const count = files.length;
     const multi = count > 1;

@@ -26,8 +26,8 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
   providedIn: 'root',
 })
 export class StashService {
-  private readonly gitApi = inject(GitApiService);
-  private readonly currentRepo = inject(CurrentRepoStore);
+  private gitApi = inject(GitApiService);
+  private currentRepo = inject(CurrentRepoStore);
 
 
   stashAndRun = <T>(operation$: Observable<T>, thenUnstash = true): Observable<T> => {

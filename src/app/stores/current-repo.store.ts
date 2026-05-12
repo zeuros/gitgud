@@ -32,50 +32,50 @@ import {GitTag} from '../models/git-tag';
 @Injectable({providedIn: 'root'})
 export class CurrentRepoStore {
 
-  private readonly reposStore = inject(GitRepositoryStore);
+  private reposStore = inject(GitRepositoryStore);
 
-  readonly cwd = computed(() => this.reposStore.selectedRepository()?.id);
-  readonly logs = computed(() => this.reposStore.selectedRepository()?.logs ?? [], {equal: logsComparison});
-  readonly stashes = computed(() => this.reposStore.selectedRepository()?.stashes ?? [], {equal: logsComparison});
-  readonly tags = computed(() => this.reposStore.selectedRepository()?.tags ?? [], {equal: isEqual});
-  readonly tagsByCommitSha = computed<Record<string, GitTag[] | undefined>>(() => groupBy(this.tags(), t => t.sha), {equal: keyComparison});
-  readonly branches = computed(() => this.reposStore.selectedRepository()?.branches ?? [], {equal: isEqual});
-  readonly branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha), {equal: keyComparison});
+  cwd = computed(() => this.reposStore.selectedRepository()?.id);
+  logs = computed(() => this.reposStore.selectedRepository()?.logs ?? [], {equal: logsComparison});
+  stashes = computed(() => this.reposStore.selectedRepository()?.stashes ?? [], {equal: logsComparison});
+  tags = computed(() => this.reposStore.selectedRepository()?.tags ?? [], {equal: isEqual});
+  tagsByCommitSha = computed<Record<string, GitTag[] | undefined>>(() => groupBy(this.tags(), t => t.sha), {equal: keyComparison});
+  branches = computed(() => this.reposStore.selectedRepository()?.branches ?? [], {equal: isEqual});
+  branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha), {equal: keyComparison});
   // Group branches by commit SHA, then pair local/remote branches by normalized name into [local, distant] tuples
-  readonly mergedBranchesByTip = computed<Record<string, LocalAndDistant[] | undefined>>(() => mapValues(this.branchesByTip(), toLocalAndDistantPairs));
+  mergedBranchesByTip = computed<Record<string, LocalAndDistant[] | undefined>>(() => mapValues(this.branchesByTip(), toLocalAndDistantPairs));
 
-  readonly startCommit = computed(() => this.reposStore.selectedRepository()?.startCommit ?? 0);
-  readonly workDirStatus = computed(() => this.reposStore.selectedRepository()?.workDirStatus, {equal: isEqual});
-  readonly panelSizes = computed(() => this.reposStore.selectedRepository()?.panelSizes);
-  readonly editorConfig = computed(() => this.reposStore.selectedRepository()?.editorConfig);
-  readonly detachedHeadSha = computed(() => this.reposStore.selectedRepository()?.detachedHeadSha);
-  readonly name = computed(() => this.reposStore.selectedRepository()?.name);
+  startCommit = computed(() => this.reposStore.selectedRepository()?.startCommit ?? 0);
+  workDirStatus = computed(() => this.reposStore.selectedRepository()?.workDirStatus, {equal: isEqual});
+  panelSizes = computed(() => this.reposStore.selectedRepository()?.panelSizes);
+  editorConfig = computed(() => this.reposStore.selectedRepository()?.editorConfig);
+  detachedHeadSha = computed(() => this.reposStore.selectedRepository()?.detachedHeadSha);
+  name = computed(() => this.reposStore.selectedRepository()?.name);
 
-  readonly selectedCommitsShas = computed(() => this.reposStore.selectedRepository()?.selectedCommitsShas, {equal: shallowArrayEqual});
-  readonly selectedCommits = computed(() => {const scs = this.selectedCommitsShas();return this.logs().filter(l => scs?.includes(l.sha));});
-  readonly selectedCommitSha = computed(() => {
+  selectedCommitsShas = computed(() => this.reposStore.selectedRepository()?.selectedCommitsShas, {equal: shallowArrayEqual});
+  selectedCommits = computed(() => {const scs = this.selectedCommitsShas();return this.logs().filter(l => scs?.includes(l.sha));});
+  selectedCommitSha = computed(() => {
     const sc = this.reposStore.selectedRepository()?.selectedCommitsShas;
     return sc?.length === 1 ? sc[0] : undefined;
   });
-  readonly selectedCommit = computed(() => {
+  selectedCommit = computed(() => {
     const sha = this.selectedCommitSha();
     return this.logs().find(c => c.sha === sha);
   });
-  readonly selectedCommitIndex = computed(() => {
+  selectedCommitIndex = computed(() => {
     const sha = this.selectedCommitSha();
     return this.logs().findIndex(c => c.sha === sha);
   });
-  readonly selectedStash = computed(() => {
+  selectedStash = computed(() => {
     const sha = this.selectedCommitSha();
     return this.stashes().find(s => s.parentSHAs?.[1] && s.parentSHAs?.[1] === sha);
   });
-  readonly selectedTag = computed(() => {
+  selectedTag = computed(() => {
     const sha = this.selectedCommitSha();
     return this.tags().find(s => s.sha == sha);
   });
-  readonly headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
+  headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
 
-  readonly headSha = () => this.headBranch()?.tip?.sha ?? this.detachedHeadSha()
+  headSha = () => this.headBranch()?.tip?.sha ?? this.detachedHeadSha()
 
-  readonly update = (updates: Partial<GitRepository>) => this.reposStore.updateSelectedRepository(updates);
+  update = (updates: Partial<GitRepository>) => this.reposStore.updateSelectedRepository(updates);
 }
