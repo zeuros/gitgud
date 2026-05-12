@@ -66,7 +66,7 @@ export class ToolbarComponent implements OnInit {
   protected zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
   private branchAheadBehind = inject(BranchAheadBehindService);
-  private gitRefresh = inject(GitRefreshService);
+  protected gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);
   private rebase = inject(RebaseService);
   private dialog = inject(DialogService);

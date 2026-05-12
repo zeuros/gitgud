@@ -1,7 +1,7 @@
 <div class="repo-info">
     <div class="repo-name-clip">
         <div class="repo-info-track">
-            <span class="repo-name"><span class="sword">⚔</span> {{ currentRepo.name() }} <span class="sword">⚔</span></span>
+            <span class="repo-name"><span class="sword" [class.spinning]="gitRefresh.isRefreshing()">⚔</span> {{ currentRepo.name() }} <span class="sword" [class.spinning]="gitRefresh.isRefreshing()">⚔</span></span>
         </div>
     </div>
     <span class="branch-badge">{{ currentRepo.headBranch()?.name ?? short(currentRepo.detachedHeadSha() ?? '') + ' (detached HEAD)' }}</span>

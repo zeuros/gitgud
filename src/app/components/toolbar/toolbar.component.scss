@@ -56,7 +56,14 @@ $repo-track-max-width: 260px;
     -webkit-text-fill-color: transparent;
     animation: repo-flames 120s ease-in-out infinite;
     .sword {
-      animation: repo-flames 80s ease-in-out infinite;
+      display: inline-block;
+      background: linear-gradient(180deg, var(--babedouGray) 0%, var(--huaaaaaGray) 100%);
+      background-size: 100% 280%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      &.spinning {
+        animation: spin 1.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+      }
     }
   }
 
@@ -88,6 +95,11 @@ $repo-track-max-width: 260px;
   50% {
     background-position: 0% 100%;
   }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 ::ng-deep p-divider.p-divider-vertical {
