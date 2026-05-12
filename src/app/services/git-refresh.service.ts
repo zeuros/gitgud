@@ -16,8 +16,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {DestroyRef, inject, Injectable} from '@angular/core';
-import {forkJoin, map, of, switchMap, tap} from 'rxjs';
+import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
+import {defer, finalize, forkJoin, map, of, switchMap, tap} from 'rxjs';
+import {Observable} from 'rxjs';
 import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
 import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
 import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
@@ -47,6 +48,15 @@ export class GitRefreshService {
   private fileWatcher = inject(FileWatcherService);
   private destroyRef = inject(DestroyRef);
 
+  private _active = signal(0);
+  isRefreshing = computed(() => this._active() > 0);
+
+  private track = <T>(source$: Observable<T>): Observable<T> =>
+    defer(() => {
+      this._active.update(n => n + 1);
+      return source$.pipe(finalize(() => this._active.update(n => n - 1)));
+    });
+
   constructor() {
     this.doUpdateWorkingDirChanges();
     window.electron.onWindowFocus(this.doRefreshAll);
@@ -54,10 +64,10 @@ export class GitRefreshService {
     this.fileWatcher.onWorkingDirFileChange$.subscribe(this.doUpdateWorkingDirChanges);
   }
 
-  refreshAll = () => forkJoin({
+  refreshAll = () => this.track(forkJoin({
     workDirStatus: this.updateWorkingDirChanges(),
     logsAndBranches: this.updateLogsAndBranches(), // refresh log and wait for it so that selected commit sha can be updated
-  });
+  }));
 
   doRefreshAll = () => this.refreshAll().subscribe();
 
@@ -65,7 +75,7 @@ export class GitRefreshService {
    * Fetches logs, branches, and stashes for the current repository
    * and returns a partial repository update.
    */
-  updateLogsAndBranches = () =>
+  updateLogsAndBranches = () => this.track(
     this.stashReader.getStashes()
       .pipe(
         switchMap(stashes => forkJoin({
@@ -77,7 +87,7 @@ export class GitRefreshService {
           tags: this.tagReader.getTags(),
         })),
         tap((r: Partial<GitRepository>) => this.gitRepositoryStore.updateSelectedRepository(r)),
-      );
+      ));
 
   doUpdateLogsAndBranches = () => this.updateLogsAndBranches().subscribe();
 
@@ -86,17 +96,12 @@ export class GitRefreshService {
    * Get a list of files which have recorded changes in the index as compared to
    * HEAD along with the type of change.
    */
-  updateWorkingDirChanges = () =>
-    this.gitApi.git([
-      'status',
-      '--porcelain',
-      '-z',
-      '--',
-    ])
+  updateWorkingDirChanges = () => this.track(
+    this.gitApi.git(['status', '--porcelain', '-z', '--'])
       .pipe(
         map(parseWorkingDirChanges),
         tap(workDirStatus => this.currentRepo.update({workDirStatus})),
-      );
+      ));
 
   /**
    * Get a list of files which have recorded changes in the index as compared to
