@@ -20,10 +20,6 @@ import {AfterViewInit, Component, computed, effect, ElementRef, HostListener, in
 import {CommittedFileChange, FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
-import {Button} from 'primeng/button';
-import {ButtonGroup} from 'primeng/buttongroup';
-import {Tooltip} from 'primeng/tooltip';
-import {Toolbar} from 'primeng/toolbar';
 import {FormsModule} from '@angular/forms';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
@@ -33,6 +29,7 @@ import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-acti
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {ViewType} from '../../models/git-repository';
 import {renderWindowsShitEol} from './monaco-utils';
+import {SelectButton} from 'primeng/selectbutton';
 import ITextModel = editor.ITextModel;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import IEditorOptions = editor.IEditorOptions;
@@ -51,11 +48,18 @@ interface DiffModels {
 @Component({
   standalone: true,
   selector: 'gitgud-monaco-editor-view',
-  imports: [Button, ButtonGroup, Tooltip, Toolbar, FormsModule],
+  imports: [FormsModule, SelectButton],
   templateUrl: './monaco-editor-view.component.html',
   styleUrl: './monaco-editor-view.component.scss',
 })
 export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
+
+  protected viewOptions = Object.entries({
+    hunk:   {label: 'Hunk',   icon: 'fa fa-list'},
+    inline: {label: 'Inline', icon: 'fa fa-align-left'},
+    split:  {label: 'Split',  icon: 'fa fa-columns'},
+  } satisfies Record<ViewType, {label: string; icon: string}>).map(([value, {label, icon}]) => ({value, label, icon}));
+
   fileToDiff = input<FileChange>();
   @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
   diffModels = signal<DiffModels | undefined>(undefined);

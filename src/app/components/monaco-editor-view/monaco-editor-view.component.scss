@@ -1,3 +1,7 @@
+:host {
+  display: flex;
+  flex-direction: column;
+}
 
 .diff-editor-container {
   height: 100%;
@@ -5,22 +9,6 @@
   flex: 1;
 }
 
-:host {
-  display: flex;
-  flex-direction: column;
-
-  ::ng-deep {
-
-    .action-button {
-      position: absolute;
-      right: 10px;
-      z-index: 10;
-      padding: 2px 5px;
-      cursor: pointer;
-    }
-
-    .gutter-selection-highlight {
-      background: rgba(38, 79, 120, 0.8);
-    }
-  }
+.display-modes {
+  margin-left: auto;
 }
