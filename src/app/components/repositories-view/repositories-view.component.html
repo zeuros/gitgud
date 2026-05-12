@@ -2,7 +2,7 @@
 
 <gitgud-toolbar/>
 
-<p-tabs [value]="selectedIndex" (valueChange)="gitRepositoryStore.selectRepository($event!)" scrollable>
+<p-tabs [value]="selectedIndex" (valueChange)="selectRepository($event!)" scrollable>
 
     <p-tablist cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
         @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {

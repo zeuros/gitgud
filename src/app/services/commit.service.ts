@@ -34,7 +34,7 @@ export class CommitService {
 
   commit = (summary: string, description?: string, amend = false) =>
     this.gitApi.git(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs))
+      .pipe(switchMap(this.gitRefresh.refreshAll))
       .subscribe(({workDirStatus}) => {
         this.fileDiffPanel.closeDiffView();
         if (!workingDirHasChanges(workDirStatus))

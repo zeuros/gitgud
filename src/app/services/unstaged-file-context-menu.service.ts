@@ -21,6 +21,7 @@ import {MenuItem} from 'primeng/api';
 import {WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
 import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-directory.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitRefreshService} from './git-refresh.service';
 import {PopupService} from './popup.service';
 import {AppFileStatusKind} from '../lib/github-desktop/model/status';
 import {FileDiffPanelService} from './file-diff-panel.service';
@@ -30,6 +31,7 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
 export class UnstagedFileContextMenuService {
   private workingDir = inject(WorkingDirectoryService);
   private gitApi = inject(GitApiService);
+  private gitRefresh = inject(GitRefreshService);
   private currentRepo = inject(CurrentRepoStore);
   private popup = inject(PopupService);
   private fileDiffPanel = inject(FileDiffPanelService);
@@ -69,8 +71,8 @@ export class UnstagedFileContextMenuService {
 
     const tracked = files.filter(f => f.status.kind !== AppFileStatusKind.Untracked);
     const untracked = files.filter(f => f.status.kind === AppFileStatusKind.Untracked);
-    if (tracked.length) this.gitApi.git(['checkout', '--', ...tracked.map(f => f.path)]).subscribe(this.workingDir.doFetchWorkingDirChanges);
-    if (untracked.length) this.gitApi.git(['clean', '-f', '--', ...untracked.map(f => f.path)]).subscribe(this.workingDir.doFetchWorkingDirChanges);
+    if (tracked.length) this.gitApi.git(['checkout', '--', ...tracked.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    if (untracked.length) this.gitApi.git(['clean', '-f', '--', ...untracked.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
   };
 
   private copyPath = () => {

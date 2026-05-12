@@ -16,51 +16,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {DestroyRef, effect, inject, Injectable} from '@angular/core';
-import {forkJoin, map, of, switchMap, tap} from 'rxjs';
-import {GitRepository} from '../models/git-repository';
+import {effect, inject, Injectable} from '@angular/core';
 import {isRootDirectory, throwEx} from '../utils/utils';
-import {createRepository, filterOutStashes} from '../utils/repository-utils';
-import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
-import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
-import {TagReaderService} from './electron-cmd-parser-layer/tag-reader.service';
-import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
+import {createRepository} from '../utils/repository-utils';
 import {FileWatcherService} from './file-watcher.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
+import {GitRefreshService} from './git-refresh.service';
 
-const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
-
-/**
- * State manager for Git repositories.
- *
- * - Tracks opened repositories and current selection
- * - Persist repository state to local storage
- * - Coordinate git/log/branch/stash services
- * - React to window focus and filesystem changes
- *
- * FIXME: Too complicated + rename to ElectronGit ?
- */
 @Injectable({
   providedIn: 'root',
 })
 export class GitRepositoryService {
 
-  // Services
-  private logReader = inject(LogReaderService);
-  private branchReader = inject(BranchReaderService);
-  private stashReader = inject(StashReaderService);
-  private tagReader = inject(TagReaderService);
   private fileWatcher = inject(FileWatcherService);
   private gitRepositoryStore = inject(GitRepositoryStore);
-  private destroyRef = inject(DestroyRef);
+  private gitRefresh = inject(GitRefreshService);
 
   constructor() {
-
-    // Refresh data when window regains focus
-    window.electron.onWindowFocus(this.doUpdateLogsAndBranches);
-    this.destroyRef.onDestroy(() => window.electron.offWindowFocus(this.doUpdateLogsAndBranches));
-
-    // React to repository selection changes
     effect(() => {
       const repo = this.gitRepositoryStore.selectedRepository();
       if (repo) this.fileWatcher.setWatcher(repo.id);
@@ -70,6 +42,7 @@ export class GitRepositoryService {
   pickFolderAndOpenRepository = () => {
     this.openRepository(this.pickGitFolder()).subscribe();
   };
+
   /**
    * Opens or retrieve repository after user picks a repo folder
    * - Reuses an existing repo if already opened
@@ -88,11 +61,11 @@ export class GitRepositoryService {
       this.gitRepositoryStore.addRepository(repo);
     }
 
-    // Select it
+    // Select it — cwd is derived from selectedRepository, so this also updates cwd
     this.gitRepositoryStore.selectRepository(repoPath);
 
     // Refresh git data
-    return this.updateLogsAndBranches();
+    return this.gitRefresh.refreshAll();
   };
 
   pickGitFolder = () => {
@@ -119,29 +92,6 @@ export class GitRepositoryService {
       return throwEx(`This folder is not a valid git repository`);
     else
       return this.findGitDir(window.electron.path.resolve(gitDir, '..'));
-
   };
-
-
-  /**
-   * Fetches logs, branches, and stashes for the current repository
-   * and returns a partial repository update.
-   */
-  updateLogsAndBranches = () =>
-    this.stashReader.getStashes()
-      .pipe(
-        switchMap(stashes => forkJoin({
-          logs: this.logReader.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', ...stashes.map(s => s.sha)])
-            .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
-          branches: this.branchReader.getBranches(),
-          detachedHeadSha: this.branchReader.detachedHeadSha(),
-          stashes: of(stashes),
-          tags: this.tagReader.getTags(),
-        })),
-        tap((r: Partial<GitRepository>) => this.gitRepositoryStore.updateSelectedRepository(r)),
-      );
-
-
-  doUpdateLogsAndBranches = () => this.updateLogsAndBranches().subscribe();
 
 }

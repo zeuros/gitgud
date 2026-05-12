@@ -24,6 +24,7 @@ import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {ToolbarComponent} from '../toolbar/toolbar.component';
 import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
+import {GitRefreshService} from '../../services/git-refresh.service';
 
 @Component({
   selector: 'gitgud-repositories-view',
@@ -48,6 +49,7 @@ import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 export class RepositoriesViewComponent {
   protected gitRepositoryStore = inject(GitRepositoryStore);
   protected gitRepository = inject(GitRepositoryService);
+  private gitRefresh = inject(GitRefreshService);
 
   protected drop({previousIndex, currentIndex}: CdkDragDrop<string[]>): void {
     this.gitRepositoryStore.reorderRepositories(previousIndex, currentIndex);
@@ -59,4 +61,9 @@ export class RepositoriesViewComponent {
       this.gitRepositoryStore.removeRepository(index);
     }
   }
+
+  protected selectRepository = (directoryOrIndex: string | number) => {
+    this.gitRepositoryStore.selectRepository(directoryOrIndex);
+    this.gitRefresh.doRefreshAll();
+  };
 }

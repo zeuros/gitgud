@@ -48,7 +48,7 @@ export class CreateBranchService {
       .pipe(
         tap(() => this.popup.success(`Branch "${name}" created`)),
         switchMap(() => this.gitApi.git(['checkout', name])),
-        finalize(this.gitRefresh.doRefreshBranchesAndLogs),
+        finalize(this.gitRefresh.doUpdateLogsAndBranches),
       )
       .subscribe();
   };

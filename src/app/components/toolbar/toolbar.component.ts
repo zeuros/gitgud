@@ -43,7 +43,6 @@ import {BehindRemoteDialogComponent, BehindRemoteAction} from '../dialogs/behind
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
 import {RebaseService} from '../../services/rebase.service';
-import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -70,7 +69,6 @@ export class ToolbarComponent implements OnInit {
   private gitRefresh = inject(GitRefreshService);
   private popup = inject(PopupService);
   private rebase = inject(RebaseService);
-  private workingDir = inject(WorkingDirectoryService);
   private dialog = inject(DialogService);
   private settingsDialog = viewChild.required(SettingsDialogComponent);
   private cloneDialog = viewChild.required(CloneDialogComponent);
@@ -93,7 +91,7 @@ export class ToolbarComponent implements OnInit {
     this.loading.set('push');
     this.upstreamMatchesLocal().pipe(
       switchMap(ok => ok ? this.checkBehindThenPush() : this.openSetUpstreamDialog()),
-      switchMap(this.gitRefresh.refreshBranchesAndLogs),
+      switchMap(this.gitRefresh.refreshAll),
       finalize(() => this.loading.set(undefined)),
     ).subscribe(() => {
       this.popup.success('Pushed successfully');
@@ -104,7 +102,7 @@ export class ToolbarComponent implements OnInit {
   protected pull = () => {
     this.loading.set('pull');
     this.gitApi.git(['pull'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => {
         this.popup.success('Pulled successfully');
         this.undo.clearRedoStack();
@@ -115,37 +113,37 @@ export class ToolbarComponent implements OnInit {
   protected stash = () => {
     this.loading.set('stash');
     this.gitApi.git(['stash', '-u'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => this.popup.success('Stashed successfully'));
   };
 
   protected pop = () => {
     this.loading.set('pop');
     this.gitApi.git(['stash', 'pop'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => this.popup.success('Stash popped successfully'));
   };
 
   protected fetch = () => {
     this.loading.set('fetch');
     this.gitApi.git(['fetch'])
-      .pipe(switchMap(this.gitRefresh.refreshBranchesAndLogs), finalize(() => this.loading.set(undefined)))
+      .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => this.autoFetch.lastFetchedAt.set(Date.now()));
   };
 
   protected continueRebase = () => {
     this.loading.set('rebase-continue');
     this.gitApi.git(['rebase', '--continue']).pipe(
-      switchMap(this.gitRefresh.refreshBranchesAndLogs),
-      finalize(() => { this.loading.set(undefined); this.workingDir.doFetchWorkingDirChanges(); }),
+      switchMap(this.gitRefresh.refreshAll),
+      finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
     ).subscribe(() => this.popup.success('Rebase continued'));
   };
 
   protected abortRebase = () => {
     this.loading.set('rebase-abort');
     this.rebase.abortRebase().pipe(
-      switchMap(this.gitRefresh.refreshBranchesAndLogs),
-      finalize(() => { this.loading.set(undefined); this.workingDir.doFetchWorkingDirChanges(); }),
+      switchMap(this.gitRefresh.refreshAll),
+      finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
     ).subscribe(() => this.popup.success('Rebase aborted'));
   };
 
