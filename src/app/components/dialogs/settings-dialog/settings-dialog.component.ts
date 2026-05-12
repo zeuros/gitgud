@@ -30,6 +30,7 @@ import {catchError, forkJoin, of, throwError} from 'rxjs';
 import {Tooltip} from 'primeng/tooltip';
 import {emptyStringOnFail} from '../../../utils/utils';
 import {PopupService} from '../../../services/popup.service';
+import {CurrentRepoStore} from '../../../stores/current-repo.store';
 
 @Component({
   selector: 'gitgud-settings-dialog',
@@ -40,20 +41,21 @@ import {PopupService} from '../../../services/popup.service';
 })
 export class SettingsDialogComponent {
 
-  private readonly gitApi = inject(GitApiService);
+  private gitApi = inject(GitApiService);
+  private currentRepo = inject(CurrentRepoStore);
   private popup = inject(PopupService);
 
-  protected readonly settings = inject(SettingsService);
-  protected readonly theme = inject(ThemeService);
-  protected readonly visible = signal(false);
-  protected readonly globalUserName = signal('');
-  protected readonly globalUserEmail = signal('');
-  protected readonly localUserName = signal('');
-  protected readonly localUserEmail = signal('');
-  protected readonly hasRepo = computed(() => !!this.gitApi.cwd());
-  protected readonly pendingGitPath = signal('');
-  protected readonly gitPathDirty = computed(() => this.pendingGitPath() !== this.settings.gitBin);
-  protected readonly gitVersion = signal('');
+  protected settings = inject(SettingsService);
+  protected theme = inject(ThemeService);
+  protected visible = signal(false);
+  protected globalUserName = signal('');
+  protected globalUserEmail = signal('');
+  protected localUserName = signal('');
+  protected localUserEmail = signal('');
+  protected hasRepo = computed(() => !!this.currentRepo.cwd());
+  protected pendingGitPath = signal('');
+  protected gitPathDirty = computed(() => this.pendingGitPath() !== this.settings.gitBin);
+  protected gitVersion = signal('');
 
   open() {
     this.visible.set(true);

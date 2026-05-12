@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {inject, Injectable, isDevMode, signal} from '@angular/core';
+import {inject, Injectable, isDevMode} from '@angular/core';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting JavaScript file will look as if you never imported the module at all.
@@ -26,14 +26,14 @@ import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
 import {ExecOptions, SpawnOptionsWithoutStdio} from 'node:child_process';
 import {GitCommandHistoryService} from '../git-command-history.service';
 import {SettingsService} from '../settings.service';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GitApiService {
 
-  // When a repository is opened / loaded, set the cwd for future git commands
-  readonly cwd = signal<string | undefined>(undefined);
+  private readonly currentRepo = inject(CurrentRepoStore);
   private readonly history = inject(GitCommandHistoryService);
   private readonly settingsService = inject(SettingsService);
 
@@ -56,24 +56,23 @@ export class GitApiService {
   git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
     return this.waitForLock().pipe(
-      switchMap(() => this.exec(this.settingsService.gitBin, filteredArgs, {cwd: this.cwd(), env: window.electron.process.env, ...options})),
+      switchMap(() => this.exec(this.settingsService.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: window.electron.process.env, ...options})),
       tap({
-        next: () => this.history.record(filteredArgs, this.cwd(), true),
-        error: () => this.history.record(filteredArgs, this.cwd(), false),
+        next: () => this.history.record(filteredArgs, this.currentRepo.cwd(), true),
+        error: () => this.history.record(filteredArgs, this.currentRepo.cwd(), false),
       }),
     );
   };
 
   gitWithInput = (args: string[], input: string) =>
     this.waitForLock().pipe(map(() => {
-      const result = window.electron.spawnSync(this.settingsService.gitBin, args, {cwd: this.cwd(), input, env: window.electron.process.env});
+      const result = window.electron.spawnSync(this.settingsService.gitBin, args, {cwd: this.currentRepo.cwd(), input, env: window.electron.process.env});
       if (result.status !== 0) throw new Error(`Git exited ${result.status}\n${result.stderr}`);
       return result.stdout;
     }));
 
   clone = (url: string, repoName: string, dir: string) =>
-    this.git(['clone', url, repoName], {cwd: dir, env: window.electron.process.env})
-      .pipe(tap(() => this.cwd.set(`${dir}/${repoName}`)));
+    this.git(['clone', url, repoName], {cwd: dir, env: window.electron.process.env});
 
   exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
     from(window.electron.execFile(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
@@ -84,7 +83,7 @@ export class GitApiService {
 
   spawn = (cmd: string, args: string[] = [], options?: SpawnOptionsWithoutStdio) =>
     this.waitForLock().pipe(switchMap(() => new Observable<string>(observer => {
-      window.electron.spawn(cmd === 'git' ? this.settingsService.gitBin : cmd, args, {cwd: this.cwd(), env: window.electron.process.env, ...options})
+      window.electron.spawn(cmd === 'git' ? this.settingsService.gitBin : cmd, args, {cwd: this.currentRepo.cwd(), env: window.electron.process.env, ...options})
         .then(out => {
           if (isDevMode()) showPerf(cmd, args, out);
           observer.next(out);
@@ -99,7 +98,7 @@ export class GitApiService {
    * 2. 700ms may time out prematurely for longer external operations
    */
   waitForLock = (maxWaitMs = 700, intervalMs = 100): Observable<void> => {
-    const lockFile = `${this.cwd()}/.git/index.lock`;
+    const lockFile = `${this.currentRepo.cwd()}/.git/index.lock`;
     const start = Date.now();
 
     return defer(() => {

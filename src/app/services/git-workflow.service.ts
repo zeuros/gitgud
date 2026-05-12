@@ -93,7 +93,7 @@ export class GitWorkflowService {
     const commitIndex = this.currentRepo.selectedCommitIndex();
 
     // Use interactive rebase to reword a past commit
-    return this.rebaseAndEditActions(`${selectedCommitSha}~1`, rewordCommitAction(this.gitApi.cwd()!, selectedCommitSha, newMessage))
+    return this.rebaseAndEditActions(`${selectedCommitSha}~1`, rewordCommitAction(this.currentRepo.cwd()!, selectedCommitSha, newMessage))
       // After refreshing logs, selects the edited commit
       .pipe(tap(() => this.currentRepo.update({selectedCommitsShas: [this.currentRepo.logs()[commitIndex]?.sha]})));
   };

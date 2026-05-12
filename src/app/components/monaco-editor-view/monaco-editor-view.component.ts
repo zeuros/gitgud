@@ -110,7 +110,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       const after$ = isWorkingDirectoryFileChange(file)
         ? (file.staged
           ? this.fileDiffService.getFileAtRevision(file.path, '')   // git show :path  (index)
-          : of(window.electron.fs.readFileSync(window.electron.path.resolve(this.gitApi.cwd()!, file.path))))
+          : of(window.electron.fs.readFileSync(window.electron.path.resolve(this.currentRepo.cwd()!, file.path))))
         : this.fileDiffService.getFileAtRevision(file.path, (file as CommittedFileChange).commitish);
 
       combineLatest([before$, after$]).subscribe(([before, after]) => {

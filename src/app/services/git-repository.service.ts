@@ -25,7 +25,6 @@ import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
 import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
 import {TagReaderService} from './electron-cmd-parser-layer/tag-reader.service';
 import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {FileWatcherService} from './file-watcher.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 
@@ -51,7 +50,6 @@ export class GitRepositoryService {
   private readonly branchReader = inject(BranchReaderService);
   private readonly stashReader = inject(StashReaderService);
   private readonly tagReader = inject(TagReaderService);
-  private readonly gitApi = inject(GitApiService);
   private readonly fileWatcher = inject(FileWatcherService);
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
   private readonly destroyRef = inject(DestroyRef);
@@ -65,38 +63,33 @@ export class GitRepositoryService {
     // React to repository selection changes
     effect(() => {
       const repo = this.gitRepositoryStore.selectedRepository();
-      if (repo) this.onRepositorySelected(repo);
+      if (repo) this.fileWatcher.setWatcher(repo.id);
     });
   }
 
-  private onRepositorySelected = ({id}: GitRepository) => {
-    this.fileWatcher.setWatcher(id);
-    this.gitApi.cwd.set(id);
-  };
-
   pickFolderAndOpenRepository = () => {
     this.openRepository(this.pickGitFolder()).subscribe();
-  }
+  };
   /**
    * Opens or retrieve repository after user picks a repo folder
    * - Reuses an existing repo if already opened
    * - Marks it as selected
    * - Refreshes logs, branches, and stashes
    */
-  openRepository = (repoDirectory: string) => {
+  openRepository = (repoPath: string) => {
 
     const repos = this.gitRepositoryStore.repositories();
 
-    let repo = repos.find(r => r.id === repoDirectory);
+    let repo = repos.find(r => r.id === repoPath);
 
     // Add repo if not already opened
     if (!repo) {
-      repo = createRepository(repoDirectory);
+      repo = createRepository(repoPath);
       this.gitRepositoryStore.addRepository(repo);
     }
 
     // Select it
-    this.gitRepositoryStore.selectRepository(repoDirectory);
+    this.gitRepositoryStore.selectRepository(repoPath);
 
     // Refresh git data
     return this.updateLogsAndBranches();

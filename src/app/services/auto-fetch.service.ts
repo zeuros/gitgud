@@ -21,6 +21,7 @@ import {GitRepositoryStore} from '../stores/git-repos.store';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRepositoryService} from './git-repository.service';
 import {SettingsService} from './settings.service';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 
 @Injectable({
   providedIn: 'root',
@@ -28,6 +29,7 @@ import {SettingsService} from './settings.service';
 export class AutoFetchService {
 
   private readonly gitRepository = inject(GitRepositoryService);
+  private readonly currentRepo = inject(CurrentRepoStore);
   private readonly gitApi = inject(GitApiService);
   private readonly gitRepositoryStore = inject(GitRepositoryStore);
   private readonly settingsService = inject(SettingsService);
@@ -44,7 +46,7 @@ export class AutoFetchService {
 
     // Initialize last-fetched time from .git/FETCH_HEAD mtime when repo changes
     effect(() => {
-      const cwd = this.gitApi.cwd();
+      const cwd = this.currentRepo.cwd();
       if (!cwd) return;
       const fetchHead = `${cwd}/.git/FETCH_HEAD`;
       untracked(() => this.lastFetchedAt.set(

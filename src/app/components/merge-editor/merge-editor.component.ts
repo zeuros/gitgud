@@ -27,6 +27,7 @@ import {catchError, combineLatest, finalize, of} from 'rxjs';
 import {fileName} from '../../utils/utils';
 import {detectLang} from '../../utils/language-detection';
 import {createHighlighter, type Highlighter} from 'shiki';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 // Diff-block colors mirroring VS Code Dark+ / Monaco diff editor.
 // conflict uses GitGud's warning orange since there is no VS Code equivalent.
@@ -58,6 +59,7 @@ export class MergeEditorComponent {
   protected fileName = fileName;
 
   private gitApi = inject(GitApiService);
+  private currentRepo = inject(CurrentRepoStore);
   private workingDir = inject(WorkingDirectoryService);
 
   protected readonly gitgudColors = GitGudDarkColors;
@@ -102,7 +104,7 @@ export class MergeEditorComponent {
     this.saving.set(true);
 
     const merged = this.mergeEl()?.nativeElement?.ctr ?? this.ctr();
-    const absPath = window.electron.path.resolve(this.gitApi.cwd()!, file.path);
+    const absPath = window.electron.path.resolve(this.currentRepo.cwd()!, file.path);
     window.electron.fs.writeFileSync(absPath, merged);
 
     this.gitApi.git(['add', '--', file.path])

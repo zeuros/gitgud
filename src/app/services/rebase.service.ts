@@ -19,6 +19,7 @@
 import {inject, Injectable} from '@angular/core';
 import {catchError, defer, EMPTY, finalize, first, of, retry, Subject, switchMap, throwError} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 
 @Injectable({
   providedIn: 'root',
@@ -26,6 +27,7 @@ import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 export class RebaseService {
 
   private readonly gitApi = inject(GitApiService);
+  private readonly currentRepo = inject(CurrentRepoStore);
   private pendingRebase$ = new Subject<void>();
 
   /**
@@ -70,7 +72,7 @@ export class RebaseService {
       catchError(e => this.abortRebase().pipe(switchMap(() => throwError(() => e)))),
     );
 
-  isRebasing = () => window.electron.fs.existsSync(`${this.gitApi.cwd()}/.git/rebase-merge`);
+  isRebasing = () => window.electron.fs.existsSync(`${this.currentRepo.cwd()}/.git/rebase-merge`);
 
   // FIXME: if main electron process (the one calling git rebase) crashes during a git operation,
   //  git could keep a lock file, we have to write the .done and git lock file on error so that git rebase can finish and state be ok
@@ -96,7 +98,7 @@ export class RebaseService {
       ? 'sh -c "while [ ! -f \\"$0.done\\" ]; do sleep 0.3; done && rm \\"$0.done\\""' // Fixme: double check it's $0 and not $1 on git bash
       : 'sh -c \'while [ ! -f "$0.done" ]; do sleep 0.3; done && rm "$0.done"\'';
 
-  private rebaseActionsFilePath = () => `${this.gitApi.cwd()}/.git/rebase-merge/git-rebase-todo`;
+  private rebaseActionsFilePath = () => `${this.currentRepo.cwd()}/.git/rebase-merge/git-rebase-todo`;
 
   abortRebase = () =>
     this.gitApi.git(['rebase', '--abort']).pipe(catchError(e => {
