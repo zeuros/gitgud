@@ -47,6 +47,12 @@ export class WorkingDirectoryService {
 
   readonly stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['add', '--', path]).subscribe(this.doFetchWorkingDirChanges);
 
+  readonly stageFiles = (files: WorkingDirectoryFileChange[]) =>
+    this.gitApi.git(['add', '--', ...files.map(f => f.path)]).subscribe(this.doFetchWorkingDirChanges);
+
+  readonly unstageFiles = (files: WorkingDirectoryFileChange[]) =>
+    this.gitApi.git(['reset', '--', ...files.map(f => f.path)]).subscribe(this.doFetchWorkingDirChanges);
+
   /** Stage (or unstage) a patch via stdin, then refresh */
   readonly stageChangesWithPatch = (patch: string, stage: boolean) =>
     this.gitApi.gitWithInput(['apply', ...(stage ? [] : ['-R']), '--cached', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.doFetchWorkingDirChanges);

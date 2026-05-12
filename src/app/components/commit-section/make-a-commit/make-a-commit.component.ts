@@ -23,7 +23,7 @@ import {Textarea} from 'primeng/textarea';
 import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
-import {Listbox} from 'primeng/listbox';
+import {TableModule} from 'primeng/table';
 import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {directory, fileName} from '../../../utils/utils';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
@@ -45,7 +45,7 @@ import {UnstagedFileContextMenuService} from '../../../services/unstaged-file-co
     ReactiveFormsModule,
     Textarea,
     InputText,
-    Listbox,
+    TableModule,
     Button,
     PrimeTemplate,
     Checkbox,
@@ -64,7 +64,9 @@ export class MakeACommitComponent {
   protected unstagedContextMenu = inject(UnstagedFileContextMenuService);
   protected commitForm = inject(FormBuilder).nonNullable.group({summary: '', description: ''});
   protected amend = false;
-  protected selectedFile = signal<WorkingDirectoryFileChange | null>(null);
+  protected selectedConflictFile = signal<WorkingDirectoryFileChange | null>(null);
+  protected selectedUnstagedFiles = signal<WorkingDirectoryFileChange[]>([]);
+  protected selectedStagedFiles = signal<WorkingDirectoryFileChange[]>([]);
   protected FileStatusesIcons = FileStatusesIcons;
   protected keys = Object.keys;
   protected directory = directory;
@@ -76,7 +78,6 @@ export class MakeACommitComponent {
 
   protected commit() {
     const {summary, description} = this.commitForm.value;
-
     this.commitService.commit(summary!, description?.length ? description : undefined, this.amend);
   }
 
@@ -86,13 +87,8 @@ export class MakeACommitComponent {
       this.savedFormState = this.commitForm.value;
 
       // Prefill with last commit message
-      const lastCommit = headCommit(this.currentRepo.branches(), this.currentRepo.logs()); // HEAD;
-      if (lastCommit) {
-        this.commitForm.patchValue({
-          summary: lastCommit.summary,
-          description: lastCommit.body ?? '',
-        });
-      }
+      const lastCommit = headCommit(this.currentRepo.branches(), this.currentRepo.logs());
+      if (lastCommit) this.commitForm.patchValue({summary: lastCommit.summary, description: lastCommit.body ?? ''});
     } else {
       // Restore saved state
       if (this.savedFormState) {
@@ -108,19 +104,41 @@ export class MakeACommitComponent {
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
     this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, makeCommitPanel: sizes.map(Number)}});
 
-  protected selectFile(file: WorkingDirectoryFileChange | null) {
-    this.selectedFile.set(file);
-    if (!file) {
-      this.fileDiffPanelService.close();
-      this.fileDiffPanelService.closeConflict();
+  protected onConflictFileSelect = (file: WorkingDirectoryFileChange | null) => {
+    this.selectedConflictFile.set(file);
+    if (file) this.fileDiffPanelService.showWorkingDirDiffs(file);
+    else {
+      this.fileDiffPanelService.closeDiffView();
+      this.fileDiffPanelService.closeConflictView();
+    }
+  };
+
+  protected onSelectionChange = (files: WorkingDirectoryFileChange[], staged: boolean) => {
+    const current = staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles();
+
+    // If a file is clicked twice (toggled) => hide diff view
+    const isReclick = files.length === 1 && current.length === 1 && current[0].path === files[0].path;
+    if (isReclick) {
+      (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set([]);
+      this.fileDiffPanelService.closeDiffView();
+      this.fileDiffPanelService.closeConflictView();
       return;
     }
-    this.fileDiffPanelService.showWorkingDirDiffs(file);
-  }
+    (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set(files);
+    (staged ? this.selectedUnstagedFiles : this.selectedStagedFiles).set([]);
+    if (files.length === 1) this.fileDiffPanelService.showWorkingDirDiffs(files[0]);
+    else {
+      this.fileDiffPanelService.closeDiffView();
+      this.fileDiffPanelService.closeConflictView();
+    }
+  };
 
   protected openFileContextMenu = (file: WorkingDirectoryFileChange, staged: boolean, event: MouseEvent) => {
     event.preventDefault();
-    this.unstagedContextMenu.selectedFile.set(file);
+    const currentSelection = staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles();
+    if (!currentSelection.some(f => f.path === file.path))
+      (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set([file]);
+    this.unstagedContextMenu.selectedFiles.set(staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles());
     this.unstagedContextMenu.staged.set(staged);
     this.activeContextMenu.show(this.unstagedContextMenu.contextMenu(), event);
   };

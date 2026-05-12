@@ -168,7 +168,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   }
 
   @HostListener('document:keydown.escape')
-  protected onEscape = () => this.fileDiffPanel.close();
+  protected onEscape = () => this.fileDiffPanel.closeDiffView();
 
   protected setViewType = (viewType: ViewType) => this.currentRepo.update({editorConfig: {viewType}});
 
@@ -176,7 +176,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     const changes = diffEditorEditor.getLineChanges();
     if (this.currentFile() && changes !== null && changes.length === 0) {
       this.diffEditor()?.editor.dispose();
-      this.fileDiffPanel.close();
+      this.fileDiffPanel.closeDiffView();
     }
   };
 
