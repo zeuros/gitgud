@@ -1,5 +1,9 @@
 <div class="repo-info">
-    <span class="repo-name">⚔ {{ currentRepo.name() }} ⚔</span>
+    <div class="repo-name-clip">
+        <div class="repo-info-track">
+            <span class="repo-name"><span class="sword">⚔</span> {{ currentRepo.name() }} <span class="sword">⚔</span></span>
+        </div>
+    </div>
     <span class="branch-badge">{{ currentRepo.headBranch()?.name ?? short(currentRepo.detachedHeadSha() ?? '') + ' (detached HEAD)' }}</span>
 </div>
 
@@ -95,7 +99,8 @@
 
     <p-button class="sober" icon="fa fa-download" [text]="true" [rounded]="true" pTooltip="Clone" tooltipPosition="bottom" (onClick)="openCloneDialog()"/>
     <p-button class="sober" icon="fa fa-history" [text]="true" [rounded]="true" [pTooltip]="undo.undoTooltip()" tooltipPosition="bottom" (onClick)="undo.undo()"/>
-    <p-button class="sober" icon="fa fa-repeat" [text]="true" [rounded]="true" [pTooltip]="undo.redoTooltip()" tooltipPosition="bottom" [disabled]="!undo.redoAvailable()" (onClick)="undo.redo()"/>
+    <p-button class="sober" icon="fa fa-repeat" [text]="true" [rounded]="true" [pTooltip]="undo.redoTooltip()" tooltipPosition="bottom" [disabled]="!undo.redoAvailable()"
+              (onClick)="undo.redo()"/>
     <p-button class="sober" icon="fa fa-terminal" [text]="true" [rounded]="true" pTooltip="Git command history" tooltipPosition="bottom" (onClick)="openShellHistoryDialog()"/>
     <p-button class="sober" icon="fa fa-cog" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (onClick)="openSettingsDialog()"/>
 </div>

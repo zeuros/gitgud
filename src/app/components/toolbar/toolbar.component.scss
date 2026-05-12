@@ -10,11 +10,27 @@ $spacing: 8px;
   font-size: 0.9rem;
 }
 
+$repo-track-max-width: 260px;
+
 .repo-info {
   display: flex;
-  align-items: center;
   gap: $spacing;
-  padding: 0 4px;
+  align-items: center;
+
+  .repo-name-clip {
+    max-width: $repo-track-max-width;
+    overflow: hidden;
+  }
+
+  .repo-info-track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    padding: 0 4px;
+    white-space: nowrap;
+    animation: repo-marquee 25s ease-in-out infinite alternate;
+    will-change: transform;
+  }
 
   .repo-name {
     font-family: 'Cinzel Decorative', 'Palatino Linotype', serif;
@@ -26,15 +42,22 @@ $spacing: 8px;
     background: linear-gradient(
             180deg,
             #fff6f7 0%,
-            #ffe8b0 18%,
-            #f3c86b 40%,
-            #d77838 62%,
-            #9b5cf2 100%
+            #ffe8b0 12%,
+            #f3c86b 30%,
+            #d77838 50%,
+            #9b5cf2 68%,
+            #d77838 82%,
+            #f3c86b 92%,
+            #ffe8b0 100%
     );
-
+    background-size: 100% 280%;
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    animation: repo-flames 120s ease-in-out infinite;
+    .sword {
+      animation: repo-flames 80s ease-in-out infinite;
+    }
   }
 
   .branch-badge {
@@ -45,6 +68,25 @@ $spacing: 8px;
     background: var(--p-primary-color);
     color: var(--p-primary-contrast-color);
     white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+@keyframes repo-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(min(calc(-100% + #{$repo-track-max-width}), 0px));
+  }
+}
+
+@keyframes repo-flames {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 0% 100%;
   }
 }
 
@@ -78,6 +120,11 @@ $spacing: 8px;
     padding: 0 4px;
   }
 
-  .rebase-continue ::ng-deep .p-button { color: #6abf69; }
-  .rebase-abort    ::ng-deep .p-button { color: var(--warning-text-color); }
+  .rebase-continue ::ng-deep .p-button {
+    color: #6abf69;
+  }
+
+  .rebase-abort ::ng-deep .p-button {
+    color: var(--warning-text-color);
+  }
 }
