@@ -19,7 +19,7 @@
 import {Component, computed, inject, input} from '@angular/core';
 import {CommitIdentity} from '../../../../lib/github-desktop/model/commit-identity';
 import {IdenticonPipe} from '../../../../services/identicon-pipe.service';
-import {AvatarCacheService} from './avatar-cache.service';
+import {AvatarService} from './avatar.service';
 import {AsyncPipe} from '@angular/common';
 
 @Component({
@@ -30,9 +30,9 @@ import {AsyncPipe} from '@angular/common';
   standalone: true,
 })
 export class AvatarComponent {
-  private avatarCache = inject(AvatarCacheService);
+  private avatar = inject(AvatarService);
 
   identity = input.required<CommitIdentity>();
 
-  protected objectUrl = computed(() => this.avatarCache.resolve(this.identity().email));
+  protected objectUrl = computed(() => this.avatar.findAvatarImgAndConvertToBlobUrl(this.identity().email));
 }

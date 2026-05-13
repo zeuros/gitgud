@@ -23,7 +23,7 @@ import {bySha} from '../../utils/log-utils';
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {Commit} from '../../lib/github-desktop/model/commit';
 import {once} from 'lodash-es';
-import {commitColor, isCommit, isIndex, isStash} from '../../utils/commit-utils';
+import {commitColor, hasName, isCommit, isIndex, isStash} from '../../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
 import {DragDropModule} from '@angular/cdk/drag-drop';
@@ -54,6 +54,7 @@ import {FormsModule} from '@angular/forms';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {LogBranchTag} from './log-branch-tag/log-branch-tag';
 import {FixupService} from '../../services/fixup.service';
+import {AvatarService} from '../commit-section/commit-infos/avatar/avatar.service';
 
 @Component({
   selector: 'gitgud-logs',
@@ -87,6 +88,7 @@ export class LogsComponent {
   private activeContextMenu = inject(ActiveContextMenuService);
   private branchReader = inject(BranchReaderService);
   private conflict = inject(ConflictService);
+  private avatar = inject(AvatarService);
 
   protected checkoutBranch = (branch: Branch | null, event: MouseEvent) => {
     event.stopPropagation();
@@ -109,6 +111,7 @@ export class LogsComponent {
   protected _canvasResized = signal({}); // When selectedRepository() changes, canvas is resized for some reason, it helps redraw the log at the good moment
   protected _branchColumnWidth = signal(0);
   private _tableHeight = signal(0);
+  private _avatarImages = signal<Map<string, HTMLImageElement> | undefined>(undefined);
   private canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   private logTable = viewChild<Table<DisplayRef>>('logTable');
   private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
@@ -151,6 +154,12 @@ export class LogsComponent {
       untracked(() => this.computeDisplayLog(workingDirHasChanges(workDirStatus), logs, stashes));
     });
 
+    // Pre-fetch avatars for all commits in the display log
+    effect(() => {
+      const commitMails = new Set(this.computedDisplayLog().filter(isCommit).map(c => (hasName(c.author) ? c.author : c.committer).email));
+      this.avatar.loadAvatarImages(commitMails).subscribe(images => this._avatarImages.set(images));
+    });
+
     // Reactively draw canvas when dependencies change
     effect(() => {
       const displayLog = this.computedDisplayLog();
@@ -161,9 +170,10 @@ export class LogsComponent {
       const visibleCommitsCount = this.visibleCommitsCount();
       const logTableContainer = this.logTableContainer();
       const canvas = this.canvas()?.nativeElement?.getContext('2d');
+      const avatarImages = this._avatarImages(); // re-run when new avatars load
 
-      if (this._canvasResized() && canvas && displayLog.length && stashImg && visibleCommitsCount && visibleCommitsCount > 0 && logTableContainer) {
-        drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg);
+      if (this._canvasResized() && canvas && displayLog.length && stashImg && avatarImages && visibleCommitsCount && visibleCommitsCount > 0 && logTableContainer) {
+        drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages);
         untracked(() => this.setupScrollListeners(logTableContainer));// will be called once
       }
     });

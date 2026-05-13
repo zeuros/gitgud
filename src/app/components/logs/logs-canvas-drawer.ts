@@ -37,6 +37,7 @@ export const drawLog = (
   endCommit: number,
   scrollOffset: number,
   stashImg: HTMLImageElement,
+  avatarImages: Map<string, HTMLImageElement>,
 ) => {
   // clearRect() doesn't clear properly with transform applied, we remove it before clearing
   canvas.resetTransform();
@@ -52,7 +53,7 @@ export const drawLog = (
   // Draw commit nodes
   displayLog.slice(startCommit, endCommit)
     .forEach((ref, indexForThisSlice) =>
-      drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref, stashImg),
+      drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref, stashImg, avatarImages),
     );
 };
 
@@ -108,6 +109,7 @@ const drawNode = (
   commitCoordinates: Coordinates,
   ref: DisplayRef,
   stashImg: HTMLImageElement,
+  avatarImages: Map<string, HTMLImageElement>,
 ) => {
   const [x, y] = [xPosition(commitCoordinates.col), yPosition(commitCoordinates.row)];
 
@@ -121,12 +123,33 @@ const drawNode = (
     canvas.arc(x, y, NODE_RADIUS / 1.4, 0, 2 * Math.PI, true);
     canvas.stroke();
   } else if (isCommit(ref)) {
-    canvas.arc(x, y, NODE_RADIUS, 0, 2 * Math.PI, true);
-    canvas.fill();
+    const identity = hasName(ref.author) ? ref.author : ref.committer;
+    const avatarImg = avatarImages.get(identity.email);
 
-    prepareForCommitTextDraw(canvas);
-    canvas.fillText(initials(hasName(ref.author) ? ref.author : ref.committer), x, y + 1);
-    canvas.fill();
+    if (avatarImg) {
+      canvas.fillStyle = '#29262c';
+      canvas.arc(x, y, NODE_RADIUS, 0, 2 * Math.PI, true);
+      canvas.fill();
+
+      canvas.save();
+      canvas.shadowBlur = 0;
+      canvas.filter = 'none';
+      canvas.beginPath();
+      canvas.arc(x, y, NODE_RADIUS, 0, 2 * Math.PI, true);
+      canvas.clip();
+      canvas.drawImage(avatarImg, x - NODE_RADIUS * 0.91, y - NODE_RADIUS * 0.91, NODE_DIAMETER * 0.91, NODE_DIAMETER * 0.91);
+      canvas.restore();
+
+      canvas.beginPath();
+      canvas.arc(x, y, NODE_RADIUS, 0, 2 * Math.PI, true);
+      canvas.stroke();
+    } else {
+      canvas.arc(x, y, NODE_RADIUS, 0, 2 * Math.PI, true);
+      canvas.fill();
+      prepareForCommitTextDraw(canvas);
+      canvas.fillText(initials(identity), x, y + 1);
+      canvas.fill();
+    }
   } else if (isIndex(ref)) {
     canvas.arc(x, y, NODE_RADIUS - 1, 0, 2 * Math.PI, true);
     canvas.fillStyle = '#1c1e23';
