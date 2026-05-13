@@ -84,4 +84,8 @@
   font-weight: 800;
   white-space: nowrap;
   opacity: 0.85;
+
+  & + .ahead-behind {
+    margin-left: 5px;
+  }
 }
