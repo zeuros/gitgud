@@ -1,16 +1,11 @@
-@let id = identity();
-@if (id) {
+@let blob = objectUrl() | async;
+@if (blob) {
     <img animate.enter="fade-slide-in"
-         [class.hidden]="!avatarLoaded"
-         [src]="id.email | gravatarUrl"
-         (load)="avatarLoaded = true"
-         (error)="avatarLoaded = false"
+         [src]="blob"
          class="avatar-size"
-         alt="user avatar from gravatar"/>
-
-    @if (!avatarLoaded) {
-        <img animate.enter="fade-slide-in"
-             [src]="id.email | identicon"
-             alt="user avatar identicon"/>
-    }
+         alt="user avatar"/>
+} @else {
+    <img animate.enter="fade-slide-in"
+         [src]="identity().email | identicon"
+         alt="user avatar identicon"/>
 }
