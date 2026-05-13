@@ -16,24 +16,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, input} from '@angular/core';
+import {Component, computed, inject, input} from '@angular/core';
 import {CommitIdentity} from '../../../../lib/github-desktop/model/commit-identity';
-import {GravatarUrlPipe} from '../../../../pipes/gravatar-url';
 import {IdenticonPipe} from '../../../../services/identicon-pipe.service';
+import {AvatarCacheService} from './avatar-cache.service';
+import {AsyncPipe} from '@angular/common';
 
 @Component({
   selector: 'gitgud-avatar',
-  imports: [
-    GravatarUrlPipe,
-    IdenticonPipe,
-  ],
+  imports: [IdenticonPipe, AsyncPipe],
   templateUrl: './avatar.component.html',
   styleUrl: './avatar.component.scss',
   standalone: true,
 })
 export class AvatarComponent {
+  private avatarCache = inject(AvatarCacheService);
 
-  identity = input<CommitIdentity | undefined>(undefined);
-  protected avatarLoaded = false;
+  identity = input.required<CommitIdentity>();
 
+  protected objectUrl = computed(() => this.avatarCache.resolve(this.identity().email));
 }
