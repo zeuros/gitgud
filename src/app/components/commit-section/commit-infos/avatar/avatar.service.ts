@@ -17,29 +17,56 @@
  */
 
 import {Injectable} from '@angular/core';
-import {from, Observable} from 'rxjs';
+import {forkJoin, from, map, Observable, of, switchMap} from 'rxjs';
+import {notUndefined} from '../../../../utils/utils';
 
 @Injectable({providedIn: 'root'})
-export class AvatarCacheService {
+export class AvatarService {
 
-  private cache = new Map<string, string | null>(); // url → objectURL
+  private mailBlobsCache = new Map<string, string | null>(); // url → objectURL
 
-  // Tries GitHub avatar first (if noreply email), then Gravatar. Returns null if both fail.
-  resolve(email: string) {
-    const avatarUrl = this.githubUrl(email) ?? this.gravatarUrl(email);
-    return from(this.get(avatarUrl));
+  // Resolves all emails in parallel, emits the full image map once all settle.
+  loadAvatarImages(emails: Set<string>): Observable<Map<string, HTMLImageElement>> {
+    return forkJoin([...emails].map(this.convertEmailToBlob)).pipe(
+      map(r => r
+        .filter(notUndefined)
+        .reduce((acc, {email, img}) => acc.set(email, img), new Map<string, HTMLImageElement>())),
+    );
   }
 
+  private convertEmailToBlob = (email: string) =>
+    this.findAvatarImgAndConvertToBlobUrl(email).pipe(switchMap(objectUrl => objectUrl ? this.blobUrlToHtmlImg(email, objectUrl) : of(null)));
+
+  // Tries GitHub avatar first (if noreply email), then Gravatar. Returns null if both fail.
+  findAvatarImgAndConvertToBlobUrl = (email: string) => {
+    const avatarUrl = this.githubUrl(email) ?? this.gravatarUrl(email);
+    return from(this.get(avatarUrl));
+  };
+
+  private blobUrlToHtmlImg = (email: string, objectUrl: string) =>
+    new Observable<{ email: string, img: HTMLImageElement } | null>(subscriber => {
+      const img = new Image();
+      img.onload = () => {
+        subscriber.next({email, img});
+        subscriber.complete();
+      };
+      img.onerror = () => {
+        subscriber.next(null);
+        subscriber.complete();
+      };
+      img.src = objectUrl;
+    });
+
   private async get(url: string) {
-    if (this.cache.has(url)) return this.cache.get(url)!;
+    if (this.mailBlobsCache.has(url)) return this.mailBlobsCache.get(url)!;
     try {
       const resp = await fetch(url);
       if (!resp.ok) {
-        this.cache.set(url, null);
+        this.mailBlobsCache.set(url, null);
         return null;
       }
       const objectUrl = URL.createObjectURL(await resp.blob());
-      this.cache.set(url, objectUrl);
+      this.mailBlobsCache.set(url, objectUrl);
       return objectUrl;
     } catch {
       return null;
