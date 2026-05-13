@@ -15,8 +15,10 @@
 @if (graphColCount && visibleCommitsCnt && visibleCommitsCnt > 0) {
     <canvas #canvas
             id="commit-graph-canvas"
-            [height]="yPosition(visibleCommitsCnt)"
-            [width]="xPosition(graphColCount - 1) + NODE_RADIUS"
+            [height]="yPosition(visibleCommitsCnt) * dpr()"
+            [width]="(xPosition(graphColCount - 1) + NODE_RADIUS) * dpr()"
+            [style.height.px]="yPosition(visibleCommitsCnt)"
+            [style.width.px]="xPosition(graphColCount - 1) + NODE_RADIUS"
             [style.top.px]="CANVAS_MARGIN.top"
             [style.left.px]="_branchColumnWidth() + CANVAS_MARGIN.left"
     ></canvas>

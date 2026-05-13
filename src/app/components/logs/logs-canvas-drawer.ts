@@ -39,13 +39,15 @@ export const drawLog = (
   stashImg: HTMLImageElement,
   avatarImages: Map<string, HTMLImageElement>,
 ) => {
+  const devicePixelRatio = window.devicePixelRatio || 1;
+
   // clearRect() doesn't clear properly with transform applied, we remove it before clearing
   canvas.resetTransform();
 
   canvas.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
 
-  // Drawn commit window will be shifted by scrollFromTop % ROW_HEIGHT which gives smooth scroll
-  canvas.setTransform(1, 0, 0, 1, 0, ROW_HEIGHT - scrollOffset);
+  // Scale by devicePixelRatio so all logical coordinates (xPosition/yPosition) render at native resolution
+  canvas.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, (ROW_HEIGHT - scrollOffset) * devicePixelRatio);
 
   // Draw edges (connections between commits)
   edges.search(startCommit, endCommit).forEach(edge => drawEdge(canvas, edge, startCommit));

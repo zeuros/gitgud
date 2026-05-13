@@ -103,29 +103,21 @@ export class LogsComponent {
   protected graphColumnCount = signal(0);
   protected untrackedStashes = signal<string[]>([]); // Unused (edge case)
   protected computedDisplayLog = signal<DisplayRef[]>([]); // Commits ready for display
-  private edges = signal(new IntervalTree<Edge>()); // Edges computed from displayLog
   protected firstCommitOffsetPx = signal(0); // Pixel-based scroll position for smooth canvas drawing
+  private edges = signal(new IntervalTree<Edge>()); // Edges computed from displayLog
   private stashImg = loadStashImage();
 
-  private _layoutReady = signal(false);
   protected _canvasResized = signal({}); // When selectedRepository() changes, canvas is resized for some reason, it helps redraw the log at the good moment
   protected _branchColumnWidth = signal(0);
+  protected dpr = signal(window.devicePixelRatio || 1);
+  protected visibleCommitsCount = computed(() => this.countVisibleCommits(this._tableHeight(), this.computedDisplayLog()));
+  private _layoutReady = signal(false);
   private _tableHeight = signal(0);
   private _avatarImages = signal<Map<string, HTMLImageElement> | undefined>(undefined);
   private canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   private logTable = viewChild<Table<DisplayRef>>('logTable');
   private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
   private logTableContainer = computed(() => this.logTableRef()?.querySelector<HTMLElement>('.p-datatable-table-container'));
-  protected visibleCommitsCount = computed(() => {
-    const tableHeight = this._tableHeight();
-    const displayLog = this.computedDisplayLog();
-
-    // Somehow, table takes time to settle to correct height, either debounce or set minimum height to be valid (did this)
-    if (tableHeight < 100 || !displayLog.length) return undefined;
-
-    const visibleRows = Math.ceil(tableHeight / ROW_HEIGHT);
-    return Math.min(visibleRows, displayLog.length) + 2; // +2 for partially hidden commits (canvas draws commits before first row / after last row)
-  });
 
   constructor() {
 
@@ -195,7 +187,7 @@ export class LogsComponent {
     });
 
     afterNextRender(() => this._layoutReady.set(true));
-
+    this.watchDpr();
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -295,6 +287,18 @@ export class LogsComponent {
 
   private isOnView = (commitIndex: number, startCommit: number, endCommit: number) =>
     commitIndex > startCommit && commitIndex < endCommit;
+
+  private watchDpr = () => window
+    .matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+    .addEventListener('change', () => {this.dpr.set(window.devicePixelRatio || 1);this.watchDpr();}, {once: true});
+
+  private countVisibleCommits = (tableHeight: number, displayLog: DisplayRef[]) => {
+    // Somehow, table takes time to settle to correct height, either debounce or set minimum height to be valid (did this)
+    if (tableHeight < 100 || !displayLog.length) return undefined;
+
+    const visibleRows = Math.ceil(tableHeight / ROW_HEIGHT);
+    return Math.min(visibleRows, displayLog.length) + 2; // +2 for partially hidden commits (canvas draws commits before first row / after last row)
+  };
 
   protected openCommitContextMenu = (commit: DisplayRef, event: PointerEvent) => {
     event.stopPropagation();
