@@ -20,10 +20,14 @@
       min-height: 210px;
     }
 
-    // force table to not exceed container
-    p-table .p-datatable-table {
-      table-layout: fixed;
-      width: 100%;
+    p-table {
+      min-height: 0; // make table fit its flex container without overflowing bottom
+
+      // force table to not exceed container
+      .p-datatable-table {
+        table-layout: fixed;
+        width: 100%;
+      }
     }
 
     p-table.show-button-on-row-hover {
