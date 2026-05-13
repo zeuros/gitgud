@@ -32,16 +32,10 @@ A cross-platform Git GUI that doesn't get in your way.
 
 ## TODOs
 
-- Fix some commit right-click actions that leave git in a broken state
-- fix all monaco viewer displays (untested)
-- add shortcut ctrl+return to commit (shortcut should work for other forms, settings for example)
 - Make diff editor disappear once all contents moved to staging area
-- add force push message if force push is necessary, propose other choices, make it beginner-friendly
 - broken state management (rebasing / ...)
-- Light mode depends on system but is currently ugly, add it in settings, and make an ok light mode based on existing, use dotted background very stily
-- Make three-way diff solver like in jetbrains IDEs / gitkraken
-- Use aheadBehind() to show the count of commits to catch on for each branch
-- Manage merge conflicts / rebase conflicts
+- Light mode depends on system but is currently ugly, add it in settings, and make an ok light mode based on existing, use dotted background very stily 
+- test all the stuff
 
 ## BUGs
 
@@ -51,10 +45,10 @@ A cross-platform Git GUI that doesn't get in your way.
 
 ## Many thanks & references
 
-- [Gitcraken](https://github.com/Krf/gitcraken) — inspiring GUI and graph work
+- [Gitkraken](https://github.com/Krf/gitcraken) — inspiring GUI and graph work
 - [PVigier/gitamine](https://github.com/pvigier/gitamine) — open-source commit graph algorithm
-- [github-desktop](https://github.com/desktop/desktop) — git/electron layer reference
-- [Gitsquid](https://gitsquid.dev/) — Good interface ideas
+- [Gitsquid](https://gitsquid.dev/) — Great interface ideas
+- [github-desktop](https://github.com/desktop/desktop) — git/electron layer reference (bit too complex)
 
 ## Built with
 
