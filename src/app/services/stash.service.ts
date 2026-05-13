@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {delay, map, Observable, switchMap, tap} from 'rxjs';
+import {delay, EMPTY, map, Observable, of, switchMap, tap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {workingDirHasChanges} from '../utils/utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -30,19 +30,20 @@ export class StashService {
   private currentRepo = inject(CurrentRepoStore);
 
 
-  stashAndRun = <T>(operation$: Observable<T>, thenUnstash = true): Observable<T> => {
+  private topStashSha$ = this.gitApi.git(['stash', 'list', '--format=%H', '-1']).pipe(map(s => s.trim()));
 
+  stashAndRun = <T>(operation$: Observable<T>, thenUnstash = true): Observable<T> => {
+    // Stash
     if (!workingDirHasChanges(this.currentRepo.workDirStatus())) return operation$;
 
-    const stashAndRun$ = this.gitApi.git(['stash', '-u']).pipe(tap(() => console.log('stashed')), delay(1), switchMap(() => operation$));
-
-    // TODO: get stash sha, restore this exact same stash in the end ...
-    return thenUnstash
-      ? stashAndRun$.pipe(
-        switchMap(r => this.gitApi.git(['stash', 'pop']).pipe(map(() => r))),
-        // catchError(e => this.gitApiService.git(['stash', 'pop']).pipe(switchMap(() => throwError(() => e))))
-      )
-      : stashAndRun$;
+    return this.topStashSha$.pipe(
+      switchMap(prevSha =>
+        this.gitApi.git(['stash', '-u']).pipe(
+          switchMap(() => operation$), // do action
+          switchMap(r => thenUnstash ? this.popIfNewStash(prevSha).pipe(map(() => r)) : of(r)), // unstash
+        ),
+      ),
+    );
   };
 
   stash = () => this.gitApi.git(['stash', '-u']);
@@ -52,4 +53,9 @@ export class StashService {
   apply = (stashRef = 'stash@{0}') => this.gitApi.git(['stash', 'apply', stashRef]);
 
   drop = (stashRef = 'stash@{0}') => this.gitApi.git(['stash', 'drop', stashRef]);
+
+  private popIfNewStash = (prevSha: string) =>
+    this.topStashSha$.pipe(
+      switchMap(newSha => newSha !== prevSha ? this.gitApi.git(['stash', 'pop']) : of(null)),
+    );
 }
