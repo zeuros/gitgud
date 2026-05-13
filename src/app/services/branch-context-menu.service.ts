@@ -19,7 +19,7 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {MenuItem, TreeNode} from 'primeng/api';
 import {first, map, switchMap} from 'rxjs';
-import {Branch} from '../lib/github-desktop/model/branch';
+import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
 import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
@@ -148,8 +148,16 @@ export class BranchContextMenuService {
       .pipe(first(notUndefined))
       .subscribe(newName => this.gitWorkflow.doRunAndRefresh(['branch', '-m', this.name(), newName], `Renamed ${this.name()} to ${newName}`));
 
-  private deleteBranch = () =>
-    this.gitWorkflow.doRunAndRefresh(['branch', '-d', this.name()], `Deleted branch ${this.name()}`, true, false);
+  private deleteBranch = () => {
+    const branch = this.selectedNode()!.data!;
+
+    if (branch.type === BranchType.Remote) {
+      const remoteName = branch.name.replace(/^origin\//, '');
+      this.gitWorkflow.doRunAndRefresh(['push', 'origin', '--delete', remoteName], `Deleted remote branch ${branch.name}`, false, false);
+    } else {
+      this.gitWorkflow.doRunAndRefresh(['branch', '-d', branch.name], `Deleted branch ${branch.name}`, true, false);
+    }
+  };
 
   private createTagHere = () =>
     this.prompt.open('Tag name:').pipe(
