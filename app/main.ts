@@ -57,7 +57,9 @@ function createMainWindow() {
   if (isDev) {
     mainWindow.loadURL('http://localhost:4200');
   } else {
-      mainWindow.loadFile(join(process.resourcesPath, 'dist/index.html'));
+    const indexHtml = join(process.resourcesPath, 'dist/index.html');
+    mainWindow.loadFile(indexHtml);
+    mainWindow.webContents.on('did-fail-load', () => mainWindow?.loadFile(indexHtml));
   }
 
   mainWindow.on('closed', () => {
