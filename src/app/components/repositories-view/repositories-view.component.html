@@ -13,7 +13,7 @@
                         icon="pi pi-times"
                         [rounded]="true"
                         [text]="true"
-                        [severity]="i == selectedIndex ? 'primary' : 'secondary'"
+                        [severity]="i === selectedIndex ? 'primary' : 'secondary'"
                         styleClass="close-tab-btn"
                         (click)="gitRepositoryStore.removeRepository(i); $event.stopPropagation()"
                 />

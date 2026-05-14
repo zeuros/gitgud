@@ -1,6 +1,6 @@
 @let selectedCommits = currentRepo.selectedCommits();
 @if (selectedCommits!.length > 1) {
-    <h4 class="m-0">Diffs {{ selectedCommits.length == 2 ? 'between' : 'of' }} {{ selectedCommits.length }} commits:</h4>
+    <h4 class="m-0">Diffs {{ selectedCommits.length === 2 ? 'between' : 'of' }} {{ selectedCommits.length }} commits:</h4>
 
     <p-divider/>
 
