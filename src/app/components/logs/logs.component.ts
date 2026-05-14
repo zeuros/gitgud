@@ -31,7 +31,7 @@ import {SearchLogsComponent} from '../search-logs/search-logs.component';
 import {afterNextRender, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
 import {DatePipe} from '@angular/common';
-import {local, remote} from '../../utils/branch-utils';
+import {local, normalizedBranchName, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {LogBuilderService} from '../../services/log-builder.service';
@@ -41,7 +41,6 @@ import {CommitContextMenuService} from '../../services/commit-context-menu.servi
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
-import {BranchReaderService} from '../../services/electron-cmd-parser-layer/branch-reader.service';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import {BranchDragDropService} from '../../services/branch-drag-drop.service';
 import {GitTag} from '../../models/git-tag';
@@ -55,6 +54,8 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {LogBranchTag} from './log-branch-tag/log-branch-tag';
 import {FixupService} from '../../services/fixup.service';
 import {AvatarService} from '../commit-section/commit-infos/avatar/avatar.service';
+import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
+import {BranchService} from '../../services/branch.service';
 
 @Component({
   selector: 'gitgud-logs',
@@ -86,13 +87,13 @@ export class LogsComponent {
   protected fixup = inject(FixupService);
   private logBuilder = inject(LogBuilderService);
   private activeContextMenu = inject(ActiveContextMenuService);
-  private branchReader = inject(BranchReaderService);
+  private branch = inject(BranchService);
   private conflict = inject(ConflictService);
   private avatar = inject(AvatarService);
 
   protected checkoutBranch = (branch: Branch | null, event: MouseEvent) => {
     event.stopPropagation();
-    if (branch) this.branchReader.checkoutBranch(branch);
+    if (branch) this.branch.checkoutBranch(branch);
   };
   protected commitsSelection = computed(() => {
     const selectedCommitsShas = this.currentRepo.selectedCommitsShas();

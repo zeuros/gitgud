@@ -30,14 +30,14 @@ import {TableModule} from 'primeng/table';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
 import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
-import {BranchReaderService} from '../../services/electron-cmd-parser-layer/branch-reader.service';
 import {GitTag} from '../../models/git-tag';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
 import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
-import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {BranchDragDropService} from '../../services/branch-drag-drop.service';
+import {BranchService} from '../../services/branch.service';
+import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 
 
 @Component({
@@ -70,10 +70,10 @@ export class LeftPanelComponent {
     return findNode([...this.localBranches(), ...this.remoteBranches()], sha);
   });
   protected branchContextMenu = inject(BranchContextMenuService);
-  protected aheadBehind = inject(BranchAheadBehindService);
   protected branchDragDrop = inject(BranchDragDropService);
   protected activeContextMenu = inject(ActiveContextMenuService);
-  private branchReader = inject(BranchReaderService);
+  protected aheadBehind = inject(BranchAheadBehindService);
+  private branch = inject(BranchService);
 
   protected selectBranchCommit = (branch?: Branch) => {
     if (branch) this.currentRepo.update({selectedCommitsShas: [branch.tip.sha]});
@@ -100,7 +100,7 @@ export class LeftPanelComponent {
   };
 
   protected checkoutBranch = (branch?: Branch) => {
-    if (branch) this.branchReader.checkoutBranch(branch);
+    if (branch) this.branch.checkoutBranch(branch);
   };
 
   protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
