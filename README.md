@@ -43,6 +43,28 @@ A cross-platform Git GUI that doesn't get in your way.
 
 ---
 
+## Development
+
+### Prerequisites
+
+Node.js and npm. Then:
+
+```bash
+npm i
+npm start
+```
+
+### Test the production build locally
+
+```bash
+npm run build:preview
+npm run preview
+```
+
+Builds, packages, and launches the app in one step.
+
+---
+
 ## Many thanks & references
 
 - [Gitkraken](https://github.com/Krf/gitcraken) — inspiring GUI and graph work
