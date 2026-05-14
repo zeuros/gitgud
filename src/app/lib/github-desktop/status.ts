@@ -18,7 +18,7 @@
 
 import {RebaseInternalState} from './model/rebase';
 import {WorkingDirectoryStatus} from './model/status';
-import {IStatusEntry, StatusHeader} from './status-parser';
+import {IStatusEntry} from './status-parser';
 import {AheadBehind} from './model/branch';
 import {getFilesWithConflictMarkers} from './diff/diff-check';
 import {catchError, forkJoin, Observable} from 'rxjs';
@@ -60,14 +60,6 @@ export interface IStatusResult {
 
   /** whether conflicting files present on repository */
   readonly doConflictedFilesExist: boolean
-}
-
-interface IStatusHeadersData {
-  currentBranch?: string
-  currentUpstreamBranch?: string
-  currentTip?: string
-  branchAheadBehind?: AheadBehind
-  match: RegExpMatchArray | null
 }
 
 type ConflictFilesDetails = {
@@ -169,9 +161,6 @@ type ConflictFilesDetails = {
 //   return throwEx(`Unknown file status ${status}`)
 // }
 
-// List of known conflicted index entries for a file, extracted from mapStatus
-// inside `app/src/lib/status-parser.ts` for convenience
-const conflictStatusCodes = ['DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU']
 
 /**
  *
@@ -231,45 +220,6 @@ const conflictStatusCodes = ['DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU']
 //   return files
 // }
 
-/**
- * Update status header based on the current header entry.
- * Reducer.
- */
-function parseStatusHeader(results: IStatusHeadersData, header: StatusHeader) {
-  let {
-    currentBranch,
-    currentUpstreamBranch,
-    currentTip,
-    branchAheadBehind,
-    match,
-  } = results
-  const value = header.value
-
-  // This intentionally does not match branch.oid initial
-  if ((match = value.match(/^branch\.oid ([a-f0-9]+)$/))) {
-    currentTip = match[1]
-  } else if ((match = value.match(/^branch.head (.*)/))) {
-    if (match[1] !== '(detached)') {
-      currentBranch = match[1]
-    }
-  } else if ((match = value.match(/^branch.upstream (.*)/))) {
-    currentUpstreamBranch = match[1]
-  } else if ((match = value.match(/^branch.ab \+(\d+) -(\d+)$/))) {
-    const ahead = parseInt(match[1], 10)
-    const behind = parseInt(match[2], 10)
-
-    if (!isNaN(ahead) && !isNaN(behind)) {
-      branchAheadBehind = {ahead, behind}
-    }
-  }
-  return {
-    currentBranch,
-    currentUpstreamBranch,
-    currentTip,
-    branchAheadBehind,
-    match,
-  }
-}
 
 const getMergeConflictDetails =
   (git: (args?: string[]) => Observable<string>, conflictedFilesInIndex: IStatusEntry[]): Observable<ConflictFilesDetails> =>

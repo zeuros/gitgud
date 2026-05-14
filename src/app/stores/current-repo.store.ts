@@ -19,7 +19,6 @@
 import {computed, inject, Injectable} from '@angular/core';
 import {GitRepositoryStore} from './git-repos.store';
 import {GitRepository} from '../models/git-repository';
-import {Branch} from '../lib/github-desktop/model/branch';
 import {groupBy, isEqual, mapValues} from 'lodash-es';
 import {keyComparison, logsComparison, shallowArrayEqual} from '../utils/utils';
 import {LocalAndDistant, toLocalAndDistantPairs} from '../utils/branch-utils';

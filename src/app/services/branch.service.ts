@@ -1,6 +1,6 @@
 import {inject, Injectable} from '@angular/core';
-import {AheadBehind, Branch, BranchType} from '../lib/github-desktop/model/branch';
-import {catchError, finalize, map, switchMap} from 'rxjs';
+import {Branch, BranchType} from '../lib/github-desktop/model/branch';
+import {catchError, finalize, switchMap} from 'rxjs';
 import {ConfirmationService} from 'primeng/api';
 import {normalizedBranchName} from '../utils/branch-utils';
 import {PopupService} from './popup.service';

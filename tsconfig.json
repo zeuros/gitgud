@@ -2,8 +2,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "strict": true,
-    "noUnusedLocals": false, // FIXME Set to false temporarily
-    "noUnusedParameters": false, // FIXME Set to false temporarily
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "outDir": "./dist/out-tsc",

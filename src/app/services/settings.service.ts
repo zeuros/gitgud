@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {effect, Injectable, signal} from '@angular/core';
+import {Injectable, signal} from '@angular/core';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
 
 export type ThemeMode = 'dark' | 'light' | 'system';
