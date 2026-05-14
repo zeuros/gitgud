@@ -22,7 +22,6 @@ import {first, map, switchMap} from 'rxjs';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
-import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {PopupService} from './popup.service';
 import {PromptService} from './prompt.service';
@@ -30,13 +29,15 @@ import {DialogService} from 'primeng/dynamicdialog';
 import {EditRemoteComponent} from '../components/dialogs/edit-remote/edit-remote.component';
 import {openSetUpstreamDialog} from '../components/dialogs/set-upstream-dialog/set-upstream-dialog.component';
 import {CreateBranchService} from './create-branch.service';
+import {normalizedBranchName} from '../utils/branch-utils';
+import {BranchService} from './branch.service';
 
 @Injectable({providedIn: 'root'})
 export class BranchContextMenuService {
 
   private currentRepo = inject(CurrentRepoStore);
   private popup = inject(PopupService);
-  private branchReader = inject(BranchReaderService);
+  private branch = inject(BranchService);
   private gitWorkflow = inject(GitWorkflowService);
   private prompt = inject(PromptService);
   private dialog = inject(DialogService);
@@ -81,7 +82,7 @@ export class BranchContextMenuService {
       {label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.popup.info('Interactive rebase requires a terminal')},
       {separator: true},
       // Checkout
-      {label: `Checkout ${name}`, icon: 'fa fa-sign-in', command: () => node.data && this.branchReader.checkoutBranch(node.data)},
+      {label: `Checkout ${name}`, icon: 'fa fa-sign-in', command: () => node.data && this.branch.checkoutBranch(node.data)},
       {separator: true},
       // Commit ops
       {label: 'Create branch here', icon: 'fa fa-plus', command: this.createBranchHere},
@@ -152,8 +153,7 @@ export class BranchContextMenuService {
     const branch = this.selectedNode()!.data!;
 
     if (branch.type === BranchType.Remote) {
-      const remoteName = branch.name.replace(/^origin\//, '');
-      this.gitWorkflow.doRunAndRefresh(['push', 'origin', '--delete', remoteName], `Deleted remote branch ${branch.name}`, false, false);
+      this.gitWorkflow.doRunAndRefresh(['push', 'origin', '--delete', normalizedBranchName(branch)], `Deleted remote branch ${branch.name}`, false, false);
     } else {
       this.gitWorkflow.doRunAndRefresh(['branch', '-d', branch.name], `Deleted branch ${branch.name}`, true, false);
     }

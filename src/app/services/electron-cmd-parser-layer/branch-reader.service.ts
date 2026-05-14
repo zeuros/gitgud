@@ -23,7 +23,6 @@ import {Branch, BranchType, IBranchTip} from '../../lib/github-desktop/model/bra
 import {catchError, map, Observable} from 'rxjs';
 import {PREFIXES} from '../../utils/constants';
 import {GitApiService} from './git-api.service';
-import {PopupService} from '../popup.service';
 
 @Injectable({
   providedIn: 'root',
@@ -41,7 +40,6 @@ export class BranchReaderService {
   };
   remoteHeadPointer?: string;
   private parser = createForEachRefParser(this.fields);
-  private popup = inject(PopupService);
   private gitApi = inject(GitApiService);
 
   getBranches = (): Observable<Branch[]> =>
@@ -84,21 +82,4 @@ export class BranchReaderService {
       catchError(() => this.gitApi.git(['rev-parse', 'HEAD']).pipe(map(sha => sha.trim()))),
     );
 
-  checkoutBranch = (branch: Branch) => {
-    if (branch.isHeadPointed) {
-      this.popup.warn(`Branch ${branch.name} is already checked out`);
-      return;
-    }
-
-    if (branch.type === BranchType.Local) {
-      this.gitApi.git(['checkout', branch.name]).subscribe();
-      return;
-    }
-
-    const localName = branch.name.replace(/^origin\//, '');
-    this.gitApi.git(['checkout', localName]).pipe(
-      // If the branch exists remotely only, we check it out and track it
-      catchError(() => this.gitApi.git(['checkout', '-b', localName, '--track', `origin/${localName}`])),
-    ).subscribe();
-  };
 }

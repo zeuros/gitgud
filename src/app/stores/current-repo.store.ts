@@ -40,7 +40,7 @@ export class CurrentRepoStore {
   tags = computed(() => this.reposStore.selectedRepository()?.tags ?? [], {equal: isEqual});
   tagsByCommitSha = computed<Record<string, GitTag[] | undefined>>(() => groupBy(this.tags(), t => t.sha), {equal: keyComparison});
   branches = computed(() => this.reposStore.selectedRepository()?.branches ?? [], {equal: isEqual});
-  branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha), {equal: keyComparison});
+  branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha));
   // Group branches by commit SHA, then pair local/remote branches by normalized name into [local, distant] tuples
   mergedBranchesByTip = computed<Record<string, LocalAndDistant[] | undefined>>(() => mapValues(this.branchesByTip(), toLocalAndDistantPairs));
 

@@ -91,7 +91,7 @@ export const findNode = (nodes: TreeNode<Branch>[], sha: string): TreeNode<Branc
   return null;
 };
 
-// Normalize origin / local branch name origin/main → main
+// For any name (local / distant) => filter out the origin part to keep branch name only
 export const normalizedBranchName = (b: Branch | null) => b?.name.replace('origin/', '')
 
 /** A pair of branches sharing the same normalized name. local is index 0, distant is index 1. */
