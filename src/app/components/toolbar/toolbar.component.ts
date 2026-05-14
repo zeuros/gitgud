@@ -195,4 +195,8 @@ export class ToolbarComponent implements OnInit {
       switchMap(result => result ? this.gitApi.git(['push', '--set-upstream', result.remote, result.branch]) : EMPTY),
     );
 
+  protected copyBtcAddress = () =>
+    navigator.clipboard.writeText('bc1q6kpuaygvp2a0mnv6n74jg4dlcggw35llynm3p9')
+      .then(() => this.popup.success('BTC address copied to clipboard'));
+
 }
