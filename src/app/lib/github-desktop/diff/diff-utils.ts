@@ -17,7 +17,6 @@
  */
 
 import {IRawDiff} from '../model/diff/raw-diff';
-import {Commit} from '../model/commit';
 import {ChangeSet} from '../model/change-set';
 import {AppFileStatusKind, CommittedFileChange} from '../model/status';
 

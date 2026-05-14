@@ -319,7 +319,7 @@ function getMediaType(extension: string) {
 //  */
 export async function getBlobImage(
   gitApi: GitApiService,
-  git: (args?: string[]) => Observable<string>,
+  _git: (args?: string[]) => Observable<string>,
   path: string,
   commitish: string,
 ) {
@@ -365,7 +365,7 @@ export async function getBlobImage(
  * otherwise you should probably pass `'HEAD'` to get a diff of the working tree vs `HEAD`
  * @param conflictedFilesInIndex
  */
-export const getBinaryPaths = (git: (args?: string[]) => Observable<string>, ref: string, conflictedFilesInIndex?: IStatusEntry[]) =>
+export const getBinaryPaths = (git: (args?: string[]) => Observable<string>, ref: string, _conflictedFilesInIndex?: IStatusEntry[]) =>
   forkJoin([getDetectedBinaryFiles(git, ref), getFilesUsingBinaryMergeDriver(git)])
     .pipe(map(([detectedBinaryFiles, conflictedFilesUsingBinaryMergeDriver]) => [...new Set([...detectedBinaryFiles, ...conflictedFilesUsingBinaryMergeDriver])]));
 

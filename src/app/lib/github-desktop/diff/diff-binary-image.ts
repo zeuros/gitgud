@@ -38,7 +38,7 @@ const imageFileExtensions = new Set([
 ]);
 
 
-export const beforeAndAfterText = (contents: string, hunks: DiffHunk[]) => {
+export const beforeAndAfterText = (contents: string, _hunks: DiffHunk[]) => {
   const lines = contents.split('\n');
 
   // Extract the lines that represent the original and modified content
@@ -101,7 +101,7 @@ export function convertDiff(
 
 export function getImageDiff(
   file: FileChange,
-  oldestCommitish?: string,
+  _oldestCommitish?: string,
 ): IImageDiff {
   let current: Image | undefined = undefined;
   let previous: Image | undefined = undefined;

@@ -16,9 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, Input, input, model, viewChild} from '@angular/core';
+import {Component, input, viewChild} from '@angular/core';
 import {DATE_FORMAT} from '../../../utils/constants';
-import {CommittedFileChange} from '../../../lib/github-desktop/model/status';
 import {Commit} from '../../../lib/github-desktop/model/commit';
 import {Tooltip} from 'primeng/tooltip';
 import {AvatarComponent} from '../commit-infos/avatar/avatar.component';

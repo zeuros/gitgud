@@ -16,9 +16,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Path from "node:path";
-import {RebaseInternalState} from "./model/rebase";
-import { GitRepository } from "../../models/git-repository";
 
 /**
  * Get the internal state about the rebase being performed on a repository. This

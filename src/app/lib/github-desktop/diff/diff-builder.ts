@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {DiffType, IDiff, ILargeTextDiff, LineEndingsChange} from '../model/diff/diff-data';
+import {DiffType, IDiff, LineEndingsChange} from '../model/diff/diff-data';
 import {FileChange} from '../model/status';
 import {DiffParser} from './diff-parser';
 import {isDiffTooLarge, isStringTooLarge, isValidBuffer} from './diff-utils';

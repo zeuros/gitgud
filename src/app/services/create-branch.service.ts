@@ -16,8 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, inject, Injectable, signal} from '@angular/core';
-import {catchError, EMPTY, finalize, switchMap, tap} from 'rxjs';
+import {inject, Injectable, signal} from '@angular/core';
+import {finalize, switchMap, tap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {PopupService} from './popup.service';

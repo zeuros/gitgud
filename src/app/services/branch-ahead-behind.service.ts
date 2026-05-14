@@ -17,7 +17,7 @@
  */
 
 import {effect, inject, Injectable, signal} from '@angular/core';
-import {catchError, EMPTY, from, map, mergeMap, Observable, of} from 'rxjs';
+import {catchError, EMPTY, from, map, mergeMap, Observable} from 'rxjs';
 import {AheadBehind, Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
