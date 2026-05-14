@@ -17,7 +17,7 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {MenuItem} from 'primeng/api';
+import {type MenuItem} from 'primeng/api';
 import {WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
 import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-directory.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';

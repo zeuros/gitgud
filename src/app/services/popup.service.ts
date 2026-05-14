@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {MessageService, ToastMessageOptions} from 'primeng/api';
+import {MessageService, type ToastMessageOptions} from 'primeng/api';
 import {errorMessage} from '../utils/utils';
 
 const defaultMessageConfig: ToastMessageOptions = {styleClass: 'headLess', text: '', life: 5000};

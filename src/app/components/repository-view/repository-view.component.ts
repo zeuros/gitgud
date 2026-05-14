@@ -18,7 +18,7 @@
 
 import {Component, inject} from '@angular/core';
 import {LeftPanelComponent} from '../left-panel/left-panel.component';
-import {SplitterModule, SplitterResizeEndEvent} from 'primeng/splitter';
+import {SplitterModule, type SplitterResizeEndEvent} from 'primeng/splitter';
 import {CommitSectionComponent} from '../commit-section/commit-section.component';
 import {LogsComponent} from '../logs/logs.component';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';

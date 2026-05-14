@@ -21,8 +21,8 @@ import {GitRepositoryStore} from './git-repos.store';
 import {GitRepository} from '../models/git-repository';
 import {groupBy, isEqual, mapValues} from 'lodash-es';
 import {keyComparison, logsComparison, shallowArrayEqual} from '../utils/utils';
-import {LocalAndDistant, toLocalAndDistantPairs} from '../utils/branch-utils';
-import {GitTag} from '../models/git-tag';
+import {type LocalAndDistant, toLocalAndDistantPairs} from '../utils/branch-utils';
+import {type GitTag} from '../models/git-tag';
 
 /**
  * Exposes reactive state for the currently selected repository.

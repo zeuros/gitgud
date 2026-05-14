@@ -16,8 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {DiffType, IDiff, IImageDiff, LineEndingsChange} from '../model/diff/diff-data';
-import {DiffHunk, IRawDiff} from '../model/diff/raw-diff';
+import {DiffType, type IDiff, type IImageDiff, type LineEndingsChange} from '../model/diff/diff-data';
+import {DiffHunk, type IRawDiff} from '../model/diff/raw-diff';
 import {AppFileStatusKind, CommittedFileChange, FileChange} from '../model/status';
 import {Image} from '../model/diff/image';
 import {fileName} from '../../../utils/utils';

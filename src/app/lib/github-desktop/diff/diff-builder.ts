@@ -16,12 +16,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {DiffType, IDiff, LineEndingsChange} from '../model/diff/diff-data';
+import {DiffType, type IDiff, type LineEndingsChange} from '../model/diff/diff-data';
 import {FileChange} from '../model/status';
 import {DiffParser} from './diff-parser';
 import {isDiffTooLarge, isStringTooLarge, isValidBuffer} from './diff-utils';
 import {forceUnwrap} from '../throw-ex';
-import {IRawDiff} from '../model/diff/raw-diff';
+import {type IRawDiff} from '../model/diff/raw-diff';
 import {beforeAndAfterText, convertDiff} from './diff-binary-image';
 
 export function buildDiff(

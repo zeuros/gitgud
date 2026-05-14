@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ApplicationConfig, ErrorHandler, MAX_ANIMATION_TIMEOUT, provideZoneChangeDetection} from '@angular/core';
+import {type ApplicationConfig, ErrorHandler, MAX_ANIMATION_TIMEOUT, provideZoneChangeDetection} from '@angular/core';
 import {provideRouter} from '@angular/router';
 import {routes} from './app.routes';
 import {ConfirmationService, MessageService} from 'primeng/api';

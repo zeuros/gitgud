@@ -16,8 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {CommitOneLine} from "./commit"
-import {IMultiCommitOperationProgress} from "./progress"
+import {type CommitOneLine} from "./commit"
+import {type IMultiCommitOperationProgress} from "./progress"
 import {ComputedAction} from "./computed-action";
 
 

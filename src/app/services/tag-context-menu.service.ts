@@ -17,9 +17,9 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {MenuItem} from 'primeng/api';
+import {type MenuItem} from 'primeng/api';
 import {first, switchMap} from 'rxjs';
-import {GitTag} from '../models/git-tag';
+import {type GitTag} from '../models/git-tag';
 import {GitWorkflowService} from './git-workflow.service';
 import {PopupService} from './popup.service';
 import {PromptService} from './prompt.service';

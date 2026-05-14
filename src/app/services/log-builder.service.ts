@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {Commit} from '../lib/github-desktop/model/commit';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {RefType} from '../enums/ref-type.enum';
@@ -27,14 +27,14 @@ import {
   buildChildrenMap,
   buildShaMap,
   buildStashMap,
-  ChildrenMap,
+  type ChildrenMap,
   edgeType,
   isCommit,
   isIndex,
   isMergeCommit,
   isRootCommit,
   isStash,
-  ShaMap,
+  type ShaMap,
   stashUntrackedChildren,
 } from '../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';

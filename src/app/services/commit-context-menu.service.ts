@@ -17,11 +17,11 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {MenuItem} from 'primeng/api';
+import {type MenuItem} from 'primeng/api';
 import {PopupService} from './popup.service';
 import {first, map, switchMap} from 'rxjs';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {short} from '../utils/commit-utils';
 import {PromptService} from './prompt.service';
 import {notUndefined} from '../utils/utils';

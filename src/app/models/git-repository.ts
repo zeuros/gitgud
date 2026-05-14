@@ -18,8 +18,8 @@
 
 import {Commit} from '../lib/github-desktop/model/commit';
 import {Branch} from '../lib/github-desktop/model/branch';
-import {WorkDirStatus} from '../lib/github-desktop/model/workdir';
-import {GitTag} from './git-tag';
+import {type WorkDirStatus} from '../lib/github-desktop/model/workdir';
+import {type GitTag} from './git-tag';
 
 export type ViewType = 'hunk' | 'inline' | 'split';
 

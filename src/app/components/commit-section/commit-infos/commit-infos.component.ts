@@ -24,7 +24,7 @@ import {Button} from 'primeng/button';
 import {isEqual} from 'lodash-es';
 import {directory, fileName} from '../../../utils/utils';
 import {Tooltip} from 'primeng/tooltip';
-import {ChangeSet} from '../../../lib/github-desktop/model/change-set';
+import {type ChangeSet} from '../../../lib/github-desktop/model/change-set';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
 import {PopupService} from '../../../services/popup.service';

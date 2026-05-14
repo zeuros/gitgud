@@ -17,8 +17,8 @@
  */
 
 import {CommitIdentity} from './commit-identity';
-import {Trailer} from '../../../models/interpret-trailers';
-import {LogObject} from '../../../models/log-object';
+import {type Trailer} from '../../../models/interpret-trailers';
+import {type LogObject} from '../../../models/log-object';
 import {notUndefined} from '../../../utils/utils';
 
 export const parseRawUnfoldedTrailers = (trailers: string, separators: string): Trailer[] =>

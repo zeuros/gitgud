@@ -18,7 +18,7 @@
 
 import {inject, Injectable} from '@angular/core';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {RefType} from '../enums/ref-type.enum';
 
 @Injectable({providedIn: 'root'})

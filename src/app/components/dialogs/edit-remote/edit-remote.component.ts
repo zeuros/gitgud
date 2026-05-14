@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject, type OnInit} from '@angular/core';
 import {FormControl, ReactiveFormsModule} from '@angular/forms';
 import {catchError, EMPTY, switchMap, tap} from 'rxjs';
 import {Button} from 'primeng/button';

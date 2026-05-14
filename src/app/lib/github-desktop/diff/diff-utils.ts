@@ -16,8 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {IRawDiff} from '../model/diff/raw-diff';
-import {ChangeSet} from '../model/change-set';
+import {type IRawDiff} from '../model/diff/raw-diff';
+import {type ChangeSet} from '../model/change-set';
 import {AppFileStatusKind, CommittedFileChange} from '../model/status';
 
 

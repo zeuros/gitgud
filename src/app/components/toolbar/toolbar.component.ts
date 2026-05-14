@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject, OnInit, signal, viewChild} from '@angular/core';
+import {Component, computed, inject, type OnInit, signal, viewChild} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {catchError, EMPTY, finalize, interval, map, of, switchMap} from 'rxjs';
 import {Button} from 'primeng/button';
@@ -39,7 +39,7 @@ import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell
 import {UndoService} from '../../services/undo.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
-import {BehindRemoteDialogComponent, BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
+import {BehindRemoteDialogComponent, type BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
 import {RebaseService} from '../../services/rebase.service';

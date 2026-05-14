@@ -17,8 +17,8 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {CdkDragEnd} from '@angular/cdk/drag-drop';
-import {MenuItem} from 'primeng/api';
+import {type CdkDragEnd} from '@angular/cdk/drag-drop';
+import {type MenuItem} from 'primeng/api';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {parseRemote} from '../utils/branch-utils';
 import {ActiveContextMenuService} from './active-context-menu.service';
