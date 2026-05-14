@@ -8,7 +8,7 @@
 @forward 'styles/drag-drop';
 
 @forward 'primeflex/primeflex';
-@import 'primeicons/primeicons';
-@import 'styles/primeng-theme-custom/theme-custom-dark-deeppurple' layer(my-theme);
-@import '@mismerge/core/styles.css';
-@import 'styles/mismerge-gitgud';
+@use 'primeicons/primeicons';
+@use 'styles/primeng-theme-custom/theme-custom-dark-deeppurple';
+@use '@mismerge/core/styles.css';
+@use 'styles/mismerge-gitgud';
