@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {AfterViewInit, Component, computed, effect, ElementRef, HostListener, inject, input, OnDestroy, signal, ViewChild} from '@angular/core';
+import {type AfterViewInit, Component, computed, effect, ElementRef, HostListener, inject, input, type OnDestroy, signal, ViewChild} from '@angular/core';
 import {CommittedFileChange, FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
@@ -26,7 +26,7 @@ import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir
 import {combineLatest, of} from 'rxjs';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
-import {ViewType} from '../../models/git-repository';
+import {type ViewType} from '../../models/git-repository';
 import {renderWindowsShitEol} from './monaco-utils';
 import {SelectButton} from 'primeng/selectbutton';
 import ITextModel = editor.ITextModel;

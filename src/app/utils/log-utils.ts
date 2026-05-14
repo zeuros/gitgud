@@ -17,7 +17,7 @@
  */
 
 import {Branch} from '../lib/github-desktop/model/branch';
-import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {RefType} from '../enums/ref-type.enum';
 
 export const byName = (branchName: string) => (branch: Branch) => branch.name == branchName;

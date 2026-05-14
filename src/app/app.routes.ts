@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Routes } from "@angular/router";
+import { type Routes } from "@angular/router";
 import {WelcomeScreenComponent} from './components/welcome-screen/welcome-screen.component';
 import {RepositoriesViewComponent} from './components/repositories-view/repositories-view.component';
 

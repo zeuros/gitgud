@@ -17,7 +17,7 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {MenuItem, TreeNode} from 'primeng/api';
+import {type MenuItem, type TreeNode} from 'primeng/api';
 import {first, map, switchMap} from 'rxjs';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';

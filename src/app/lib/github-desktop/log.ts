@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {AppFileStatus, AppFileStatusKind} from "./model/status";
+import {type AppFileStatus, AppFileStatusKind} from "./model/status";
 
 
 /**

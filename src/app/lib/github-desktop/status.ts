@@ -16,10 +16,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {RebaseInternalState} from './model/rebase';
+import {type RebaseInternalState} from './model/rebase';
 import {WorkingDirectoryStatus} from './model/status';
-import {IStatusEntry} from './status-parser';
-import {AheadBehind} from './model/branch';
+import {type IStatusEntry} from './status-parser';
+import {type AheadBehind} from './model/branch';
 import {getFilesWithConflictMarkers} from './diff/diff-check';
 import {catchError, forkJoin, Observable} from 'rxjs';
 import {getBinaryPaths} from './diff/diff';

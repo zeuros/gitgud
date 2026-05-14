@@ -18,7 +18,7 @@
 
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
-import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
+import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {RefType} from '../../enums/ref-type.enum';
 import {commitColor, hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';

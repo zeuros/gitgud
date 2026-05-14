@@ -33,8 +33,8 @@ import {CommitService} from '../../../services/commit.service';
 import {FixupService} from '../../../services/fixup.service';
 import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
-import {WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
-import {Splitter, SplitterResizeEndEvent} from 'primeng/splitter';
+import {type WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
+import {Splitter, type SplitterResizeEndEvent} from 'primeng/splitter';
 import {ActiveContextMenuService} from '../../../services/active-context-menu.service';
 import {UnstagedFileContextMenuService} from '../../../services/unstaged-file-context-menu.service';
 

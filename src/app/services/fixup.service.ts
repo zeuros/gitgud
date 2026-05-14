@@ -21,7 +21,7 @@ import {switchMap, tap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {PopupService} from './popup.service';
-import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {short} from '../utils/commit-utils';
 
 @Injectable({providedIn: 'root'})

@@ -28,7 +28,7 @@
 // In many versions of GNU diff, each range can omit the comma and trailing value s,
 
 import {DiffLine, DiffLineType} from '../model/diff/diff-line';
-import {DiffHunk, DiffHunkHeader, IRawDiff} from '../model/diff/raw-diff';
+import {DiffHunk, DiffHunkHeader, type IRawDiff} from '../model/diff/raw-diff';
 import {throwEx} from '../../../utils/utils';
 import {getHunkHeaderExpansionType} from './diff-hunks';
 

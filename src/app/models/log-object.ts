@@ -17,7 +17,7 @@
  */
 
 import {CommitIdentity} from "../lib/github-desktop/model/commit-identity";
-import {Trailer} from "./interpret-trailers";
+import {type Trailer} from "./interpret-trailers";
 
 export interface LogObject {
   sha: string

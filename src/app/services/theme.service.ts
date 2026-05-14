@@ -17,7 +17,7 @@
  */
 
 import {effect, inject, Injectable} from '@angular/core';
-import {SettingsService, ThemeMode} from './settings.service';
+import {SettingsService, type ThemeMode} from './settings.service';
 
 export type {ThemeMode};
 

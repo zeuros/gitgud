@@ -17,7 +17,7 @@
  */
 
 import {DiffSelection} from './diff/diff-selection';
-import {AppFileStatus, FileChange} from './status';
+import {type AppFileStatus, FileChange} from './status';
 
 
 export interface WorkDirStatus {

@@ -17,7 +17,7 @@
  */
 
 import {Commit} from '../lib/github-desktop/model/commit';
-import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {RefType} from '../enums/ref-type.enum';
 import {CommitIdentity} from '../lib/github-desktop/model/commit-identity';
 import Identicon from 'identicon.js';

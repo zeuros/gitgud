@@ -17,12 +17,12 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {MenuItem} from 'primeng/api';
+import {type MenuItem} from 'primeng/api';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {PopupService} from './popup.service';
 import {switchMap} from 'rxjs';
-import {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 
 @Injectable({providedIn: 'root'})
 export class StashContextMenuService {

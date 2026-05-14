@@ -45,11 +45,11 @@
  *    file_two_new_path
  */
 
-import {ChangeSet} from './model/change-set';
-import {AppFileStatus, AppFileStatusKind, CommittedFileChange, isConflictedStatusCode} from './model/status';
+import {type ChangeSet} from './model/change-set';
+import {type AppFileStatus, AppFileStatusKind, CommittedFileChange, isConflictedStatusCode} from './model/status';
 import {forceUnwrap} from './throw-ex';
 import {isCopyOrRename, mapPorcelainStatus, mapStatus} from './log';
-import {WorkDirStatus, WorkingDirectoryFileChange} from './model/workdir';
+import {type WorkDirStatus, WorkingDirectoryFileChange} from './model/workdir';
 
 /**
  * Parses output of diff flags -z --raw --numstat.

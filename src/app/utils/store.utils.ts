@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Signal} from '@angular/core';
+import {type Signal} from '@angular/core';
 import {StorageName} from '../enums/storage-name.enum';
 import {toObservable} from '@angular/core/rxjs-interop';
 import {debounceTime} from 'rxjs';

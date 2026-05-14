@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {LogObject} from "../../../models/log-object";
+import {type LogObject} from "../../../models/log-object";
 import {RefType} from "../../../enums/ref-type.enum";
 import {Branch} from "./branch";
 

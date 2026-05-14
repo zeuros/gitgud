@@ -19,7 +19,7 @@
 import {Component, effect, inject, signal} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {directory, fileName} from '../../../utils/utils';
-import {ChangeSet} from '../../../lib/github-desktop/model/change-set';
+import {type ChangeSet} from '../../../lib/github-desktop/model/change-set';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {FileDiffService} from '../../../services/file-diff.service';
 import {CommitCardComponent} from '../commit-line/commit-card.component';

@@ -23,7 +23,7 @@ import {RepositoryViewComponent} from '../repository-view/repository-view.compon
 import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {ToolbarComponent} from '../toolbar/toolbar.component';
-import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
+import {CdkDrag, type CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 import {GitRefreshService} from '../../services/git-refresh.service';
 
 @Component({

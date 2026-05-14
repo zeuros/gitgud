@@ -17,9 +17,9 @@
  */
 
 import {
-  FileEntry,
+  type FileEntry,
   GitStatusEntry,
-  SubmoduleStatus,
+  type SubmoduleStatus,
   UnmergedEntrySummary,
 } from './model/status'
 import { splitBuffer } from './split-buffer'

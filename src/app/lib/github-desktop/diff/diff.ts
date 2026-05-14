@@ -20,7 +20,7 @@ import {AppFileStatusKind, FileChange} from '../model/status';
 import {forkJoin, map, Observable} from 'rxjs';
 import {getBlobContents} from '../show';
 import {Image} from '../model/diff/image';
-import {IStatusEntry} from '../status-parser';
+import {type IStatusEntry} from '../status-parser';
 import {createLogParser} from '../git-delimiter-parser';
 import {buildDiff} from './diff-builder';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';

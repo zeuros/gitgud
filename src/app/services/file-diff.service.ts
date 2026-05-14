@@ -18,13 +18,13 @@
 
 import {inject, Injectable} from '@angular/core';
 import {AppFileStatusKind, FileChange} from '../lib/github-desktop/model/status';
-import {DiffHunk, DiffHunkHeader, IRawDiff} from '../lib/github-desktop/model/diff/raw-diff';
+import {DiffHunk, DiffHunkHeader, type IRawDiff} from '../lib/github-desktop/model/diff/raw-diff';
 import {DiffLine, DiffLineType} from '../lib/github-desktop/model/diff/diff-line';
 import {throwEx} from '../utils/utils';
 import {getHunkHeaderExpansionType} from '../lib/github-desktop/diff/diff-hunks';
 import {getLargestLineNumber} from '../lib/github-desktop/diff/diff-parser';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
-import {ChangeSet} from '../lib/github-desktop/model/change-set';
+import {type ChangeSet} from '../lib/github-desktop/model/change-set';
 import {catchError, forkJoin, map, Observable, of} from 'rxjs';
 import {parseRawLogWithNumstat} from '../lib/github-desktop/commit-files-changes';
 import {CurrentRepoStore} from '../stores/current-repo.store';
