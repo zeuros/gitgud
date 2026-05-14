@@ -22,7 +22,7 @@ import {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {RefType} from '../../enums/ref-type.enum';
 import {commitColor, hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
-import {NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
+import {CANVAS_DPR_MULTIPLIER, DRAWING_PAD_LEFT, NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
 
 
 /**
@@ -39,7 +39,7 @@ export const drawLog = (
   stashImg: HTMLImageElement,
   avatarImages: Map<string, HTMLImageElement>,
 ) => {
-  const devicePixelRatio = window.devicePixelRatio || 1;
+  const devicePixelRatio = CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1);
 
   // clearRect() doesn't clear properly with transform applied, we remove it before clearing
   canvas.resetTransform();
@@ -47,7 +47,7 @@ export const drawLog = (
   canvas.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
 
   // Scale by devicePixelRatio so all logical coordinates (xPosition/yPosition) render at native resolution
-  canvas.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, (ROW_HEIGHT - scrollOffset) * devicePixelRatio);
+  canvas.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, DRAWING_PAD_LEFT, (ROW_HEIGHT - scrollOffset) * devicePixelRatio);
 
   // Draw edges (connections between commits)
   edges.search(startCommit, endCommit).forEach(edge => drawEdge(canvas, edge, startCommit));

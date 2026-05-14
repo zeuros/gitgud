@@ -16,8 +16,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-export const CANVAS_MARGIN = {left: 5, top: 2};
+export const CANVAS_MARGIN = {left: 5, top: 0.5};
 export const NODE_DIAMETER = 26;
+export const GRAPH_COLUMN_MIN_WIDTH = 80;
 export const NODES_VERTICAL_SPACING = 8;
 export const NODE_RADIUS = NODE_DIAMETER / 2;
 export const ROW_HEIGHT = NODE_DIAMETER + NODES_VERTICAL_SPACING;
+export const DRAWING_PAD_LEFT = 3;
+export const CANVAS_DPR_MULTIPLIER = 2; // Canvas renders much smoother (linux)

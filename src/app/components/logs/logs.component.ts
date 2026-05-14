@@ -27,15 +27,14 @@ import {commitColor, hasName, isCommit, isIndex, isStash} from '../../utils/comm
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
 import {DragDropModule} from '@angular/cdk/drag-drop';
-import {SearchLogsComponent} from '../search-logs/search-logs.component';
 import {afterNextRender, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
 import {DatePipe} from '@angular/common';
-import {local, normalizedBranchName, remote} from '../../utils/branch-utils';
+import {local, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {LogBuilderService} from '../../services/log-builder.service';
-import {CANVAS_MARGIN, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
+import {CANVAS_MARGIN, DRAWING_PAD_LEFT, GRAPH_COLUMN_MIN_WIDTH, CANVAS_DPR_MULTIPLIER, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
 import {CommitContextMenuService} from '../../services/commit-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
@@ -50,12 +49,11 @@ import {CreateBranchService} from '../../services/create-branch.service';
 import {ConflictService} from '../../services/conflict.service';
 import {InputText} from 'primeng/inputtext';
 import {FormsModule} from '@angular/forms';
-import {AutofocusDirective} from '../../directives/autofocus.directive';
-import {LogBranchTag} from './log-branch-tag/log-branch-tag';
 import {FixupService} from '../../services/fixup.service';
 import {AvatarService} from '../commit-section/commit-infos/avatar/avatar.service';
-import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {BranchService} from '../../services/branch.service';
+import {LogBranchTag} from './log-branch-tag/log-branch-tag';
+import {SearchLogsComponent} from '../search-logs/search-logs.component';
 
 @Component({
   selector: 'gitgud-logs',
@@ -64,13 +62,12 @@ import {BranchService} from '../../services/branch.service';
   imports: [
     TableModule,
     DragDropModule,
-    SearchLogsComponent,
     DatePipe,
     Badge,
     InputText,
     FormsModule,
-    AutofocusDirective,
     LogBranchTag,
+    SearchLogsComponent,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -109,9 +106,11 @@ export class LogsComponent {
   private stashImg = loadStashImage();
 
   protected _canvasResized = signal({}); // When selectedRepository() changes, canvas is resized for some reason, it helps redraw the log at the good moment
+  protected _canvasOverflows = signal(false);
   protected _branchColumnWidth = signal(0);
+  protected _graphColumnWidth = signal(0);
   protected _tableScrollLeft = signal(0);
-  protected dpr = signal(window.devicePixelRatio || 1);
+  protected dpr = signal(CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1));
   protected visibleCommitsCount = computed(() => this.countVisibleCommits(this._tableHeight(), this.computedDisplayLog()));
   private _layoutReady = signal(false);
   private _tableHeight = signal(0);
@@ -174,8 +173,16 @@ export class LogsComponent {
 
     // Position the canvas over the p-table GRAPH column
     effect(() => {
-      const firstTableTh = this.logTableRef()?.querySelector('table')?.querySelector('th');
-      if (firstTableTh) new ResizeObserver(() => this._branchColumnWidth.set(firstTableTh.clientWidth)).observe(firstTableTh);
+      const logTableHeaders = this.logTableRef()?.querySelector('table')?.querySelectorAll('th');
+      const branchTh = logTableHeaders?.[0];
+      if (branchTh) new ResizeObserver(() => this._branchColumnWidth.set(branchTh.clientWidth)).observe(branchTh);
+
+      const graphTh = logTableHeaders?.[1];
+      if (graphTh) new ResizeObserver(() => {
+        this._graphColumnWidth.set(graphTh.clientWidth);
+        const canvasWidth = xPosition(this.graphColumnCount() - 1) + NODE_RADIUS + 2 * DRAWING_PAD_LEFT;
+        this._canvasOverflows.set(canvasWidth > graphTh.clientWidth);
+      }).observe(graphTh);
     });
 
     effect(() => {
@@ -293,7 +300,10 @@ export class LogsComponent {
 
   private watchDpr = () => window
     .matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
-    .addEventListener('change', () => {this.dpr.set(window.devicePixelRatio || 1);this.watchDpr();}, {once: true});
+    .addEventListener('change', () => {
+      this.dpr.set(CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1));
+      this.watchDpr();
+    }, {once: true});
 
   private countVisibleCommits = (tableHeight: number, displayLog: DisplayRef[]) => {
     // Somehow, table takes time to settle to correct height, either debounce or set minimum height to be valid (did this)
@@ -334,7 +344,9 @@ export class LogsComponent {
   protected DATE_FORMAT = DATE_FORMAT;
   protected NODE_RADIUS = NODE_RADIUS;
   protected CANVAS_MARGIN = CANVAS_MARGIN;
+  protected GRAPH_COLUMN_MIN_WIDTH = GRAPH_COLUMN_MIN_WIDTH;
   protected NODES_VERTICAL_SPACING = NODES_VERTICAL_SPACING;
+  protected DRAWING_PAD_LEFT = DRAWING_PAD_LEFT;
   protected $displayRef = (c: DisplayRef) => c;
 
 }
