@@ -28,6 +28,6 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
 })
 export class SearchLogsComponent {
 
-  onSearch = output<string>();
+  searchChange = output<string>();
 
 }

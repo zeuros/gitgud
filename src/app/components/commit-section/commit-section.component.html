@@ -1,8 +1,8 @@
 @let selectedCommitsShas = currentRepo.selectedCommitsShas();
 @if (selectedCommitsShas && selectedCommitsShas?.length) {
-    @if (selectedCommitsShas[0] == 'index') {
+    @if (selectedCommitsShas[0] === 'index') {
         <gitgud-make-a-commit class="p-2 h-full"/>
-    } @else if (selectedCommitsShas.length == 1){
+    } @else if (selectedCommitsShas.length === 1){
         <!-- Show one commit diffs -->
         <gitgud-commit-infos class="p-2 h-full"/>
     } @else if (selectedCommitsShas.length > 1){

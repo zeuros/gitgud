@@ -10,7 +10,7 @@
 @let visibleCommitsCnt = visibleCommitsCount();
 
 @if (showSearchBar) {
-    <gitgud-search-logs (onSearch)="search($event)"/>
+    <gitgud-search-logs (searchChange)="search($event)"/>
 }
 @if (graphColCount && visibleCommitsCnt && visibleCommitsCnt > 0) {
     <div class="commit-graph-canvas-container"
@@ -64,7 +64,7 @@
             @let commitTags = currentRepo.tagsByCommitSha()[commit.sha] ?? [];
             @let extraCount = branchesGrouped.length + commitTags.length + (isDetachedHead ? 1 : 0) - 1;
             <td class="branch-tag-td">
-                @if (commit.sha == createBranch.newBranchSha()) {
+                @if (commit.sha === createBranch.newBranchSha()) {
                     <input pInputText
                            class="branch-name-input"
                            placeholder="New branch name"
@@ -121,7 +121,7 @@
                                 </ng-template>
 
                                 <gitgud-log-branch-tag [local]="local" [distant]="distant"/>
-                                @if (extraCount > 0 && i == 0) {
+                                @if (extraCount > 0 && i === 0) {
                                     <p-badge [value]="'+'+extraCount" size="small" class="extra-count-badge"/>
                                 }
                             </div>
