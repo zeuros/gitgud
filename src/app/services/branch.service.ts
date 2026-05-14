@@ -54,6 +54,7 @@ export class BranchService {
     this.gitApi.git(['checkout', branchName]).pipe(
       // If the branch exists remotely only, we check it out and track it
       catchError(() => this.gitApi.git(['checkout', '-b', branchName, '--track', `origin/${branchName}`])),
+      finalize(this.gitRefresh.doUpdateLogsAndBranches)
     ).subscribe();
   };
 
