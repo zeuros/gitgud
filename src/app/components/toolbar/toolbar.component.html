@@ -105,12 +105,16 @@
     <p-button class="sober" icon="fa fa-cog" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (onClick)="openSettingsDialog()"/>
 </div>
 
+<p-button
+        class="sober coffee-btn" icon="fa fa-coffee" [text]="true" [rounded]="true"
+        pTooltip="Support GitGud ☕ — click to copy BTC address" tooltipPosition="bottom"
+        (onClick)="copyBtcAddress()"/>
+
 <p-select
         [options]="zoomLevels"
         [(ngModel)]="settings.zoom"
         optionLabel="label"
         optionValue="value"
-        style="margin-left: auto"
 >
     <ng-template pTemplate="selectedItem" let-item>
         Zoom ({{ item.label }})

@@ -140,3 +140,40 @@ $repo-track-max-width: 260px;
     color: var(--warning-text-color);
   }
 }
+.coffee-btn {
+  margin-left: auto;
+
+  ::ng-deep button.p-button {
+    position: relative;
+    overflow: visible;
+
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      bottom: 68%;
+      width: 3px;
+      height: 8px;
+      border-radius: 50% 50% 20% 20%;
+      background: rgba(200, 200, 200, 0.55);
+      animation: coffee-smoke 2.2s ease-in infinite;
+      pointer-events: none;
+    }
+
+    &::before {
+      left: calc(50% - 5px);
+      animation-delay: 0s;
+    }
+
+    &::after {
+      left: calc(50% + 2px);
+      animation-delay: 1.1s;
+    }
+  }
+}
+
+@keyframes coffee-smoke {
+  0%   { transform: translateY(0)    translateX(3px)  scaleX(1);   opacity: 0.55; }
+  30%  { transform: translateY(-5px) translateX(5px)  scaleX(1.4); opacity: 0.35; }
+  65%  { transform: translateY(-10px) translateX(1px) scaleX(1.9); opacity: 0.15; }
+  100% { transform: translateY(-15px) translateX(4px) scaleX(2.4); opacity: 0; }
+}
