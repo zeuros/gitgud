@@ -110,6 +110,7 @@ export class LogsComponent {
 
   protected _canvasResized = signal({}); // When selectedRepository() changes, canvas is resized for some reason, it helps redraw the log at the good moment
   protected _branchColumnWidth = signal(0);
+  protected _tableScrollLeft = signal(0);
   protected dpr = signal(window.devicePixelRatio || 1);
   protected visibleCommitsCount = computed(() => this.countVisibleCommits(this._tableHeight(), this.computedDisplayLog()));
   private _layoutReady = signal(false);
@@ -262,6 +263,7 @@ export class LogsComponent {
   private onTableScroll: EventListener = ({target}) => {
     this.activeContextMenu.hide();
     this.firstCommitOffsetPx.set((target as HTMLElement).scrollTop % ROW_HEIGHT); // Update pixel-based scroll for smooth canvas drawing
+    this._tableScrollLeft.set((target as HTMLElement).scrollLeft);
     const startCommit = Math.floor((target as HTMLElement).scrollTop / ROW_HEIGHT);
     this.currentRepo.update({startCommit}); // First commit to raw
   };

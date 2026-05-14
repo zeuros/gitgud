@@ -20,7 +20,7 @@
             [style.height.px]="yPosition(visibleCommitsCnt)"
             [style.width.px]="xPosition(graphColCount - 1) + NODE_RADIUS"
             [style.top.px]="CANVAS_MARGIN.top"
-            [style.left.px]="_branchColumnWidth() + CANVAS_MARGIN.left"
+            [style.left.px]="_branchColumnWidth() + CANVAS_MARGIN.left - _tableScrollLeft()"
     ></canvas>
 }
 <p-table
