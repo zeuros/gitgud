@@ -34,18 +34,37 @@
 
 $row-height: 34px;
 $row-spacing: 8px;
+$branch-tag-left-margin: 8px;
 
 :host {
   width: 100%;
   position: relative;
 
-  #commit-graph-canvas {
+  .commit-graph-canvas-container {
     position: absolute;
     bottom: 0;
     top: 0;
     pointer-events: none;
     z-index: 100;
     background: transparent;
+    overflow: hidden;
+
+    &::after {
+      transition: all 0.4s ease-in-out;
+      opacity: 0;
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 12px;
+      height: 100%;
+      pointer-events: none;
+      background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.3));
+    }
+
+    &.canvas-overflows::after {
+      opacity: 1;
+    }
   }
 
   ::ng-deep {
@@ -63,6 +82,10 @@ $row-spacing: 8px;
 
         & > td {
           padding: 0;
+
+          &.summary {
+            padding-left: 10px;
+          }
         }
 
         &:hover {
@@ -84,10 +107,12 @@ $row-spacing: 8px;
           td.summary, td.author, td.date, .commit-highlight-background {
             background: var(--row-warning-background-color);
           }
+
           td.summary {
             color: var(--warning-text-color);
             font-style: italic;
           }
+
           &.p-datatable-row-selected, &.p-highlight:hover {
             td.summary, td.author, td.date, .commit-highlight-background {
               background: var(--row-warning-selected-background-color);
@@ -135,6 +160,7 @@ $row-spacing: 8px;
         .branch-tag {
           transition: all 0.3s ease;
           opacity: 0;
+          margin-left: $branch-tag-left-margin;
 
           &:first-child {
             opacity: 1;
@@ -146,7 +172,7 @@ $row-spacing: 8px;
             transform: translateY(0) scale(1);
             z-index: 300; // Display this over commit graph
             position: absolute;
-            left: 8px;
+            left: $branch-tag-left-margin;
             top: 0;
             padding: 0;
             border-radius: 3px;
@@ -371,7 +397,7 @@ $row-spacing: 8px;
   z-index: 500; // over log branches
   position: absolute;
   top: 0;
-  left: 8px;
+  left: $branch-tag-left-margin;
   height: $row-height;
   width: 94%;
   font-size: 0.75rem;

@@ -1,9 +1,9 @@
 @if (fixup.selectingFixupTarget()) {
-  <div class="fixup-banner">
-    <i class="fa fa-wrench mr-2"></i>
-    Click a commit to fixup staged changes into it
-    <span class="fixup-banner-esc">Esc to cancel</span>
-  </div>
+    <div class="fixup-banner">
+        <i class="fa fa-wrench mr-2"></i>
+        Click a commit to fixup staged changes into it
+        <span class="fixup-banner-esc">Esc to cancel</span>
+    </div>
 }
 @let displayLog = computedDisplayLog();
 @let graphColCount = graphColumnCount();
@@ -13,15 +13,19 @@
     <gitgud-search-logs (onSearch)="search($event)"/>
 }
 @if (graphColCount && visibleCommitsCnt && visibleCommitsCnt > 0) {
-    <canvas #canvas
-            id="commit-graph-canvas"
-            [height]="yPosition(visibleCommitsCnt) * dpr()"
-            [width]="(xPosition(graphColCount - 1) + NODE_RADIUS) * dpr()"
-            [style.height.px]="yPosition(visibleCommitsCnt)"
-            [style.width.px]="xPosition(graphColCount - 1) + NODE_RADIUS"
-            [style.top.px]="CANVAS_MARGIN.top"
-            [style.left.px]="_branchColumnWidth() + CANVAS_MARGIN.left - _tableScrollLeft()"
-    ></canvas>
+    <div class="commit-graph-canvas-container"
+         [class.canvas-overflows]="_canvasOverflows()"
+         [style.width.px]="_graphColumnWidth()"
+         [style.top.px]="CANVAS_MARGIN.top"
+         [style.left.px]="_branchColumnWidth() + CANVAS_MARGIN.left - _tableScrollLeft()">
+        <canvas #canvas
+                id="commit-graph-canvas"
+                [height]="yPosition(visibleCommitsCnt) * dpr()"
+                [width]="(xPosition(graphColCount - 1) + NODE_RADIUS + 2 * DRAWING_PAD_LEFT) * dpr()"
+                [style.height.px]="yPosition(visibleCommitsCnt)"
+                [style.width.px]="xPosition(graphColCount - 1) + NODE_RADIUS + 2 * DRAWING_PAD_LEFT"
+        ></canvas>
+    </div>
 }
 <p-table
         #logTable
@@ -39,7 +43,7 @@
     <ng-template pTemplate="header">
         <tr class="uppercase text-gray">
             <th pResizableColumn>Branch / Tag</th>
-            <th pResizableColumn [style.max-width.px]="CANVAS_MARGIN.left + xPosition(graphColCount)" [style.width.px]="CANVAS_MARGIN.left + xPosition(graphColCount)">Graph</th>
+            <th pResizableColumn [style.min-width.px]="GRAPH_COLUMN_MIN_WIDTH">Graph</th>
             <th pResizableColumn style="min-width: 100px;">Commit message</th>
             <th pResizableColumn>Author</th>
             <th pResizableColumn style="min-width: 170px;">Commit date / time</th>
