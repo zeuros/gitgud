@@ -145,6 +145,7 @@ $log-chip-parent-left-margin: 6px;
 
         // Other branches will appear below on hovering the branch <td>
         &:hover {
+          z-index: 500; // hovered pack of chips over others
 
           .log-chip-parent {
             opacity: 1;
@@ -152,7 +153,6 @@ $log-chip-parent-left-margin: 6px;
             .log-chip-drop-zone {
               transform: translateY(var(--offset)) scale(1.05);
               max-width: 300px;
-              z-index: 420;
             }
           }
         }
