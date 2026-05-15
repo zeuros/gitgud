@@ -12,7 +12,7 @@
         <p-table
                 [value]="conflicted"
                 [selection]="selectedConflictFile() ? [selectedConflictFile()] : []"
-                (selectionChange)="onConflictFileSelect($event[0] ?? null)"
+                (selectionChange)="onConflictFileSelect($event)"
                 dataKey="path"
                 selectionMode="single"
                 [rowHover]="true"
@@ -62,7 +62,7 @@
                 <p-table
                         [value]="workDirStatus.unstaged"
                         [selection]="selectedUnstagedFiles()"
-                        (selectionChange)="onSelectionChange($event, false)"
+                        (selectionChange)="onStagingFileSelectionChange($event, false)"
                         dataKey="path"
                         selectionMode="multiple"
                         [metaKeySelection]="true"
@@ -114,7 +114,7 @@
                 <p-table
                         [value]="workDirStatus.staged"
                         [selection]="selectedStagedFiles()"
-                        (selectionChange)="onSelectionChange($event, true)"
+                        (selectionChange)="onStagingFileSelectionChange($event, true)"
                         dataKey="path"
                         selectionMode="multiple"
                         [metaKeySelection]="true"
