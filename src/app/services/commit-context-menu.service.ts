@@ -37,7 +37,7 @@ export class CommitContextMenuService {
   private gitWorkflow = inject(GitWorkflowService);
   private popup = inject(PopupService);
   private currentRepo = inject(CurrentRepoStore);
-  private createBranchService = inject(CreateBranchService);
+  private createBranch = inject(CreateBranchService);
 
   selectedCommit = signal<DisplayRef | undefined>(undefined);
   private sha = computed(() => this.selectedCommit()!.sha);
@@ -50,7 +50,7 @@ export class CommitContextMenuService {
   commitContextMenu = computed<MenuItem[]>(() => [
     {label: 'Checkout this commit', icon: 'fa fa-code-branch', command: this.checkoutCommit},
     {separator: true},
-    {label: 'Create branch here', icon: 'fa fa-plus', command: this.createBranch},
+    {label: 'Create branch here', icon: 'fa fa-plus', command: this.createBranchHere},
     {label: 'Cherry pick commit', icon: 'fa fa-hand-grab-o', command: this.cherryPick},
     {
       label: `Reset ${this.currentRepo.headBranch()?.name} to this commit`,
@@ -96,7 +96,7 @@ export class CommitContextMenuService {
   protected checkoutCommit = () =>
     this.gitWorkflow.doRunAndRefresh(['checkout', this.sha()], `Checked out ${short(this.sha())}`, true, false);
 
-  protected createBranch = () => this.createBranchService.createBranchAtSha(this.sha());
+  protected createBranchHere = () => this.createBranch.createBranchAtSha(this.sha());
 
   protected cherryPick = () =>
     this.gitWorkflow.doRunAndRefresh(['cherry-pick', this.sha()], `Cherry picked ${short(this.sha())}`, true, true);
