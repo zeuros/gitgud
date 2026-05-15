@@ -33,7 +33,7 @@ export class CommitService {
   private fileDiffPanel = inject(FileDiffPanelService);
 
   commit = (summary: string, description?: string, amend = false) =>
-    this.gitApi.git(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])])
+    this.gitApi.gitAction(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])])
       .pipe(switchMap(this.gitRefresh.refreshAll))
       .subscribe(({workDirStatus}) => {
         this.fileDiffPanel.closeViews();

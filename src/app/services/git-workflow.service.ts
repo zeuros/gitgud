@@ -61,7 +61,7 @@ export class GitWorkflowService {
     );
 
   runAndRefresh = (args: (string | undefined)[], successMsg?: string, stashBefore = false, thenUnstash = true) => {
-    const action$ = this.gitApi.git(args)
+    const action$ = this.gitApi.gitAction(args)
       .pipe(
         finalize(this.gitRefresh.doRefreshAll),
         tap(() => successMsg && this.popup.success(successMsg)),
@@ -75,8 +75,8 @@ export class GitWorkflowService {
 
   // Checks out branchName, runs args, then refreshes. Always stashes first.
   checkoutThenRun = (branchName: string, args: string[], msg?: string, thenUnstash = true) => {
-    const action$ = this.gitApi.git(['checkout', branchName]).pipe(
-      switchMap(() => this.gitApi.git(args)),
+    const action$ = this.gitApi.gitAction(['checkout', branchName]).pipe(
+      switchMap(() => this.gitApi.gitAction(args)),
       finalize(this.gitRefresh.doRefreshAll),
       tap(() => msg && this.popup.success(msg)),
     );

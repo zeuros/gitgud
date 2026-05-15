@@ -107,7 +107,7 @@ export class MergeEditorComponent {
     const absPath = window.electron.path.resolve(this.currentRepo.cwd()!, file.path);
     window.electron.fs.writeFileSync(absPath, merged);
 
-    this.gitApi.git(['add', '--', file.path])
+    this.gitApi.gitAction(['add', '--', file.path])
       .pipe(finalize(() => {
         this.saving.set(false);
         this.fileDiffPanel.closeViews();

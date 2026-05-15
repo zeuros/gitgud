@@ -46,13 +46,13 @@ export class StashService {
     );
   };
 
-  stash = () => this.gitApi.git(['stash', '-u']);
+  stash = () => this.gitApi.gitAction(['stash', '-u']);
 
-  pop = () => this.gitApi.git(['stash', 'pop']);
+  pop = () => this.gitApi.gitAction(['stash', 'pop']);
 
-  apply = (stashRef = 'stash@{0}') => this.gitApi.git(['stash', 'apply', stashRef]);
+  apply = (stashRef = 'stash@{0}') => this.gitApi.gitAction(['stash', 'apply', stashRef]);
 
-  drop = (stashRef = 'stash@{0}') => this.gitApi.git(['stash', 'drop', stashRef]);
+  drop = (stashRef = 'stash@{0}') => this.gitApi.gitAction(['stash', 'drop', stashRef]);
 
   private popIfNewStash = (prevSha: string) =>
     this.topStashSha$.pipe(

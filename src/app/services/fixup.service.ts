@@ -42,7 +42,7 @@ export class FixupService {
   };
 
   fixupFromStagedChanges = (commit: DisplayRef) =>
-    this.gitApi.git(['commit', '--fixup', commit.sha]).pipe(
+    this.gitApi.gitAction(['commit', '--fixup', commit.sha]).pipe(
       switchMap(() => this.gitWorkflow.rebaseAndEditActions(`${commit.sha}~1`, a => a, true)),
       tap(() => this.popup.success(`Fixup squashed into ${short(commit.sha)}: ${commit.summary}`)),
     );

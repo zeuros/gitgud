@@ -64,10 +64,10 @@ export class UndoService {
           const from = gs.match(/moving from (.+) to .+/)?.[1]?.trim() ?? '';
           const to = gs.match(/moving from .+ to (.+)/)?.[1]?.trim() ?? '';
           this.redoStack.update(s => [...s, {type: 'checkout', branch: to, message: this.parseAction(gs, 'Redo')}]);
-          return this.gitApi.git(['checkout', from]);
+          return this.gitApi.gitAction(['checkout', from]);
         }
         this.redoStack.update(s => [...s, {type: 'reset', sha, message: this.parseAction(gs, 'Redo')}]);
-        return this.gitApi.git(['reset', '--soft', 'HEAD@{1}']);
+        return this.gitApi.gitAction(['reset', '--soft', 'HEAD@{1}']);
       }),
       switchMap(this.gitRefresh.refreshAll),
     ).subscribe(() => { this.popup.success('Undone'); this.refreshTooltip(); });
@@ -77,8 +77,8 @@ export class UndoService {
     if (!top) return;
     this.redoStack.update(s => s.slice(0, -1));
     const cmd = top.type === 'checkout'
-      ? this.gitApi.git(['checkout', top.branch])
-      : this.gitApi.git(['reset', '--soft', top.sha]);
+      ? this.gitApi.gitAction(['checkout', top.branch])
+      : this.gitApi.gitAction(['reset', '--soft', top.sha]);
     cmd.pipe(switchMap(this.gitRefresh.refreshAll))
       .subscribe(() => { this.popup.success('Redone'); this.refreshTooltip(); });
   };

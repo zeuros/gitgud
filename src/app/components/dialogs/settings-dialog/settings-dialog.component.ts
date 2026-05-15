@@ -97,19 +97,19 @@ export class SettingsDialogComponent {
 
   protected saveGlobalName() {
     const v = this.globalUserName().trim();
-    if (v) this.gitApi.git(['config', '--global', 'user.name', v]).subscribe();
+    if (v) this.gitApi.gitAction(['config', '--global', 'user.name', v]).subscribe();
   }
 
   protected saveGlobalEmail() {
     const v = this.globalUserEmail().trim();
-    if (v) this.gitApi.git(['config', '--global', 'user.email', v]).subscribe();
+    if (v) this.gitApi.gitAction(['config', '--global', 'user.email', v]).subscribe();
   }
 
   protected saveLocalName() {
     if (!this.hasRepo()) return;
     const v = this.localUserName().trim();
     const args = v ? ['config', '--local', 'user.name', v] : ['config', '--local', '--unset', 'user.name'];
-    this.gitApi.git(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
+    this.gitApi.gitAction(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
       .subscribe({error: e => this.popup.err(`Failed to set local user name: ${e?.message ?? e}`)});
   }
 
@@ -117,7 +117,7 @@ export class SettingsDialogComponent {
     if (!this.hasRepo()) return;
     const v = this.localUserEmail().trim();
     const args = v ? ['config', '--local', 'user.email', v] : ['config', '--local', '--unset', 'user.email'];
-    this.gitApi.git(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
+    this.gitApi.gitAction(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
       .subscribe({error: e => this.popup.err(`Failed to set local email: ${e?.message ?? e}`)});
   }
 
