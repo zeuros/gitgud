@@ -20,7 +20,9 @@ import {computed, inject, Injectable, signal} from '@angular/core';
 import {type CdkDragEnd} from '@angular/cdk/drag-drop';
 import {type MenuItem} from 'primeng/api';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
+import {type LocalAndDistantTagWithName} from '../utils/tag-utils';
 import {parseRemote} from '../utils/branch-utils';
+import {isAncestor} from '../utils/log-utils';
 import {ActiveContextMenuService} from './active-context-menu.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -35,11 +37,19 @@ export class BranchDragDropService {
 
   draggingBranch = signal<Branch | null>(null);
   hoveredBranch = signal<Branch | null>(null);
+  hoveredTag = signal<LocalAndDistantTagWithName | null>(null);
   source = signal<Branch | undefined>(undefined);
   target = signal<Branch | undefined>(undefined);
+  private tagTarget = signal<LocalAndDistantTagWithName | undefined>(undefined);
 
   // True when the given branch would be a meaningful drop target for the current drag.
   // Only remote→remote produces no actions, so that's the only excluded pair.
+  isValidTagDropTarget = (tag: LocalAndDistantTagWithName | null): boolean => {
+    const dragging = this.draggingBranch();
+    if (!tag || !dragging) return false;
+    return dragging.type === BranchType.Local && tag.sha !== dragging.tip.sha;
+  };
+
   isValidDropTarget = (target: Branch | null): boolean => {
     const dragging = this.draggingBranch();
     if (!target || !dragging || target.tip.sha === dragging.tip.sha) return false;
@@ -57,7 +67,7 @@ export class BranchDragDropService {
     const items: MenuItem[] = [];
 
     if (isLocalSource && isLocalTarget) {
-      if (this.isAncestor(source.tip.sha, target.tip.sha)) {
+      if (isAncestor(source.tip.sha, target.tip.sha, this.currentRepo.logs())) {
         items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForward});
       }
       items.push({label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.merge});
@@ -66,7 +76,7 @@ export class BranchDragDropService {
       items.push({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase});
       items.push({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase});
     } else if (!isLocalSource && isLocalTarget) {
-      if (this.isAncestor(source.tip.sha, target.tip.sha)) {
+      if (isAncestor(source.tip.sha, target.tip.sha, this.currentRepo.logs())) {
         items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForwardRemote});
       }
       items.push({label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeLocalIntoRemote});
@@ -80,22 +90,36 @@ export class BranchDragDropService {
     return items;
   });
 
+  private tagMenu = computed<MenuItem[]>(() => {
+    const source = this.source();
+    const tag = this.tagTarget();
+    if (!source || !tag) return [];
+    return [{label: `Reset ${source.name} on ${tag.name}`, icon: 'fa fa-undo', command: this.resetOnTag}];
+  });
+
   onDragStarted = (branch: Branch | null) => this.draggingBranch.set(branch);
 
   completeDrop = (event: CdkDragEnd<Branch>) => {
     const source = this.draggingBranch();
     const target = this.hoveredBranch();
+    const tagTarget = this.hoveredTag();
 
     event.source.reset();
     this.draggingBranch.set(null);
     this.hoveredBranch.set(null);
+    this.hoveredTag.set(null);
 
-    if (!source || !target) return;
+    if (!source) return;
 
-    this.source.set(source);
-    this.target.set(target);
-
-    this.activeContextMenu.show(this.menu(), event.event);
+    if (tagTarget) {
+      this.source.set(source);
+      this.tagTarget.set(tagTarget);
+      this.activeContextMenu.show(this.tagMenu(), event.event);
+    } else if (target) {
+      this.source.set(source);
+      this.target.set(target);
+      this.activeContextMenu.show(this.menu(), event.event);
+    }
   };
 
   onMouseEnter = (branch: Branch | null) => {
@@ -108,21 +132,12 @@ export class BranchDragDropService {
 
   onMouseLeave = () => this.hoveredBranch.set(null);
 
-  // BFS through loaded commits to check if ancestorSha is reachable from descendantSha.
-  private isAncestor = (ancestorSha: string, descendantSha: string): boolean => {
-    if (ancestorSha === descendantSha) return false;
-    const parentMap = new Map(this.currentRepo.logs().map(c => [c.sha, c.parentSHAs]));
-    const visited = new Set<string>();
-    const queue = [descendantSha];
-    while (queue.length) {
-      const sha = queue.shift()!;
-      if (sha === ancestorSha) return true;
-      if (visited.has(sha)) continue;
-      visited.add(sha);
-      for (const p of parentMap.get(sha) ?? []) queue.push(p);
-    }
-    return false;
+  onTagMouseEnter = (tag: LocalAndDistantTagWithName | null) => {
+    if (!tag || this.draggingBranch()?.type !== BranchType.Local) return;
+    this.hoveredTag.set(tag);
   };
+
+  onTagMouseLeave = () => this.hoveredTag.set(null);
 
   private remoteRef = () => {
     const target = this.target()!;
@@ -166,6 +181,12 @@ export class BranchDragDropService {
     const {name: tgt} = this.target()!;
     const {remote, branch} = parseRemote(src.name);
     this.gitWorkflow.doRunAndRefresh(['push', remote, `${tgt}:${branch}`], `Merged ${tgt} into ${src.name}`);
+  };
+
+  private resetOnTag = () => {
+    const {name: src} = this.source()!;
+    const {name: tagName} = this.tagTarget()!;
+    this.gitWorkflow.checkoutThenRun(src, ['reset', '--hard', tagName], `Reset ${src} on ${tagName}`);
   };
 
   private push = () => {

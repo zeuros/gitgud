@@ -41,7 +41,7 @@ import {StashContextMenuService} from '../../services/stash-context-menu.service
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
-import {BranchDragDropService} from '../../services/branch-drag-drop.service';
+import {LogDragDropService} from '../../services/log-drag-drop.service';
 import {type LocalAndDistantTagWithName} from '../../utils/tag-utils';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {Badge} from 'primeng/badge';
@@ -84,7 +84,7 @@ export class LogsComponent {
   protected stashContextMenu = inject(StashContextMenuService);
   protected tagContextMenu = inject(TagContextMenuService);
   protected branchContextMenu = inject(BranchContextMenuService);
-  protected branchDragDrop = inject(BranchDragDropService);
+  protected logDragDrop = inject(LogDragDropService);
   protected fixup = inject(FixupService);
   private logBuilder = inject(LogBuilderService);
   private activeContextMenu = inject(ActiveContextMenuService);

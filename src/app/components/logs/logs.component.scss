@@ -34,7 +34,7 @@
 
 $row-height: 34px;
 $row-spacing: 8px;
-$branch-tag-left-margin: 6px;
+$log-chip-parent-left-margin: 6px;
 
 :host {
   width: 100%;
@@ -134,7 +134,7 @@ $branch-tag-left-margin: 6px;
     }
 
     .commit-row {
-      td.branch-tag-td {
+      td.log-chip-parent-td {
         min-width: 70px;
         max-width: 200px;
         position: relative;
@@ -146,10 +146,10 @@ $branch-tag-left-margin: 6px;
         // Other branches will appear below on hovering the branch <td>
         &:hover {
 
-          .branch-tag {
+          .log-chip-parent {
             opacity: 1;
 
-            .commit-branch, .commit-tag {
+            .log-chip-drop-zone {
               transform: translateY(var(--offset)) scale(1.05);
               max-width: 300px;
               z-index: 420;
@@ -157,22 +157,22 @@ $branch-tag-left-margin: 6px;
           }
         }
 
-        .branch-tag {
+        .log-chip-parent {
           transition: all 0.3s ease;
           opacity: 0;
-          margin-left: $branch-tag-left-margin;
+          margin-left: $log-chip-parent-left-margin;
 
           &:first-child {
             opacity: 1;
           }
 
-          .commit-branch, .commit-tag {
+          .log-chip-drop-zone {
             display: flex;
             max-width: 90%;
             transform: translateY(0) scale(1);
             z-index: 300; // Display this over commit graph
             position: absolute;
-            left: $branch-tag-left-margin;
+            left: $log-chip-parent-left-margin;
             top: 0;
             padding: 0;
             border-radius: 3px;
@@ -350,7 +350,7 @@ $branch-tag-left-margin: 6px;
   }
 }
 
-.draggable-branch {
+.draggable-chip {
   border: 1px solid rgba(119, 87, 126, 0.9);
   background-color: var(--primeng-purple-line);
   max-width: 100%; // Text ellipsis needs this
@@ -367,7 +367,7 @@ $branch-tag-left-margin: 6px;
   }
 }
 
-.draggable-branch {
+.draggable-chip {
   cursor: grab;
 
   &.checked-out {
@@ -379,7 +379,7 @@ $branch-tag-left-margin: 6px;
   z-index: 500; // over log branches
   position: absolute;
   top: 0;
-  left: $branch-tag-left-margin;
+  left: $log-chip-parent-left-margin;
   height: $row-height;
   width: 94%;
   font-size: 0.75rem;

@@ -19,8 +19,25 @@
 import {Branch} from '../lib/github-desktop/model/branch';
 import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {RefType} from '../enums/ref-type.enum';
+import {Commit} from '../lib/github-desktop/model/commit';
 
 export const byName = (branchName: string) => (branch: Branch) => branch.name == branchName;
+
+/** BFS from descendantSha toward root — returns true if ancestorSha is reachable. */
+export const isAncestor = (ancestorSha: string, descendantSha: string, logs: Commit[]): boolean => {
+  if (ancestorSha === descendantSha) return false;
+  const parentMap = new Map(logs.map(c => [c.sha, c.parentSHAs]));
+  const visited = new Set<string>();
+  const queue = [descendantSha];
+  while (queue.length) {
+    const sha = queue.shift()!;
+    if (sha === ancestorSha) return true;
+    if (visited.has(sha)) continue;
+    visited.add(sha);
+    for (const p of parentMap.get(sha) ?? []) queue.push(p);
+  }
+  return false;
+};
 
 export const bySha = (sha: string) => (c: DisplayRef) => c.sha === sha;
 
