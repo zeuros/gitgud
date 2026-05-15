@@ -19,7 +19,7 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {type MenuItem} from 'primeng/api';
 import {first, switchMap} from 'rxjs';
-import {type LocalAndDistantTag} from '../utils/tag-utils';
+import {type LocalAndDistantTagWithName} from '../utils/tag-utils';
 import {GitWorkflowService} from './git-workflow.service';
 import {PopupService} from './popup.service';
 import {PromptService} from './prompt.service';
@@ -34,14 +34,12 @@ export class TagContextMenuService {
   private prompt = inject(PromptService);
   private currentRepo = inject(CurrentRepoStore);
 
-  selectedTag = signal<LocalAndDistantTag | undefined>(undefined);
-  private local = computed(() => this.selectedTag()?.[0]);
-  private distant = computed(() => this.selectedTag()?.[1]);
-  private name = computed(() => (this.local() ?? this.distant())?.name);
-  private sha = computed(() => (this.local() ?? this.distant())?.sha);
+  selectedTag = signal<LocalAndDistantTagWithName | undefined>(undefined);
+  private name = computed(() => this.selectedTag()?.name);
+  private sha = computed(() => this.selectedTag()?.sha);
 
   tagContextMenu = computed<MenuItem[]>(() => [
-    {label: `Push ${this.name()} to origin`, icon: 'fa fa-cloud-upload', command: this.pushTag, visible: !this.distant()},
+    {label: `Push ${this.name()} to origin`, icon: 'fa fa-cloud-upload', command: this.pushTag, visible: !this.selectedTag()?.distant},
     {separator: true},
     {
       label: `Reset ${this.currentRepo.headBranch()?.name ?? 'HEAD'} to ${this.name()}`,
@@ -54,15 +52,16 @@ export class TagContextMenuService {
     },
     {label: `Checkout commit of ${this.name()}`, icon: 'fa fa-sign-in', command: this.checkoutTag},
     {separator: true},
-    {label: `Delete ${this.name()} locally`, icon: 'fa fa-trash', command: this.deleteTag, visible: !!this.local()},
-    {label: `Delete ${this.name()} from origin`, icon: 'fa fa-cloud', command: this.deleteRemoteTag, visible: !!this.distant()},
+    {label: `Delete ${this.name()} locally`, icon: 'fa fa-trash', command: this.deleteTag, visible: !!this.selectedTag()?.local},
+    {label: `Delete ${this.name()} from origin`, icon: 'fa fa-cloud', command: this.deleteRemoteTag, visible: !!this.selectedTag()?.distant},
     {separator: true},
     {label: 'Copy tag name', icon: 'fa fa-copy', command: this.copyTagName},
     {label: `Annotate ${this.name()}`, icon: 'fa fa-pencil', command: this.annotateTag},
   ]);
 
+  // If right click on local only tag, make sure to push the tag at its current sha so distant tag updates its sha
   private pushTag = () =>
-    this.gitWorkflow.doRunAndRefresh(['push', 'origin', `refs/tags/${this.name()}`], `Pushed tag ${this.name()} to origin`);
+    this.gitWorkflow.doRunAndRefresh(['push', 'origin', '--force', `${this.sha()}:refs/tags/${this.name()}`], `Pushed tag ${this.name()} to origin`);
 
   private resetToTag = (mode: 'soft' | 'mixed' | 'hard') =>
     this.gitWorkflow.doRunAndRefresh(['reset', `--${mode}`, this.name()], `Reset ${mode} to ${this.name()}`, mode === 'hard', false);

@@ -22,7 +22,7 @@ import {GitRepository} from '../models/git-repository';
 import {groupBy, isEqual, mapValues} from 'lodash-es';
 import {logsComparison, shallowArrayEqual} from '../utils/utils';
 import {type LocalAndDistant, toLocalAndDistantPairs} from '../utils/branch-utils';
-import {groupTagsBySha, type LocalAndDistantTag, toLocalAndDistantTagPairs, toLocalAndDistantTagWithName} from '../utils/tag-utils';
+import {groupTagsByShaAndName, localAndDistantTagPairsByName} from '../utils/tag-utils';
 
 /**
  * Exposes reactive state for the currently selected repository.
@@ -38,9 +38,8 @@ export class CurrentRepoStore {
   stashes = computed(() => this.reposStore.selectedRepository()?.stashes ?? [], {equal: logsComparison});
   tags = computed(() => this.reposStore.selectedRepository()?.tags ?? [], {equal: isEqual});
   remoteTags = computed(() => this.reposStore.selectedRepository()?.remoteTags ?? [], {equal: isEqual});
-  allTags = computed(() => toLocalAndDistantTagPairs(this.tags(), this.remoteTags()), {equal: isEqual});
-  allTagsWithName = computed(() => this.allTags().map(toLocalAndDistantTagWithName), {equal: isEqual});
-  allTagsBySha = computed<Record<string, LocalAndDistantTag[] | undefined>>(() => groupTagsBySha(this.allTags()), {equal: isEqual});
+  allTagsByName = computed(() => localAndDistantTagPairsByName(this.tags(), this.remoteTags()), {equal: isEqual});
+  allTagsByShaAndName = computed(() => groupTagsByShaAndName(this.tags(), this.remoteTags()), {equal: isEqual});
   branches = computed(() => this.reposStore.selectedRepository()?.branches ?? [], {equal: isEqual});
   branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha));
   // Group branches by commit SHA, then pair local/remote branches by normalized name into [local, distant] tuples
@@ -77,7 +76,7 @@ export class CurrentRepoStore {
   });
   headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
 
-  headSha = () => this.headBranch()?.tip?.sha ?? this.detachedHeadSha()
+  headSha = () => this.headBranch()?.tip?.sha ?? this.detachedHeadSha();
 
   update = (updates: Partial<GitRepository>) => this.reposStore.updateSelectedRepository(updates);
 }

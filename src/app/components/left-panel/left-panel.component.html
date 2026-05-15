@@ -114,7 +114,7 @@
                     <i class="fa fa-tag mr-2"></i>Tags
                 </div>
                 <p-listbox
-                        [options]="currentRepo.allTagsWithName()"
+                        [options]="currentRepo.allTagsByName()"
                         [ngModel]="currentRepo.selectedTag()"
                         (ngModelChange)="selectTag($event)"
                         scrollHeight="auto"
