@@ -89,7 +89,7 @@
     "linux": {
       "maintainer": "zeuros <13236310+zeuros@users.noreply.github.com>",
       "category": "Development;RevisionControl;",
-      "artifactName": "${productName}-${version}-Linux-${arch === 'x64' ? '64bit' : 'ARM64'}.${ext}",
+      "artifactName": "${productName}-${version}-Linux-${arch}.${ext}",
       "target": [
         {
           "target": "deb",
@@ -119,7 +119,7 @@
       ]
     },
     "mac": {
-      "artifactName": "${productName}-${version}-Mac-${arch === 'arm64' ? 'AppleSilicon-M1toM4' : 'Intel'}.${ext}",
+      "artifactName": "${productName}-${version}-Mac-${arch}.${ext}",
       "target": [
         {
           "target": "dmg",
