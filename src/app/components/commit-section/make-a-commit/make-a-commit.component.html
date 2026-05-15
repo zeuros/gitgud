@@ -19,7 +19,7 @@
                 [scrollable]="true"
                 scrollHeight="flex"
                 size="small"
-                class="borderless flex-1">
+                class="borderless show-button-on-row-hover flex-1">
             <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
                 @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
                 <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex">
@@ -33,6 +33,13 @@
                                 <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
                             }
                             <span class="white-space-nowrap white">{{ (dir?.length ? '/' : '') + fileName(fileChanges.path) }}</span>
+                            <p-button
+                                    size="small"
+                                    class="stick-right-button"
+                                    severity="warn"
+                                    styleClass="file-row-stage-button"
+                                    (click)="workingDirectory.stageFile(fileChanges); $event.stopPropagation()"
+                                    label="Mark resolved"/>
                         </div>
                     </td>
                 </tr>
@@ -88,7 +95,7 @@
                                     <p-button
                                             size="small"
                                             class="stick-right-button"
-                                            styleClass="file-row-stage-button p-button-sm"
+                                            styleClass="file-row-stage-button"
                                             (click)="workingDirectory.stageFile(fileChanges); $event.stopPropagation()"
                                             label="Stage"/>
                                 </div>
@@ -140,7 +147,7 @@
                                     <p-button
                                             size="small"
                                             class="stick-right-button"
-                                            styleClass="file-row-stage-button p-button-sm"
+                                            styleClass="file-row-stage-button"
                                             (click)="workingDirectory.unstageFile(fileChanges); $event.stopPropagation()"
                                             label="Unstage"/>
                                 </div>
@@ -159,7 +166,7 @@
                 <h4 class="m-0">Commit message</h4>
                 <div class="flex align-items-center gap-3">
                     <p-button
-                            styleClass="p-button-sm p-button-text p-button-warning"
+                            styleClass="p-button-sm p-button-text p-button-secondary"
                             label="Fixup"
                             icon="fa fa-wrench"
                             [disabled]="!workDirStatus?.staged?.length"
