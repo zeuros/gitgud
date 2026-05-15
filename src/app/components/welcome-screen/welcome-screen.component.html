@@ -1,7 +1,11 @@
 
-<div class="flex gap-3">
-    <p-button label="Open" icon="pi pi-folder" (onClick)="gitRepository.pickFolderAndOpenRepository()"/>
-    <p-button label="Clone" icon="pi pi-cloud-download" (onClick)="openCloneDialog()"/>
+<img class="bg" src="assets/images/welcome-screen.svg" alt="">
+<div class="overlay"></div>
+<div class="fire-glow"></div>
+
+<div class="actions">
+    <p-button label="Open" icon="pi pi-folder-open" styleClass="action-btn" (onClick)="gitRepository.pickFolderAndOpenRepository()"/>
+    <p-button label="Clone" icon="pi pi-cloud-download" styleClass="action-btn" (onClick)="openCloneDialog()"/>
 </div>
 
 <gitgud-clone-dialog/>
