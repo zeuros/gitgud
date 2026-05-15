@@ -1,14 +1,14 @@
 @if (file(); as f) {
     <div class="merge-editor-overlay">
-        <div class="merge-editor-header">
-            <span class="merge-file-name">
-                <i class="fa fa-code-fork mr-2" style="color: var(--warning-text-color)"></i>
+        <div class="editor-header">
+            <span class="editor-file-name warn">
+                <i class="fa fa-code-fork mr-2"></i>
                 Resolve conflict: {{ fileName(f.path) }}
             </span>
-            <div class="merge-editor-actions">
+            <div class="editor-actions">
                 <p-button
                         label="Save & Mark Resolved"
-                        styleClass="p-button-sm p-button-success"
+                        styleClass="p-button-sm p-button-primary"
                         icon="fa fa-check"
                         [loading]="saving()"
                         (click)="saveAndMarkResolved()"/>

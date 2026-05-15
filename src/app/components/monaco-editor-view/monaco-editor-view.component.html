@@ -1,7 +1,21 @@
-<p-select-button [options]="viewOptions" [ngModel]="viewType()" (ngModelChange)="setViewType($event)" optionValue="value" class="display-modes">
-  <ng-template #item let-opt>
-    <i [class]="opt.icon"></i> {{ opt.label }}
-  </ng-template>
-</p-select-button>
+<div class="editor-header">
+    <span class="editor-file-name">
+        <i class="fa fa-code-compare mr-2"></i>
+        Viewing {{ fileName(fileToDiff()!.path) }} diffs
+    </span>
+    <div class="editor-actions">
+
+        <p-select-button [allowEmpty]="false" [options]="viewOptions" [ngModel]="viewType()" (ngModelChange)="setViewType($event)" optionValue="value" class="display-modes">
+            <ng-template #item let-opt>
+                <i [class]="opt.icon"></i> {{ opt.label }}
+            </ng-template>
+        </p-select-button>
+
+        <p-button
+                styleClass="p-button-sm p-button-text p-button-secondary"
+                icon="fa fa-times"
+                (click)="fileDiffPanel.closeDiffView()"/>
+    </div>
+</div>
 
 <div #diffEditor class="diff-editor-container"></div>
