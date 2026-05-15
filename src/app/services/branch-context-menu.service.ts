@@ -157,7 +157,8 @@ export class BranchContextMenuService {
     if (branch.type === BranchType.Remote) {
       this.gitWorkflow.doRunAndRefresh(['push', 'origin', '--delete', normalizedBranchName(branch)], `Deleted remote branch ${branch.name}`, false, false);
     } else {
-      this.gitWorkflow.doRunAndRefresh(['branch', '-d', branch.name], `Deleted branch ${branch.name}`, true, false);
+      // TODO: maybe -d and let git warn user about dangerous operations ? Or confirm modal => Commits pointed by this branch will disappear, sure to remove ?
+      this.gitWorkflow.doRunAndRefresh(['branch', '-D', branch.name], `Deleted branch ${branch.name}`, true, false);
     }
   };
 
