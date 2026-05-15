@@ -41,6 +41,10 @@ export class WorkingDirectoryService {
   stageChangesWithPatch = (patch: string, stage: boolean) =>
     this.gitApi.gitWithInput(['apply', ...(stage ? [] : ['-R']), '--cached', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
+  /** Revert a patch in the working directory (no --cached), discarding the change */
+  discardChangesWithPatch = (patch: string) =>
+    this.gitApi.gitWithInput(['apply', '-R', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+
   unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['reset', '--', path]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
   stageAll = () => this.gitApi.git(['add', '--all']).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
