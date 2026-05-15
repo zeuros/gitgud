@@ -19,7 +19,7 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {type MenuItem} from 'primeng/api';
 import {first, switchMap} from 'rxjs';
-import {type GitTag} from '../models/git-tag';
+import {type LocalAndDistantTag} from '../utils/tag-utils';
 import {GitWorkflowService} from './git-workflow.service';
 import {PopupService} from './popup.service';
 import {PromptService} from './prompt.service';
@@ -34,12 +34,14 @@ export class TagContextMenuService {
   private prompt = inject(PromptService);
   private currentRepo = inject(CurrentRepoStore);
 
-  selectedTag = signal<GitTag | undefined>(undefined);
-  private name = computed(() => this.selectedTag()?.name);
-  private sha = computed(() => this.selectedTag()?.sha);
+  selectedTag = signal<LocalAndDistantTag | undefined>(undefined);
+  private local = computed(() => this.selectedTag()?.[0]);
+  private distant = computed(() => this.selectedTag()?.[1]);
+  private name = computed(() => (this.local() ?? this.distant())?.name);
+  private sha = computed(() => (this.local() ?? this.distant())?.sha);
 
   tagContextMenu = computed<MenuItem[]>(() => [
-    {label: `Push ${this.name()} to origin`, icon: 'fa fa-cloud-upload', command: this.pushTag},
+    {label: `Push ${this.name()} to origin`, icon: 'fa fa-cloud-upload', command: this.pushTag, visible: !this.distant()},
     {separator: true},
     {
       label: `Reset ${this.currentRepo.headBranch()?.name ?? 'HEAD'} to ${this.name()}`,
@@ -52,7 +54,8 @@ export class TagContextMenuService {
     },
     {label: `Checkout commit of ${this.name()}`, icon: 'fa fa-sign-in', command: this.checkoutTag},
     {separator: true},
-    {label: `Delete ${this.name()} locally`, icon: 'fa fa-trash', command: this.deleteTag},
+    {label: `Delete ${this.name()} locally`, icon: 'fa fa-trash', command: this.deleteTag, visible: !!this.local()},
+    {label: `Delete ${this.name()} from origin`, icon: 'fa fa-cloud', command: this.deleteRemoteTag, visible: !!this.distant()},
     {separator: true},
     {label: 'Copy tag name', icon: 'fa fa-copy', command: this.copyTagName},
     {label: `Annotate ${this.name()}`, icon: 'fa fa-pencil', command: this.annotateTag},
@@ -69,6 +72,9 @@ export class TagContextMenuService {
 
   private deleteTag = () =>
     this.gitWorkflow.doRunAndRefresh(['tag', '-d', this.name()], `Deleted tag ${this.name()} locally`);
+
+  private deleteRemoteTag = () =>
+    this.gitWorkflow.doRunAndRefresh(['push', 'origin', '--delete', this.name()!], `Deleted tag ${this.name()} from origin`);
 
   private copyTagName = () =>
     navigator.clipboard.writeText(this.name()!).then(() => this.popup.success('Tag name copied to clipboard'));

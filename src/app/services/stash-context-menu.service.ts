@@ -37,7 +37,6 @@ export class StashContextMenuService {
   // Stash index derived from the stash ref name e.g. "stash@{2}"
   private stashRef = computed(() => {
     const ref = this.selectedCommit()?.branchesDetails?.find(b => b.name?.startsWith('stash@'));
-    if (ref) debugger
     return ref?.name ?? 'stash@{0}';
   });
 

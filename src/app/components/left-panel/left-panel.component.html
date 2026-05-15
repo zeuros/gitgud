@@ -114,18 +114,26 @@
                     <i class="fa fa-tag mr-2"></i>Tags
                 </div>
                 <p-listbox
-                        [options]="currentRepo.tags()"
+                        [options]="currentRepo.allTagsWithName()"
                         [ngModel]="currentRepo.selectedTag()"
                         (ngModelChange)="selectTag($event)"
                         scrollHeight="auto"
-                        dataKey="sha"
+                        dataKey="name"
                         class="border-none"
                 >
                     <ng-template #item let-t>
-                        @let tag = $tag(t);
+                        @let tag = $localAndDistantTagWithName(t);
                         <div class="flex align-items-center gap-2 ellipsis" (contextmenu)="openTagContextMenu(tag, $event)">
                             <i class="fa fa-tag text-gray"></i>
-                            <span class="ellipsis text-gray">{{ tag.name }}</span>
+                            <span class="ellipsis text-gray">{{ (tag.local ?? tag.distant)?.name }}</span>
+                            <span class="tag-presence-icons text-gray">
+                                @if (tag.local) {
+                                    <i class="fa fa-laptop"></i>
+                                }
+                                @if (tag.distant) {
+                                    <i class="fa fa-github"></i>
+                                }
+                            </span>
                         </div>
                     </ng-template>
                 </p-listbox>

@@ -18,7 +18,7 @@
 
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {type MenuItem, type TreeNode} from 'primeng/api';
-import {first, map, switchMap} from 'rxjs';
+import {first} from 'rxjs';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
@@ -31,6 +31,7 @@ import {openSetUpstreamDialog} from '../components/dialogs/set-upstream-dialog/s
 import {CreateBranchService} from './create-branch.service';
 import {normalizedBranchName} from '../utils/branch-utils';
 import {BranchService} from './branch.service';
+import {CreateTagService} from './create-tag.service';
 
 @Injectable({providedIn: 'root'})
 export class BranchContextMenuService {
@@ -42,6 +43,7 @@ export class BranchContextMenuService {
   private prompt = inject(PromptService);
   private dialog = inject(DialogService);
   private createBranch = inject(CreateBranchService);
+  private createTag = inject(CreateTagService);
 
   selectedNode = signal<TreeNode<Branch> | undefined>(undefined);
 
@@ -159,14 +161,7 @@ export class BranchContextMenuService {
     }
   };
 
-  private createTagHere = () =>
-    this.prompt.open('Tag name:').pipe(
-      first(notUndefined),
-      switchMap(tagName => this.prompt.open('Tag message (leave empty for lightweight tag):', false)
-        .pipe(map(message => ({tagName, message: message ?? null})))),
-    ).subscribe(({tagName, message}) => message?.trim()?.length
-      ? this.gitWorkflow.doRunAndRefresh(['tag', '-a', tagName, '-m', message, this.name()], `Annotated tag ${tagName} created`)
-      : this.gitWorkflow.doRunAndRefresh(['tag', tagName, this.name()], `Tag ${tagName} created`));
+  private createTagHere = () => this.createTag.createTag(this.name());
 
   private editRemote = (remoteName: string) =>
     this.dialog.open(EditRemoteComponent, {

@@ -34,7 +34,7 @@ import {local, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {LogBuilderService} from '../../services/log-builder.service';
-import {CANVAS_MARGIN, DRAWING_PAD_LEFT, GRAPH_COLUMN_MIN_WIDTH, CANVAS_DPR_MULTIPLIER, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
+import {CANVAS_DPR_MULTIPLIER, CANVAS_MARGIN, DRAWING_PAD_LEFT, GRAPH_COLUMN_MIN_WIDTH, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
 import {CommitContextMenuService} from '../../services/commit-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
@@ -42,7 +42,7 @@ import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import {BranchDragDropService} from '../../services/branch-drag-drop.service';
-import {type GitTag} from '../../models/git-tag';
+import {type LocalAndDistantTag} from '../../utils/tag-utils';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {Badge} from 'primeng/badge';
 import {CreateBranchService} from '../../services/create-branch.service';
@@ -329,9 +329,9 @@ export class LogsComponent {
     }
   };
 
-  protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
+  protected openTagContextMenu = (tagPair: LocalAndDistantTag, event: MouseEvent) => {
     event.stopPropagation();
-    this.tagContextMenu.selectedTag.set(tag);
+    this.tagContextMenu.selectedTag.set(tagPair);
     this.activeContextMenu.show(this.tagContextMenu.tagContextMenu(), event);
   };
 

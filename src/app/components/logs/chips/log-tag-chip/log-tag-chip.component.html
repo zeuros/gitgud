@@ -1,2 +1,10 @@
 <i class="fa fa-tag mr-2 with-padding" [style.font-size.px]="15"></i>
-<span class="ellipsis branch-name">{{ tag()?.name }}</span>
+<span class="ellipsis branch-name">{{ (local() ?? distant())?.name }}</span>
+<span class="float-icons">
+    @if (local()) {
+        <i class="fa fa-laptop"></i>
+    }
+    @if (distant()) {
+        <i class="fa fa-github"></i>
+    }
+</span>

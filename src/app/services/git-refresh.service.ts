@@ -75,15 +75,16 @@ export class GitRefreshService {
    * and returns a partial repository update.
    */
   updateLogsAndBranches = () => this.track(
-    this.stashReader.getStashes()
+    forkJoin({stashes: this.stashReader.getStashes(), remoteTags: this.tagReader.getRemoteTags()})
       .pipe(
-        switchMap(stashes => forkJoin({
-          logs: this.logReader.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', ...stashes.map(s => s.sha)])
+        switchMap(({stashes, remoteTags}) => forkJoin({
+          logs: this.logReader.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', '--ignore-missing', ...stashes.map(s => s.sha), ...remoteTags.map(t => t.sha)])
             .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
           branches: this.branchReader.getBranches(),
           detachedHeadSha: this.branchReader.detachedHeadSha(),
           stashes: of(stashes),
           tags: this.tagReader.getTags(),
+          remoteTags: of(remoteTags),
         })),
         tap((r: Partial<GitRepository>) => this.gitRepositoryStore.updateSelectedRepository(r)),
       ));

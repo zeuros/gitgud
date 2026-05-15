@@ -30,7 +30,7 @@ import {TableModule} from 'primeng/table';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
 import {Splitter, type SplitterResizeEndEvent} from 'primeng/splitter';
-import {type GitTag} from '../../models/git-tag';
+import {LocalAndDistantTagWithName} from '../../utils/tag-utils';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
 import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
@@ -83,8 +83,9 @@ export class LeftPanelComponent {
     if (stash) this.currentRepo.update({selectedCommitsShas: [stash.parentSHAs[1]]});
   };
 
-  protected selectTag = (tag?: GitTag) => {
-    if (tag) this.currentRepo.update({selectedCommitsShas: [tag.sha]});
+  protected selectTag = (tag?: LocalAndDistantTagWithName) => {
+    if (!tag) return;
+    this.currentRepo.update({selectedCommitsShas: [(tag.local ?? tag.distant)!.sha]});
   };
 
   protected openStashContextMenu = (stash: Commit, event: MouseEvent) => {
@@ -93,9 +94,9 @@ export class LeftPanelComponent {
     this.activeContextMenu.show(this.stashContextMenu.stashContextMenu(), event);
   };
 
-  protected openTagContextMenu = (tag: GitTag, event: MouseEvent) => {
+  protected openTagContextMenu = ({local, distant}: LocalAndDistantTagWithName, event: MouseEvent) => {
     event.preventDefault();
-    this.tagContextMenu.selectedTag.set(tag);
+    this.tagContextMenu.selectedTag.set([local, distant]);
     this.activeContextMenu.show(this.tagContextMenu.tagContextMenu(), event);
   };
 
@@ -113,5 +114,5 @@ export class LeftPanelComponent {
 
   protected $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
   protected $stash = (stash: Commit) => stash;
-  protected $tag = (tag: GitTag) => tag;
+  protected $localAndDistantTagWithName = (t: LocalAndDistantTagWithName) => t;
 }
