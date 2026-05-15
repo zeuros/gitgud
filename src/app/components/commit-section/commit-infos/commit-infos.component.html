@@ -10,7 +10,7 @@
                 (click)="copyToClipboard(selectedStash.parentSHAs[1])"
                 (mouseout)="copyTooltip = 'Copy'"
                 [pTooltip]="copyTooltip"
-                [label]="selectedStash.shortSha"
+                [label]="short(selectedStash.parentSHAs[1])"
                 tooltipPosition="top"
         />
     </h4>
