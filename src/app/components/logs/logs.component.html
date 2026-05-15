@@ -64,7 +64,7 @@
             @let branchesGrouped = currentRepo.mergedBranchesByTip()[commit.sha] ?? [];
             @let tagPairs = currentRepo.allTagsByShaAndName().get(commit.sha);
             @let extraCount = branchesGrouped.length + (tagPairs?.length ?? 0) + (isDetachedHead ? 1 : 0) - 1;
-            <td class="branch-tag-td">
+            <td class="log-chip-parent-td">
                 @if (commit.sha === createBranch.newBranchSha()) {
                     <input pInputText
                            class="branch-name-input"
@@ -77,8 +77,8 @@
                     />
                 }
                 @if (isDetachedHead) {
-                    <div class="branch-tag">
-                        <div class="commit-branch" [style.filter]="commitColor(commit.indent!)">
+                    <div class="log-chip-parent">
+                        <div class="log-chip-drop-zone" [style.filter]="commitColor(commit.indent!)">
                             <i class="fa fa-check mr-2"></i>
                             <span class="ellipsis branch-name">HEAD (detached)</span>
                             <i class="fa fa-unlink mr-2"></i>
@@ -91,16 +91,15 @@
                 @for (branchLocalAndDistant of branchesGrouped; track (branchLocalAndDistant[0] ?? branchLocalAndDistant[1])!.ref; let i = $index) {
                     @let local = branchLocalAndDistant[0];
                     @let distant = branchLocalAndDistant[1];
-                    <div class="branch-tag">
+                    <div class="log-chip-parent">
                         <!-- cdkDropList creates a ghost on destinations when dragging -->
-                        <div class="commit-branch"
+                        <div class="log-chip-drop-zone"
                              cdkDropList
                              cdkDropListSortingDisabled
-                             (pointerenter)="branchDragDrop.onMouseEnter(local ?? distant)"
-                             (pointerleave)="branchDragDrop.onMouseLeave()"
-
-                             [class.drop-target-active]="branchDragDrop.isValidDropTarget(local ?? distant)"
-                             [class.drop-target-hover]="branchDragDrop.hoveredBranch() === (local ?? distant)"
+                             (pointerenter)="logDragDrop.onChipMouseEnter(local ?? distant)"
+                             (pointerleave)="logDragDrop.onChipMouseLeave()"
+                             [class.drop-target-active]="logDragDrop.isValidDropTarget(local ?? distant)"
+                             [class.drop-target-hover]="logDragDrop.isHovered(local ?? distant)"
 
                              [class.checked-out]="commit.isPointedByLocalHead"
                              [style.--offset.px]="(isDetachedHead ? i + 1 : i) * 30"
@@ -108,15 +107,15 @@
                              [style.filter]="commitColor(commit.indent!)"
                              (contextmenu)="openBranchContextMenu((local ?? distant)!, $event)"
                         >
-                            <div class="draggable-branch"
+                            <div class="draggable-chip"
                                  cdkDrag
                                  [cdkDragData]="local ?? distant"
-                                 (cdkDragStarted)="branchDragDrop.onDragStarted(local ?? distant)"
-                                 (cdkDragEnded)="branchDragDrop.completeDrop($event)"
+                                 (cdkDragStarted)="logDragDrop.onBranchDragStarted(local ?? distant)"
+                                 (cdkDragEnded)="logDragDrop.onBranchDragEnded($event)"
                                  (dblclick)="checkoutBranch(local ?? distant, $event)">
                                 <!-- ghost clone shown while dragging -->
                                 <ng-template cdkDragPreview>
-                                    <div class="draggable-branch dragging-clone">
+                                    <div class="draggable-chip dragging-clone">
                                         <gitgud-log-branch-chip [local]="local" [distant]="distant"/>
                                     </div>
                                 </ng-template>
@@ -131,13 +130,30 @@
                 }
                 @for (tagPair of tagPairs; track tagPair.name; let i = $index) {
                     @let tagOffset = branchesGrouped.length + (isDetachedHead ? 1 : 0) + i;
-                    <div class="branch-tag">
-                        <div class="commit-tag"
+                    <div class="log-chip-parent">
+                        <div class="log-chip-drop-zone"
+                             cdkDropList
+                             cdkDropListSortingDisabled
+                             (pointerenter)="logDragDrop.onChipMouseEnter(tagPair)"
+                             (pointerleave)="logDragDrop.onChipMouseLeave()"
+                             [class.drop-target-active]="logDragDrop.isValidDropTarget(tagPair)"
+                             [class.drop-target-hover]="logDragDrop.isHovered(tagPair)"
                              [style.--offset.px]="tagOffset * 30"
                              [style.z-index]="420 - tagOffset"
                              [title]="(tagPair.local ?? tagPair.distant)?.message ?? (tagPair.local ?? tagPair.distant)?.name"
                              (contextmenu)="openTagContextMenu(tagPair, $event)">
-                            <gitgud-log-tag-chip [local]="tagPair.local" [distant]="tagPair.distant"/>
+                            <div class="draggable-chip"
+                                 cdkDrag
+                                 [cdkDragData]="tagPair"
+                                 (cdkDragStarted)="logDragDrop.onTagDragStarted(tagPair)"
+                                 (cdkDragEnded)="logDragDrop.onTagDragEnded($event)">
+                                <ng-template cdkDragPreview>
+                                    <div class="draggable-chip dragging-clone">
+                                        <gitgud-log-tag-chip [local]="tagPair.local" [distant]="tagPair.distant"/>
+                                    </div>
+                                </ng-template>
+                                <gitgud-log-tag-chip [local]="tagPair.local" [distant]="tagPair.distant"/>
+                            </div>
                         </div>
                     </div>
                 }
