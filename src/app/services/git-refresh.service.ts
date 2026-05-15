@@ -17,8 +17,7 @@
  */
 
 import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
-import {defer, finalize, forkJoin, map, of, switchMap, tap} from 'rxjs';
-import {Observable} from 'rxjs';
+import {defer, finalize, forkJoin, map, Observable, of, switchMap, tap} from 'rxjs';
 import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
 import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
 import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
@@ -97,7 +96,7 @@ export class GitRefreshService {
    * HEAD along with the type of change.
    */
   updateWorkingDirChanges = () => this.track(
-    this.gitApi.git(['status', '--porcelain', '-z', '--'])
+    this.gitApi.git(['status', '--porcelain', '-z', '--untracked-files=all', '--'])
       .pipe(
         map(parseWorkingDirChanges),
         tap(workDirStatus => this.currentRepo.update({workDirStatus})),
