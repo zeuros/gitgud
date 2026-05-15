@@ -27,7 +27,6 @@ export class GitRepository {
   constructor(
     public id: string, // = repository directory
     public name: string,
-    public panelSizes = {mainPanels: [20, 50, 30], leftPanel: [25, 25, 25, 25], makeCommitPanel: [40, 40, 20]}, // panels sizes
     public selected = true, // This repository is selected
     public logs: Commit[] = [],
     public stashes: Commit[] = [],

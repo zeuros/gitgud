@@ -1,5 +1,4 @@
 @let workDirStatus = currentRepo.workDirStatus();
-@let panelSizes = currentRepo.panelSizes()?.makeCommitPanel ?? [];
 @let conflicted = workDirStatus?.conflicted ?? [];
 @let hasConflicts = conflicted.length > 0;
 
@@ -51,8 +50,8 @@
 <p-splitter
         [style]="{ height: '100%' }"
         layout="vertical"
-        [panelSizes]="panelSizes"
-        (onResizeEnd)="savePanelSizes($event)"
+        stateStorage="local"
+        [stateKey]="'splitter-make-a-commit-' + currentRepo.cwd()"
         [minSizes]="[20, 20, 20]"
 >
     <ng-template pTemplate="panel">

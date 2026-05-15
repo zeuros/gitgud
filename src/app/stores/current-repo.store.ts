@@ -47,7 +47,6 @@ export class CurrentRepoStore {
 
   startCommit = computed(() => this.reposStore.selectedRepository()?.startCommit ?? 0);
   workDirStatus = computed(() => this.reposStore.selectedRepository()?.workDirStatus, {equal: isEqual});
-  panelSizes = computed(() => this.reposStore.selectedRepository()?.panelSizes);
   editorConfig = computed(() => this.reposStore.selectedRepository()?.editorConfig);
   detachedHeadSha = computed(() => this.reposStore.selectedRepository()?.detachedHeadSha);
   name = computed(() => this.reposStore.selectedRepository()?.name);

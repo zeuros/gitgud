@@ -1,5 +1,8 @@
-.wuuuu {
+.editor-overlay {
   background: var(--background);
   z-index: 500;
   height: 100%;
+  position: absolute;
+  left: 0;
+  bottom: 0;
 }

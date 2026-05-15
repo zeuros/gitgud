@@ -29,7 +29,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {TableModule} from 'primeng/table';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
-import {Splitter, type SplitterResizeEndEvent} from 'primeng/splitter';
+import {Splitter} from 'primeng/splitter';
 import {LocalAndDistantTagWithName} from '../../utils/tag-utils';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
@@ -103,9 +103,6 @@ export class LeftPanelComponent {
   protected checkoutBranch = (branch?: Branch) => {
     if (branch) this.branch.checkoutBranch(branch);
   };
-
-  protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
-    this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, leftPanel: sizes.map(Number)}});
 
   protected prepareBranchContextMenu = (node: TreeNode<Branch>) => {
     this.branchContextMenu.selectedNode.set(node);

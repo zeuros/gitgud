@@ -30,6 +30,8 @@
 
 <p-table
         #logTable
+        stateStorage="local"
+        [stateKey]="'logs-table-' + currentRepo.cwd()"
         [value]="displayLog"
         [selection]="commitsSelection()"
         (selectionChange)="onCommitsSelection($event)"

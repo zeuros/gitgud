@@ -1,11 +1,9 @@
-@let panelSizes = currentRepo.panelSizes()?.leftPanel;
-
-@if (panelSizes) {
+@if (currentRepo.cwd(); as repoId) {
     <p-splitter
             [style]="{ height: '100%' }"
             layout="vertical"
-            [panelSizes]="panelSizes"
-            (onResizeEnd)="savePanelSizes($event)"
+            stateStorage="local"
+            [stateKey]="'splitter-left-panel-' + repoId"
             [minSizes]="[20, 20, 20, 10]"
     >
         <ng-template pTemplate="panel">
