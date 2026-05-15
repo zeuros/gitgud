@@ -54,6 +54,7 @@ import {AvatarService} from '../commit-section/commit-infos/avatar/avatar.servic
 import {BranchService} from '../../services/branch.service';
 import {LogBranchTag} from './log-branch-tag/log-branch-tag';
 import {SearchLogsComponent} from '../search-logs/search-logs.component';
+import {AutofocusDirective} from '../../directives/autofocus.directive';
 
 @Component({
   selector: 'gitgud-logs',
@@ -67,6 +68,7 @@ import {SearchLogsComponent} from '../search-logs/search-logs.component';
     InputText,
     FormsModule,
     LogBranchTag,
+    AutofocusDirective,
     SearchLogsComponent,
   ],
   templateUrl: './logs.component.html',
