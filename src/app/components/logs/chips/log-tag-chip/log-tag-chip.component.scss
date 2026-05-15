@@ -1,0 +1,10 @@
+@use '../log-chip';
+
+:host {
+  border: 1px solid rgba(119, 87, 126, 0.9);
+  background-color: var(--primeng-purple-line);
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+  padding: 2.5px 4px;
+  transition: all 0.2s ease;
+}

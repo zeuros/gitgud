@@ -116,11 +116,11 @@
                                 <!-- ghost clone shown while dragging -->
                                 <ng-template cdkDragPreview>
                                     <div class="draggable-branch dragging-clone">
-                                        <gitgud-log-branch-tag [local]="local" [distant]="distant"/>
+                                        <gitgud-log-branch-chip [local]="local" [distant]="distant"/>
                                     </div>
                                 </ng-template>
 
-                                <gitgud-log-branch-tag [local]="local" [distant]="distant"/>
+                                <gitgud-log-branch-chip [local]="local" [distant]="distant"/>
                                 @if (extraCount > 0 && i === 0) {
                                     <p-badge [value]="'+'+extraCount" size="small" class="extra-count-badge"/>
                                 }
@@ -136,8 +136,7 @@
                              [style.z-index]="420 - tagOffset"
                              [title]="tag.message ?? tag.name"
                              (contextmenu)="openTagContextMenu(tag, $event)">
-                            <i class="fa fa-tag mr-2"></i>
-                            <span class="ellipsis branch-name">{{ tag.name }}</span>
+                            <gitgud-log-tag-chip [tag]="tag"/>
                         </div>
                     </div>
                 }

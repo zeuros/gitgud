@@ -52,8 +52,9 @@ import {FormsModule} from '@angular/forms';
 import {FixupService} from '../../services/fixup.service';
 import {AvatarService} from '../commit-section/commit-infos/avatar/avatar.service';
 import {BranchService} from '../../services/branch.service';
-import {LogBranchTag} from './log-branch-tag/log-branch-tag';
 import {SearchLogsComponent} from '../search-logs/search-logs.component';
+import {LogBranchChip} from './chips/log-branch-chip/log-branch-chip.component';
+import {LogTagChip} from './chips/log-tag-chip/log-tag-chip.component';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 
 @Component({
@@ -67,7 +68,8 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
     Badge,
     InputText,
     FormsModule,
-    LogBranchTag,
+    LogBranchChip,
+    LogTagChip,
     AutofocusDirective,
     SearchLogsComponent,
   ],
