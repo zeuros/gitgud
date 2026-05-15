@@ -1,5 +1,27 @@
 @let selectedCommit = currentRepo.selectedCommit();
-@if (selectedCommit) {
+@let selectedStash = currentRepo.selectedStash();
+
+@if (selectedStash) {
+    <h4 class="m-0">Stash:
+        <p-button
+                styleClass="p-0"
+                [link]="true"
+                size="small"
+                (click)="copyToClipboard(selectedStash.parentSHAs[1])"
+                (mouseout)="copyTooltip = 'Copy'"
+                [pTooltip]="copyTooltip"
+                [label]="selectedStash.shortSha"
+                tooltipPosition="top"
+        />
+    </h4>
+
+    <p-divider class="mb-0"/>
+
+    <gitgud-commit-card [commit]="selectedStash" [showSha]="false"/>
+
+    <gitgud-commit-file-list class="pt-2" [files]="(editedFiles()?.files ?? [])"/>
+
+} @else if (selectedCommit) {
     <h4 class="m-0">Commit:
         <p-button
                 styleClass="p-0"

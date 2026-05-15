@@ -62,7 +62,6 @@ export class CommitInfosComponent {
   private shaTooltip = viewChild(Tooltip);
   protected editedFiles = signal<ChangeSet | undefined>(undefined);
   protected initialValue: typeof this.editCommitForm.value = {};
-  protected isEqual = isEqual;
   protected directory = directory;
   protected fileName = fileName;
   protected currentRepo = inject(CurrentRepoStore);
@@ -72,15 +71,20 @@ export class CommitInfosComponent {
 
   constructor() {
     effect(() => {
+      const selectedStash = this.currentRepo.selectedStash();
       const selectedCommit = this.currentRepo.selectedCommit();
 
-      if (selectedCommit) {
+      if (selectedStash) {
+        this.fileDiff.getChangedFilesForStash(selectedStash.sha).subscribe(editedFiles => this.editedFiles.set(editedFiles));
+      } else if (selectedCommit) {
         this.fileDiff.getChangedFilesForGivenCommit(selectedCommit.sha).subscribe(editedFiles => this.editedFiles.set(editedFiles));
         this.editCommitForm.setValue({
           summary: selectedCommit.summary,
           description: selectedCommit.body,
         });
         this.initialValue = this.editCommitForm.value;
+      } else {
+        this.editedFiles.set(undefined);
       }
     });
   }

@@ -568,4 +568,10 @@ export class FileDiffService {
     this.gitApi.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
       .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, [sha])));
 
+  // Stashes are merge commits — git log --first-parent -m produces no numstat for them.
+  // git diff sha^1 sha directly compares the stash against HEAD-at-stash-time.
+  getChangedFilesForStash = (sha: string) =>
+    this.gitApi.git(['diff', `${sha}^1`, sha, '-C', '-M', '--raw', '--numstat', '-z', '--'])
+      .pipe(map(rawFileChanges => parseRawLogWithNumstat(rawFileChanges, [sha])));
+
 }
