@@ -1,0 +1,27 @@
+@let c = commit();
+
+<div class="flex items-center justify-content-between" [pTooltip]="c.author.email" tooltipPosition="left">
+    <div class="flex align-items-center gap-2 author-icon">
+        <gitgud-avatar [identity]="c.author"/>
+        <div class="flex-column">
+            <span>{{ c.author.name }}</span>
+            <span>authored {{ c.author.date | date: DATE_FORMAT }}</span>
+        </div>
+    </div>
+    @if (showParent()) {
+        <div class="pt-1">
+            <span>Parent: </span>
+            <p-button
+                    styleClass="p-0"
+                    [link]="true"
+                    size="small"
+                    (click)="copyToClipboard(c.parentSHAs[0])"
+                    (mouseout)="copyTooltip = 'Copy'"
+                    [pTooltip]="copyTooltip"
+                    [label]="short(c.parentSHAs[0])"
+                    tooltipPosition="top"
+            />
+        </div>
+    }
+</div>
+

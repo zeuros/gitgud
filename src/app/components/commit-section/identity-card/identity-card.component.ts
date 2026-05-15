@@ -23,24 +23,24 @@ import {Tooltip} from 'primeng/tooltip';
 import {AvatarComponent} from '../commit-infos/avatar/avatar.component';
 import {Button} from 'primeng/button';
 import {DatePipe} from '@angular/common';
+import {short} from '../../../utils/commit-utils';
 
 @Component({
-  selector: 'gitgud-commit-card',
+  selector: 'gitgud-identity-card',
   imports: [
     Tooltip,
     AvatarComponent,
     Button,
     DatePipe,
   ],
-  templateUrl: './commit-card.component.html',
-  styleUrl: './commit-card.component.scss',
+  templateUrl: './identity-card.component.html',
+  styleUrl: './identity-card.component.scss',
   standalone: true,
 })
-export class CommitCardComponent {
+export class IdentityCardComponent {
   private shaTooltip = viewChild(Tooltip);
 
-  commit = input<Commit | undefined>(undefined);
-  showSha = input(true);
+  commit = input.required<Commit>();
   showParent = input(false);
 
   protected copyTooltip = 'Copy';
@@ -52,4 +52,5 @@ export class CommitCardComponent {
   };
 
   protected DATE_FORMAT = DATE_FORMAT;
+  protected short = short;
 }

@@ -22,7 +22,7 @@ import {directory, fileName} from '../../../utils/utils';
 import {type ChangeSet} from '../../../lib/github-desktop/model/change-set';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {FileDiffService} from '../../../services/file-diff.service';
-import {CommitCardComponent} from '../commit-line/commit-card.component';
+import {IdentityCardComponent} from '../identity-card/identity-card.component';
 import {Divider} from 'primeng/divider';
 import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
 
@@ -31,7 +31,7 @@ import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
   imports: [
     ReactiveFormsModule,
     FormsModule,
-    CommitCardComponent,
+    IdentityCardComponent,
     Divider,
     CommitFileListComponent,
   ],

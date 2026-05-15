@@ -17,7 +17,7 @@
 
     <p-divider class="mb-0"/>
 
-    <gitgud-commit-card [commit]="selectedStash" [showSha]="false"/>
+    <gitgud-identity-card [commit]="selectedStash" [showParent]="true"/>
 
     <gitgud-commit-file-list class="pt-2" [files]="(editedFiles()?.files ?? [])"/>
 
@@ -59,7 +59,7 @@
 
     <p-divider/>
 
-    <gitgud-commit-card [commit]="selectedCommit" [showSha]="false"/>
+    <gitgud-identity-card [commit]="selectedCommit"/>
 
     <gitgud-commit-file-list class="pt-2" [files]="(editedFiles()?.files ?? [])"/>
 
