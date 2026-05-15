@@ -5,7 +5,7 @@
     <p-divider/>
 
     @for (commit of selectedCommits; track commit.sha) {
-        <gitgud-commit-card [commit]="commit"/>
+        <gitgud-identity-card [commit]="commit"/>
     }
 
     <gitgud-commit-file-list class="pt-2" [files]="(editedFiles()?.files ?? [])"/>

@@ -29,9 +29,10 @@ import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
 import {PopupService} from '../../../services/popup.service';
 import {FileDiffService} from '../../../services/file-diff.service';
-import {CommitCardComponent} from '../commit-line/commit-card.component';
+import {IdentityCardComponent} from '../identity-card/identity-card.component';
 import {Divider} from 'primeng/divider';
 import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
+import {short} from '../../../utils/commit-utils';
 
 @Component({
   selector: 'gitgud-commit-infos',
@@ -42,7 +43,7 @@ import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
     Tooltip,
     FormsModule,
     Button,
-    CommitCardComponent,
+    IdentityCardComponent,
     Divider,
     CommitFileListComponent,
   ],
@@ -104,4 +105,5 @@ export class CommitInfosComponent {
       });
 
   protected commitFormValueChanged = () => !isEqual(this.editCommitForm.value, this.initialValue)
+  protected short = short;
 }
