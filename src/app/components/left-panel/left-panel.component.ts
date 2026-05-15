@@ -94,9 +94,9 @@ export class LeftPanelComponent {
     this.activeContextMenu.show(this.stashContextMenu.stashContextMenu(), event);
   };
 
-  protected openTagContextMenu = ({local, distant}: LocalAndDistantTagWithName, event: MouseEvent) => {
+  protected openTagContextMenu = (tag: LocalAndDistantTagWithName, event: MouseEvent) => {
     event.preventDefault();
-    this.tagContextMenu.selectedTag.set([local, distant]);
+    this.tagContextMenu.selectedTag.set(tag);
     this.activeContextMenu.show(this.tagContextMenu.tagContextMenu(), event);
   };
 

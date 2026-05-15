@@ -1,23 +1,30 @@
 import {type GitTag} from '../models/git-tag';
+import {groupBy} from 'lodash-es';
 
-export type LocalAndDistantTag = [local: GitTag | null, distant: GitTag | null];
-export type LocalAndDistantTagWithName = { local: GitTag | null, distant: GitTag | null, name: string };
+export type LocalAndDistantTagWithName = { local: GitTag | null, distant: GitTag | null, name: string, sha: string };
 
-export const toLocalAndDistantTagPairs = (localTags: GitTag[], remoteTags: GitTag[]): LocalAndDistantTag[] => {
-  const allNames = new Set([...localTags.map(t => t.name), ...remoteTags.map(t => t.name)]);
-  return Array.from(allNames).map(name => [
-    localTags.find(t => t.name === name) ?? null,
-    remoteTags.find(t => t.name === name) ?? null,
-  ] as LocalAndDistantTag);
+export const localAndDistantTagPairsByName = (localTags: GitTag[], remoteTags: GitTag[]): LocalAndDistantTagWithName[] => {
+  const localByName = new Map(localTags.map(t => [t.name, t]));
+  const distantByName = new Map(remoteTags.map(t => [t.name, t]));
+  const allNames = new Set([...localByName.keys(), ...distantByName.keys()]);
+  return Array.from(allNames).map(name => {
+    const local = localByName.get(name) ?? null;
+    const distant = distantByName.get(name) ?? null;
+    const sha = (local ?? distant)!.sha;
+    return {name, sha, local, distant};
+  });
 };
 
-export const toLocalAndDistantTagWithName = ([local, distant]: LocalAndDistantTag): LocalAndDistantTagWithName => ({local, distant, name: (local ?? distant)!.name});
-
-export const groupTagsBySha = (tags: LocalAndDistantTag[]): Record<string, LocalAndDistantTag[]> =>
-  tags.reduce((acc, pair) => {
-    const [local, distant] = pair;
-    for (const sha of new Set([local?.sha, distant?.sha].filter(Boolean) as string[])) {
-      (acc[sha] ??= []).push(pair);
-    }
-    return acc;
-  }, {} as Record<string, LocalAndDistantTag[]>);
+export const groupTagsByShaAndName = (localTags: GitTag[], remoteTags: GitTag[]): Map<string, LocalAndDistantTagWithName[]> => {
+  const localSet = new Set(localTags);
+  const allBySha = groupBy([...localTags, ...remoteTags], t => t.sha);
+  return new Map(Object.entries(allBySha).map(([sha, shaGroup]) => [
+    sha,
+    Object.entries(groupBy(shaGroup, t => t.name)).map(([name, group]) => ({
+      name,
+      sha,
+      local: group.find(t => localSet.has(t)) ?? null,
+      distant: group.find(t => !localSet.has(t)) ?? null,
+    })),
+  ]));
+};

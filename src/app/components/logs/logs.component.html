@@ -27,6 +27,7 @@
         ></canvas>
     </div>
 }
+
 <p-table
         #logTable
         [value]="displayLog"
@@ -61,8 +62,8 @@
             [pContextMenuRowDisabled]="isIndex(commit)"
         >
             @let branchesGrouped = currentRepo.mergedBranchesByTip()[commit.sha] ?? [];
-            @let tagPairs = currentRepo.allTagsBySha()[commit.sha] ?? [];
-            @let extraCount = branchesGrouped.length + tagPairs.length + (isDetachedHead ? 1 : 0) - 1;
+            @let tagPairs = currentRepo.allTagsByShaAndName().get(commit.sha);
+            @let extraCount = branchesGrouped.length + (tagPairs?.length ?? 0) + (isDetachedHead ? 1 : 0) - 1;
             <td class="branch-tag-td">
                 @if (commit.sha === createBranch.newBranchSha()) {
                     <input pInputText
@@ -128,17 +129,15 @@
                         </div>
                     </div>
                 }
-                @for (tagPair of tagPairs; track (tagPair[0] ?? tagPair[1])!.name; let i = $index) {
-                    @let tagLocal = tagPair[0];
-                    @let tagDistant = tagPair[1];
+                @for (tagPair of tagPairs; track tagPair.name; let i = $index) {
                     @let tagOffset = branchesGrouped.length + (isDetachedHead ? 1 : 0) + i;
                     <div class="branch-tag">
                         <div class="commit-tag"
                              [style.--offset.px]="tagOffset * 30"
                              [style.z-index]="420 - tagOffset"
-                             [title]="(tagLocal ?? tagDistant)?.message ?? (tagLocal ?? tagDistant)?.name"
+                             [title]="(tagPair.local ?? tagPair.distant)?.message ?? (tagPair.local ?? tagPair.distant)?.name"
                              (contextmenu)="openTagContextMenu(tagPair, $event)">
-                            <gitgud-log-tag-chip [local]="tagLocal" [distant]="tagDistant"/>
+                            <gitgud-log-tag-chip [local]="tagPair.local" [distant]="tagPair.distant"/>
                         </div>
                     </div>
                 }

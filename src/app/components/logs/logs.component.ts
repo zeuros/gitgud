@@ -42,7 +42,7 @@ import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import {BranchDragDropService} from '../../services/branch-drag-drop.service';
-import {type LocalAndDistantTag} from '../../utils/tag-utils';
+import {type LocalAndDistantTagWithName} from '../../utils/tag-utils';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {Badge} from 'primeng/badge';
 import {CreateBranchService} from '../../services/create-branch.service';
@@ -329,7 +329,7 @@ export class LogsComponent {
     }
   };
 
-  protected openTagContextMenu = (tagPair: LocalAndDistantTag, event: MouseEvent) => {
+  protected openTagContextMenu = (tagPair: LocalAndDistantTagWithName, event: MouseEvent) => {
     event.stopPropagation();
     this.tagContextMenu.selectedTag.set(tagPair);
     this.activeContextMenu.show(this.tagContextMenu.tagContextMenu(), event);
