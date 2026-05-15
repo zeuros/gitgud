@@ -110,7 +110,7 @@ export class MergeEditorComponent {
     this.gitApi.git(['add', '--', file.path])
       .pipe(finalize(() => {
         this.saving.set(false);
-        this.fileDiffPanel.closeConflictView();
+        this.fileDiffPanel.closeViews();
         this.gitRefresh.doUpdateWorkingDirChanges();
       }))
       .subscribe();
