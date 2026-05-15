@@ -32,6 +32,7 @@ export class GitRepository {
     public logs: Commit[] = [],
     public stashes: Commit[] = [],
     public tags: GitTag[] = [],
+    public remoteTags: GitTag[] = [],
     public branches: Branch[] = [],
     public detachedHeadSha?: string,
     public selectedCommitsShas: string[] = ['index'],

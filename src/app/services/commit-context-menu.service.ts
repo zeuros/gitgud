@@ -19,25 +19,23 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {type MenuItem} from 'primeng/api';
 import {PopupService} from './popup.service';
-import {first, map, switchMap} from 'rxjs';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {short} from '../utils/commit-utils';
-import {PromptService} from './prompt.service';
-import {notUndefined} from '../utils/utils';
 import {GitWorkflowService} from './git-workflow.service';
 import {CreateBranchService} from './create-branch.service';
+import {CreateTagService} from './create-tag.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CommitContextMenuService {
 
-  private prompt = inject(PromptService);
   private gitWorkflow = inject(GitWorkflowService);
   private popup = inject(PopupService);
   private currentRepo = inject(CurrentRepoStore);
   private createBranch = inject(CreateBranchService);
+  private createTag = inject(CreateTagService);
 
   selectedCommit = signal<DisplayRef | undefined>(undefined);
   private sha = computed(() => this.selectedCommit()!.sha);
@@ -90,7 +88,7 @@ export class CommitContextMenuService {
     {separator: true},
     {label: 'Copy commit sha', icon: 'fa fa-copy', command: this.copyCommitSha},
     {separator: true},
-    {label: 'Create tag here', icon: 'fa fa-tag', command: this.createTag},
+    {label: 'Create tag here', icon: 'fa fa-tag', command: this.createTagHere},
   ]);
 
   protected checkoutCommit = () =>
@@ -139,15 +137,8 @@ export class CommitContextMenuService {
     return actions;
   }
 
-  protected copyCommitSha = () => navigator.clipboard.writeText(this.sha()).then(() => this.popup.success('SHA copied to clipboard'));
+  private copyCommitSha = () => navigator.clipboard.writeText(this.sha()).then(() => this.popup.success('SHA copied to clipboard'));
 
-  protected createTag = () =>
-    this.prompt.open('Tag name:').pipe(
-      first(notUndefined),
-      switchMap(tagName => this.prompt.open('Tag message for annotated tags (leave empty for lightweight tag):', false)
-        .pipe(map(message => ({tagName, message: message ?? null})))),
-    ).subscribe(({tagName, message}) => message?.trim()?.length
-      ? this.gitWorkflow.doRunAndRefresh(['tag', '-a', tagName, '-m', message, this.sha()], `Annotated tag ${tagName} created`)
-      : this.gitWorkflow.doRunAndRefresh(['tag', tagName, this.sha()], `Tag ${tagName} created`));
+  private createTagHere = () => this.createTag.createTag(this.sha());
 
 }

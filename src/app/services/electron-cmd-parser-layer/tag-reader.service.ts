@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {map} from 'rxjs';
+import {catchError, map, of} from 'rxjs';
 import {GitApiService} from './git-api.service';
 import {type GitTag} from '../../models/git-tag';
 import {createForEachRefParser} from '../parser.service';
@@ -45,4 +45,18 @@ export class TagReaderService {
           message: t.message || undefined,
         }))
       ));
+
+  getRemoteTags = () =>
+    this.gitApi.git(['ls-remote', '--tags', '--refs', 'origin'])
+      .pipe(
+        map(output =>
+          output.split('\n')
+            .filter(Boolean)
+            .map((line): GitTag => {
+              const [sha, ref] = line.split('\t');
+              return {name: ref.replace(/^(refs\/)?tags\//, ''), sha};
+            })
+        ),
+        catchError(() => of([])), // no remote or no network
+      );
 }

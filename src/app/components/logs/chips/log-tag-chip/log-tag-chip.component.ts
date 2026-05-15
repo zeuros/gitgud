@@ -8,5 +8,6 @@ import {GitTag} from '../../../../models/git-tag';
   standalone: true,
 })
 export class LogTagChip {
-  tag = input<GitTag | null>(null);
+  local = input<GitTag | null>(null);
+  distant = input<GitTag | null>(null);
 }
