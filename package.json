@@ -19,6 +19,7 @@
     "build:prod": "npm run build:electron && npm run build:angular -c production",
     "build:angular": "ng build --base-href ./",
     "build:electron": "tsc -p tsconfig.serve.json",
+
     "build:preview": "npm run build:prod && electron-builder --dir && npm run preview",
     "preview": "node scripts/preview.js"
   },

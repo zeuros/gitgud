@@ -1,0 +1,121 @@
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+// ── Background image ──────────────────────────────────────────────────────────
+
+@keyframes bg-flicker {
+  0%, 100% { filter: brightness(0.68) saturate(0.85); }
+  50%       { filter: brightness(0.73) saturate(0.92) hue-rotate(4deg); }
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  animation: bg-flicker 3.2s ease-in-out infinite;
+}
+
+// ── Gradient vignette overlay ─────────────────────────────────────────────────
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 40% at 50% 52%, rgba(255, 75, 10, 0.06) 0%, transparent 65%),
+    linear-gradient(to bottom, rgba(4, 7, 24, 0.28) 0%, transparent 40%, rgba(4, 7, 24, 0.5) 100%);
+  pointer-events: none;
+}
+
+// ── Pulsing fire halo ─────────────────────────────────────────────────────────
+
+@keyframes ember-pulse {
+  0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) scale(1);    }
+  50%       { opacity: 0.85; transform: translate(-50%, -50%) scale(1.12); }
+}
+
+.fire-glow {
+  position: absolute;
+  width: 440px;
+  height: 80%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse, rgba(255, 105, 18, 0.16) 0%, transparent 68%);
+  border-radius: 50%;
+  animation: ember-pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+// ── Actions container ─────────────────────────────────────────────────────────
+
+.actions {
+  position: relative;
+  display: flex;
+  gap: 1.6rem;
+  z-index: 1;
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+
+@keyframes btn-ember {
+  0%, 100% {
+    box-shadow:
+      0 0 10px rgba(255, 95, 18, 0.38),
+      0 0 26px rgba(255, 55, 0, 0.15),
+      0 5px 18px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 185, 80, 0.10);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(255, 115, 28, 0.58),
+      0 0 44px rgba(255, 65, 0, 0.24),
+      0 5px 18px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 185, 80, 0.16);
+  }
+}
+
+:host ::ng-deep .action-btn {
+  background: rgba(6, 9, 28, 0.78) !important;
+  border: 1.5px solid rgba(255, 118, 32, 0.58) !important;
+  color: #f3deb6 !important;
+  font-size: 1.1rem !important;
+  padding: 0.9rem 2.4rem !important;
+  border-radius: 5px !important;
+  letter-spacing: 0.07em !important;
+  font-weight: 600 !important;
+  backdrop-filter: blur(12px);
+  text-shadow: 0 0 10px rgba(255, 145, 55, 0.5);
+  animation: btn-ember 2.6s ease-in-out infinite;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease !important;
+
+  .p-button-icon {
+    color: rgba(255, 150, 50, 0.92) !important;
+    text-shadow: 0 0 8px rgba(255, 120, 35, 0.65);
+  }
+
+  &:hover {
+    background: rgba(13, 17, 44, 0.88) !important;
+    border-color: rgba(255, 152, 55, 0.88) !important;
+    color: #fff6e0 !important;
+    transform: translateY(-2px) scale(1.03);
+    animation-play-state: paused;
+    box-shadow:
+      0 0 28px rgba(255, 118, 28, 0.62),
+      0 0 56px rgba(255, 68, 0, 0.26),
+      0 8px 22px rgba(0, 0, 0, 0.58),
+      inset 0 1px 0 rgba(255, 195, 90, 0.18) !important;
+  }
+
+  &:active {
+    transform: translateY(0) scale(1) !important;
+  }
+}

@@ -28,6 +28,7 @@ import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.compone
   imports: [ButtonModule, DialogModule, CloneDialogComponent],
   templateUrl: './welcome-screen.component.html',
   styleUrl: './welcome-screen.component.scss',
+  host: {class: 'fill-height'},
 })
 export class WelcomeScreenComponent {
 
