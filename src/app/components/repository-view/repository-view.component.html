@@ -1,6 +1,5 @@
-@let sizes = currentRepo.panelSizes()?.mainPanels;
-@if (sizes) {
-    <p-splitter [panelSizes]="sizes" [minSizes]="[8, 13, 10]" (onResizeEnd)="savePanelSizes($event)" class="h-full">
+@if (currentRepo.cwd(); as repoId) {
+    <p-splitter stateStorage="local" [stateKey]="'splitter-main-view-' + repoId" [minSizes]="[8, 13, 10]" class="h-full">
         <ng-template pTemplate>
             <gitgud-left-panel/>
         </ng-template>
@@ -8,21 +7,14 @@
             <gitgud-logs/>
         </ng-template>
         <ng-template pTemplate>
-            <gitgud-commit-section/>
+            <gitgud-commit-section #commitPanel/>
         </ng-template>
     </p-splitter>
 
     @if (fileDiffPanel.fileToDiff$ | async; as fileToDiff) {
-        <gitgud-monaco-editor-view
-                [fileToDiff]="fileToDiff"
-                class="absolute left-0 bottom-0 wuuuu"
-                [style.right]="'calc(100vw * ' + (sizes[2] / sum(sizes)) + ' + 3px)'"
-        />
+        <gitgud-monaco-editor-view [fileToDiff]="fileToDiff" class="editor-overlay" [style.width.px]="editorRightPx()"/>
     }
     @if (fileDiffPanel.conflictedFile()) {
-        <gitgud-merge-editor
-                class="absolute left-0 bottom-0 wuuuu"
-                [style.right]="'calc(100vw * ' + (sizes[2] / sum(sizes)) + ' + 3px)'"
-        />
+        <gitgud-merge-editor class="editor-overlay" [style.width.px]="editorRightPx()"/>
     }
 }

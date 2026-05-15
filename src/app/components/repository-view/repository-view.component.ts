@@ -16,14 +16,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject} from '@angular/core';
+import {Component, effect, ElementRef, inject, signal, viewChild} from '@angular/core';
 import {LeftPanelComponent} from '../left-panel/left-panel.component';
-import {SplitterModule, type SplitterResizeEndEvent} from 'primeng/splitter';
+import {SplitterModule} from 'primeng/splitter';
 import {CommitSectionComponent} from '../commit-section/commit-section.component';
 import {LogsComponent} from '../logs/logs.component';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {AsyncPipe} from '@angular/common';
-import {sum} from 'lodash-es';
 import {MonacoEditorViewComponent} from '../monaco-editor-view/monaco-editor-view.component';
 import {MergeEditorComponent} from '../merge-editor/merge-editor.component';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
@@ -42,7 +41,17 @@ export class RepositoryViewComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
   protected fileDiffPanel = inject(FileDiffPanelService);
-  protected sum = sum;
-  protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
-    this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, mainPanels: sizes.map(Number)}});
+  protected editorRightPx = signal(0);
+
+  private commitPanel = viewChild('commitPanel', {read: ElementRef});
+
+  constructor() {
+    effect((onCleanup) => {
+      const el: HTMLElement | undefined = this.commitPanel()?.nativeElement;
+      if (!el) return;
+      const ro = new ResizeObserver(() => this.editorRightPx.set(el.getBoundingClientRect().left - 4)); // 4 for accessing the splitter resize handle
+      ro.observe(el);
+      onCleanup(() => ro.disconnect());
+    });
+  }
 }

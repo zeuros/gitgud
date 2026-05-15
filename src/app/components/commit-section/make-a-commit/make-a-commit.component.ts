@@ -34,7 +34,7 @@ import {FixupService} from '../../../services/fixup.service';
 import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
 import {type WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
-import {Splitter, type SplitterResizeEndEvent} from 'primeng/splitter';
+import {Splitter} from 'primeng/splitter';
 import {ActiveContextMenuService} from '../../../services/active-context-menu.service';
 import {UnstagedFileContextMenuService} from '../../../services/unstaged-file-context-menu.service';
 
@@ -100,9 +100,6 @@ export class MakeACommitComponent {
 
   protected commitReady = (workDirStatus?: WorkDirStatus) =>
     !!(this.commitForm.value.summary?.length && workDirStatus?.staged?.length && !workDirStatus.conflicted.length);
-
-  protected savePanelSizes = ({sizes}: SplitterResizeEndEvent) =>
-    this.currentRepo.update({panelSizes: {...this.currentRepo.panelSizes()!, makeCommitPanel: sizes.map(Number)}});
 
   protected onConflictFileSelect = (file: WorkingDirectoryFileChange | null) => {
     this.selectedConflictFile.set(file);
