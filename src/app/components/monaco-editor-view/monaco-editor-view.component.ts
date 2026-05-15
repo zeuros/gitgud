@@ -33,6 +33,8 @@ import ITextModel = editor.ITextModel;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import IEditorOptions = editor.IEditorOptions;
 import IDiffEditorOptions = editor.IDiffEditorOptions;
+import {fileName} from '../../utils/utils';
+import {Button} from 'primeng/button';
 
 interface DiffModel {
   code: string;
@@ -47,16 +49,16 @@ interface DiffModels {
 @Component({
   standalone: true,
   selector: 'gitgud-monaco-editor-view',
-  imports: [FormsModule, SelectButton],
+  imports: [FormsModule, SelectButton, Button],
   templateUrl: './monaco-editor-view.component.html',
   styleUrl: './monaco-editor-view.component.scss',
 })
 export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
   protected currentRepo = inject(CurrentRepoStore);
+  protected fileDiffPanel = inject(FileDiffPanelService);
   private fileDiff = inject(FileDiffService);
   private hunkActions = inject(MonacoDiffRightClickActionsService);
-  private fileDiffPanel = inject(FileDiffPanelService);
 
   protected viewOptions = Object.entries({
     hunk:   {label: 'Hunk',   icon: 'fa fa-list'},
@@ -214,4 +216,5 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  protected readonly fileName = fileName;
 }

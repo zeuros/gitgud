@@ -107,30 +107,24 @@ export class MakeACommitComponent {
   protected onConflictFileSelect = (file: WorkingDirectoryFileChange | null) => {
     this.selectedConflictFile.set(file);
     if (file) this.fileDiffPanel.showWorkingDirDiffs(file);
-    else {
-      this.fileDiffPanel.closeDiffView();
-      this.fileDiffPanel.closeConflictView();
-    }
+    else this.fileDiffPanel.closeViews();
   };
 
-  protected onSelectionChange = (files: WorkingDirectoryFileChange[], staged: boolean) => {
+  protected onStagingFileSelectionChange = (files: WorkingDirectoryFileChange[], staged: boolean) => {
     const current = staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles();
 
     // If a file is clicked twice (toggled) => hide diff view
     const isReclick = files.length === 1 && current.length === 1 && current[0].path === files[0].path;
     if (isReclick) {
       (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set([]);
-      this.fileDiffPanel.closeDiffView();
-      this.fileDiffPanel.closeConflictView();
+      this.fileDiffPanel.closeViews();
       return;
     }
     (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set(files);
     (staged ? this.selectedUnstagedFiles : this.selectedStagedFiles).set([]);
+
     if (files.length === 1) this.fileDiffPanel.showWorkingDirDiffs(files[0]);
-    else {
-      this.fileDiffPanel.closeDiffView();
-      this.fileDiffPanel.closeConflictView();
-    }
+    else this.fileDiffPanel.closeViews();
   };
 
   protected openFileContextMenu = (file: WorkingDirectoryFileChange, staged: boolean, event: MouseEvent) => {

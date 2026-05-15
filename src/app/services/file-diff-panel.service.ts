@@ -77,6 +77,8 @@ export class FileDiffPanelService {
     this.fileToDiffSubject$.next(f);
   };
 
+  closeViews = () => {this.closeConflictView(); this.closeDiffView()};
+
   closeConflictView = () => this.conflictedFile.set(null);
 
   closeDiffView = () => { this.selectedFile.set(null); this.fileToDiffSubject$.next(null); };
