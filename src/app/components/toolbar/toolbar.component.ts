@@ -101,7 +101,7 @@ export class ToolbarComponent implements OnInit {
 
   protected pull = () => {
     this.loading.set('pull');
-    this.gitApi.git(['pull'])
+    this.gitApi.gitAction(['pull'])
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => {
         this.popup.success('Pulled successfully');
@@ -112,28 +112,28 @@ export class ToolbarComponent implements OnInit {
 
   protected stash = () => {
     this.loading.set('stash');
-    this.gitApi.git(['stash', '-u'])
+    this.gitApi.gitAction(['stash', '-u'])
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => this.popup.success('Stashed successfully'));
   };
 
   protected pop = () => {
     this.loading.set('pop');
-    this.gitApi.git(['stash', 'pop'])
+    this.gitApi.gitAction(['stash', 'pop'])
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => this.popup.success('Stash popped successfully'));
   };
 
   protected fetch = () => {
     this.loading.set('fetch');
-    this.gitApi.git(['fetch'])
+    this.gitApi.gitAction(['fetch'])
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => this.autoFetch.lastFetchedAt.set(Date.now()));
   };
 
   protected continueRebase = () => {
     this.loading.set('rebase-continue');
-    this.gitApi.git(['rebase', '--continue']).pipe(
+    this.gitApi.gitAction(['rebase', '--continue']).pipe(
       switchMap(this.gitRefresh.refreshAll),
       finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
     ).subscribe(() => this.popup.success('Rebase continued'));
@@ -158,7 +158,7 @@ export class ToolbarComponent implements OnInit {
   private checkBehindThenPush = () =>
     this.branchAheadBehind.aheadBehindForHead().pipe(
       switchMap(({behind, diverged}) =>
-        behind === 0 ? this.gitApi.git(['push']) : this.openBehindRemoteDialog(diverged)
+        behind === 0 ? this.gitApi.gitAction(['push']) : this.openBehindRemoteDialog(diverged)
       ),
     );
 
@@ -171,10 +171,10 @@ export class ToolbarComponent implements OnInit {
       data: {localRef: branch.ref, remoteRef: `refs/remotes/${branch.upstream}`, diverged},
     })!.onClose.pipe(
       switchMap((action: BehindRemoteAction) => {
-        if (action === 'pull') return this.gitApi.git(['pull', '--ff-only']);
-        if (action === 'merge') return this.gitApi.git(['pull', '--no-ff']);
-        if (action === 'rebase') return this.gitApi.git(['pull', '--rebase']);
-        if (action === 'force-push') return this.gitApi.git(['push', '--force-with-lease']);
+        if (action === 'pull') return this.gitApi.gitAction(['pull', '--ff-only']);
+        if (action === 'merge') return this.gitApi.gitAction(['pull', '--no-ff']);
+        if (action === 'rebase') return this.gitApi.gitAction(['pull', '--rebase']);
+        if (action === 'force-push') return this.gitApi.gitAction(['push', '--force-with-lease']);
         return EMPTY;
       }),
     );
@@ -192,7 +192,7 @@ export class ToolbarComponent implements OnInit {
 
   private openSetUpstreamDialog = () =>
     openSetUpstreamDialog(this.dialog, this.currentRepo.headBranch()?.name ?? '').pipe(
-      switchMap(result => result ? this.gitApi.git(['push', '--set-upstream', result.remote, result.branch]) : EMPTY),
+      switchMap(result => result ? this.gitApi.gitAction(['push', '--set-upstream', result.remote, result.branch]) : EMPTY),
     );
 
   protected copyBtcAddress = () =>

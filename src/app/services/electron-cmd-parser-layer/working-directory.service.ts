@@ -29,13 +29,13 @@ export class WorkingDirectoryService {
   private gitApi = inject(GitApiService);
   private gitRefresh = inject(GitRefreshService);
 
-  stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['add', '--', path]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+  stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.gitAction(['add', '--', path]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
   stageFiles = (files: WorkingDirectoryFileChange[]) =>
-    this.gitApi.git(['add', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    this.gitApi.gitAction(['add', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
   unstageFiles = (files: WorkingDirectoryFileChange[]) =>
-    this.gitApi.git(['reset', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    this.gitApi.gitAction(['reset', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
   /** Stage (or unstage) a patch via stdin, then refresh */
   stageChangesWithPatch = (patch: string, stage: boolean) =>
@@ -45,10 +45,10 @@ export class WorkingDirectoryService {
   discardChangesWithPatch = (patch: string) =>
     this.gitApi.gitWithInput(['apply', '-R', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
-  unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.git(['reset', '--', path]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+  unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.gitAction(['reset', '--', path]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
-  stageAll = () => this.gitApi.git(['add', '--all']).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+  stageAll = () => this.gitApi.gitAction(['add', '--all']).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
-  unstageAll = () => this.gitApi.git(['reset', 'HEAD', '--', '.']).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+  unstageAll = () => this.gitApi.gitAction(['reset', 'HEAD', '--', '.']).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
 
 }

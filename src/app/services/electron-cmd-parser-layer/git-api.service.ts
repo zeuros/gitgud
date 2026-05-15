@@ -57,9 +57,17 @@ export class GitApiService {
     const filteredArgs = args?.filter(notUndefined) ?? [];
     return this.waitForLock().pipe(
       switchMap(() => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: window.electron.process.env, ...options})),
+    );
+  };
+
+  // User git calls
+  gitAction = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
+    const filteredArgs = args?.filter(notUndefined) ?? [];
+    const cwd = this.currentRepo.cwd();
+    return this.git(args, options).pipe(
       tap({
-        next: () => this.history.record(filteredArgs, this.currentRepo.cwd(), true),
-        error: () => this.history.record(filteredArgs, this.currentRepo.cwd(), false),
+        next: () => this.history.record(filteredArgs, cwd, true),
+        error: () => this.history.record(filteredArgs, cwd, false),
       }),
     );
   };

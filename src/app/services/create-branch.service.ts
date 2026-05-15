@@ -44,10 +44,10 @@ export class CreateBranchService {
     this.newBranchSha.set(undefined);
     this.name.set('');
     if (!name) return;
-    this.gitApi.git(['branch', name, sha])
+    this.gitApi.gitAction(['branch', name, sha])
       .pipe(
         tap(() => this.popup.success(`Branch "${name}" created`)),
-        switchMap(() => this.gitApi.git(['checkout', name])),
+        switchMap(() => this.gitApi.gitAction(['checkout', name])),
         finalize(this.gitRefresh.doUpdateLogsAndBranches),
       )
       .subscribe();

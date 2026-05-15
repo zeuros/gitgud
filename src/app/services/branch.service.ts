@@ -42,7 +42,7 @@ export class BranchService {
         rejectLabel: 'Cancel',
         accept: () =>
           this.stash.stashAndRun(
-            this.gitApi.git(['checkout', branchName]).pipe(switchMap(() => this.gitApi.git(['reset', '--hard', `origin/${branchName}`]))),
+            this.gitApi.gitAction(['checkout', branchName]).pipe(switchMap(() => this.gitApi.gitAction(['reset', '--hard', `origin/${branchName}`]))),
             false,
           )
             .pipe(finalize(this.gitRefresh.doUpdateLogsAndBranches))
@@ -51,9 +51,9 @@ export class BranchService {
       return;
     }
 
-    this.gitApi.git(['checkout', branchName]).pipe(
+    this.gitApi.gitAction(['checkout', branchName]).pipe(
       // If the branch exists remotely only, we check it out and track it
-      catchError(() => this.gitApi.git(['checkout', '-b', branchName, '--track', `origin/${branchName}`])),
+      catchError(() => this.gitApi.gitAction(['checkout', '-b', branchName, '--track', `origin/${branchName}`])),
       finalize(this.gitRefresh.doUpdateLogsAndBranches)
     ).subscribe();
   };

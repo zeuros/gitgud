@@ -101,7 +101,7 @@ export class RebaseService {
   private rebaseActionsFilePath = () => `${this.currentRepo.cwd()}/.git/rebase-merge/git-rebase-todo`;
 
   abortRebase = () =>
-    this.gitApi.git(['rebase', '--abort']).pipe(catchError(e => {
+    this.gitApi.gitAction(['rebase', '--abort']).pipe(catchError(e => {
       console.error(e);
       return EMPTY;
     }));

@@ -71,8 +71,8 @@ export class UnstagedFileContextMenuService {
 
     const tracked = files.filter(f => f.status.kind !== AppFileStatusKind.Untracked);
     const untracked = files.filter(f => f.status.kind === AppFileStatusKind.Untracked);
-    if (tracked.length) this.gitApi.git(['checkout', '--', ...tracked.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
-    if (untracked.length) this.gitApi.git(['clean', '-f', '--', ...untracked.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    if (tracked.length) this.gitApi.gitAction(['checkout', '--', ...tracked.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    if (untracked.length) this.gitApi.gitAction(['clean', '-f', '--', ...untracked.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
   };
 
   private copyPath = () => {

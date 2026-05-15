@@ -50,7 +50,7 @@ export class StashContextMenuService {
   ]);
 
   private run = (args: (string | undefined)[], successMsg?: string) =>
-    this.gitApi.git(args)
+    this.gitApi.gitAction(args)
       .pipe(switchMap(this.gitRefresh.refreshAll))
       .subscribe(() => successMsg && this.popup.success(successMsg));
 
