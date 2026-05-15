@@ -14,26 +14,6 @@
   border-left: 2px solid var(--warning-text-color);
 }
 
-.merge-editor-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.4rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
-}
-
-.merge-file-name {
-  font-size: 0.9rem;
-  color: var(--warning-text-color);
-  font-weight: 500;
-}
-
-.merge-editor-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 
 .merge-editor-labels {
   display: flex;
