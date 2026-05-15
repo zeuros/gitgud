@@ -34,7 +34,7 @@
 
 $row-height: 34px;
 $row-spacing: 8px;
-$branch-tag-left-margin: 8px;
+$branch-tag-left-margin: 6px;
 
 :host {
   width: 100%;
@@ -166,7 +166,7 @@ $branch-tag-left-margin: 8px;
             opacity: 1;
           }
 
-          .commit-branch {
+          .commit-branch, .commit-tag {
             display: flex;
             max-width: 90%;
             transform: translateY(0) scale(1);
@@ -176,17 +176,7 @@ $branch-tag-left-margin: 8px;
             top: 0;
             padding: 0;
             border-radius: 3px;
-          }
-
-          .commit-tag {
-            cursor: grab;
-            border: 1px solid rgba(180, 140, 30, 0.9);
-            background-color: rgba(120, 90, 10, 0.85);
-
-            .branch-name {
-              font-size: 13px;
-              margin-right: 4px;
-            }
+            height: 28px; // Avoid space between chips, hovering in between them would reach out of td
           }
         }
       }
@@ -360,36 +350,28 @@ $branch-tag-left-margin: 8px;
   }
 }
 
-.draggable-branch, .commit-tag {
+.draggable-branch {
+  border: 1px solid rgba(119, 87, 126, 0.9);
+  background-color: var(--primeng-purple-line);
+  max-width: 100%; // Text ellipsis needs this
   display: flex;
   transition: all 0.2s ease;
   border-radius: 3px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
   padding: 2.5px 4px;
   align-items: center;
-}
-
-.draggable-branch {
-  cursor: grab;
-  border: 1px solid rgba(119, 87, 126, 0.9);
-  background-color: var(--primeng-purple-line);
-  max-width: 100%; // Text ellipsis needs this
 
   .branch-name {
     font-size: 13px;
     margin-right: 4px;
   }
+}
+
+.draggable-branch {
+  cursor: grab;
 
   &.checked-out {
     color: var(--babedouGray);
-  }
-
-  i.with-padding {
-    padding: 0 3px;
-  }
-
-  .float-icons {
-    font-size: 16px;
   }
 }
 
