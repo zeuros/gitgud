@@ -17,8 +17,8 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {type MenuItem, type TreeNode} from 'primeng/api';
-import {first} from 'rxjs';
+import {ConfirmationService, type MenuItem, type TreeNode} from 'primeng/api';
+import {catchError, EMPTY, first} from 'rxjs';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
@@ -38,6 +38,7 @@ export class BranchContextMenuService {
 
   private currentRepo = inject(CurrentRepoStore);
   private popup = inject(PopupService);
+  private confirmation = inject(ConfirmationService);
   private branch = inject(BranchService);
   private gitWorkflow = inject(GitWorkflowService);
   private prompt = inject(PromptService);
@@ -156,10 +157,24 @@ export class BranchContextMenuService {
 
     if (branch.type === BranchType.Remote) {
       this.gitWorkflow.doRunAndRefresh(['push', 'origin', '--delete', normalizedBranchName(branch)], `Deleted remote branch ${branch.name}`, false, false);
-    } else {
-      // TODO: maybe -d and let git warn user about dangerous operations ? Or confirm modal => Commits pointed by this branch will disappear, sure to remove ?
-      this.gitWorkflow.doRunAndRefresh(['branch', '-D', branch.name], `Deleted branch ${branch.name}`, true, false);
+      return;
     }
+
+    this.gitWorkflow.runAndRefresh(['branch', '-d', branch.name], `Deleted branch ${branch.name}`, false, false)
+      .pipe(
+        catchError(() => {
+          this.confirmation.confirm({
+            header: `Force-delete ${branch.name} ?`,
+            message: `Any commits only reachable through this branch will be permanently lost.`,
+            acceptButtonStyleClass: 'p-button-danger',
+            acceptLabel: 'Force Delete',
+            rejectLabel: 'Cancel',
+            accept: () => this.gitWorkflow.doRunAndRefresh(['branch', '-D', branch.name], `Force-deleted branch ${branch.name}`, false, false),
+          });
+          return EMPTY;
+        }),
+      )
+      .subscribe();
   };
 
   private createTagHere = () => this.createTag.createTag(this.name());
