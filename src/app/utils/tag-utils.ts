@@ -12,3 +12,12 @@ export const toLocalAndDistantTagPairs = (localTags: GitTag[], remoteTags: GitTa
 };
 
 export const toLocalAndDistantTagWithName = ([local, distant]: LocalAndDistantTag): LocalAndDistantTagWithName => ({local, distant, name: (local ?? distant)!.name});
+
+export const groupTagsBySha = (tags: LocalAndDistantTag[]): Record<string, LocalAndDistantTag[]> =>
+  tags.reduce((acc, pair) => {
+    const [local, distant] = pair;
+    for (const sha of new Set([local?.sha, distant?.sha].filter(Boolean) as string[])) {
+      (acc[sha] ??= []).push(pair);
+    }
+    return acc;
+  }, {} as Record<string, LocalAndDistantTag[]>);

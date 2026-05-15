@@ -22,7 +22,7 @@ import {GitRepository} from '../models/git-repository';
 import {groupBy, isEqual, mapValues} from 'lodash-es';
 import {logsComparison, shallowArrayEqual} from '../utils/utils';
 import {type LocalAndDistant, toLocalAndDistantPairs} from '../utils/branch-utils';
-import {type LocalAndDistantTag, toLocalAndDistantTagPairs, toLocalAndDistantTagWithName} from '../utils/tag-utils';
+import {groupTagsBySha, type LocalAndDistantTag, toLocalAndDistantTagPairs, toLocalAndDistantTagWithName} from '../utils/tag-utils';
 
 /**
  * Exposes reactive state for the currently selected repository.
@@ -40,7 +40,7 @@ export class CurrentRepoStore {
   remoteTags = computed(() => this.reposStore.selectedRepository()?.remoteTags ?? [], {equal: isEqual});
   allTags = computed(() => toLocalAndDistantTagPairs(this.tags(), this.remoteTags()), {equal: isEqual});
   allTagsWithName = computed(() => this.allTags().map(toLocalAndDistantTagWithName), {equal: isEqual});
-  allTagsBySha = computed<Record<string, LocalAndDistantTag[] | undefined>>(() => groupBy(this.allTags(), ([local, distant]) => (local ?? distant)!.sha), {equal: isEqual});
+  allTagsBySha = computed<Record<string, LocalAndDistantTag[] | undefined>>(() => groupTagsBySha(this.allTags()), {equal: isEqual});
   branches = computed(() => this.reposStore.selectedRepository()?.branches ?? [], {equal: isEqual});
   branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha));
   // Group branches by commit SHA, then pair local/remote branches by normalized name into [local, distant] tuples
