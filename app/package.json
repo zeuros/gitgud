@@ -1,10 +1,12 @@
 {
   "name": "gitgud",
-  "description": "Angular Electron sample",
+  "description": "Get Gud at Git",
   "author": {
     "name": "zeuros"
   },
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "homepage": "https://github.com/zeuros/gitgud",
+  "license": "GPL-3.0-only",
   "main": "main.js",
   "private": true,
   "files": [
