@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
 import {Divider} from 'primeng/divider';
 import {FormBuilder, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
@@ -40,6 +40,7 @@ import {UnstagedFileContextMenuService} from '../../../services/unstaged-file-co
 
 @Component({
   selector: 'gitgud-make-a-commit',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     Divider,
     ReactiveFormsModule,
@@ -63,7 +64,7 @@ export class MakeACommitComponent {
   protected currentRepo = inject(CurrentRepoStore);
   protected unstagedContextMenu = inject(UnstagedFileContextMenuService);
   protected commitForm = inject(FormBuilder).nonNullable.group({summary: '', description: ''});
-  protected amend = false;
+  protected amend = signal(false);
   protected selectedConflictFile = signal<WorkingDirectoryFileChange | null>(null);
   protected selectedUnstagedFiles = signal<WorkingDirectoryFileChange[]>([]);
   protected selectedStagedFiles = signal<WorkingDirectoryFileChange[]>([]);
@@ -78,7 +79,7 @@ export class MakeACommitComponent {
 
   protected commit() {
     const {summary, description} = this.commitForm.value;
-    this.commitService.commit(summary!, description?.length ? description : undefined, this.amend);
+    this.commitService.commit(summary!, description?.length ? description : undefined, this.amend());
   }
 
   protected toggleAmendMode(amend: boolean) {

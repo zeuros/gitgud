@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, effect, inject, signal, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, effect, inject, signal, viewChild} from '@angular/core';
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
@@ -36,6 +36,7 @@ import {short} from '../../../utils/commit-utils';
 
 @Component({
   selector: 'gitgud-commit-infos',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     InputText,
@@ -62,7 +63,7 @@ export class CommitInfosComponent {
   });
   private shaTooltip = viewChild(Tooltip);
   protected editedFiles = signal<ChangeSet | undefined>(undefined);
-  protected initialValue: typeof this.editCommitForm.value = {};
+  protected initialValue = signal<typeof this.editCommitForm.value>({});
   protected directory = directory;
   protected fileName = fileName;
   protected currentRepo = inject(CurrentRepoStore);
@@ -83,27 +84,27 @@ export class CommitInfosComponent {
           summary: selectedCommit.summary,
           description: selectedCommit.body,
         });
-        this.initialValue = this.editCommitForm.value;
+        this.initialValue.set(this.editCommitForm.value);
       } else {
         this.editedFiles.set(undefined);
       }
     });
   }
 
-  protected copyTooltip = 'Copy';
+  protected copyTooltip = signal('Copy');
   protected copyToClipboard = (sha: string) => {
     navigator.clipboard.writeText(sha);
-    this.copyTooltip = 'Copied';
+    this.copyTooltip.set('Copied');
     setTimeout(() => this.shaTooltip()?.show(), 0); // show after deactivate runs (deactivate is triggered when pTooltip gets new value)
   };
 
   protected rewordCommit = () =>
     this.gitWorkflow.rewordCommit(this.editCommitForm.getRawValue())
       .subscribe(() => {
-        this.initialValue = this.editCommitForm.value;
+        this.initialValue.set(this.editCommitForm.value);
         this.popup.success('Commit message updated');
       });
 
-  protected commitFormValueChanged = () => !isEqual(this.editCommitForm.value, this.initialValue)
+  protected commitFormValueChanged = () => !isEqual(this.editCommitForm.value, this.initialValue())
   protected short = short;
 }

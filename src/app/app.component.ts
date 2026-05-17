@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, effect, inject, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, effect, inject, viewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ToastModule} from 'primeng/toast';
 import {ConfirmDialog} from 'primeng/confirmdialog';
@@ -33,6 +33,7 @@ import {FixupService} from './services/fixup.service';
   standalone: true,
   imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, SettingsDialogComponent, ContextMenu],
   selector: 'app-root',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })

@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {ReactiveFormsModule} from '@angular/forms';
 import {CommitInfosComponent} from './commit-infos/commit-infos.component';
 import {MakeACommitComponent} from './make-a-commit/make-a-commit.component';
@@ -26,6 +26,7 @@ import {CommitsFileListInfoComponent} from './commits-file-list-info/commits-fil
 
 @Component({
   selector: 'gitgud-commit-section',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     ReactiveFormsModule,

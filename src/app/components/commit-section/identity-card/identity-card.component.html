@@ -16,8 +16,8 @@
                     [link]="true"
                     size="small"
                     (click)="copyToClipboard(c.parentSHAs[0])"
-                    (mouseout)="copyTooltip = 'Copy'"
-                    [pTooltip]="copyTooltip"
+                    (mouseout)="copyTooltip.set('Copy')"
+                    [pTooltip]="copyTooltip()"
                     [label]="short(c.parentSHAs[0])"
                     tooltipPosition="top"
             />

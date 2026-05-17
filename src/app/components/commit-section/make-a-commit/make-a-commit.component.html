@@ -172,7 +172,7 @@
                             (click)="fixup.openFixupPicker()"/>
                     <label class="flex align-items-center gap-2 cursor-pointer">
                         <span>Amend</span>
-                        <p-checkbox [binary]="true" [(ngModel)]="amend" (onChange)="toggleAmendMode($event.checked)"/>
+                        <p-checkbox [binary]="true" [ngModel]="amend()" (ngModelChange)="amend.set($event)" (onChange)="toggleAmendMode($event.checked)"/>
                     </label>
                 </div>
             </div>
@@ -184,7 +184,7 @@
                         [disabled]="!commitReady(workDirStatus)"
                         class="mt-2"
                         styleClass="w-full border-round-xs"
-                        [label]="amend ? 'Amend last commit' : 'Commit staged changes'"/>
+                        [label]="amend() ? 'Amend last commit' : 'Commit staged changes'"/>
             </form>
         </div>
     </ng-template>

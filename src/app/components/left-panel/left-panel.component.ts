@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
 import {Tree} from 'primeng/tree';
 import {CdkDropList} from '@angular/cdk/drag-drop';
@@ -42,6 +42,7 @@ import {BranchAheadBehindService} from '../../services/branch-ahead-behind.servi
 
 @Component({
   selector: 'gitgud-left-panel',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     Tree,

@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {Button} from 'primeng/button';
 import {Dialog} from 'primeng/dialog';
 import {InputNumber} from 'primeng/inputnumber';
@@ -34,6 +34,7 @@ import {CurrentRepoStore} from '../../../stores/current-repo.store';
 
 @Component({
   selector: 'gitgud-settings-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [Button, Dialog, InputNumber, InputText, Select, FormsModule, Tooltip],
   templateUrl: './settings-dialog.component.html',

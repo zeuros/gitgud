@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type ApplicationConfig, ErrorHandler, MAX_ANIMATION_TIMEOUT, provideZoneChangeDetection} from '@angular/core';
+import {type ApplicationConfig, ErrorHandler, MAX_ANIMATION_TIMEOUT, provideZonelessChangeDetection} from '@angular/core';
 import {provideRouter} from '@angular/router';
 import {routes} from './app.routes';
 import {ConfirmationService, MessageService} from 'primeng/api';
@@ -42,7 +42,7 @@ export const appConfig: ApplicationConfig = {
         },
       },
     }),
-    provideZoneChangeDetection(),
+    provideZonelessChangeDetection(),
     {provide: MAX_ANIMATION_TIMEOUT, useValue: 200}, // Animations last 200ms long max
     {provide: ErrorHandler, useClass: GlobalErrorHandler},
     provideTranslateService({fallbackLang: 'en'}),

@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject, type OnInit, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, type OnInit, signal} from '@angular/core';
 import {FormControl, ReactiveFormsModule} from '@angular/forms';
 import {Button} from 'primeng/button';
 import {Select} from 'primeng/select';
@@ -40,6 +40,7 @@ export const openSetUpstreamDialog = (dialog: DialogService, branchName: string)
 
 @Component({
   selector: 'gitgud-set-upstream-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [ReactiveFormsModule, Button, Select, InputText],
   template: `
