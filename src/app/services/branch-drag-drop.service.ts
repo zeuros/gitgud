@@ -26,14 +26,14 @@ import {isAncestor} from '../utils/log-utils';
 import {ActiveContextMenuService} from './active-context-menu.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 
 @Injectable({providedIn: 'root'})
 export class BranchDragDropService {
   private activeContextMenu = inject(ActiveContextMenuService);
   private gitWorkflow = inject(GitWorkflowService);
   private currentRepo = inject(CurrentRepoStore);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   draggingBranch = signal<Branch | null>(null);
   hoveredBranch = signal<Branch | null>(null);
@@ -165,7 +165,7 @@ export class BranchDragDropService {
   };
 
   private interactiveRebase = () =>
-    this.popup.info('Interactive rebase requires a terminal');
+    this.toast.info('Interactive rebase requires a terminal');
 
   // Remote → Local: push the local target branch to the remote source ref (FF only)
   private fastForwardRemote = () => {

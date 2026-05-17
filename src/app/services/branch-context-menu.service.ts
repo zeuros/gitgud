@@ -23,7 +23,7 @@ import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
 import {GitWorkflowService} from './git-workflow.service';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 import {PromptService} from './prompt.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {EditRemoteComponent} from '../components/dialogs/edit-remote/edit-remote.component';
@@ -37,7 +37,7 @@ import {CreateTagService} from './create-tag.service';
 export class BranchContextMenuService {
 
   private currentRepo = inject(CurrentRepoStore);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
   private confirmation = inject(ConfirmationService);
   private branch = inject(BranchService);
   private gitWorkflow = inject(GitWorkflowService);
@@ -68,7 +68,7 @@ export class BranchContextMenuService {
     if (node.children?.length) {
       const label = node.label ?? '…';
       const count = this.countLeaves(node);
-      return [{label: `Remove ${count} branches in ${label}`, icon: 'fa fa-trash', command: () => this.popup.info(`Remove ${count} branches in ${label}`)}];
+      return [{label: `Remove ${count} branches in ${label}`, icon: 'fa fa-trash', command: () => this.toast.info(`Remove ${count} branches in ${label}`)}];
     }
 
     const name = this.name();
@@ -82,7 +82,7 @@ export class BranchContextMenuService {
       // Integration
       {label: `Merge ${name} into ${head}`, icon: 'fa fa-compress', command: this.mergeBranch},
       {label: `Rebase ${head} onto ${name}`, icon: 'fa fa-code-fork', command: this.rebaseBranch},
-      {label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.popup.info('Interactive rebase requires a terminal')},
+      {label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.toast.info('Interactive rebase requires a terminal')},
       {separator: true},
       // Checkout
       {label: `Checkout ${name}`, icon: 'fa fa-sign-in', command: () => node.data && this.branch.checkoutBranch(node.data)},

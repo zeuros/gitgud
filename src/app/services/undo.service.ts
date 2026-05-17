@@ -20,7 +20,7 @@ import {computed, inject, Injectable, signal} from '@angular/core';
 import {switchMap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 
 type RedoItem = ({type: 'reset'; sha: string} | {type: 'checkout'; branch: string}) & {message: string};
 
@@ -29,7 +29,7 @@ export class UndoService {
 
   private gitApi = inject(GitApiService);
   private gitRefresh = inject(GitRefreshService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   private redoStack = signal<RedoItem[]>([]);
   undoTooltip = signal('Undo last action');
@@ -70,7 +70,7 @@ export class UndoService {
         return this.gitApi.gitAction(['reset', '--soft', 'HEAD@{1}']);
       }),
       switchMap(this.gitRefresh.refreshAll),
-    ).subscribe(() => { this.popup.success('Undone'); this.refreshTooltip(); });
+    ).subscribe(() => { this.toast.success('Undone'); this.refreshTooltip(); });
 
   redo = () => {
     const top = this.redoStack().at(-1);
@@ -80,7 +80,7 @@ export class UndoService {
       ? this.gitApi.gitAction(['checkout', top.branch])
       : this.gitApi.gitAction(['reset', '--soft', top.sha]);
     cmd.pipe(switchMap(this.gitRefresh.refreshAll))
-      .subscribe(() => { this.popup.success('Redone'); this.refreshTooltip(); });
+      .subscribe(() => { this.toast.success('Redone'); this.refreshTooltip(); });
   };
 
 }

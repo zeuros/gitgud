@@ -3,7 +3,7 @@
   <div class="fixup-overlay-mask"></div>
 }
 
-<p-toast/>
+<p-toast position="bottom-center" (click)="dismissToastOnClick($event)"/>
 <p-confirmDialog/>
 <gitgud-settings-dialog/>
 <p-contextMenu #globalMenu [model]="activeContextMenu.contextMenu()" appendTo="body"/>

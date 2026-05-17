@@ -18,7 +18,7 @@
 
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {type MenuItem} from 'primeng/api';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {short} from '../utils/commit-utils';
@@ -32,7 +32,7 @@ import {CreateTagService} from './create-tag.service';
 export class CommitContextMenuService {
 
   private gitWorkflow = inject(GitWorkflowService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
   private currentRepo = inject(CurrentRepoStore);
   private createBranch = inject(CreateBranchService);
   private createTag = inject(CreateTagService);
@@ -114,7 +114,7 @@ export class CommitContextMenuService {
       // We reset the last commit => we just do a reset to previous commit — no rebase needed
       ? this.gitWorkflow.doRunAndRefresh(['reset', '--hard', `${this.sha()}~1`], successMsg, true)
       : this.gitWorkflow.rebaseAndEditActions(this.parentSha(), actions => actions.filter(a => !a.includes(short(this.sha()))))
-        .subscribe(() => this.popup.success(successMsg));
+        .subscribe(() => this.toast.success(successMsg));
   };
 
   protected moveCommit = (direction: 'up' | 'down') => {
@@ -124,7 +124,7 @@ export class CommitContextMenuService {
 
     const swapCommits = (actions: string[]) => this.swapActions(actions, this.sha(), toExchange);
 
-    this.gitWorkflow.rebaseAndEditActions(startRebaseFrom, swapCommits).subscribe(() => this.popup.success(`Moved commit ${direction}`));
+    this.gitWorkflow.rebaseAndEditActions(startRebaseFrom, swapCommits).subscribe(() => this.toast.success(`Moved commit ${direction}`));
   };
 
   private swapActions(actions: string[], shaActionA: string, shaActionB: string) {
@@ -137,7 +137,7 @@ export class CommitContextMenuService {
     return actions;
   }
 
-  private copyCommitSha = () => navigator.clipboard.writeText(this.sha()).then(() => this.popup.success('SHA copied to clipboard'));
+  private copyCommitSha = () => navigator.clipboard.writeText(this.sha()).then(() => this.toast.success('SHA copied to clipboard'));
 
   private createTagHere = () => this.createTag.createTag(this.sha());
 

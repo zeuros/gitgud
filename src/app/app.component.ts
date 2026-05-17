@@ -28,6 +28,7 @@ import {SettingsDialogComponent} from './components/dialogs/settings-dialog/sett
 import {ThemeService} from './services/theme.service'; // bootstraps theme reactivity
 import {ActiveContextMenuService} from './services/active-context-menu.service';
 import {FixupService} from './services/fixup.service';
+import {MessageService} from 'primeng/api';
 
 @Component({
   standalone: true,
@@ -41,6 +42,11 @@ export class AppComponent {
 
   protected activeContextMenu = inject(ActiveContextMenuService);
   protected fixup = inject(FixupService);
+  private messageService = inject(MessageService);
+
+  protected dismissToastOnClick = (event: Event) => {
+    if ((event.target as Element).closest('.p-toast-message')) this.messageService.clear();
+  };
   private gitRepositoryStore = inject(GitRepositoryStore);
   private router = inject(Router);
   private globalMenu = viewChild.required<ContextMenu>('globalMenu');

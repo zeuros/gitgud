@@ -22,7 +22,7 @@ import {WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
 import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-directory.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 import {AppFileStatusKind} from '../lib/github-desktop/model/status';
 import {FileDiffPanelService} from './file-diff-panel.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -33,7 +33,7 @@ export class UnstagedFileContextMenuService {
   private gitApi = inject(GitApiService);
   private gitRefresh = inject(GitRefreshService);
   private currentRepo = inject(CurrentRepoStore);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
   private fileDiffPanel = inject(FileDiffPanelService);
 
   selectedFiles = signal<WorkingDirectoryFileChange[]>([]);
@@ -79,7 +79,7 @@ export class UnstagedFileContextMenuService {
     const file = this.selectedFiles()[0];
     const fullPath = window.electron.path.resolve(this.currentRepo.cwd()!, file.path);
     navigator.clipboard.writeText(fullPath);
-    this.popup.success('Path copied');
+    this.toast.success('Path copied');
   };
 
   private showInFolder = () => {

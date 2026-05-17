@@ -27,7 +27,7 @@ import {Tooltip} from 'primeng/tooltip';
 import {type ChangeSet} from '../../../lib/github-desktop/model/change-set';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
-import {PopupService} from '../../../services/popup.service';
+import {ToastService} from '../../../services/toast.service';
 import {FileDiffService} from '../../../services/file-diff.service';
 import {IdentityCardComponent} from '../identity-card/identity-card.component';
 import {Divider} from 'primeng/divider';
@@ -69,7 +69,7 @@ export class CommitInfosComponent {
   protected currentRepo = inject(CurrentRepoStore);
   private fileDiff = inject(FileDiffService);
   private gitWorkflow = inject(GitWorkflowService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   constructor() {
     effect(() => {
@@ -102,7 +102,7 @@ export class CommitInfosComponent {
     this.gitWorkflow.rewordCommit(this.editCommitForm.getRawValue())
       .subscribe(() => {
         this.initialValue.set(this.editCommitForm.value);
-        this.popup.success('Commit message updated');
+        this.toast.success('Commit message updated');
       });
 
   protected commitFormValueChanged = () => !isEqual(this.editCommitForm.value, this.initialValue())

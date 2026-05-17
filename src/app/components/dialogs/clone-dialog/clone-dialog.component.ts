@@ -25,7 +25,7 @@ import {FloatLabel} from 'primeng/floatlabel';
 import {PrimeTemplate} from 'primeng/api';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRepositoryService} from '../../../services/git-repository.service';
-import {PopupService} from '../../../services/popup.service';
+import {ToastService} from '../../../services/toast.service';
 import {finalize, switchMap} from 'rxjs';
 
 @Component({
@@ -40,7 +40,7 @@ export class CloneDialogComponent {
 
   private gitApi = inject(GitApiService);
   private gitRepository = inject(GitRepositoryService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   protected visible = signal(false);
   protected url = signal('');
@@ -81,7 +81,7 @@ export class CloneDialogComponent {
       )
       .subscribe(() => {
         this.visible.set(false);
-        this.popup.success(`Cloned ${this.repoName()} successfully`);
+        this.toast.success(`Cloned ${this.repoName()} successfully`);
       });
   }
 
@@ -91,7 +91,7 @@ export class CloneDialogComponent {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe(() => {
         this.visible.set(false);
-        this.popup.success(`Opened ${this.repoName()}`);
+        this.toast.success(`Opened ${this.repoName()}`);
       });
   }
 }

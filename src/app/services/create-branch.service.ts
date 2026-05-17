@@ -20,13 +20,13 @@ import {inject, Injectable, signal} from '@angular/core';
 import {finalize, switchMap, tap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 
 @Injectable({providedIn: 'root'})
 export class CreateBranchService {
   private gitApi = inject(GitApiService);
   private gitRefresh = inject(GitRefreshService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   newBranchSha = signal<string | undefined>(undefined);
   name = signal('');
@@ -46,7 +46,7 @@ export class CreateBranchService {
     if (!name) return;
     this.gitApi.gitAction(['branch', name, sha])
       .pipe(
-        tap(() => this.popup.success(`Branch "${name}" created`)),
+        tap(() => this.toast.success(`Branch "${name}" created`)),
         switchMap(() => this.gitApi.gitAction(['checkout', name])),
         finalize(this.gitRefresh.doUpdateLogsAndBranches),
       )
