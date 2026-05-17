@@ -20,7 +20,7 @@ import {inject, Injectable, signal} from '@angular/core';
 import {switchMap, tap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitWorkflowService} from './git-workflow.service';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {short} from '../utils/commit-utils';
 
@@ -28,7 +28,7 @@ import {short} from '../utils/commit-utils';
 export class FixupService {
   private gitApi = inject(GitApiService);
   private gitWorkflow = inject(GitWorkflowService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   selectingFixupTarget = signal(false);
 
@@ -44,6 +44,6 @@ export class FixupService {
   fixupFromStagedChanges = (commit: DisplayRef) =>
     this.gitApi.gitAction(['commit', '--fixup', commit.sha]).pipe(
       switchMap(() => this.gitWorkflow.rebaseAndEditActions(`${commit.sha}~1`, a => a, true)),
-      tap(() => this.popup.success(`Fixup squashed into ${short(commit.sha)}: ${commit.summary}`)),
+      tap(() => this.toast.success(`Fixup squashed into ${short(commit.sha)}: ${commit.summary}`)),
     );
 }

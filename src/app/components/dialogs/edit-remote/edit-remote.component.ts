@@ -24,7 +24,7 @@ import {InputText} from 'primeng/inputtext';
 import {DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
-import {PopupService} from '../../../services/popup.service';
+import {ToastService} from '../../../services/toast.service';
 
 @Component({
   selector: 'gitgud-edit-remote',
@@ -46,7 +46,7 @@ export class EditRemoteComponent implements OnInit {
   private config = inject(DynamicDialogConfig);
   private gitApi = inject(GitApiService);
   private gitWorkflow = inject(GitWorkflowService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   private remoteName = this.config.data.remoteName;
   protected urlInput = new FormControl('', {nonNullable: true});
@@ -59,14 +59,14 @@ export class EditRemoteComponent implements OnInit {
   protected confirm = () =>
     this.gitApi.git(['remote', 'get-url', this.remoteName]).pipe(
       catchError(() => {
-        this.popup.err(`Remote "${this.remoteName}" does not exist`);
+        this.toast.err(`Remote "${this.remoteName}" does not exist`);
         return EMPTY;
       }),
       switchMap(() => this.gitWorkflow.runAndRefresh(['remote', 'set-url', this.remoteName, this.urlInput.value])),
       tap(() => this.ref.close()),
       switchMap(() => this.gitWorkflow.runAndRefresh(['fetch', this.remoteName])),
-      catchError(e => { this.popup.err(e); return EMPTY; }),
-    ).subscribe(() => this.popup.success(`Remote ${this.remoteName} updated and reachable`));
+      catchError(e => { this.toast.err(e); return EMPTY; }),
+    ).subscribe(() => this.toast.success(`Remote ${this.remoteName} updated and reachable`));
 
   protected cancel = () => this.ref.close();
 }

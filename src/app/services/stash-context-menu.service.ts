@@ -20,7 +20,7 @@ import {computed, inject, Injectable, signal} from '@angular/core';
 import {type MenuItem} from 'primeng/api';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 import {switchMap} from 'rxjs';
 import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 
@@ -29,7 +29,7 @@ export class StashContextMenuService {
 
   private gitApi = inject(GitApiService);
   private gitRefresh = inject(GitRefreshService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   selectedCommit = signal<DisplayRef | undefined>(undefined);
   private sha = computed(() => this.selectedCommit()!.sha);
@@ -52,7 +52,7 @@ export class StashContextMenuService {
   private run = (args: (string | undefined)[], successMsg?: string) =>
     this.gitApi.gitAction(args)
       .pipe(switchMap(this.gitRefresh.refreshAll))
-      .subscribe(() => successMsg && this.popup.success(successMsg));
+      .subscribe(() => successMsg && this.toast.success(successMsg));
 
   private stashSummary = computed(() => this.selectedCommit()?.summary ?? this.stashRef());
 
@@ -67,6 +67,6 @@ export class StashContextMenuService {
 
   private copyCommitSha = () => {
     navigator.clipboard.writeText(this.sha());
-    this.popup.success('SHA copied to clipboard');
+    this.toast.success('SHA copied to clipboard');
   };
 }

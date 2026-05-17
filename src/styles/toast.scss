@@ -1,0 +1,33 @@
+.p-toast {
+  width: auto;
+  min-width: 260px;
+  max-width: 440px;
+}
+
+.p-toast-message {
+  cursor: pointer;
+}
+
+.p-toast-message-content {
+  align-items: center !important;
+}
+
+.p-toast-close-button {
+  margin: 0;
+}
+
+.p-toast-message-text {
+  max-width: 25vw;
+}
+
+.p-toast-summary {
+  display: none !important;
+}
+
+.p-toast-detail {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

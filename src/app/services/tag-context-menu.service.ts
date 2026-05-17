@@ -21,7 +21,7 @@ import {type MenuItem} from 'primeng/api';
 import {first, switchMap} from 'rxjs';
 import {type LocalAndDistantTagWithName} from '../utils/tag-utils';
 import {GitWorkflowService} from './git-workflow.service';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 import {PromptService} from './prompt.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
@@ -30,7 +30,7 @@ import {notUndefined} from '../utils/utils';
 export class TagContextMenuService {
 
   private gitWorkflow = inject(GitWorkflowService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
   private prompt = inject(PromptService);
   private currentRepo = inject(CurrentRepoStore);
 
@@ -76,7 +76,7 @@ export class TagContextMenuService {
     this.gitWorkflow.doRunAndRefresh(['push', 'origin', '--delete', this.name()!], `Deleted tag ${this.name()} from origin`);
 
   private copyTagName = () =>
-    navigator.clipboard.writeText(this.name()!).then(() => this.popup.success('Tag name copied to clipboard'));
+    navigator.clipboard.writeText(this.name()!).then(() => this.toast.success('Tag name copied to clipboard'));
 
   // Converts lightweight tag to annotated, or updates existing annotation message
   private annotateTag = () =>

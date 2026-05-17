@@ -19,7 +19,7 @@
 import {inject, Injectable} from '@angular/core';
 import {catchError, finalize, map, switchMap, tap, throwError} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
-import {PopupService} from './popup.service';
+import {ToastService} from './toast.service';
 import {StashService} from './stash.service';
 import {RebaseService} from './rebase.service';
 import {GitRefreshService} from './git-refresh.service';
@@ -34,7 +34,7 @@ export class GitWorkflowService {
   private gitApi = inject(GitApiService);
   private stash = inject(StashService);
   private rebase = inject(RebaseService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
   private gitRefresh = inject(GitRefreshService);
   private currentRepo = inject(CurrentRepoStore);
 
@@ -64,7 +64,7 @@ export class GitWorkflowService {
     const action$ = this.gitApi.gitAction(args)
       .pipe(
         finalize(this.gitRefresh.doRefreshAll),
-        tap(() => successMsg && this.popup.success(successMsg)),
+        tap(() => successMsg && this.toast.success(successMsg)),
       );
 
     return stashBefore ? this.stash.stashAndRun(action$, thenUnstash) : action$;
@@ -78,7 +78,7 @@ export class GitWorkflowService {
     const action$ = this.gitApi.gitAction(['checkout', branchName]).pipe(
       switchMap(() => this.gitApi.gitAction(args)),
       finalize(this.gitRefresh.doRefreshAll),
-      tap(() => msg && this.popup.success(msg)),
+      tap(() => msg && this.toast.success(msg)),
     );
     this.stash.stashAndRun(action$, thenUnstash).subscribe();
   };

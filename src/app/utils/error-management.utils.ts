@@ -17,17 +17,17 @@
  */
 
 import {ErrorHandler, inject} from '@angular/core';
-import {PopupService} from '../services/popup.service';
+import {ToastService} from '../services/toast.service';
 
 export class GlobalErrorHandler implements ErrorHandler {
 
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   handleError(error: unknown): void {
     console.error('[GlobalErrorHandler]', error);
 
     if (error instanceof Error) {
-      this.popup.err(error.message);
+      this.toast.err(error.message);
     }
   }
 }

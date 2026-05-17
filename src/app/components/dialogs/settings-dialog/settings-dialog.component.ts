@@ -29,7 +29,7 @@ import {ThemeService} from '../../../services/theme.service';
 import {catchError, forkJoin, of, throwError} from 'rxjs';
 import {Tooltip} from 'primeng/tooltip';
 import {emptyStringOnFail} from '../../../utils/utils';
-import {PopupService} from '../../../services/popup.service';
+import {ToastService} from '../../../services/toast.service';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 
 @Component({
@@ -44,7 +44,7 @@ export class SettingsDialogComponent {
 
   private gitApi = inject(GitApiService);
   private currentRepo = inject(CurrentRepoStore);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
 
   protected settings = inject(SettingsService);
   protected theme = inject(ThemeService);
@@ -111,7 +111,7 @@ export class SettingsDialogComponent {
     const v = this.localUserName().trim();
     const args = v ? ['config', '--local', 'user.name', v] : ['config', '--local', '--unset', 'user.name'];
     this.gitApi.gitAction(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
-      .subscribe({error: e => this.popup.err(`Failed to set local user name: ${e?.message ?? e}`)});
+      .subscribe({error: e => this.toast.err(`Failed to set local user name: ${e?.message ?? e}`)});
   }
 
   protected saveLocalEmail() {
@@ -119,7 +119,7 @@ export class SettingsDialogComponent {
     const v = this.localUserEmail().trim();
     const args = v ? ['config', '--local', 'user.email', v] : ['config', '--local', '--unset', 'user.email'];
     this.gitApi.gitAction(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
-      .subscribe({error: e => this.popup.err(`Failed to set local email: ${e?.message ?? e}`)});
+      .subscribe({error: e => this.toast.err(`Failed to set local email: ${e?.message ?? e}`)});
   }
 
   private checkGitPathIsValid(candidate: string) {
@@ -133,7 +133,7 @@ export class SettingsDialogComponent {
       error: () => {
         this.settings.gitBin = previous;
         this.pendingGitPath.set(previous);
-        this.popup.err('The entered path does not appear to be a valid git executable.');
+        this.toast.err('The entered path does not appear to be a valid git executable.');
       },
     });
   }

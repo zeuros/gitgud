@@ -26,7 +26,7 @@ import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
-import {PopupService} from '../../services/popup.service';
+import {ToastService} from '../../services/toast.service';
 import {PrimeTemplate} from 'primeng/api';
 import {AutoFetchService} from '../../services/auto-fetch.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
@@ -68,7 +68,7 @@ export class ToolbarComponent implements OnInit {
   private gitApi = inject(GitApiService);
   private branchAheadBehind = inject(BranchAheadBehindService);
   protected gitRefresh = inject(GitRefreshService);
-  private popup = inject(PopupService);
+  private toast = inject(ToastService);
   private rebase = inject(RebaseService);
   private dialog = inject(DialogService);
   private settingsDialog = viewChild.required(SettingsDialogComponent);
@@ -95,7 +95,7 @@ export class ToolbarComponent implements OnInit {
       switchMap(this.gitRefresh.refreshAll),
       finalize(() => this.loading.set(undefined)),
     ).subscribe(() => {
-      this.popup.success('Pushed successfully');
+      this.toast.success('Pushed successfully');
       this.undo.clearRedoStack();
     });
   };
@@ -105,7 +105,7 @@ export class ToolbarComponent implements OnInit {
     this.gitApi.gitAction(['pull'])
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => {
-        this.popup.success('Pulled successfully');
+        this.toast.success('Pulled successfully');
         this.undo.clearRedoStack();
         this.undo.refreshTooltip();
       });
@@ -115,14 +115,14 @@ export class ToolbarComponent implements OnInit {
     this.loading.set('stash');
     this.gitApi.gitAction(['stash', '-u'])
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => this.popup.success('Stashed successfully'));
+      .subscribe(() => this.toast.success('Stashed successfully'));
   };
 
   protected pop = () => {
     this.loading.set('pop');
     this.gitApi.gitAction(['stash', 'pop'])
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => this.popup.success('Stash popped successfully'));
+      .subscribe(() => this.toast.success('Stash popped successfully'));
   };
 
   protected fetch = () => {
@@ -137,7 +137,7 @@ export class ToolbarComponent implements OnInit {
     this.gitApi.gitAction(['rebase', '--continue']).pipe(
       switchMap(this.gitRefresh.refreshAll),
       finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
-    ).subscribe(() => this.popup.success('Rebase continued'));
+    ).subscribe(() => this.toast.success('Rebase continued'));
   };
 
   protected abortRebase = () => {
@@ -145,7 +145,7 @@ export class ToolbarComponent implements OnInit {
     this.rebase.abortRebase().pipe(
       switchMap(this.gitRefresh.refreshAll),
       finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
-    ).subscribe(() => this.popup.success('Rebase aborted'));
+    ).subscribe(() => this.toast.success('Rebase aborted'));
   };
 
   // Returns false when there is no upstream or the upstream branch name differs from the local branch name.
@@ -198,6 +198,6 @@ export class ToolbarComponent implements OnInit {
 
   protected copyBtcAddress = () =>
     navigator.clipboard.writeText('bc1q6kpuaygvp2a0mnv6n74jg4dlcggw35llynm3p9')
-      .then(() => this.popup.success('BTC address copied to clipboard'));
+      .then(() => this.toast.success('BTC address copied to clipboard'));
 
 }

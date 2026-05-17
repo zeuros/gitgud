@@ -25,7 +25,7 @@ const defaultMessageConfig: ToastMessageOptions = {styleClass: 'headLess', text:
 @Injectable({
   providedIn: 'root',
 })
-export class PopupService {
+export class ToastService {
 
   private message = inject(MessageService);
 
