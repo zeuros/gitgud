@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject, input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, input} from '@angular/core';
 import {directory, fileName} from '../../../utils/utils';
 import {FormsModule} from '@angular/forms';
 import {Listbox} from 'primeng/listbox';
@@ -25,6 +25,7 @@ import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 
 @Component({
   selector: 'gitgud-commit-file-list',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [Listbox, FormsModule],
   template: `

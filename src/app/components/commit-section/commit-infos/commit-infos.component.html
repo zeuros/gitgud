@@ -8,8 +8,8 @@
                 [link]="true"
                 size="small"
                 (click)="copyToClipboard(selectedStash.parentSHAs[1])"
-                (mouseout)="copyTooltip = 'Copy'"
-                [pTooltip]="copyTooltip"
+                (mouseout)="copyTooltip.set('Copy')"
+                [pTooltip]="copyTooltip()"
                 [label]="short(selectedStash.parentSHAs[1])"
                 tooltipPosition="top"
         />
@@ -28,8 +28,8 @@
                 [link]="true"
                 size="small"
                 (click)="copyToClipboard(selectedCommit.sha)"
-                (mouseout)="copyTooltip = 'Copy'"
-                [pTooltip]="copyTooltip"
+                (mouseout)="copyTooltip.set('Copy')"
+                [pTooltip]="copyTooltip()"
                 [label]="selectedCommit.shortSha"
                 tooltipPosition="top"
         />

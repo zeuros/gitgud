@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
 import {Dialog} from 'primeng/dialog';
 import {Button} from 'primeng/button';
 import {PrimeTemplate} from 'primeng/api';
@@ -25,6 +25,7 @@ import {GitCommandHistoryService} from '../../../services/git-command-history.se
 
 @Component({
   selector: 'gitgud-shell-history-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [Dialog, Button, PrimeTemplate, DatePipe],
   templateUrl: './shell-history-dialog.component.html',

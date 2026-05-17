@@ -9,7 +9,7 @@
 @let graphColCount = graphColumnCount();
 @let visibleCommitsCnt = visibleCommitsCount();
 
-@if (showSearchBar) {
+@if (showSearchBar()) {
     <gitgud-search-logs (searchChange)="search($event)"/>
 }
 @if (graphColCount && visibleCommitsCnt && visibleCommitsCnt > 0) {

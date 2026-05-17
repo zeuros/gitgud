@@ -27,7 +27,7 @@ import {commitColor, hasName, isCommit, isIndex, isStash} from '../../utils/comm
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
 import {DragDropModule} from '@angular/cdk/drag-drop';
-import {afterNextRender, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild} from '@angular/core';
+import {afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
 import {DatePipe} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
@@ -59,6 +59,7 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
 
 @Component({
   selector: 'gitgud-logs',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   host: {'[class.fixup-selection-mode]': 'fixup.selectingFixupTarget()'},
   imports: [
@@ -101,7 +102,7 @@ export class LogsComponent {
     return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
   });
 
-  protected showSearchBar = false;
+  protected showSearchBar = signal(false);
   protected graphColumnCount = signal(0);
   protected untrackedStashes = signal<string[]>([]); // Unused (edge case)
   protected computedDisplayLog = signal<DisplayRef[]>([]); // Commits ready for display
@@ -206,12 +207,12 @@ export class LogsComponent {
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent({ctrlKey, code}: KeyboardEvent) {
     if (ctrlKey && code == 'KeyF') {
-      this.showSearchBar = true;
+      this.showSearchBar.set(true);
     } else if (code == 'Escape') {
       if (this.fixup.selectingFixupTarget()) {
         this.fixup.cancelFixupSelection();
       } else {
-        this.showSearchBar = false;
+        this.showSearchBar.set(false);
         this.search('');
       }
     }

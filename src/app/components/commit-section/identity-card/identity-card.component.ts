@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, input, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, input, signal, viewChild} from '@angular/core';
 import {DATE_FORMAT} from '../../../utils/constants';
 import {Commit} from '../../../lib/github-desktop/model/commit';
 import {Tooltip} from 'primeng/tooltip';
@@ -27,6 +27,7 @@ import {short} from '../../../utils/commit-utils';
 
 @Component({
   selector: 'gitgud-identity-card',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     Tooltip,
     AvatarComponent,
@@ -43,11 +44,11 @@ export class IdentityCardComponent {
   commit = input.required<Commit>();
   showParent = input(false);
 
-  protected copyTooltip = 'Copy';
+  protected copyTooltip = signal('Copy');
 
   protected copyToClipboard = (sha: string) => {
     navigator.clipboard.writeText(sha);
-    this.copyTooltip = 'Copied';
+    this.copyTooltip.set('Copied');
     setTimeout(() => this.shaTooltip()?.show(), 0);
   };
 

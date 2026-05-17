@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, NgZone, type OnDestroy, signal, ViewChild} from '@angular/core';
+import {type AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, type OnDestroy, signal, ViewChild} from '@angular/core';
 import {CommittedFileChange, FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {editor, Uri} from 'monaco-editor';
 import {FileDiffService} from '../../services/file-diff.service';
@@ -60,8 +60,6 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   protected fileDiffPanel = inject(FileDiffPanelService);
   private fileDiff = inject(FileDiffService);
   private hunkActions = inject(MonacoDiffRightClickActionsService);
-  private ngZone = inject(NgZone);
-
   protected viewOptions = Object.entries({
     hunk:   {label: 'Hunk',   icon: 'fa fa-list'},
     inline: {label: 'Inline', icon: 'fa fa-align-left'},
@@ -137,12 +135,12 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       const diffEditor = this.diffEditor();
 
       if (diffEditor) {
-        this.ngZone.runOutsideAngular(() => diffEditor.editor.updateOptions({
+        diffEditor.editor.updateOptions({
           renderSideBySide: viewType === 'split',
           hideUnchangedRegions: viewType === 'hunk'
             ? {enabled: true, revealLineCount: 15, minimumLineCount: 5, contextLineCount: 3}
             : {enabled: false},
-        } as IEditorOptions));
+        } as IEditorOptions);
       }
     });
 
@@ -150,17 +148,15 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       const models = this.diffModels();
       if (models && this.diffEditor())
-        this.ngZone.runOutsideAngular(() => this.updateDiffEditor(models!));
+        this.updateDiffEditor(models!);
     });
   }
 
   ngAfterViewInit(): void {
     if (this.diffEditorContainer) {
-      this.ngZone.runOutsideAngular(() => {
-        const diffEditorEditor = editor.createDiffEditor(this.diffEditorContainer!.nativeElement, this.editorOptions);
-        this.diffEditor.set({editor: diffEditorEditor, contextMenuUpdater: this.hunkActions.registerEditorRightClick(diffEditorEditor)});
-        diffEditorEditor.onDidUpdateDiff(this.clearEditorWhenNoChangesToDisplay(diffEditorEditor));
-      });
+      const diffEditorEditor = editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions);
+      this.diffEditor.set({editor: diffEditorEditor, contextMenuUpdater: this.hunkActions.registerEditorRightClick(diffEditorEditor)});
+      diffEditorEditor.onDidUpdateDiff(this.clearEditorWhenNoChangesToDisplay(diffEditorEditor));
     }
   }
 
@@ -180,7 +176,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     const changes = diffEditorEditor.getLineChanges();
     if (this.currentFile() && changes !== null && changes.length === 0) {
       this.diffEditor()?.editor.dispose();
-      this.ngZone.run(() => this.fileDiffPanel.closeDiffView());
+      this.fileDiffPanel.closeDiffView();
     }
   };
 

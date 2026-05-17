@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject, type OnInit, signal, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, type OnInit, signal, viewChild} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {catchError, EMPTY, finalize, interval, map, of, switchMap} from 'rxjs';
 import {Button} from 'primeng/button';
@@ -46,6 +46,7 @@ import {RebaseService} from '../../services/rebase.service';
 
 @Component({
   selector: 'gitgud-toolbar',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, CloneDialogComponent, ShellHistoryDialogComponent, SettingsDialogComponent],
   templateUrl: './toolbar.component.html',

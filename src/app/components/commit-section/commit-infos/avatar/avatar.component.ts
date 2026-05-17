@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject, input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, input} from '@angular/core';
 import {CommitIdentity} from '../../../../lib/github-desktop/model/commit-identity';
 import {IdenticonPipe} from '../../../../services/identicon-pipe.service';
 import {AvatarService} from './avatar.service';
@@ -24,6 +24,7 @@ import {AsyncPipe} from '@angular/common';
 
 @Component({
   selector: 'gitgud-avatar',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IdenticonPipe, AsyncPipe],
   templateUrl: './avatar.component.html',
   styleUrl: './avatar.component.scss',

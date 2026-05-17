@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, computed, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {Button} from 'primeng/button';
 import {Dialog} from 'primeng/dialog';
@@ -30,6 +30,7 @@ import {finalize, switchMap} from 'rxjs';
 
 @Component({
   selector: 'gitgud-clone-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [Button, Dialog, InputText, FloatLabel, FormsModule, PrimeTemplate],
   templateUrl: './clone-dialog.component.html',

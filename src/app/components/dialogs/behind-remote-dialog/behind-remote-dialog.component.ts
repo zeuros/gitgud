@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {Button} from 'primeng/button';
 import {DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 
@@ -24,6 +24,7 @@ export type BehindRemoteAction = 'pull' | 'merge' | 'rebase' | 'force-push' | nu
 
 @Component({
   selector: 'gitgud-behind-remote-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [Button],
   template: `

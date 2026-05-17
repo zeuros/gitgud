@@ -16,11 +16,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, output} from '@angular/core';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 
 @Component({
   selector: 'gitgud-search-logs',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [AutofocusDirective],
   templateUrl: './search-logs.component.html',

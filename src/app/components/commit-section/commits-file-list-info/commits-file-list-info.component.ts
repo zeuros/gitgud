@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, effect, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, effect, inject, signal} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {directory, fileName} from '../../../utils/utils';
 import {type ChangeSet} from '../../../lib/github-desktop/model/change-set';
@@ -28,6 +28,7 @@ import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
 
 @Component({
   selector: 'gitgud-commits-file-list-info',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     FormsModule,

@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, effect, ElementRef, inject, signal, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, effect, ElementRef, inject, signal, viewChild} from '@angular/core';
 import {LeftPanelComponent} from '../left-panel/left-panel.component';
 import {SplitterModule} from 'primeng/splitter';
 import {CommitSectionComponent} from '../commit-section/commit-section.component';
@@ -29,6 +29,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 @Component({
   selector: 'gitgud-repository-view',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [LeftPanelComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe, MonacoEditorViewComponent, MergeEditorComponent],
   templateUrl: './repository-view.component.html',

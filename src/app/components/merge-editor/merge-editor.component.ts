@@ -18,7 +18,7 @@
 
 import '@mismerge/core/web';
 
-import {Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, HostListener, inject, signal, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, HostListener, inject, signal, viewChild} from '@angular/core';
 import {Button} from 'primeng/button';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
@@ -45,6 +45,7 @@ type HighlightFn = (text: string) => string | Promise<string>;
 
 @Component({
   selector: 'gitgud-merge-editor',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [Button],

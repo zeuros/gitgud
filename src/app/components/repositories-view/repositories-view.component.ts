@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
 import {Button} from 'primeng/button';
 import {RepositoryViewComponent} from '../repository-view/repository-view.component';
@@ -42,6 +42,7 @@ import {GitRefreshService} from '../../services/git-refresh.service';
   ],
   templateUrl: './repositories-view.component.html',
   styleUrl: './repositories-view.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'fill-height',
   },
