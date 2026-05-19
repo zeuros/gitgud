@@ -41,6 +41,15 @@ app-root {
   width: unset; // Removes default primeng context menu width at 12.5em
 }
 
+.tooltip-fit-contents {
+  max-width: none;
+
+  .p-tooltip-text {
+    max-width: none;
+    white-space: nowrap;
+  }
+}
+
 .pointer {
   cursor: pointer;
 }
