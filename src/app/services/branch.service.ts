@@ -30,6 +30,7 @@ export class BranchService {
         header: 'Branches have diverged',
         width: '480px',
         modal: true,
+        dismissableMask: true,
         data: {localBranch: branchName, remoteBranch: branch.name},
       })?.onClose.pipe(
         switchMap((action: DivergedBranchAction) => {

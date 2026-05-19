@@ -184,6 +184,7 @@ export class BranchContextMenuService {
       header: `Edit remote: ${remoteName}`,
       width: '450px',
       modal: true,
+      dismissableMask: true,
       data: {remoteName},
     })?.onClose.subscribe(() => this.dialog.dialogComponentRefMap.clear());
 }
