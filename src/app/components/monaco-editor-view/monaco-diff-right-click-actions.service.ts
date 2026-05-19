@@ -22,6 +22,7 @@ import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
 import {idsToHide} from '../../utils/diff-editor.utils';
 import {buildZeroContextPatch} from './monaco-patch-builder';
+import {isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import ILineChange = editor.ILineChange;
@@ -43,6 +44,8 @@ export class MonacoDiffRightClickActionsService {
     const isStagedMod = diffEditor.getModifiedEditor().createContextKey<boolean>('isFileStaged', false);
     const isSingleLineOrig = diffEditor.getOriginalEditor().createContextKey<boolean>('isSingleLine', false);
     const isSingleLineMod = diffEditor.getModifiedEditor().createContextKey<boolean>('isSingleLine', false);
+    const isWorkingDirOrig = diffEditor.getOriginalEditor().createContextKey<boolean>('isWorkingDirFile', false);
+    const isWorkingDirMod = diffEditor.getModifiedEditor().createContextKey<boolean>('isWorkingDirFile', false);
 
     diffEditor.getOriginalEditor().onDidChangeCursorSelection(({selection}) =>
       isSingleLineOrig.set(selection.startLineNumber === selection.endLineNumber));
@@ -73,20 +76,22 @@ export class MonacoDiffRightClickActionsService {
     };
 
     for (const ed of [diffEditor.getOriginalEditor(), diffEditor.getModifiedEditor()]) {
-      ed.addAction({id: 'stage-line',     label: 'Stage this line',   contextMenuGroupId: 'modification', contextMenuOrder: 0.5, precondition: '!isFileStaged && isSingleLine',  run: stageLines(true)});
-      ed.addAction({id: 'stage-lines',    label: 'Stage lines',       contextMenuGroupId: 'modification', contextMenuOrder: 1,   precondition: '!isFileStaged && !isSingleLine', run: stageLines(true)});
-      ed.addAction({id: 'unstage-line',   label: 'Unstage this line', contextMenuGroupId: 'modification', contextMenuOrder: 0.5, precondition: 'isFileStaged && isSingleLine',   run: stageLines(false)});
-      ed.addAction({id: 'unstage-lines',  label: 'Unstage lines',     contextMenuGroupId: 'modification', contextMenuOrder: 1,   precondition: 'isFileStaged && !isSingleLine',  run: stageLines(false)});
-      ed.addAction({id: 'discard-line',   label: 'Discard this line', contextMenuGroupId: 'modification', contextMenuOrder: 1.5, precondition: '!isFileStaged && isSingleLine',  run: discardLine});
-      ed.addAction({id: 'discard-lines',  label: 'Discard lines',     contextMenuGroupId: 'modification', contextMenuOrder: 1.5, precondition: '!isFileStaged && !isSingleLine', run: discardLine});
+      ed.addAction({id: 'stage-line',     label: 'Stage this line',   contextMenuGroupId: 'modification', contextMenuOrder: 0.5, precondition: 'isWorkingDirFile && !isFileStaged && isSingleLine',  run: stageLines(true)});
+      ed.addAction({id: 'stage-lines',    label: 'Stage lines',       contextMenuGroupId: 'modification', contextMenuOrder: 1,   precondition: 'isWorkingDirFile && !isFileStaged && !isSingleLine', run: stageLines(true)});
+      ed.addAction({id: 'unstage-line',   label: 'Unstage this line', contextMenuGroupId: 'modification', contextMenuOrder: 0.5, precondition: 'isWorkingDirFile && isFileStaged && isSingleLine',   run: stageLines(false)});
+      ed.addAction({id: 'unstage-lines',  label: 'Unstage lines',     contextMenuGroupId: 'modification', contextMenuOrder: 1,   precondition: 'isWorkingDirFile && isFileStaged && !isSingleLine',  run: stageLines(false)});
+      ed.addAction({id: 'discard-line',   label: 'Discard this line', contextMenuGroupId: 'modification', contextMenuOrder: 1.5, precondition: 'isWorkingDirFile && !isFileStaged && isSingleLine',  run: discardLine});
+      ed.addAction({id: 'discard-lines',  label: 'Discard lines',     contextMenuGroupId: 'modification', contextMenuOrder: 1.5, precondition: 'isWorkingDirFile && !isFileStaged && !isSingleLine', run: discardLine});
       this.removeDefaultContextMenuActions(ed);
     }
 
     // Returned updater — call whenever the selected file changes
     return (file: WorkingDirectoryFileChange): void => {
       currentFile = file;
-      isStagedOrig.set(file.staged ?? false);
-      isStagedMod.set(file.staged ?? false);
+      isWorkingDirOrig.set(isWorkingDirectoryFileChange(file));
+      isWorkingDirMod.set(isWorkingDirectoryFileChange(file));
+      isStagedOrig.set(file?.staged ?? false);
+      isStagedMod.set(file?.staged ?? false);
     };
   };
 
