@@ -10,6 +10,7 @@
   "license": "GPL-3.0-only",
   "private": true,
   "scripts": {
+    "version": "node -e \"const fs=require('fs'),p=require('./app/package.json');p.version=process.env.npm_new_version;fs.writeFileSync('./app/package.json',JSON.stringify(p,null,2)+'\\n')\" && git add app/package.json",
     "postinstall": "electron-builder install-app-deps",
 
     "start": "npm-run-all -p electron:serve ng:serve",
