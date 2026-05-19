@@ -169,6 +169,7 @@ export class ToolbarComponent implements OnInit {
       header: diverged ? 'Branches have diverged' : 'Branch is behind remote',
       width: '600px',
       modal: true,
+      dismissableMask: true,
       data: {localRef: branch.ref, remoteRef: `refs/remotes/${branch.upstream}`, diverged},
     })!.onClose.pipe(
       switchMap((action: BehindRemoteAction) => {

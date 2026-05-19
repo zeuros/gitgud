@@ -31,6 +31,7 @@ export class PromptService {
       header: label,
       width: '400px',
       modal: true,
+      dismissableMask: true,
       data: {label, required},
     })!.onClose.pipe(map((r?: string) => r?.trim().length ? r : null), tap(this.closeAll));
 

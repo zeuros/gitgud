@@ -35,6 +35,7 @@ export const openSetUpstreamDialog = (dialog: DialogService, branchName: string)
     header: `Set upstream for "${branchName}"`,
     width: '500px',
     modal: true,
+    dismissableMask: true,
     data: {branchName},
   })!.onClose
 
