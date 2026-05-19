@@ -12,14 +12,19 @@
   "scripts": {
     "version": "node -e \"const fs=require('fs'),p=require('./app/package.json');p.version=process.env.npm_new_version;fs.writeFileSync('./app/package.json',JSON.stringify(p,null,2)+'\\n')\" && git add app/package.json",
     "postinstall": "electron-builder install-app-deps",
+
     "start": "npm-run-all -p electron:serve ng:serve",
     "electron:serve": "wait-on tcp:4200 && npm run build:electron && electron . --serve",
     "ng:serve": "node --max-old-space-size=4096 ./node_modules/@angular/cli/bin/ng serve -c dev",
     "build:prod": "npm run build:electron && npm run build:angular -c production",
     "build:angular": "ng build --base-href ./",
     "build:electron": "tsc -p tsconfig.serve.json",
+
     "build:preview": "npm run build:prod && electron-builder --dir && npm run preview",
-    "preview": "node scripts/preview.js"
+    "preview": "node scripts/preview.js",
+
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@angular/animations": "^21.2.12",
@@ -72,6 +77,7 @@
     "npm-run-all": "4.1.5",
     "style-loader": "^4.0.0",
     "typescript": "~5.9.3",
+    "vitest": "^4.1.6",
     "wait-on": "9.0.5"
   },
   "build": {

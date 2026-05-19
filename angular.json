@@ -100,6 +100,14 @@
             "buildTarget": "angular-electron:build"
           }
         },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "runner": "vitest",
+            "runnerConfig": true,
+            "tsConfig": "tsconfig.spec.json"
+          }
+        },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
