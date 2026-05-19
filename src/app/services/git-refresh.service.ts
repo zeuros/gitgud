@@ -29,6 +29,7 @@ import {GitRepositoryStore} from '../stores/git-repos.store';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {FileWatcherService} from './file-watcher.service';
 import {parseWorkingDirChanges} from '../lib/github-desktop/commit-files-changes';
+import {FileDiffPanelService} from './file-diff-panel.service';
 
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 
@@ -45,6 +46,7 @@ export class GitRefreshService {
   private gitApi = inject(GitApiService);
   private currentRepo = inject(CurrentRepoStore);
   private fileWatcher = inject(FileWatcherService);
+  private fileDiffPanel = inject(FileDiffPanelService);
   private destroyRef = inject(DestroyRef);
 
   private _active = signal(0);
@@ -101,6 +103,7 @@ export class GitRefreshService {
       .pipe(
         map(parseWorkingDirChanges),
         tap(workDirStatus => this.currentRepo.update({workDirStatus})),
+        tap(this.fileDiffPanel.refreshWorkingDirView),
       ));
 
   /**

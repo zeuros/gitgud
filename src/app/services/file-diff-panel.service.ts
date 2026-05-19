@@ -29,10 +29,12 @@ import {toObservable} from '@angular/core/rxjs-interop';
 })
 export class FileDiffPanelService {
 
-
   private currentRepo = inject(CurrentRepoStore);
   private fileToDiffSubject$ = new Subject<FileChange | null>();
   private workDirStatus$ = toObservable(this.currentRepo.workDirStatus);
+
+  selectedFile = signal<FileChange | null>(null);
+  conflictedFile = signal<WorkingDirectoryFileChange | null>(null);
 
   // Here we update monaco view for commit files (no live changes) or for working dir changes (live update on file change)
   fileToDiff$ = this.fileToDiffSubject$.pipe(
@@ -59,9 +61,6 @@ export class FileDiffPanelService {
     }),
   );
 
-  selectedFile = signal<FileChange | null>(null);
-  conflictedFile = signal<WorkingDirectoryFileChange | null>(null);
-
   showCommittedFileDiffs = (f: CommittedFileChange) => { this.selectedFile.set(f); this.fileToDiffSubject$.next(f); };
 
   showWorkingDirDiffs = (f: WorkingDirectoryFileChange | null) => {
@@ -82,5 +81,11 @@ export class FileDiffPanelService {
   closeConflictView = () => this.conflictedFile.set(null);
 
   closeDiffView = () => { this.selectedFile.set(null); this.fileToDiffSubject$.next(null); };
+
+  refreshWorkingDirView = () => {
+    const file = this.selectedFile();
+    if (file && instanceOf(file, WorkingDirectoryFileChange))
+      this.fileToDiffSubject$.next(file);
+  };
 
 }

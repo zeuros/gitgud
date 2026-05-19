@@ -10,8 +10,8 @@
         <p-divider class="mt-0"/>
         <p-table
                 [value]="conflicted"
-                [selection]="selectedConflictFile() ? [selectedConflictFile()] : []"
-                (selectionChange)="onConflictFileSelect($event)"
+                [selection]="workingDirSelection.selectedConflictFile() ? [workingDirSelection.selectedConflictFile()] : []"
+                (selectionChange)="workingDirSelection.onConflictFileSelect($event)"
                 dataKey="path"
                 selectionMode="single"
                 [rowHover]="true"
@@ -67,8 +67,8 @@
             @if (workDirStatus && workDirStatus.unstaged.length) {
                 <p-table
                         [value]="workDirStatus.unstaged"
-                        [selection]="selectedUnstagedFiles()"
-                        (selectionChange)="onStagingFileSelectionChange($event, false)"
+                        [selection]="workingDirSelection.selectedUnstagedFiles()"
+                        (selectionChange)="workingDirSelection.onStagingFileSelectionChange($event, false)"
                         dataKey="path"
                         selectionMode="multiple"
                         [metaKeySelection]="true"
@@ -80,7 +80,7 @@
                     <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
                         <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex"
-                            (contextmenu)="openFileContextMenu(fileChanges, false, $event)">
+                            (contextmenu)="workingDirSelection.openFileContextMenu(fileChanges, false, $event)">
                             <td>
                                 <div class="file-row-content">
                                     <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
@@ -119,8 +119,8 @@
             @if (workDirStatus && workDirStatus.staged.length) {
                 <p-table
                         [value]="workDirStatus.staged"
-                        [selection]="selectedStagedFiles()"
-                        (selectionChange)="onStagingFileSelectionChange($event, true)"
+                        [selection]="workingDirSelection.selectedStagedFiles()"
+                        (selectionChange)="workingDirSelection.onStagingFileSelectionChange($event, true)"
                         dataKey="path"
                         selectionMode="multiple"
                         [metaKeySelection]="true"
@@ -132,7 +132,7 @@
                     <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
                         <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex"
-                            (contextmenu)="openFileContextMenu(fileChanges, true, $event)">
+                            (contextmenu)="workingDirSelection.openFileContextMenu(fileChanges, true, $event)">
                             <td>
                                 <div class="file-row-content">
                                     <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"

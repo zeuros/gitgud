@@ -35,8 +35,7 @@ import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
 import {type WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
 import {Splitter} from 'primeng/splitter';
-import {ActiveContextMenuService} from '../../../services/active-context-menu.service';
-import {UnstagedFileContextMenuService} from '../../../services/unstaged-file-context-menu.service';
+import {WorkingDirFileSelectionService} from '../../../services/working-dir-file-selection.service';
 
 @Component({
   selector: 'gitgud-make-a-commit',
@@ -62,19 +61,15 @@ export class MakeACommitComponent {
   protected fileDiffPanel = inject(FileDiffPanelService);
   protected workingDirectory = inject(WorkingDirectoryService);
   protected currentRepo = inject(CurrentRepoStore);
-  protected unstagedContextMenu = inject(UnstagedFileContextMenuService);
+  protected workingDirSelection = inject(WorkingDirFileSelectionService);
   protected commitForm = inject(FormBuilder).nonNullable.group({summary: '', description: ''});
   protected amend = signal(false);
-  protected selectedConflictFile = signal<WorkingDirectoryFileChange | null>(null);
-  protected selectedUnstagedFiles = signal<WorkingDirectoryFileChange[]>([]);
-  protected selectedStagedFiles = signal<WorkingDirectoryFileChange[]>([]);
   protected FileStatusesIcons = FileStatusesIcons;
   protected keys = Object.keys;
   protected directory = directory;
   protected fileName = fileName;
   private commitService = inject(CommitService);
   protected fixup = inject(FixupService);
-  private activeContextMenu = inject(ActiveContextMenuService);
   private savedFormState?: typeof this.commitForm.value;
 
   protected commit() {
@@ -101,39 +96,6 @@ export class MakeACommitComponent {
 
   protected commitReady = (workDirStatus?: WorkDirStatus) =>
     !!(this.commitForm.value.summary?.length && workDirStatus?.staged?.length && !workDirStatus.conflicted.length);
-
-  protected onConflictFileSelect = (file: WorkingDirectoryFileChange | null) => {
-    this.selectedConflictFile.set(file);
-    if (file) this.fileDiffPanel.showWorkingDirDiffs(file);
-    else this.fileDiffPanel.closeViews();
-  };
-
-  protected onStagingFileSelectionChange = (files: WorkingDirectoryFileChange[], staged: boolean) => {
-    const current = staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles();
-
-    // If a file is clicked twice (toggled) => hide diff view
-    const isReclick = files.length === 1 && current.length === 1 && current[0].path === files[0].path;
-    if (isReclick) {
-      (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set([]);
-      this.fileDiffPanel.closeViews();
-      return;
-    }
-    (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set(files);
-    (staged ? this.selectedUnstagedFiles : this.selectedStagedFiles).set([]);
-
-    if (files.length === 1) this.fileDiffPanel.showWorkingDirDiffs(files[0]);
-    else this.fileDiffPanel.closeViews();
-  };
-
-  protected openFileContextMenu = (file: WorkingDirectoryFileChange, staged: boolean, event: MouseEvent) => {
-    event.preventDefault();
-    const currentSelection = staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles();
-    if (!currentSelection.some(f => f.path === file.path))
-      (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set([file]);
-    this.unstagedContextMenu.selectedFiles.set(staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles());
-    this.unstagedContextMenu.staged.set(staged);
-    this.activeContextMenu.show(this.unstagedContextMenu.contextMenu(), event);
-  };
 
   protected $WorkDirFileChanges = (w: WorkingDirectoryFileChange) => w;
 }
