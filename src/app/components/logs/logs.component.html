@@ -163,7 +163,7 @@
             <td class="graph">
                 <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN.left + xPosition(commit.indent)"></div>
             </td>
-            <td class="summary ellipsis">{{ commit.summary }}</td>
+            <td class="summary ellipsis" [titleIfOverflow]="commit.summary">{{ commit.summary }}</td>
             <td class="author text-gray ellipsis">{{ commit.author.name }}</td>
             <td class="date text-gray">{{ commit.author.date | date: DATE_FORMAT }}</td>
         </tr>
