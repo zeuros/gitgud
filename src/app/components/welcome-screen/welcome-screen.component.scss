@@ -1,7 +1,9 @@
 :host {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2.8rem;
   position: relative;
   overflow: hidden;
 }
@@ -53,6 +55,39 @@
   border-radius: 50%;
   animation: ember-pulse 2.4s ease-in-out infinite;
   pointer-events: none;
+}
+
+// ── Title ─────────────────────────────────────────────────────────────────────
+
+@keyframes title-flicker {
+  0%, 89%, 91%, 93%, 100% {
+    text-shadow:
+      0 0 8px rgba(255, 255, 255, 0.95),
+      0 0 24px rgb(66 31 11 / 80%),
+      0 0 56px rgb(133 0 255 / 45%),
+      0 0 100px rgba(200, 55, 0, 0.2);
+    opacity: 1;
+  }
+  90% { opacity: 0.82; }
+  92% { opacity: 0.90; }
+}
+
+.title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: clamp(4.5rem, 11vw, 8rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow:
+    0 0  8px rgba(255, 255, 255, 0.95),
+    0 0 24px rgba(255, 140, 40,  0.80),
+    0 0 56px rgba(255, 85,  0,   0.45),
+    0 0 100px rgba(200, 55, 0,   0.20);
+  animation: title-flicker 5.7s ease-in-out infinite;
+  user-select: none;
 }
 
 // ── Actions container ─────────────────────────────────────────────────────────
