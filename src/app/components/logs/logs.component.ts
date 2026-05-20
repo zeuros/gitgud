@@ -56,6 +56,7 @@ import {SearchLogsComponent} from '../search-logs/search-logs.component';
 import {LogBranchChip} from './chips/log-branch-chip/log-branch-chip.component';
 import {LogTagChip} from './chips/log-tag-chip/log-tag-chip.component';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
+import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 
 @Component({
   selector: 'gitgud-logs',
@@ -72,6 +73,7 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
     LogBranchChip,
     LogTagChip,
     AutofocusDirective,
+    TitleIfOverflowDirective,
     SearchLogsComponent,
   ],
   templateUrl: './logs.component.html',
