@@ -43,6 +43,7 @@ import {BehindRemoteDialogComponent, type BehindRemoteAction} from '../dialogs/b
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
 import {RebaseService} from '../../services/rebase.service';
+import {UpdateCheckService} from '../../services/update-check.service';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -59,6 +60,8 @@ export class ToolbarComponent implements OnInit {
   protected settings = inject(SettingsService);
   protected undo = inject(UndoService);
   protected createBranch = inject(CreateBranchService);
+  protected gitRefresh = inject(GitRefreshService);
+  protected updateCheck = inject(UpdateCheckService);
   protected loading = signal<'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-continue' | 'rebase-abort' | undefined>(undefined);
   protected hasWorkDirChanges = computed(() => workingDirHasChanges(this.currentRepo.workDirStatus()));
   protected hasStashes = computed(() => this.currentRepo.stashes().length > 0);
@@ -67,7 +70,6 @@ export class ToolbarComponent implements OnInit {
   protected zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
   private branchAheadBehind = inject(BranchAheadBehindService);
-  protected gitRefresh = inject(GitRefreshService);
   private toast = inject(ToastService);
   private rebase = inject(RebaseService);
   private dialog = inject(DialogService);

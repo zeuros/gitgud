@@ -21,7 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {createHash} from 'crypto';
 import {execFile, ExecFileOptions} from 'child_process';
-import {dialog, getCurrentWindow} from '@electron/remote';
+import {app, dialog, getCurrentWindow} from '@electron/remote';
 import {ChokidarOptions, FSWatcher, watch} from 'chokidar';
 import type {WriteFileOptions} from 'node:fs';
 import {spawn, SpawnOptionsWithoutStdio, spawnSync, SpawnSyncOptions} from 'node:child_process';
@@ -99,6 +99,12 @@ contextBridge.exposeInMainWorld('electron', {
   },
 
   showItemInFolder: (fullPath: string) => shell.showItemInFolder(fullPath),
+  openExternal: (url: string) => shell.openExternal(url),
+  appVersion: app.getVersion(),
+  packageFormat: (() => {
+    try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf-8')).packageFormat as string | undefined; }
+    catch { return undefined; }
+  })(),
 
   // Window events
   onWindowFocus: (cb: () => void): BrowserWindow => getCurrentWindow().on('focus', cb),

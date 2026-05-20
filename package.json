@@ -23,6 +23,11 @@
     "build:preview": "npm run build:prod && electron-builder --dir && npm run preview",
     "preview": "node scripts/preview.js",
 
+    "package:linux-deb": "npm run build:prod && electron-builder --linux deb --em.packageFormat=deb",
+    "package:linux-rpm": "npm run build:prod && electron-builder --linux rpm --em.packageFormat=rpm",
+    "package:win":       "npm run build:prod && electron-builder --win",
+    "package:mac":       "npm run build:prod && electron-builder --mac",
+
     "test": "vitest run",
     "test:watch": "vitest"
   },

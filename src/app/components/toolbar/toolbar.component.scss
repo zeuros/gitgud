@@ -139,6 +139,16 @@ $repo-track-max-width: 260px;
   .rebase-abort ::ng-deep .p-button {
     color: var(--warning-text-color);
   }
+
+  .update-btn ::ng-deep .p-button {
+    color: #6abf69;
+    animation: pulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
 }
 .coffee-btn {
   margin-left: auto;
