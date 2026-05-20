@@ -1,7 +1,9 @@
 <div class="repo-info">
     <div class="repo-name-clip">
         <div class="repo-info-track">
-            <span class="repo-name"><span class="sword" [class.spinning]="gitRefresh.isRefreshing()">⚔</span> {{ currentRepo.name() }} <span class="sword" [class.spinning]="gitRefresh.isRefreshing()">⚔</span></span>
+            <span class="repo-name">
+                <span class="sword" [class.spinning]="gitRefresh.isRefreshing()">⚔</span> {{ currentRepo.name() }} <span class="sword" [class.spinning]="gitRefresh.isRefreshing()">⚔</span>
+            </span>
         </div>
     </div>
     <span class="branch-badge">{{ currentRepo.headBranch()?.name ?? short(currentRepo.detachedHeadSha() ?? '') + ' (detached HEAD)' }}</span>
@@ -102,6 +104,11 @@
     <p-button class="sober" icon="fa fa-repeat" [text]="true" [rounded]="true" [pTooltip]="undo.redoTooltip()" tooltipPosition="bottom" [disabled]="!undo.redoAvailable()"
               (onClick)="undo.redo()"/>
     <p-button class="sober" icon="fa fa-terminal" [text]="true" [rounded]="true" pTooltip="Git command history" tooltipPosition="bottom" (onClick)="openShellHistoryDialog()"/>
+    @if (updateCheck.availableRelease(); as release) {
+        <p-button class="sober update-btn" icon="fa fa-arrow-circle-up" [text]="true" [rounded]="true"
+                  [pTooltip]="'Update available: v' + release.version" tooltipPosition="bottom"
+                  (onClick)="updateCheck.downloadUpdate()"/>
+    }
     <p-button class="sober" icon="fa fa-cog" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (onClick)="openSettingsDialog()"/>
 </div>
 

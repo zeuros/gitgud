@@ -57,6 +57,9 @@ interface ElectronApi {
     getFactor: () => number;
   };
   showItemInFolder: (fullPath: string) => void;
+  openExternal: (url: string) => Promise<void>;
+  appVersion: string;
+  packageFormat?: string;
   onWindowFocus: (cb: () => void) => BrowserWindow;
   offWindowFocus: (cb: () => void) => BrowserWindow;
   process: NodeJS.Process;
