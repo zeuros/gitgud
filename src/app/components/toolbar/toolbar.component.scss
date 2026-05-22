@@ -39,28 +39,51 @@ $repo-track-max-width: 260px;
     letter-spacing: 0.06em;
     white-space: nowrap;
 
+    // Light theme — deep rich palette so the "hottest" stop is the darkest color
     background: linear-gradient(
             180deg,
-            #fff6f7 0%,
-            #ffe8b0 12%,
-            #f3c86b 30%,
-            #d77838 50%,
-            #9b5cf2 68%,
-            #d77838 82%,
-            #f3c86b 92%,
-            #ffe8b0 100%
+            #b03010 0%,
+            #a05800 12%,
+            #c07800 30%,
+            #9b3a10 50%,
+            #6028b8 68%,
+            #9b3a10 82%,
+            #c07800 92%,
+            #a05800 100%
     );
+
+    :host-context(html.dark) & {
+      background: linear-gradient(
+              180deg,
+              #fff6f7 0%,
+              #ffe8b0 12%,
+              #f3c86b 30%,
+              #d77838 50%,
+              #9b5cf2 68%,
+              #d77838 82%,
+              #f3c86b 92%,
+              #ffe8b0 100%
+      );
+      background-size: 100% 280%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: repo-flames 120s ease-in-out infinite;
+    }
+
     background-size: 100% 280%;
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: repo-flames 120s ease-in-out infinite;
+
     .sword {
       display: inline-block;
       background: linear-gradient(180deg, var(--babedouGray) 0%, var(--huaaaaaGray) 100%);
       background-size: 100% 280%;
       background-clip: text;
       -webkit-background-clip: text;
+
       &.spinning {
         animation: spin 1.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
       }
