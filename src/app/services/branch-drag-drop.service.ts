@@ -164,7 +164,7 @@ export class BranchDragDropService {
   private rebase = () => {
     const {name: src} = this.source()!;
     const {name: tgt} = this.target()!;
-    this.gitWorkflow.checkoutThenRun(src, ['rebase', tgt], `Rebased ${src} onto ${tgt}`, false);
+    this.gitWorkflow.rebaseBranchOnto(src, tgt, `Rebased ${src} onto ${tgt}`);
   };
 
   private interactiveRebase = () =>

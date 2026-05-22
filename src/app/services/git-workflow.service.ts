@@ -108,8 +108,38 @@ export class GitWorkflowService {
     );
 
     (isTargetCheckedOut ? this.stash.stashAndRun(merge$) : merge$).pipe(
-      finalize(this.gitRefresh.doRefreshAll),
       tap(() => this.toast.success(msg)),
+      finalize(this.gitRefresh.doRefreshAll),
+    ).subscribe();
+  };
+
+  // Rebases src onto target without touching the checked-out branch or index.
+  // Uses a detached worktree to avoid the "branch already checked out" lock.
+  rebaseBranchOnto = (src: string, onto: string, msg: string) => {
+    const isCheckedOut = this.currentRepo.headBranch()?.name === src;
+    const env = window.electron.process.env as Record<string, string>;
+    const tmpPath = `${env['TMPDIR'] ?? env['TEMP'] ?? env['TMP'] ?? '/tmp'}/gitgud-rebase-${Date.now()}`;
+
+    const rebase$ = this.gitApi.git(['worktree', 'add', '--detach', tmpPath, `refs/heads/${src}`]).pipe(
+      switchMap(() => this.gitApi.git(['rebase', onto], {cwd: tmpPath}).pipe(
+        catchError(e =>
+          this.gitApi.git(['rebase', '--abort'], {cwd: tmpPath}).pipe(
+            catchError(() => of(null)),
+            switchMap(() => this.gitApi.git(['worktree', 'remove', '--force', tmpPath])),
+            switchMap(() => throwError(() => e)),
+          )
+        ),
+      )),
+      switchMap(() => this.gitApi.git(['rev-parse', 'HEAD'], {cwd: tmpPath})),
+      map(sha => sha.trim()),
+      switchMap(newSha => this.gitApi.git(['update-ref', `refs/heads/${src}`, newSha])),
+      switchMap(() => this.gitApi.git(['worktree', 'remove', tmpPath])),
+      switchMap(() => isCheckedOut ? this.gitApi.git(['reset', '--hard', 'HEAD']) : of(null)),
+    );
+
+    (isCheckedOut ? this.stash.stashAndRun(rebase$) : rebase$).pipe(
+      tap(() => this.toast.success(msg)),
+      finalize(this.gitRefresh.doRefreshAll),
     ).subscribe();
   };
 
