@@ -1,6 +1,7 @@
 :host.fixup-selection-mode {
   position: relative;
   z-index: 601;
+  background-color: var(--background); // block mask bleed-through on transparent host
 
   ::ng-deep .p-datatable-tbody tr {
     cursor: crosshair;
@@ -90,7 +91,7 @@ $log-chip-parent-left-margin: 6px;
 
         &:hover {
           td.summary, td.author, td.date, .commit-highlight-background {
-            background: #ce93d81c;
+            background: var(--row-hover-bg);
           }
         }
 
@@ -129,6 +130,29 @@ $log-chip-parent-left-margin: 6px;
           font-size: 14px;
           font-weight: bold;
           color: var(--hmmmmmmGray);
+
+          .p-datatable-column-resizer {
+            width: 8px;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+
+            &::after {
+              content: '';
+              position: absolute;
+              top: 20%;
+              bottom: 20%;
+              right: 3px;
+              width: 2px;
+              border-radius: 1px;
+              background: var(--chip-border-color);
+            }
+          }
+        }
+
+        &:hover {
+          .p-datatable-column-resizer {
+            opacity: 1;
+          }
         }
       }
     }
@@ -201,7 +225,7 @@ $log-chip-parent-left-margin: 6px;
 
       &.not-matched {
         td.summary, td.author, td.date {
-          color: rgba(253, 247, 255, 0.17);
+          color: var(--row-dimmed-color);
         }
       }
 
@@ -223,14 +247,14 @@ $log-chip-parent-left-margin: 6px;
 
 .graph {
   position: relative;
-  color: white;
+  color: var(--graph-bubble-text-color);
 
   .drawing {
     position: absolute;
     left: 0;
 
     &.bubble {
-      background: var(--primeng-purple-line);
+      background: var(--graph-line-color);
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
       left: 0;
     }
@@ -257,7 +281,7 @@ $log-chip-parent-left-margin: 6px;
       margin-top: calc($le-dot-radius / -2);
       background-clip: content-box;
       padding: 5px;
-      border: 1px solid var(--primeng-purple-line);
+      border: 1px solid var(--graph-line-color);
     }
 
     &.stash {
@@ -273,13 +297,13 @@ $log-chip-parent-left-margin: 6px;
       -webkit-background-size: 100% 100%;
       background: url(/assets/images/chest-bordered.svg) no-repeat center right calc(-0.15em + 0.2275rem);
       background-size: 90% 90%;
-      border: 1px dashed var(--primeng-purple-line);
+      border: 1px dashed var(--graph-line-color);
     }
 
     &.line {
       margin-left: 9px;
       height: 100%;
-      color: var(--primeng-purple-line);
+      color: var(--graph-line-color);
       font-size: 18px;
       line-height: 24px;
 
@@ -351,13 +375,13 @@ $log-chip-parent-left-margin: 6px;
 }
 
 .draggable-chip {
-  border: 1px solid rgba(119, 87, 126, 0.9);
-  background-color: var(--primeng-purple-line);
+  border: 1px solid var(--chip-border-color);
+  background-color: var(--chip-bg-color);
   max-width: 100%; // Text ellipsis needs this
   display: flex;
   transition: all 0.2s ease;
   border-radius: 3px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+  box-shadow: var(--chip-shadow);
   padding: 2.5px 4px;
   align-items: center;
 

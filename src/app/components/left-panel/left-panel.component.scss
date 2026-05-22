@@ -60,7 +60,8 @@
   color: var(--wowowowGray);
   text-transform: uppercase;
   font-size: 14px;
-  box-shadow: rgb(0 0 0 / 26%) 0 10px 10px -10px;
+  background: var(--app-chrome-bg);
+  box-shadow: var(--title-shadow);
   z-index: 100;
 }
 
@@ -72,7 +73,7 @@
 }
 
 .black-and-white {
-  filter: brightness(0) saturate(100%) invert(70%);
+  filter: var(--icon-filter);
 }
 
 .p-highlight {
