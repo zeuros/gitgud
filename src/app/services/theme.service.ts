@@ -16,13 +16,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {effect, inject, Injectable} from '@angular/core';
-import {SettingsService, type ThemeMode} from './settings.service';
-
-export type {ThemeMode};
+import {effect, inject, Injectable, signal} from '@angular/core';
+import {SettingsService} from './settings.service';
+import {DARK_TOKENS, LIGHT_TOKENS, ThemeMode} from '../models/theme.model';
 
 @Injectable({providedIn: 'root'})
 export class ThemeService {
+
+  isDark = signal(true);
+  tokens = signal(DARK_TOKENS);
 
   private systemDarkMq = window.matchMedia('(prefers-color-scheme: dark)');
   private settings = inject(SettingsService);
@@ -38,13 +40,7 @@ export class ThemeService {
   private applyTheme(mode: ThemeMode) {
     const isDark = mode === 'dark' || (mode === 'system' && this.systemDarkMq.matches);
     document.querySelector('html')?.classList?.toggle('dark', isDark);
+    this.isDark.set(isDark);
+    this.tokens.set(isDark ? DARK_TOKENS : LIGHT_TOKENS);
   }
-
-  themeOptions = Object.entries({
-    system: {label: 'System'},
-    dark: {label: 'Dark'},
-    light: {label: 'Light'},
-  } satisfies Record<ThemeMode, { label: string }>).map(
-    ([value, {label}]) => ({label, value: value as ThemeMode}),
-  );
 }

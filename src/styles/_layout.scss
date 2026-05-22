@@ -1,17 +1,3 @@
-
-.flex-column {
-  display: flex;
-  flex-direction: column;
-}
-
-.flex-1 {
-  flex: 1;
-}
-
-.w-full {
-  width: 100%;
-}
-
 // Makes an element fill its parent's remaining height in a flex column layout.
 // - display:flex + flex-direction:column: allows children to also participate in the flex chain
 // - flex:1: grow to fill all available space from the parent

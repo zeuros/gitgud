@@ -2,6 +2,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-color: var(--background);
 }
 
 /* Disable text selection by default — GUI apps don't need click-drag selecting labels */
@@ -73,19 +74,19 @@ app-root {
 
 ::-webkit-scrollbar-track {
   transition: all 1s;
-  background: #352f3a;
+  background: var(--scrollbar-track);
   border-radius: 13px;
 }
 
 ::-webkit-scrollbar-thumb {
   transition: all 1s;
-  background: #766088;
+  background: var(--scrollbar-thumb);
   border-radius: 7px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   transition: all 1s;
-  background: #b183d6;
+  background: var(--scrollbar-thumb-hover);
 }
 
 .hidden {
@@ -157,6 +158,23 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
     font-size: 1.4em;
     pointer-events: none;
     animation: tumbleweed-roll 6s linear infinite;
+  }
+}
+
+p-listbox {
+  border: 1px solid #dfade61c;
+}
+
+.sober button {
+  padding: 4px 8px;
+  color: var(--huaaaaaGray);
+
+  &:hover {
+    color: var(--babedouGray);
+  }
+
+  &:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.05);
   }
 }
 

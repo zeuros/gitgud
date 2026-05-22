@@ -24,7 +24,8 @@ import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
 import {TableModule} from 'primeng/table';
-import {FileStatusesIcons} from '../../../lib/github-desktop/model/status';
+import {AppFileStatusKind, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
+import {ThemeService} from '../../../services/theme.service';
 import {directory, fileName} from '../../../utils/utils';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {PrimeTemplate} from 'primeng/api';
@@ -64,8 +65,14 @@ export class MakeACommitComponent {
   protected workingDirSelection = inject(WorkingDirFileSelectionService);
   protected commitForm = inject(FormBuilder).nonNullable.group({summary: '', description: ''});
   protected amend = signal(false);
+  private theme = inject(ThemeService);
   protected FileStatusesIcons = FileStatusesIcons;
   protected keys = Object.keys;
+
+  protected iconDropShadow(kind: AppFileStatusKind): string {
+    const alpha = this.theme.isDark() ? '' : '80';
+    return `drop-shadow(0 0 5px ${FileStatusesIcons[kind].color}${alpha})`;
+  }
   protected directory = directory;
   protected fileName = fileName;
   private commitService = inject(CommitService);

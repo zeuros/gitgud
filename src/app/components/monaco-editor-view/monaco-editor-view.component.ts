@@ -27,7 +27,8 @@ import {combineLatest, of} from 'rxjs';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {type ViewType} from '../../models/git-repository';
-import {renderWindowsShitEol} from './monaco-utils';
+import {registerMonacoEditorThemes, renderWindowsShitEol} from './monaco-utils';
+import {ThemeService} from '../../services/theme.service';
 import {SelectButton} from 'primeng/selectbutton';
 import ITextModel = editor.ITextModel;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
@@ -60,6 +61,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   protected fileDiffPanel = inject(FileDiffPanelService);
   private fileDiff = inject(FileDiffService);
   private hunkActions = inject(MonacoDiffRightClickActionsService);
+  private theme = inject(ThemeService);
   protected viewOptions = Object.entries({
     hunk:   {label: 'Hunk',   icon: 'fa fa-list'},
     inline: {label: 'Inline', icon: 'fa fa-align-left'},
@@ -98,6 +100,9 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   private lastRevealedPath: string | undefined;
 
   constructor() {
+    registerMonacoEditorThemes();
+    effect(() => editor.setTheme(this.theme.tokens().monacoTheme));
+
     effect(() => {
       const file = this.fileToDiff();
       if (!file) return;
