@@ -62,7 +62,7 @@ export class ToolbarComponent implements OnInit {
   protected createBranch = inject(CreateBranchService);
   protected gitRefresh = inject(GitRefreshService);
   protected updateCheck = inject(UpdateCheckService);
-  protected loading = signal<'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-continue' | 'rebase-abort' | undefined>(undefined);
+  protected loading = signal<'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-continue' | 'rebase-skip' | 'rebase-abort' | undefined>(undefined);
   protected hasWorkDirChanges = computed(() => workingDirHasChanges(this.currentRepo.workDirStatus()));
   protected hasStashes = computed(() => this.currentRepo.stashes().length > 0);
   protected isRebasing = computed(() => { this.currentRepo.workDirStatus(); return this.rebase.isRebasing(); });
@@ -140,6 +140,14 @@ export class ToolbarComponent implements OnInit {
       switchMap(this.gitRefresh.refreshAll),
       finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
     ).subscribe(() => this.toast.success('Rebase continued'));
+  };
+
+  protected skipRebase = () => {
+    this.loading.set('rebase-skip');
+    this.gitApi.gitAction(['rebase', '--skip']).pipe(
+      switchMap(this.gitRefresh.refreshAll),
+      finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
+    ).subscribe(() => this.toast.success('Commit skipped'));
   };
 
   protected abortRebase = () => {

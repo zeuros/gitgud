@@ -121,7 +121,7 @@ export class GitWorkflowService {
     const tmpPath = `${env['TMPDIR'] ?? env['TEMP'] ?? env['TMP'] ?? '/tmp'}/gitgud-rebase-${Date.now()}`;
 
     const rebase$ = this.gitApi.git(['worktree', 'add', '--detach', tmpPath, `refs/heads/${src}`]).pipe(
-      switchMap(() => this.gitApi.git(['rebase', onto], {cwd: tmpPath}).pipe(
+      switchMap(() => this.gitApi.git(['rebase', '--empty=drop', onto], {cwd: tmpPath}).pipe(
         catchError(e =>
           this.gitApi.git(['rebase', '--abort'], {cwd: tmpPath}).pipe(
             catchError(() => of(null)),
