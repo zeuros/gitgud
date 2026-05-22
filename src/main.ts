@@ -21,13 +21,16 @@ import {appConfig} from './app/app.config';
 import {AppComponent} from './app/app.component';
 import {ErrorHandler} from '@angular/core';
 import {editor} from 'monaco-editor';
+import {config} from 'rxjs';
 
 editor.setTheme('vs-dark');
 
 bootstrapApplication(AppComponent, appConfig).then(appRef => {
-
   const globalErrorHandler = appRef.injector.get(ErrorHandler);
 
+  config.onUnhandledError = err => globalErrorHandler.handleError(err);
+
+  // Catch unhandled Promise rejections (async/await, explicit Promise chains).
   window.addEventListener('unhandledrejection', (event) => {
     globalErrorHandler.handleError(event.reason);
     event.preventDefault();
