@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {catchError, finalize, map, switchMap, tap, throwError} from 'rxjs';
+import {catchError, finalize, map, of, switchMap, tap, throwError} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {ToastService} from './toast.service';
 import {StashService} from './stash.service';
@@ -83,6 +83,35 @@ export class GitWorkflowService {
     this.stash.stashAndRun(action$, thenUnstash).subscribe();
   };
 
+
+  // Merges tgt into src as a merge commit without touching the working tree or index.
+  // Uses git plumbing: merge-tree → commit-tree → update-ref (requires git 2.38+).
+  mergeBranchInto = (source: string, target: string, msg: string) => {
+    const isTargetCheckedOut = this.currentRepo.headBranch()?.name === target;
+
+    const merge$ = this.gitApi.gitAction(['merge-tree', '--write-tree', `refs/heads/${target}`, `refs/heads/${source}`]).pipe(
+      map(out => {
+        const lines = out.trim().split('\n');
+        const hasConflicts = lines.length > 1 && lines[1] !== '0';
+        if (hasConflicts) throw new Error(`Merge conflict between ${source} and ${target}`);
+        return lines[0];
+      }),
+      switchMap(treeSha => this.gitApi.gitAction([
+        'commit-tree', treeSha,
+        '-p', `refs/heads/${target}`,
+        '-p', `refs/heads/${source}`,
+        '-m', msg,
+      ])),
+      switchMap(commitSha => this.gitApi.git(['update-ref', `refs/heads/${target}`, commitSha.trim()])),
+      // Sync index + working tree to the new merge commit (HEAD followed update-ref but index didn't).
+      switchMap(() => isTargetCheckedOut ? this.gitApi.git(['reset', '--hard', 'HEAD']) : of(null)),
+    );
+
+    (isTargetCheckedOut ? this.stash.stashAndRun(merge$) : merge$).pipe(
+      finalize(this.gitRefresh.doRefreshAll),
+      tap(() => this.toast.success(msg)),
+    ).subscribe();
+  };
 
   rewordCommit = ({summary, description}: { summary: string, description: string }) => {
     const selectedCommitSha = this.currentRepo.selectedCommitSha()!;
