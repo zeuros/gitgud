@@ -18,9 +18,24 @@
 
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {Button} from 'primeng/button';
-import {DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
+import {DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
+import {type Observable} from 'rxjs';
 
 export type BehindRemoteAction = 'pull' | 'merge' | 'rebase' | 'force-push' | null;
+
+export const openBehindRemoteDialog = (
+  dialog: DialogService,
+  localRef: string,
+  remoteRef: string,
+  diverged: boolean,
+): Observable<BehindRemoteAction> =>
+  dialog.open(BehindRemoteDialogComponent, {
+    header: diverged ? 'Branches have diverged' : 'Branch is behind remote',
+    width: '600px',
+    modal: true,
+    dismissableMask: true,
+    data: {localRef, remoteRef, diverged},
+  })!.onClose;
 
 @Component({
   selector: 'gitgud-behind-remote-dialog',

@@ -39,7 +39,7 @@ import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell
 import {UndoService} from '../../services/undo.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
-import {BehindRemoteDialogComponent, type BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
+import {openBehindRemoteDialog, type BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
 import {RebaseService} from '../../services/rebase.service';
@@ -167,13 +167,7 @@ export class ToolbarComponent implements OnInit {
 
   private openBehindRemoteDialog = (diverged: boolean) => {
     const branch = this.currentRepo.headBranch()!;
-    return this.dialog.open(BehindRemoteDialogComponent, {
-      header: diverged ? 'Branches have diverged' : 'Branch is behind remote',
-      width: '600px',
-      modal: true,
-      dismissableMask: true,
-      data: {localRef: branch.ref, remoteRef: `refs/remotes/${branch.upstream}`, diverged},
-    })!.onClose.pipe(
+    return openBehindRemoteDialog(this.dialog, branch.ref, `refs/remotes/${branch.upstream}`, diverged).pipe(
       switchMap((action: BehindRemoteAction) => {
         if (action === 'pull') return this.gitApi.gitAction(['pull', '--ff-only']);
         if (action === 'merge') return this.gitApi.gitAction(['pull', '--no-ff']);

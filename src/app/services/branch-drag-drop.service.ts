@@ -27,6 +27,9 @@ import {ActiveContextMenuService} from './active-context-menu.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {ToastService} from './toast.service';
+import {DialogService} from 'primeng/dynamicdialog';
+import {BranchAheadBehindService} from './branch-ahead-behind.service';
+import {openBehindRemoteDialog, type BehindRemoteAction} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
 @Injectable({providedIn: 'root'})
 export class BranchDragDropService {
@@ -34,6 +37,8 @@ export class BranchDragDropService {
   private gitWorkflow = inject(GitWorkflowService);
   private currentRepo = inject(CurrentRepoStore);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
+  private aheadBehind = inject(BranchAheadBehindService);
 
   draggingBranch = signal<Branch | null>(null);
   hoveredBranch = signal<Branch | null>(null);
@@ -196,6 +201,18 @@ export class BranchDragDropService {
     const {name: src} = this.source()!;
     const ref = this.remoteRef();
     const {remote, branch} = parseRemote(ref);
-    this.gitWorkflow.doRunAndRefresh(['push', remote, `${src}:${branch}`], `Pushed ${src} to ${ref}`);
+    const ab = this.aheadBehind.aheadBehindMap()[src];
+    if (!ab?.behind) {
+      this.gitWorkflow.doRunAndRefresh(['push', remote, `${src}:${branch}`], `Pushed ${src} to ${ref}`);
+      return;
+    }
+    const diverged = ab.ahead > 0;
+    openBehindRemoteDialog(this.dialog, src, ref, diverged)
+      .subscribe((action: BehindRemoteAction) => {
+        if (action === 'force-push') this.gitWorkflow.doRunAndRefresh(['push', '--force-with-lease', remote, `${src}:${branch}`], `Force-pushed ${src} to ${ref}`);
+        if (action === 'pull')       this.gitWorkflow.doRunAndRefresh(['fetch', remote, `${branch}:${src}`], `Pulled ${ref} into ${src}`);
+        if (action === 'rebase')     this.gitWorkflow.rebaseBranchOnto(src, ref, `Rebased ${src} onto ${ref}`);
+        if (action === 'merge')      this.gitWorkflow.checkoutThenRun(src, ['merge', '--no-ff', ref], `Merged ${ref} into ${src}`);
+      });
   };
 }
