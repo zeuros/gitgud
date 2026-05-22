@@ -31,6 +31,7 @@ import {Tooltip} from 'primeng/tooltip';
 import {emptyStringOnFail} from '../../../utils/utils';
 import {ToastService} from '../../../services/toast.service';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
+import {themeOptions} from '../../../models/theme.model';
 
 @Component({
   selector: 'gitgud-settings-dialog',
@@ -137,5 +138,7 @@ export class SettingsDialogComponent {
       },
     });
   }
+
+  protected themeOptions = themeOptions;
 
 }

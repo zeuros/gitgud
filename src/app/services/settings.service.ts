@@ -18,8 +18,7 @@
 
 import {Injectable, signal} from '@angular/core';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
-
-export type ThemeMode = 'dark' | 'light' | 'system';
+import { ThemeMode } from "../models/theme.model";
 
 @Injectable({providedIn: 'root'})
 export class SettingsService {

@@ -25,23 +25,12 @@ import {provideHttpClient} from '@angular/common/http';
 import {DialogService} from 'primeng/dynamicdialog';
 import {providePrimeNG} from 'primeng/config';
 import {GlobalErrorHandler} from './utils/error-management.utils';
-import Aura from '@primeuix/themes/aura';
+import {primeNGConfig} from './theme/gitgud-preset';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    providePrimeNG({
-      theme: {
-        preset: Aura,
-        options: {
-          cssLayer: {
-            name: 'primeng',
-            order: 'primeng, my-theme',
-          },
-          darkModeSelector: '.dark',
-        },
-      },
-    }),
+    providePrimeNG(primeNGConfig),
     provideZonelessChangeDetection(),
     {provide: MAX_ANIMATION_TIMEOUT, useValue: 200}, // Animations last 200ms long max
     {provide: ErrorHandler, useClass: GlobalErrorHandler},
