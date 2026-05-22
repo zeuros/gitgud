@@ -36,6 +36,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {LogBuilderService} from '../../services/log-builder.service';
 import {CANVAS_DPR_MULTIPLIER, CANVAS_MARGIN, DRAWING_PAD_LEFT, GRAPH_COLUMN_MIN_WIDTH, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
+import {ThemeService} from '../../services/theme.service';
 import {CommitContextMenuService} from '../../services/commit-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
@@ -91,6 +92,7 @@ export class LogsComponent {
   protected fixup = inject(FixupService);
   private logBuilder = inject(LogBuilderService);
   private activeContextMenu = inject(ActiveContextMenuService);
+  private theme = inject(ThemeService);
   private branch = inject(BranchService);
   private conflict = inject(ConflictService);
   private avatar = inject(AvatarService);
@@ -171,9 +173,10 @@ export class LogsComponent {
       const logTableContainer = this.logTableContainer();
       const canvas = this.canvas()?.nativeElement?.getContext('2d');
       const avatarImages = this._avatarImages(); // re-run when new avatars load
+      const {canvas: canvasColors} = this.theme.tokens(); // re-run on theme switch
 
       if (this._canvasResized() && canvas && displayLog.length && stashImg && avatarImages && visibleCommitsCount && visibleCommitsCount > 0 && logTableContainer) {
-        drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages);
+        drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages, canvasColors);
         untracked(() => this.setupScrollListeners(logTableContainer));// will be called once
       }
     });

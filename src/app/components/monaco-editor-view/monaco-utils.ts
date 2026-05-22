@@ -17,7 +17,44 @@
  */
 
 import {editor} from 'monaco-editor';
+import {once} from 'lodash-es';
 import ITextModel = editor.ITextModel;
+
+export const registerMonacoEditorThemes = once(() => {
+
+  editor.defineTheme('gitgud-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [],
+    colors: {
+      'editor.background':                 '#f8f6fc',
+      'editor.lineHighlightBackground':    '#eee9f5',
+      'editorLineNumber.foreground':       '#b8a8c8',
+      'editorLineNumber.activeForeground': '#8e4e8c',
+      'diffEditor.insertedTextBackground': '#c8f0d040',
+      'diffEditor.removedTextBackground':  '#f8d0d040',
+      'diffEditor.insertedLineBackground': '#d4f0da30',
+      'diffEditor.removedLineBackground':  '#f8dada30',
+    },
+  });
+
+  editor.defineTheme('gitgud-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [],
+    colors: {
+      'editor.background':                 '#1c1e23',
+      'editor.lineHighlightBackground':    '#2c2d37',
+      'editorLineNumber.foreground':       '#585e6e',
+      'editorLineNumber.activeForeground': '#ce93d8',
+      'diffEditor.insertedTextBackground': '#1e402840',
+      'diffEditor.removedTextBackground':  '#40201e40',
+      'diffEditor.insertedLineBackground': '#1e402820',
+      'diffEditor.removedLineBackground':  '#40201e20',
+    },
+  });
+});
+
 
 // Monaco consumes \r in \r\n as a line separator so it never reaches renderControlCharacters.
 // Replaced \r with ␍ (U+240D SYMBOL FOR CARRIAGE RETURN) so it survives as visible line content.
