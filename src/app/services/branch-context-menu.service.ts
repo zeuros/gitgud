@@ -140,7 +140,7 @@ export class BranchContextMenuService {
     this.gitWorkflow.doRunAndRefresh(['merge', this.name()], `Merged ${this.name()} into ${this.head()}`, true, true);
 
   private rebaseBranch = () =>
-    this.gitWorkflow.doRunAndRefresh(['rebase', this.name()], `Rebased ${this.head()} onto ${this.name()}`, true, false);
+    this.gitWorkflow.rebaseBranchOnto(this.head(), this.name(), `Rebased ${this.head()} onto ${this.name()}`);
 
   private createBranchHere = () => this.createBranch.createBranchAtSha(this.selectedNode()!.data!.tip!.sha!);
 
