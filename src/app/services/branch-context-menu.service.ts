@@ -32,6 +32,8 @@ import {CreateBranchService} from './create-branch.service';
 import {normalizedBranchName} from '../utils/branch-utils';
 import {BranchService} from './branch.service';
 import {CreateTagService} from './create-tag.service';
+import {BranchAheadBehindService} from './branch-ahead-behind.service';
+import {type BehindRemoteAction, openBehindRemoteDialog} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
 @Injectable({providedIn: 'root'})
 export class BranchContextMenuService {
@@ -45,6 +47,7 @@ export class BranchContextMenuService {
   private dialog = inject(DialogService);
   private createBranch = inject(CreateBranchService);
   private createTag = inject(CreateTagService);
+  private aheadBehind = inject(BranchAheadBehindService);
 
   selectedNode = signal<TreeNode<Branch> | undefined>(undefined);
 
@@ -127,8 +130,22 @@ export class BranchContextMenuService {
   private pullBranch = () =>
     this.gitWorkflow.doRunAndRefresh(['fetch', 'origin', `${this.name()}:${this.name()}`], `Pulled ${this.name()}`);
 
-  private pushBranch = () =>
-    this.gitWorkflow.doRunAndRefresh(['push', 'origin', this.name()], `Pushed ${this.name()}`);
+  private pushBranch = () => {
+    const name = this.name();
+    const ab = this.aheadBehind.aheadBehindMap()[name];
+    if (!ab?.behind) {
+      this.gitWorkflow.doRunAndRefresh(['push', 'origin', name], `Pushed ${name}`);
+      return;
+    }
+    const diverged = ab.ahead > 0;
+    openBehindRemoteDialog(this.dialog, name, `origin/${name}`, diverged)
+      .subscribe((action: BehindRemoteAction) => {
+        if (action === 'force-push') this.gitWorkflow.doRunAndRefresh(['push', '--force-with-lease', 'origin', name], `Force-pushed ${name}`);
+        if (action === 'pull')       this.gitWorkflow.doRunAndRefresh(['fetch', 'origin', `${name}:${name}`], `Pulled ${name}`);
+        if (action === 'rebase')     this.gitWorkflow.rebaseBranchOnto(name, `origin/${name}`, `Rebased ${name} onto origin/${name}`);
+        if (action === 'merge')      this.gitWorkflow.checkoutThenRun(name, ['merge', '--no-ff', `origin/${name}`], `Merged origin/${name} into ${name}`);
+      });
+  };
 
   private setUpstream = () =>
     openSetUpstreamDialog(this.dialog, this.name())
