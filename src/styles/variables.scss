@@ -1,14 +1,128 @@
+// ── Light theme (default) ─────────────────────────────────────────────────────
 :root {
-  --primeng-purple-line: rgba(66, 48, 69, 0.9);
-  --hmmmmmmGray: #696969;
-  --huaaaaaGray: #adadad;
-  --wowowowGray: #bfbfbf;
-  --babedouGray: #e5e5e5;
-  --babedouGrayPlus: #efefef;
-  --row-selected-background-color: #755a975c;
-  --warning-text-color: #ffb07a;
-  --row-warning-background-color: rgba(255, 120, 30, 0.18);
-  --row-warning-selected-background-color: rgba(220, 100, 30, 0.38);
+  // Font
+  --font-family: Nunito, Roboto, Cantarell, 'Helvetica Neue Light', 'Helvetica Neue',
+                 Helvetica, Arial, 'Lucida Grande', sans-serif;
   font-family: var(--font-family), sans-serif;
+
+  // App background
+  --background: #f5f4f8;
+
+  // Gray scale — dark text on light background
+  --main-element-background: rgb(235 233 235 / 80%);
+  --hmmmmmmGray:     #888888;
+  --huaaaaaGray:     #555555;
+  --wowowowGray:     #333333;
+  --babedouGray:     #111111;
+  --babedouGrayPlus: #000000;
+
+  // Brand accent — only the one still needed by global.scss sword filter
+  --violet-jtc: #603A62;
+
+  // App semantic colors — light
+  --row-selected-background-color:         rgba(142, 78, 140, 0.18);
+  --row-warning-background-color:          rgba(255, 120, 30, 0.12);
+  --row-warning-selected-background-color: rgba(220, 100, 30, 0.28);
+  --warning-text-color:                    #c44b00;
+  --row-hover-bg:                          rgba(142, 78, 140, 0.08);
+  --row-dimmed-color:                      rgba(0, 0, 0, 0.18);
+
+  // Branch/tag chip colors — light
+  --chip-bg-color:     rgba(225, 210, 235, 0.92);
+  --chip-border-color: rgba(142, 78, 140, 0.45);
+  --chip-shadow:       0 1px 4px rgba(0, 0, 0, 0.12);
+
+  // Graph / canvas
+  --graph-line-color:        rgba(160, 110, 170, 0.65);
+  --graph-bubble-text-color: #2d1f35;
+
+  // App chrome — toolbar, tablist, panel titles
+  --app-chrome-bg:    #eeedf3;
+  --title-shadow: rgb(0 0 0 / 10%) 0 10px 10px -6px;
+  --fixup-overlay-bg: rgba(96, 58, 98, 0.18);
+  --identity-card-bg: rgba(228, 228, 231, 0.5);
+
+  // SVG icon filter — brightness(0) collapses purple SVG to black; invert% sets final gray
+  --icon-filter: brightness(0) saturate(100%) invert(30%);  // → #4d4d4d
+
+  // Scrollbar — light
+  --scrollbar-track:       #ede9f2;
+  --scrollbar-thumb:       #c3a8d6;
+  --scrollbar-thumb-hover: #9167ab;
+
+  --p-surface-1: #efefef;
+
+  // ── PrimeNG token overrides — light ─────────────────────────────────────────
+  // Primary palette lives in gitgud-preset.ts (definePreset), not here.
+
+  --p-text-color:            var(--wowowowGray);
+  --p-text-color-secondary:  rgba(0, 0, 0, 0.5);
+  --p-highlight-text-color:  var(--p-primary-color);
+  --p-highlight-focus-color: #111111;
+
+  // Subtler highlight than PrimeNG default (primary-50/100 = vivid pink)
+  --p-highlight-background:       rgba(142, 78, 140, 0.08);
+  --p-highlight-focus-background: rgba(142, 78, 140, 0.14);
+
+  // Divider / border (surface-200 is invisible on light bg at default)
+  --p-content-border-color: rgba(142, 78, 140, 0.18);
+
+  // Tablist + toolbar share the chrome color
+  --p-tabs-tablist-background: var(--app-chrome-bg);
+
+  // Layout tokens (theme-independent sizing)
+  --p-tabs-tabpanel-padding:     0;
+  --p-divider-horizontal-margin: 0.5rem 0;
+  --p-form-field-border-radius:  var(--p-border-radius-xs);
+  --p-tabs-tab-border-width:     0 0 2px 0;
+  --p-tree-node-padding:         0.14rem 0.3rem;
+  --p-tree-gap:                  1.5px;
+  --p-tree-indent:               0.75rem;
 }
 
+// ── Dark theme overrides ──────────────────────────────────────────────────────
+html.dark {
+  --background: #1c1e23;
+
+  --hmmmmmmGray:     #696969;
+  --huaaaaaGray:     #adadad;
+  --wowowowGray:     #bfbfbf;
+  --babedouGray:     #e5e5e5;
+  --babedouGrayPlus: #efefef;
+
+  --row-selected-background-color:         #755a975c;
+  --row-warning-background-color:          rgba(255, 120, 30, 0.18);
+  --row-warning-selected-background-color: rgba(220, 100, 30, 0.38);
+  --warning-text-color:                    #ffb07a;
+  --row-hover-bg:                          rgba(206, 147, 216, 0.11);
+  --row-dimmed-color:                      rgba(253, 247, 255, 0.17);
+
+  --chip-bg-color:     rgba(66, 48, 69, 0.9);
+  --chip-border-color: rgba(119, 87, 126, 0.9);
+  --chip-shadow:       0 0 10px rgba(0, 0, 0, 0.8);
+
+  --graph-line-color:        rgba(66, 48, 69, 0.9);
+  --graph-bubble-text-color: #ffffff;
+
+  --app-chrome-bg:    rgba(30, 28, 40, 0.92);
+  --identity-card-bg: rgba(66, 48, 69, 0.45);
+  --title-shadow: rgb(0 0 0 / 26%) 0 10px 10px -10px;
+  --fixup-overlay-bg: rgba(0, 0, 0, 0.5);
+
+  --icon-filter: brightness(0) saturate(100%) invert(70%);  // → #b3b3b3
+
+  --scrollbar-track:       #352f3a;
+  --scrollbar-thumb:       #766088;
+  --scrollbar-thumb-hover: #b183d6;
+
+  // ── PrimeNG token overrides — dark ──────────────────────────────────────────
+  // Primary color is set in gitgud-preset.ts colorScheme.dark.primary.
+
+  --p-text-color:            var(--wowowowGray);
+  --p-text-color-secondary:  rgba(255, 255, 255, 0.6);
+  --p-highlight-text-color:  var(--p-primary-color);
+  --p-highlight-focus-color: #e5e5e5;
+
+  --p-content-border-color: rgba(80, 65, 95, 0.45);
+  --p-tabs-tablist-background: var(--app-chrome-bg);
+}
