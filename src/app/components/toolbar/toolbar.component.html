@@ -23,6 +23,15 @@
             <i class="fa fa-play"></i>
             <span>Continue</span>
         </p-button>
+        <p-button class="sober rebase-skip"
+                  [text]="true"
+                  [loading]="loading() === 'rebase-skip'"
+                  [disabled]="!!loading()"
+                  (onClick)="skipRebase()"
+        >
+            <i class="fa fa-forward"></i>
+            <span>Skip</span>
+        </p-button>
         <p-button class="sober rebase-abort"
                   [text]="true"
                   [loading]="loading() === 'rebase-abort'"
