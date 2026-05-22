@@ -70,7 +70,7 @@ export class BranchDragDropService {
       if (isAncestor(source.tip.sha, target.tip.sha, this.currentRepo.logs())) {
         items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForward});
       }
-      items.push({label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.merge});
+      items.push({label: `Merge ${source.name} into ${target.name}`, icon: 'fa fa-compress', command: this.merge});
       items.push({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase});
     } else if (isLocalSource && !isLocalTarget) {
       items.push({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase});
@@ -82,9 +82,12 @@ export class BranchDragDropService {
       items.push({label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeLocalIntoRemote});
     }
 
-    if (isLocalSource && remoteRef) {
-      items.push({separator: true});
-      items.push({label: `Push ${source.name} to ${remoteRef}`, icon: 'fa fa-cloud-upload', command: this.push});
+    if (isLocalSource && remoteRef && source.upstream === remoteRef) {
+      const remoteTip = this.currentRepo.branches().find(b => b.name === remoteRef)?.tip.sha;
+      if (remoteTip && remoteTip !== source.tip.sha) {
+        items.push({separator: true});
+        items.push({label: `Push ${source.name} to ${remoteRef}`, icon: 'fa fa-cloud-upload', command: this.push});
+      }
     }
 
     return items;
@@ -155,7 +158,7 @@ export class BranchDragDropService {
   private merge = () => {
     const {name: src} = this.source()!;
     const {name: tgt} = this.target()!;
-    this.gitWorkflow.checkoutThenRun(src, ['merge', tgt], `Merged ${tgt} into ${src}`);
+    this.gitWorkflow.mergeBranchInto(src, tgt, `Merge branch '${src}' into '${tgt}'`);
   };
 
   private rebase = () => {
