@@ -37,11 +37,11 @@
 
     <p-divider class="mb-0"/>
 
-    <div class="flex-column items-center justify-center">
+    <div class="flex flex-column items-center justify-center">
         <div class="py-2">
             Amend commit message
         </div>
-        <form #amendCommitForm class="flex-column flex-1" [formGroup]="editCommitForm" (ngSubmit)="rewordCommit()" (keydown.control.enter)="commitFormValueChanged() && rewordCommit()">
+        <form #amendCommitForm class="flex flex-column flex-1" [formGroup]="editCommitForm" (ngSubmit)="rewordCommit()" (keydown.control.enter)="commitFormValueChanged() && rewordCommit()">
 
             <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
 

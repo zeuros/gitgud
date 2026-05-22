@@ -28,17 +28,26 @@ import {fileName} from '../../utils/utils';
 import {detectLang} from '../../utils/language-detection';
 import {createHighlighter, type Highlighter} from 'shiki';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
+import {ThemeService} from '../../services/theme.service';
 
-// Diff-block colors mirroring VS Code Dark+ / Monaco diff editor.
-// conflict uses GitGud's warning orange since there is no VS Code equivalent.
 const GitGudDarkColors = {
-  added:            'rgba(155, 185, 85,  0.20)',  // VS Code diffEditor.insertedLineBackground
-  removed:          'rgba(255,  0,   0,  0.20)',  // VS Code diffEditor.removedLineBackground
+  added:            'rgba(155, 185, 85,  0.20)',
+  removed:          'rgba(255,  0,   0,  0.20)',
   removedBothSides: 'rgba(200,  30,  30, 0.12)',
-  conflict:         'rgba(160,  65,  0,  0.28)',  // GitGud --row-warning-background-color
-  modified:         'rgba(30,  130, 255, 0.15)',  // VS Code uses blue for "changed" blocks
-  resolvedConflict: 'rgba(100, 160,  75, 0.25)',  // muted green — resolved ≈ inserted
+  conflict:         'rgba(160,  65,  0,  0.28)',
+  modified:         'rgba(30,  130, 255, 0.15)',
+  resolvedConflict: 'rgba(100, 160,  75, 0.25)',
   modifiedOverlay:  'rgba(20,  100, 200, 0.10)',
+};
+
+const GitGudLightColors = {
+  added:            'rgba(100, 160, 50,  0.18)',
+  removed:          'rgba(200,  40,  40, 0.16)',
+  removedBothSides: 'rgba(180,  30,  30, 0.10)',
+  conflict:         'rgba(180,  80,  0,  0.18)',
+  modified:         'rgba(20,  100, 220, 0.12)',
+  resolvedConflict: 'rgba(80,  140,  60, 0.20)',
+  modifiedOverlay:  'rgba(15,   80, 180, 0.08)',
 };
 
 type HighlightFn = (text: string) => string | Promise<string>;
@@ -62,8 +71,9 @@ export class MergeEditorComponent {
   private gitApi = inject(GitApiService);
   private currentRepo = inject(CurrentRepoStore);
   private gitRefresh = inject(GitRefreshService);
+  private theme = inject(ThemeService);
 
-  protected gitgudColors = GitGudDarkColors;
+  protected gitgudColors = computed(() => this.theme.isDark() ? GitGudDarkColors : GitGudLightColors);
   protected lhs = signal('');
   protected ctr = signal('');
   protected rhs = signal('');
@@ -91,6 +101,16 @@ export class MergeEditorComponent {
         this.highlightFn.set(undefined);
         this.initHighlight(path);
       });
+    });
+
+    effect(() => {
+      // Re-build highlightFn when theme changes so syntax colors update live.
+      const isDark = this.theme.isDark();
+      const lang = this.file() ? detectLang(this.file()!.path) : null;
+      if (!lang || !this.highlighter) return;
+      const h = this.highlighter;
+      const theme = isDark ? 'dark-plus' : 'github-light';
+      this.highlightFn.set((text: string) => h.codeToHtml(text, {lang, theme}));
     });
   }
 
@@ -122,7 +142,7 @@ export class MergeEditorComponent {
     if (!lang) return;
 
     if (!this.highlighter) {
-      this.highlighter = await createHighlighter({themes: ['dark-plus'], langs: [lang as never]});
+      this.highlighter = await createHighlighter({themes: ['dark-plus', 'github-light'], langs: [lang as never]});
     } else {
       const loaded = this.highlighter.getLoadedLanguages();
       if (!loaded.includes(lang)) {
@@ -131,8 +151,7 @@ export class MergeEditorComponent {
     }
 
     const h = this.highlighter;
-    this.highlightFn.set((text: string) =>
-      h.codeToHtml(text, {lang, theme: 'dark-plus'}),
-    );
+    const theme = this.theme.isDark() ? 'dark-plus' : 'github-light';
+    this.highlightFn.set((text: string) => h.codeToHtml(text, {lang, theme}));
   }
 }

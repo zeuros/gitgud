@@ -23,7 +23,7 @@ import {RefType} from '../../enums/ref-type.enum';
 import {commitColor, hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
 import {CANVAS_DPR_MULTIPLIER, DRAWING_PAD_LEFT, NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
-
+import {type CanvasColors} from '../../models/theme.model';
 
 /**
  * Draw each commit / stash and their connections
@@ -38,6 +38,7 @@ export const drawLog = (
   scrollOffset: number,
   stashImg: HTMLImageElement,
   avatarImages: Map<string, HTMLImageElement>,
+  colors: CanvasColors,
 ) => {
   const devicePixelRatio = CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1);
 
@@ -50,22 +51,22 @@ export const drawLog = (
   canvas.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, DRAWING_PAD_LEFT, (ROW_HEIGHT - scrollOffset) * devicePixelRatio);
 
   // Draw edges (connections between commits)
-  edges.search(startCommit, endCommit).forEach(edge => drawEdge(canvas, edge, startCommit));
+  edges.search(startCommit, endCommit).forEach(edge => drawEdge(canvas, edge, startCommit, colors));
 
   // Draw commit nodes
   displayLog.slice(startCommit, endCommit)
     .forEach((ref, indexForThisSlice) =>
-      drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref, stashImg, avatarImages),
+      drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref, stashImg, avatarImages, colors),
     );
 };
 
-const drawEdge = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: number) => {
+const drawEdge = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: number, colors: CanvasColors) => {
   const topScroll = startCommit * ROW_HEIGHT;
   const [xParent, yParent] = [xPosition(edge.parentCol), yPosition(edge.parentRow) - topScroll];
   const [xChild, yChild] = [xPosition(edge.childCol), yPosition(edge.childRow) - topScroll];
 
   const isMergeCommit = edge.type == RefType.MERGE_COMMIT;
-  prepareStyleForDrawingCommit(canvas, isMergeCommit ? edge.parentCol : edge.childCol);
+  prepareStyleForDrawingCommit(canvas, isMergeCommit ? edge.parentCol : edge.childCol, colors);
 
   const isChildrenRight = xParent < xChild;
 
@@ -112,10 +113,11 @@ const drawNode = (
   ref: DisplayRef,
   stashImg: HTMLImageElement,
   avatarImages: Map<string, HTMLImageElement>,
+  colors: CanvasColors,
 ) => {
   const [x, y] = [xPosition(commitCoordinates.col), yPosition(commitCoordinates.row)];
 
-  prepareStyleForDrawingCommit(canvas, ref.indent!);
+  prepareStyleForDrawingCommit(canvas, ref.indent!, colors);
 
   if (isMergeCommit(ref)) {
     canvas.arc(x, y, NODE_RADIUS / 2.3, 0, 2 * Math.PI, true);
@@ -129,7 +131,7 @@ const drawNode = (
     const avatarImg = avatarImages.get(identity.email);
 
     if (avatarImg) {
-      canvas.fillStyle = '#29262c';
+      canvas.fillStyle = colors.avatarRing;
       canvas.arc(x, y, NODE_RADIUS, 0, 2 * Math.PI, true);
       canvas.fill();
 
@@ -148,13 +150,13 @@ const drawNode = (
     } else {
       canvas.arc(x, y, NODE_RADIUS, 0, 2 * Math.PI, true);
       canvas.fill();
-      prepareForCommitTextDraw(canvas);
+      prepareForCommitTextDraw(canvas, colors);
       canvas.fillText(initials(identity), x, y + 1);
       canvas.fill();
     }
   } else if (isIndex(ref)) {
     canvas.arc(x, y, NODE_RADIUS - 1, 0, 2 * Math.PI, true);
-    canvas.fillStyle = '#1c1e23';
+    canvas.fillStyle = colors.background;
     canvas.fill();
     canvas.setLineDash([3]);
     canvas.stroke();
@@ -164,24 +166,24 @@ const drawNode = (
   }
 };
 
-const prepareForCommitTextDraw = (canvas: CanvasRenderingContext2D) => {
+const prepareForCommitTextDraw = (canvas: CanvasRenderingContext2D, colors: CanvasColors) => {
   canvas.beginPath();
   canvas.fillStyle = 'white';
   canvas.font = `normal 900 13.5px Nunito, Roboto, Cantarell, sans-serif`; // Nunito not working here :/
   canvas.textAlign = 'center';
   canvas.textBaseline = 'middle';
-  canvas.shadowColor = 'rgba(0, 0, 0, 0.8)';
+  canvas.shadowColor = colors.nodeShadowColor;
   canvas.shadowBlur = 3;
 };
 
-const prepareStyleForDrawingCommit = (canvas: CanvasRenderingContext2D, indent: number) => {
+const prepareStyleForDrawingCommit = (canvas: CanvasRenderingContext2D, indent: number, colors: CanvasColors) => {
   canvas.beginPath();
   canvas.lineWidth = 2;
   canvas.setLineDash([]);
-  canvas.fillStyle = canvas.strokeStyle = 'rgba(206, 147, 216, 0.9)';
+  canvas.fillStyle = canvas.strokeStyle = colors.primary;
   canvas.filter = commitColor(indent);
-  canvas.shadowColor = 'rgba(0, 0, 0, 0.8)';
-  canvas.shadowBlur = 10;
+  canvas.shadowColor = colors.nodeShadowColor;
+  canvas.shadowBlur = colors.nodeShadowBlur;
 };
 
 export const xPosition = (col?: number): number => {

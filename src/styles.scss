@@ -1,16 +1,14 @@
 @forward 'font-awesome/css/font-awesome.min';
-
 @forward 'styles/custom-fonts';
-@forward 'styles/global';
-@forward 'styles/layout';
-@forward 'styles/variables';
+@forward 'styles/variables';    // design tokens first — palette, grays, scrollbar vars
 @forward 'styles/animations';
 @forward 'styles/drag-drop';
 @forward 'styles/toast';
 @forward 'styles/file-tables';
+@forward 'styles/layout';
+@forward 'styles/global';       // component rules reference tokens from variables
 
-@forward 'primeflex/primeflex';
+@use 'primeflex/primeflex';
 @use 'primeicons/primeicons';
-@use 'styles/primeng-theme-custom/theme-custom-dark-deeppurple';
 @use '@mismerge/core/styles.css';
 @use 'styles/mismerge-gitgud';
