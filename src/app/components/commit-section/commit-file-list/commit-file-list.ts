@@ -20,8 +20,9 @@ import {ChangeDetectionStrategy, Component, inject, input} from '@angular/core';
 import {directory, fileName} from '../../../utils/utils';
 import {FormsModule} from '@angular/forms';
 import {Listbox} from 'primeng/listbox';
-import {CommittedFileChange, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
+import {AppFileStatusKind, CommittedFileChange, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
+import {ThemeService} from '../../../services/theme.service';
 
 @Component({
   selector: 'gitgud-commit-file-list',
@@ -41,7 +42,7 @@ import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
         @let dir = directory(file.path);
         <i class="text-gray mr-2 fa {{ FileStatusesIcons[file.status.kind].icon }}"
            [style.color]="FileStatusesIcons[file.status.kind].color"
-           [style.filter]="'drop-shadow(0 0 5px ' + FileStatusesIcons[file.status.kind].color + '88)'"></i>
+           [style.filter]="iconDropShadow(file.status.kind)"></i>
         @if (dir.length) {
           <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
         }
@@ -60,6 +61,12 @@ export class CommitFileListComponent {
   protected fileName = fileName;
   protected FileStatusesIcons = FileStatusesIcons;
   protected fileDiffPanel = inject(FileDiffPanelService);
+  private theme = inject(ThemeService);
+
+  protected iconDropShadow(kind: AppFileStatusKind): string {
+    const alpha = this.theme.isDark() ? '' : '80';
+    return `drop-shadow(0 0 5px ${FileStatusesIcons[kind].color}${alpha})`;
+  }
 
   protected file$ = (f: CommittedFileChange) => f;
 }
