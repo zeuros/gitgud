@@ -20,6 +20,7 @@
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
                             [contextMenu]="activeContextMenu.menuRef"
                             (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
+                            emptyMessage="No local branches"
                     >
                         <ng-template pTemplate="default" let-node>
                             @if (node.data) {
@@ -62,6 +63,7 @@
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
                             [contextMenu]="activeContextMenu.menuRef"
                             (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
+                            emptyMessage="No branches on remote"
                     >
                         <ng-template pTemplate="default" let-node>
                             @if (node.data) {
@@ -95,6 +97,7 @@
                         scrollHeight="auto"
                         dataKey="sha"
                         class="border-none"
+                        emptyMessage="No stashes"
                 >
                     <ng-template #item let-s>
                         @let stash = $stash(s);
@@ -118,6 +121,7 @@
                         scrollHeight="auto"
                         dataKey="name"
                         class="border-none"
+                        emptyMessage="No tags"
                 >
                     <ng-template #item let-t>
                         @let tag = $localAndDistantTagWithName(t);
