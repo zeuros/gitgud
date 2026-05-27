@@ -47,10 +47,10 @@ export const registerMonacoEditorThemes = once(() => {
       'editor.lineHighlightBackground':    '#2c2d37',
       'editorLineNumber.foreground':       '#585e6e',
       'editorLineNumber.activeForeground': '#ce93d8',
-      'diffEditor.insertedTextBackground': '#1e402840',
-      'diffEditor.removedTextBackground':  '#40201e40',
-      'diffEditor.insertedLineBackground': '#1e402820',
-      'diffEditor.removedLineBackground':  '#40201e20',
+      'diffEditor.insertedTextBackground': '#2a6a3a60',
+      'diffEditor.removedTextBackground':  '#6a2a2a60',
+      'diffEditor.insertedLineBackground': '#2a6a3a38',
+      'diffEditor.removedLineBackground':  '#6a2a2a38',
     },
   });
 });
