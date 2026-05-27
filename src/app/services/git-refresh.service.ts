@@ -59,7 +59,7 @@ export class GitRefreshService {
     });
 
   constructor() {
-    this.doUpdateWorkingDirChanges();
+    if (this.currentRepo.cwd()) this.doRefreshAll();
     window.electron.onWindowFocus(this.doRefreshAll);
     this.destroyRef.onDestroy(() => window.electron.offWindowFocus(this.doRefreshAll));
     this.fileWatcher.onWorkingDirFileChange$.subscribe(this.doUpdateWorkingDirChanges);
