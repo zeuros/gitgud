@@ -15,6 +15,25 @@
 }
 
 
+.editor-header {
+  .operation-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    opacity: 0.85;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--hmmmmmmGray);
+
+    &.op-rebase { background: rgba(220, 130, 0, 0.2); color: #e8a84a; }
+    &.op-merge { background: rgba(80, 160, 80, 0.2); color: #7ec87e; }
+    &.op-cherry-pick { background: rgba(180, 80, 200, 0.2); color: #d09ae0; }
+    &.op-stash { background: rgba(60, 130, 220, 0.2); color: #7ab8f5; }
+  }
+}
+
 .merge-editor-labels {
   display: flex;
   flex-shrink: 0;
@@ -23,11 +42,33 @@
 
   span {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
     text-align: center;
     font-size: 0.75rem;
     color: var(--hmmmmmmGray);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+}
+
+.accept-all-btn {
+  font-size: 0.8rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--hmmmmmmGray);
+  cursor: pointer;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--p-text-color);
   }
 }
 

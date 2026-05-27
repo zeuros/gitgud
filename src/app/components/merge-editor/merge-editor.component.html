@@ -5,6 +5,13 @@
                 <i class="fa fa-code-fork mr-2"></i>
                 Resolve conflict: {{ fileName(f.path) }}
             </span>
+            @if (conflictCtx().operation !== 'unknown') {
+                <span class="operation-badge op-{{ conflictCtx().operation }}"
+                      [title]="conflictCtx().operation === 'rebase' ? 'Rebase: Ours/Theirs are swapped at the git index level vs a regular merge' : ''">
+                    {{ conflictCtx().operation }}
+                    @if (conflictCtx().operation === 'rebase') {<i class="fa fa-exclamation-triangle ml-1"></i>}
+                </span>
+            }
             <div class="editor-actions">
                 <p-button
                         label="Save & Mark Resolved"
@@ -19,9 +26,15 @@
             </div>
         </div>
         <div class="merge-editor-labels">
-            <span>Ours</span>
+            <span class="side-label">
+                <button class="accept-all-btn" (click)="acceptAll('ours')" title="Accept all ours">↑ Accept All</button>
+                {{ conflictCtx().oursLabel }}
+            </span>
             <span>Base (common ancestor)</span>
-            <span>Theirs</span>
+            <span class="side-label">
+                {{ conflictCtx().theirsLabel }}
+                <button class="accept-all-btn" (click)="acceptAll('theirs')" title="Accept all theirs">↑ Accept All</button>
+            </span>
         </div>
         <mis-merge3
                 #mergeEl

@@ -29,6 +29,7 @@ import {detectLang} from '../../utils/language-detection';
 import {createHighlighter, type Highlighter} from 'shiki';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {ThemeService} from '../../services/theme.service';
+import {short} from '../../utils/commit-utils';
 
 const GitGudDarkColors = {
   added:            'rgba(155, 185, 85,  0.20)',
@@ -51,6 +52,12 @@ const GitGudLightColors = {
 };
 
 type HighlightFn = (text: string) => string | Promise<string>;
+
+type ConflictCtx = {
+  operation: 'merge' | 'rebase' | 'cherry-pick' | 'stash' | 'unknown';
+  oursLabel: string;
+  theirsLabel: string;
+};
 
 @Component({
   selector: 'gitgud-merge-editor',
@@ -79,6 +86,7 @@ export class MergeEditorComponent {
   protected rhs = signal('');
   protected saving = signal(false);
   protected highlightFn = signal<HighlightFn | undefined>(undefined);
+  protected conflictCtx = signal<ConflictCtx>({operation: 'unknown', oursLabel: 'Ours', theirsLabel: 'Theirs'});
 
   protected file = computed(() => this.fileDiffPanel.conflictedFile());
 
@@ -93,6 +101,9 @@ export class MergeEditorComponent {
       const base$ = this.gitApi.git(['show', `:1:${path}`]).pipe(catchError(() => of('')));
       const ours$ = this.gitApi.git(['show', `:2:${path}`]).pipe(catchError(() => of('')));
       const theirs$ = this.gitApi.git(['show', `:3:${path}`]).pipe(catchError(() => of('')));
+
+      this.conflictCtx.set(this.detectConflictContext());
+      this.refineMergeLabel();
 
       combineLatest([ours$, base$, theirs$]).subscribe(([ours, base, theirs]) => {
         this.lhs.set(ours);
@@ -135,6 +146,73 @@ export class MergeEditorComponent {
         this.gitRefresh.doUpdateWorkingDirChanges();
       }))
       .subscribe();
+  }
+
+  protected async acceptAll(side: 'ours' | 'theirs'): Promise<void> {
+    const mismerge = this.mergeEl()?.nativeElement;
+    if (!mismerge) return;
+    // During rebase: lhs (:2:) = upstream (theirs), rhs (:3:) = our patch (ours)
+    const isRebase = this.conflictCtx().operation === 'rebase';
+    const physicalSide = side === 'ours'
+      ? (isRebase ? 'left' : 'right')
+      : (isRebase ? 'right' : 'left');
+
+    const buttons = Array.from(mismerge.querySelectorAll<HTMLElement>(`.msm__side-panel.msm__${physicalSide} button`));
+    for (let i = buttons.length - 1; i >= 0; i--) {
+      buttons[i].click();
+      await new Promise<void>(r => setTimeout(r)); // Waits for mismerge macrotask to update
+    }
+  }
+
+  private detectConflictContext(): ConflictCtx {
+    const cwd = this.currentRepo.cwd();
+    if (!cwd) return {operation: 'unknown', oursLabel: 'Ours', theirsLabel: 'Theirs'};
+
+    const git = `${cwd}/.git`;
+    const read = (p: string) => { try { return window.electron.fs.readFileSync(p).trim(); } catch { return ''; } };
+    const exists = (p: string) => window.electron.fs.existsSync(p);
+
+    if (exists(`${git}/rebase-merge`)) {
+      const branch = read(`${git}/rebase-merge/head-name`).replace('refs/heads/', '') || 'our branch';
+      const onto = read(`${git}/rebase-merge/onto`).slice(0, 7) || 'upstream';
+      return {operation: 'rebase', oursLabel: `${branch} (ours)`, theirsLabel: `onto ${onto}`};
+    }
+
+    if (exists(`${git}/CHERRY_PICK_HEAD`)) {
+      const sha = read(`${git}/CHERRY_PICK_HEAD`).slice(0, 7);
+      return {operation: 'cherry-pick', oursLabel: 'HEAD (ours)', theirsLabel: `cherry-pick ${sha}`};
+    }
+
+    if (exists(`${git}/MERGE_HEAD`)) {
+      const mergeHead = read(`${git}/MERGE_HEAD`);
+      const stashRef = read(`${git}/refs/stash`);
+      if (stashRef && mergeHead === stashRef) {
+        return {operation: 'stash', oursLabel: 'HEAD (ours)', theirsLabel: 'stash'};
+      }
+      return {operation: 'merge', oursLabel: 'HEAD (ours)', theirsLabel: `merging ${short(mergeHead)}`};
+    }
+
+    return {operation: 'unknown', oursLabel: 'Ours', theirsLabel: 'Theirs'};
+  }
+
+  private refineMergeLabel(): void {
+    const cwd = this.currentRepo.cwd();
+    if (!cwd) return;
+    const git = `${cwd}/.git`;
+    const read = (p: string) => { try { return window.electron.fs.readFileSync(p).trim(); } catch { return ''; } };
+    const exists = (p: string) => window.electron.fs.existsSync(p);
+
+    if (!exists(`${git}/MERGE_HEAD`) || exists(`${git}/rebase-merge`) || exists(`${git}/CHERRY_PICK_HEAD`)) return;
+    const mergeHead = read(`${git}/MERGE_HEAD`);
+    const stashRef = read(`${git}/refs/stash`);
+    if (stashRef && mergeHead === stashRef) return;
+
+    this.gitApi.git(['name-rev', '--name-only', mergeHead]).subscribe(name => {
+      const clean = name?.trim().replace(/[~^]\d*$/g, '');
+      if (clean && !clean.includes('undefined')) {
+        this.conflictCtx.update(ctx => ({...ctx, theirsLabel: `merging ${clean}`}));
+      }
+    });
   }
 
   private async initHighlight(path: string) {
