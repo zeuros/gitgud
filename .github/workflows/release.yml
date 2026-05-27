@@ -55,3 +55,27 @@ jobs:
         run: npx electron-builder --${{ matrix.platform }} --${{ matrix.arch }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build:prod && npx electron-builder --linux --dir
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get install -y xvfb libgbm-dev libasound2
+          npx playwright install-deps
+
+      - name: Run e2e tests
+        run: xvfb-run --auto-servernum npm run e2e

@@ -12,6 +12,8 @@
 
 A cross-platform Git GUI that doesn't get in your way.
 
+<video src="https://github.com/user-attachments/assets/b6e6ef04-b569-4695-95f4-d9525c0a6748" autoplay loop muted playsinline width="100%"></video>
+
 ## Download
 
 | Platform | Package | Architecture |

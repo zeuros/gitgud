@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Annotation Engine — Visual Test</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0d0d1a;
+      color: #e8e8f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Mock tab bar ──────────────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      background: #111122;
+      border-bottom: 1px solid #2d2d4a;
+      padding: 0 8px;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    p-tab {
+      display: inline-block;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      color: #888;
+    }
+    p-tab.active { border-bottom-color: #8b83ff; color: #e8e8f0; }
+
+    /* ── Main layout ───────────────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Branch panel ──────────────────────────────────────────────────────── */
+    .branch-panel {
+      width: 200px;
+      background: #111122;
+      border-right: 1px solid #2d2d4a;
+      padding: 8px 0;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .panel-label {
+      font-size: 11px;
+      color: #555;
+      padding: 4px 12px 6px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .p-tree-node-selectable {
+      display: flex;
+      align-items: center;
+      padding: 5px 12px;
+      cursor: pointer;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .p-tree-node-selectable:hover { background: #1a1a2e; }
+    .p-tree-node-selectable i { color: #8b83ff; font-size: 11px; }
+    .p-tree-node-selectable span { color: #c8c8e0; }
+    .p-tree-node-selectable.active span { color: #FACC15; font-weight: 600; }
+
+    /* ── Commit graph ──────────────────────────────────────────────────────── */
+    .graph-area {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* ── Toolbar ───────────────────────────────────────────────────────────── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      background: #111122;
+      border-bottom: 1px solid #2d2d4a;
+      padding: 4px 12px;
+      gap: 4px;
+    }
+    .toolbar button {
+      background: none;
+      border: 1px solid #2d2d4a;
+      color: #c8c8e0;
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .toolbar button:hover { background: #1a1a2e; border-color: #8b83ff; }
+    .toolbar .label { font-size: 12px; color: #555; margin-left: 4px; }
+
+    /* ── Commit table ──────────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; }
+    tr.commit-row { cursor: pointer; }
+    tr.commit-row:hover td { background: #1a1a2e; }
+    tr.commit-row td {
+      padding: 7px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #1a1a2e;
+      white-space: nowrap;
+    }
+    .commit-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #8b83ff;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    .commit-dot.yellow { background: #FACC15; }
+    .branch-tag {
+      font-size: 11px;
+      background: #2d2d4a;
+      color: #8b83ff;
+      border-radius: 4px;
+      padding: 1px 6px;
+      margin-left: 6px;
+    }
+    .commit-hash { color: #555; font-family: monospace; font-size: 12px; }
+    .commit-date { color: #444; font-size: 12px; }
+
+    /* ── Right panel ───────────────────────────────────────────────────────── */
+    .right-panel {
+      width: 240px;
+      background: #111122;
+      border-left: 1px solid #2d2d4a;
+      padding: 10px;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .right-panel .section-title {
+      font-size: 11px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    .conflicted-section tr td {
+      padding: 5px 8px;
+      color: #ff6b6b;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .conflicted-section tr:hover td { background: #2d1a1a; }
+    button.action-btn {
+      background: none;
+      border: 1px solid #2d2d4a;
+      color: #c8c8e0;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      width: 100%;
+      margin-bottom: 6px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button.action-btn:hover { background: #1a1a2e; }
+
+    /* ── Control panel ─────────────────────────────────────────────────────── */
+    .controls {
+      background: #0a0a16;
+      border-top: 2px solid #2d2d4a;
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .controls button {
+      background: #1a1a2e;
+      border: 1px solid #2d2d4a;
+      color: #c8c8e0;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+    .controls button:hover { background: #2d2d4a; }
+    .controls button.clear { border-color: #ff4757; color: #ff4757; }
+    .controls button.reload { border-color: #2ed573; color: #2ed573; }
+    .controls .sep { width: 1px; height: 20px; background: #2d2d4a; }
+    .controls label { font-size: 12px; color: #666; }
+    .controls input[type=range] { width: 80px; accent-color: #8b83ff; }
+    .controls .val { font-size: 12px; color: #FACC15; font-family: monospace; min-width: 30px; }
+  </style>
+</head>
+<body>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <p-tab class="active">todo-app</p-tab>
+    <p-tab>gitgud</p-tab>
+  </div>
+
+  <div class="layout">
+
+    <!-- Branch panel -->
+    <div class="branch-panel">
+      <div class="panel-label">Local</div>
+      <div class="p-tree-node-selectable active">
+        <i class="fa fa-code-branch"></i><span>main</span>
+      </div>
+      <div class="p-tree-node-selectable">
+        <i class="fa fa-code-branch"></i><span>dark-mode</span>
+      </div>
+      <div class="p-tree-node-selectable">
+        <i class="fa fa-code-branch"></i><span>local-storage</span>
+      </div>
+      <div class="p-tree-node-selectable">
+        <i class="fa fa-code-branch"></i><span>demo/new-feature</span>
+      </div>
+      <div class="panel-label" style="margin-top:8px">Remote</div>
+      <div class="p-tree-node-selectable">
+        <i class="fa fa-cloud"></i><span>origin/main</span>
+      </div>
+    </div>
+
+    <!-- Centre: toolbar + graph -->
+    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div class="toolbar">
+        <button><i class="fa fa-refresh"></i> Fetch</button>
+        <button><i class="fa fa-archive"></i> Stash</button>
+        <button><i class="fa fa-inbox"></i> Pop</button>
+        <button><i class="fa fa-code-fork"></i> Branch</button>
+        <span class="label">13s ago</span>
+      </div>
+      <div class="graph-area">
+        <table>
+          <tbody>
+            <tr class="commit-row">
+              <td><span class="commit-dot yellow"></span>Working directory<span class="branch-tag">WIP</span></td>
+              <td class="commit-hash">index</td>
+              <td class="commit-date">now</td>
+            </tr>
+            <tr class="commit-row">
+              <td><span class="commit-dot"></span>docs: update README<span class="branch-tag">HEAD</span><span class="branch-tag" style="color:#FACC15">main</span></td>
+              <td class="commit-hash">3cf54e6</td>
+              <td class="commit-date">2h ago</td>
+            </tr>
+            <tr class="commit-row">
+              <td><span class="commit-dot"></span>refactor: extract sanitize helper</td>
+              <td class="commit-hash">c639900</td>
+              <td class="commit-date">3h ago</td>
+            </tr>
+            <tr class="commit-row">
+              <td><span class="commit-dot"></span>feat: add responsive breakpoint</td>
+              <td class="commit-hash">6dc3939</td>
+              <td class="commit-date">4h ago</td>
+            </tr>
+            <tr class="commit-row">
+              <td><span class="commit-dot"></span>chore: v1.0.0 release<span class="branch-tag">v1.0.0</span></td>
+              <td class="commit-hash">6bb3042</td>
+              <td class="commit-date">1d ago</td>
+            </tr>
+            <tr class="commit-row">
+              <td><span class="commit-dot"></span>fix: prevent duplicate todo items</td>
+              <td class="commit-hash">7523d95</td>
+              <td class="commit-date">1d ago</td>
+            </tr>
+            <tr class="commit-row">
+              <td><span class="commit-dot"></span>feat: add Enter/Escape keyboard shortcuts</td>
+              <td class="commit-hash">a1b2c3d</td>
+              <td class="commit-date">2d ago</td>
+            </tr>
+            <tr class="commit-row">
+              <td><span class="commit-dot"></span>feat: implement add, delete and toggle</td>
+              <td class="commit-hash">e4f5a6b</td>
+              <td class="commit-date">2d ago</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div class="right-panel">
+      <div class="section-title">Changed files</div>
+      <table class="conflicted-section" style="width:100%">
+        <tbody>
+          <tr><td><i class="fa fa-exclamation-triangle" style="margin-right:6px"></i>styles.css</td></tr>
+          <tr><td><i class="fa fa-exclamation-triangle" style="margin-right:6px"></i>app.js</td></tr>
+        </tbody>
+      </table>
+      <br>
+      <button class="action-btn"><i class="fa fa-check"></i> Save &amp; Mark Resolved</button>
+    </div>
+
+  </div>
+
+  <!-- Control panel -->
+  <div class="controls">
+    <button class="reload" onclick="reloadEngine()">↺ Reload engine</button>
+    <button class="clear" onclick="window.__annClear?.()">✕ Clear</button>
+    <div class="sep"></div>
+
+    <button onclick="demo('commit-right')">Commit → right</button>
+    <button onclick="demo('commit-left')">Commit → left</button>
+    <button onclick="demo('branch-left')">Branch → left</button>
+    <button onclick="demo('toolbar-top')">Toolbar → top</button>
+    <button onclick="demo('conflict-right')">Conflict → right</button>
+    <button onclick="demo('tab-top')">Tab → top</button>
+    <button onclick="demo('all')">All 4 sides</button>
+
+    <div class="sep"></div>
+    <label>gap <input id="gap" type="range" min="0" max="150" value="50" oninput="updateParam('gap',this.value)"><span class="val" id="gap-val">50</span></label>
+    <label>margin <input id="margin" type="range" min="100" max="500" value="280" oninput="updateParam('margin',this.value)"><span class="val" id="margin-val">280</span></label>
+  </div>
+
+  <script src="../../node_modules/roughjs/bundled/rough.js"></script>
+  <script id="engine-script" src="annotation-engine.js"></script>
+  <script>
+    // ── Live-reload the engine without refreshing the page ────────────────────
+    function reloadEngine() {
+      const old = document.getElementById('engine-script');
+      if (old) old.remove();
+      window.__annClear?.();
+      const s = document.createElement('script');
+      s.id  = 'engine-script';
+      s.src = './annotation-engine.js?t=' + Date.now(); // cache-bust
+      document.body.appendChild(s);
+    }
+
+    // ── Expose tuning params as globals read by the engine ────────────────────
+    window.__annGap    = 50;
+    window.__annMargin = 280;
+
+    function updateParam(name, value) {
+      document.getElementById(name + '-val').textContent = value;
+      if (name === 'gap')    window.__annGap    = +value;
+      if (name === 'margin') window.__annMargin = +value;
+    }
+
+    // ── Helper: get centre of an element ─────────────────────────────────────
+    function centre(selector) {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+
+    // ── Demo scenarios ────────────────────────────────────────────────────────
+    function demo(scenario) {
+      window.__annClear?.();
+      switch (scenario) {
+        case 'commit-right': {
+          const p = centre('tr.commit-row:nth-child(3)');
+          if (p) window.__annDraw('Each row is one commit\nClick to see changed files', p.x, p.y, 'right');
+          break;
+        }
+        case 'commit-left': {
+          const p = centre('tr.commit-row:nth-child(3)');
+          if (p) window.__annDraw('Each row is one commit\nClick to see changed files', p.x, p.y, 'right');
+          break;
+        }
+        case 'branch-left': {
+          const p = centre('.p-tree-node-selectable');
+          if (p) window.__annDraw('The left panel lists all branches\nDouble-click to check out', p.x, p.y, 'right');
+          break;
+        }
+        case 'toolbar-top': {
+          const p = centre('.toolbar button');
+          if (p) window.__annDraw('Fetch downloads remote changes\nwithout merging', p.x, p.y, 'bottom');
+          break;
+        }
+        case 'conflict-right': {
+          const p = centre('.conflicted-section tr');
+          if (p) window.__annDraw('Merge conflict!\nClick a file to open\nthe 3-way merge editor', p.x, p.y, 'right');
+          break;
+        }
+        case 'tab-top': {
+          const p = centre('p-tab');
+          if (p) window.__annDraw('Open a second repo in a new tab\nSwitch between repos instantly', p.x, p.y, 'bottom');
+          break;
+        }
+        case 'all': {
+          const pairs = [
+            ['tr.commit-row:nth-child(2)', 'Commit graph\nEvery commit and branch', 'right'],
+            ['.p-tree-node-selectable',     'Branch panel\nClick to navigate',       'right'],
+            ['.toolbar button',             'Toolbar actions\nFetch · Stash · Branch','bottom'],
+            ['.conflicted-section tr',      'Conflicted file\nClick to resolve',      'bottom'],
+          ];
+          pairs.forEach(([sel, text, side]) => {
+            const p = centre(sel);
+            if (p) window.__annDraw(text, p.x, p.y, side);
+          });
+          break;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
