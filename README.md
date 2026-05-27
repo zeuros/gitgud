@@ -12,7 +12,7 @@
 
 A cross-platform Git GUI that doesn't get in your way.
 
-<video src="https://github.com/user-attachments/assets/4cef367f-5d48-4421-8ae3-62e129570d1e" autoplay loop muted playsinline width="100%"></video>
+<video src="https://github.com/user-attachments/assets/b6e6ef04-b569-4695-95f4-d9525c0a6748" autoplay loop muted playsinline width="100%"></video>
 
 ## Download
 
