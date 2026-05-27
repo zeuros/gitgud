@@ -60,7 +60,7 @@ export class RepositoryViewComponent {
       if (!repoId) return;
       const key = 'splitter-main-view-' + repoId;
       if (!localStorage.getItem(key)) {
-        localStorage.setItem(key, JSON.stringify([20, 80, 20]));
+        localStorage.setItem(key, JSON.stringify([17, 80, 23]));
       }
     });
   }
