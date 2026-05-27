@@ -50,7 +50,7 @@ import {GitRefreshService} from '../../services/git-refresh.service';
 export class RepositoriesViewComponent {
   protected gitRepositoryStore = inject(GitRepositoryStore);
   protected gitRepository = inject(GitRepositoryService);
-  private gitRefresh = inject(GitRefreshService);
+  protected gitRefresh = inject(GitRefreshService);
 
   protected drop({previousIndex, currentIndex}: CdkDragDrop<string[]>): void {
     this.gitRepositoryStore.reorderRepositories(previousIndex, currentIndex);
