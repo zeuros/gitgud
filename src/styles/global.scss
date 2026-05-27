@@ -146,6 +146,11 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
 }
 
 .p-listbox-empty-message {
+  color: var(--p-content-color);
+}
+
+.tumblewheat .p-listbox-empty-message {
+
   position: relative;
   overflow: hidden;
   min-height: 50px;
@@ -157,7 +162,7 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
     left: 100%;
     font-size: 1.4em;
     pointer-events: none;
-    animation: tumbleweed-roll 6s linear infinite;
+    animation: tumblewheat-roll 6s linear infinite;
   }
 }
 
@@ -178,7 +183,7 @@ p-listbox {
   }
 }
 
-@keyframes tumbleweed-roll {
+@keyframes tumblewheat-roll {
   0% {
     left: 70%;
     opacity: 0;
