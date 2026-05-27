@@ -54,5 +54,14 @@ export class RepositoryViewComponent {
       ro.observe(el);
       onCleanup(() => ro.disconnect());
     });
+
+    effect(() => {
+      const repoId = this.currentRepo.cwd();
+      if (!repoId) return;
+      const key = 'splitter-main-view-' + repoId;
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, JSON.stringify([20, 80, 20]));
+      }
+    });
   }
 }
