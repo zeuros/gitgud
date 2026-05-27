@@ -265,6 +265,11 @@ export class LogsComponent {
     this.edges.set(edges);
     this.graphColumnCount.set(graphColumnCount);
     this.untrackedStashes.set(untrackedStashes);
+
+    // Auto-show the work in progress (index) commit — or first commit — when nothing valid is selected
+    if (!this.currentRepo.selectedCommitsShas()?.length && displayLog.length) {
+      this.currentRepo.update({selectedCommitsShas: [displayLog[0].sha]});
+    }
   };
 
   // Called after canvas is available (runs once)
