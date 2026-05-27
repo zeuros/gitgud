@@ -4,7 +4,29 @@
   height: 100%;
 }
 
+@keyframes loading-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
 :host ::ng-deep {
+  .refreshing .p-tablist {
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 25%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--p-primary-color), transparent);
+      animation: loading-shimmer 1.4s ease-in-out infinite;
+      opacity: 0.6;
+    }
+  }
+
   p-tabs {
     display: flex;
     flex-direction: column;
