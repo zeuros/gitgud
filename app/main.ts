@@ -25,6 +25,14 @@ let mainWindow: BrowserWindow | null;
 
 const isDev = process.argv.slice(1).includes('--serve');
 
+// Packaged Electron apps launch without a login shell on Linux/macOS, so
+// process.env.PATH may be stripped. Prepend the standard locations so that
+// 'git' resolves without requiring the user to configure the full binary path.
+const FALLBACK_PATHS = ['/usr/local/bin', '/usr/bin', '/bin', '/opt/homebrew/bin'];
+const current = process.env['PATH'] ?? '';
+const missing = FALLBACK_PATHS.filter(p => !current.split(':').includes(p));
+if (missing.length) process.env['PATH'] = [...missing, current].join(':');
+
 // -----------------------------
 // Preload & Remote initialization
 // -----------------------------
