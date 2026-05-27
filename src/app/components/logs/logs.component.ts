@@ -250,7 +250,7 @@ export class LogsComponent {
 
   private computeDisplayLog = (workingDirHasChanges: boolean, logs: Commit[], stashes: Commit[]) => {
     const headCommit = workingDirHasChanges
-      ? logs.find(c => c.branches.includes('HEAD ->'))
+      ? logs.find(c => /(?<!\/)HEAD/.test(c.branches)) // (?<!\/) excludes origin/HEAD; matches both "HEAD -> branch" and bare "HEAD" (detached)
       : undefined;
 
     const indexParent = headCommit
