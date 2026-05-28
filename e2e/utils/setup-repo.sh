@@ -16,7 +16,7 @@ commit() { g add -A && g commit -m "$1"; }
 rm -rf "$BASE" "$CONFLICT"
 mkdir -p "$BASE"
 
-g init
+g init -b main
 g config user.name  "Demo Dev"
 g config user.email "demo@gitgud.dev"
 

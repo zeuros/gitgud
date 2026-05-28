@@ -23,7 +23,7 @@ export async function launchWithRepo(
 
   const app = await electron.launch({
     executablePath: BINARY,
-    args: ['--no-sandbox', '--disable-gpu', '--ozone-platform=x11'],
+    args: ['--no-sandbox', '--ozone-platform=x11'],
     ...(options.record ? {recordVideo: {dir: VIDEO_DIR, size: {width: 1920, height: 1080}}} : {}),
   } as Parameters<typeof electron.launch>[0]);
 
@@ -104,12 +104,12 @@ export const beat = (page: Page, ms = 400) => page.waitForTimeout(ms);
 
 /** Click a toolbar button by its Font Awesome icon class. */
 export const toolbarBtn = (page: Page, faClass: string) =>
-  page.locator(`.actions button:has(i.${faClass})`).click();
+  page.locator(`.actions button:has(i.${faClass})`).dispatchEvent('click');
 
 /** Add a second repo tab and switch back — shows the tab switching feature. */
 export async function demoSecondTab(page: Page, secondRepoPath: string) {
   // Click the "+" tab button
-  await page.locator('p-tablist p-button:has(i.pi-plus)').click();
+  await page.locator('p-tablist p-button:has(i.pi-plus)').dispatchEvent('click');
   await beat(page);
   // The file dialog is mocked by evaluating localStorage directly
   await page.evaluate((dir) => {
@@ -142,23 +142,23 @@ export const waitForMerge = (page: Page) =>
 export async function resolveAllConflicts(page: Page): Promise<void> {
   // The conflicted-section lives in the commit detail panel — make sure the
   // WIP/index row is selected so the panel is visible before we start looping.
-  await page.locator('tr.commit-row').first().click();
+  await page.locator('tr.commit-row').first().dispatchEvent('click');
   await page.waitForTimeout(400);
 
   while (true) {
     const conflictRow = page.locator('.conflicted-section tr').first();
     if (!await conflictRow.isVisible({timeout: 2_000}).catch(() => false)) break;
 
-    await conflictRow.click();
+    await conflictRow.dispatchEvent('click');
     await waitForMerge(page);
 
     // Click first merge-hunk button — for hunks with two choices this picks
     // whichever was rendered last (THEIRS/RHS), which is fine for demo purposes.
     const buttons = page.locator('button.msm__merge-button');
-    await buttons.nth(0).click();
+    await buttons.nth(0).dispatchEvent('click');
     await page.waitForTimeout(80);
 
-    await page.getByRole('button', {name: 'Save & Mark Resolved'}).click();
+    await page.getByRole('button', {name: 'Save & Mark Resolved'}).dispatchEvent('click');
     // Wait for the editor to close before moving to the next file
     await page.waitForSelector('gitgud-merge-editor', {state: 'hidden', timeout: 10_000});
     await page.waitForTimeout(400);

@@ -78,4 +78,4 @@ jobs:
           npx playwright install-deps
 
       - name: Run e2e tests
-        run: xvfb-run --auto-servernum npm run e2e
+        run: npm run e2e

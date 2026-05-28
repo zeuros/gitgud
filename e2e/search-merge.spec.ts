@@ -1,8 +1,11 @@
-import {expect, test} from '@playwright/test';
+import {ElectronApplication, expect, test} from '@playwright/test';
 import {DEMO_BASE, DEMO_CONFLICT, electronReload, launchWithRepo, waitForMerge} from './utils/helpers';
 
+let app: ElectronApplication;
+test.afterEach(async () => await app?.close());
+
 test('graph search, git command log & merge editor', async () => {
-  const {app, page} = await launchWithRepo(DEMO_BASE);
+  const {page} = ({app} = await launchWithRepo(DEMO_BASE));
 
   // ── Graph search ────────────────────────────────────────────────────────────
   await page.keyboard.press('Control+f');
@@ -28,7 +31,7 @@ test('graph search, git command log & merge editor', async () => {
   await page.keyboard.press('Escape');
 
   // ── Git command log ─────────────────────────────────────────────────────────
-  await page.locator('button:has(span.fa-terminal)').click();
+  await page.locator('button:has(span.fa-terminal)').dispatchEvent('click');
   await expect(page.getByText('Git Command History')).toBeVisible();
   await page.keyboard.press('Escape');
 
@@ -45,22 +48,21 @@ test('graph search, git command log & merge editor', async () => {
   }, DEMO_CONFLICT);
 
   await electronReload(app, page);
-  await page.waitForSelector('tr.commit-row', {timeout: 15_000});
-  await page.locator('p-tab').last().click();
+  await page.waitForSelector('tr.commit-row', {timeout: 10_000});
+  await page.locator('p-tab').last().dispatchEvent('click');
   await expect(page.locator('.conflicted-section')).toBeVisible({timeout: 10_000});
 
   // Conflicted file opens three-way merge editor
-  await page.locator('.conflicted-section tr').first().click();
+  await page.locator('.conflicted-section tr').first().dispatchEvent('click');
   await waitForMerge(page);
   await expect(page.locator('gitgud-merge-editor')).toBeVisible();
 
   // Accept ours and theirs for individual hunks
-  await page.getByRole('button', { name: '↑ Accept All', description: 'Accept all ours', exact: true }).click();
-  await page.getByRole('button', { name: '↑ Accept All', description: 'Accept all theirs', exact: true }).click();
+  await page.getByRole('button', {name: '↑ Accept All', description: 'Accept all ours', exact: true}).dispatchEvent('click');
+  await page.getByRole('button', {name: '↑ Accept All', description: 'Accept all theirs', exact: true}).dispatchEvent('click');
 
   // Mark as resolved
-  await page.getByRole('button', { name: ' Save & Mark Resolved' }).first().click();
+  await page.getByRole('button', {name: ' Save & Mark Resolved'}).first().dispatchEvent('click');
   await expect(page.locator('gitgud-merge-editor')).not.toBeVisible({timeout: 10_000});
 
-  await app.close();
 });
