@@ -1,4 +1,8 @@
 {
+  "publish": {
+    "provider": "github",
+    "releaseType": "draft"
+  },
   "asar": true,
   "directories": {
     "output": "release/"

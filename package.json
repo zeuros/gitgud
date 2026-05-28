@@ -1,6 +1,6 @@
 {
   "name": "gitgud",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Get Gud at Git",
   "homepage": "https://github.com/zeuros/gitgud",
   "author": {
@@ -32,7 +32,7 @@
     "test:watch": "vitest",
 
     "e2e:setup": "bash e2e/utils/setup-repo.sh",
-    "e2e": "npm run e2e:setup && playwright test",
+    "e2e": "npm run e2e:setup && xvfb-maybe -- playwright test",
     "e2e:debug": "npm run e2e:setup && playwright test --debug",
     "videos": "npm run e2e:setup && rm e2e/recordings/*.webm && playwright test --config playwright.video.config.ts"
   },
@@ -90,7 +90,8 @@
     "style-loader": "^4.0.0",
     "typescript": "~5.9.3",
     "vitest": "^4.1.6",
-    "wait-on": "9.0.5"
+    "wait-on": "9.0.5",
+    "xvfb-maybe": "^0.2.1"
   },
   "build": {
     "publish": {
