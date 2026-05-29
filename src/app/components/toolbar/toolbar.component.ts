@@ -24,6 +24,8 @@ import {Divider} from 'primeng/divider';
 import {Tooltip} from 'primeng/tooltip';
 import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
+import {Menu} from 'primeng/menu';
+import {type MenuItem} from 'primeng/api';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {ToastService} from '../../services/toast.service';
@@ -49,7 +51,7 @@ import {UpdateCheckService} from '../../services/update-check.service';
   selector: 'gitgud-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, CloneDialogComponent, ShellHistoryDialogComponent, SettingsDialogComponent],
+  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, CloneDialogComponent, ShellHistoryDialogComponent, SettingsDialogComponent, Menu],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
 })
@@ -201,8 +203,18 @@ export class ToolbarComponent implements OnInit {
       switchMap(result => result ? this.gitApi.gitAction(['push', '--set-upstream', result.remote, result.branch]) : EMPTY),
     );
 
-  protected copyBtcAddress = () =>
-    navigator.clipboard.writeText('bc1q6kpuaygvp2a0mnv6n74jg4dlcggw35llynm3p9')
-      .then(() => this.toast.success('BTC address copied to clipboard'));
+  protected donateItems: MenuItem[] = [
+    {
+      label: 'Liberapay',
+      icon: 'fa fa-heart',
+      command: () => window.electron.openExternal('https://liberapay.com/zeuros/donate'),
+    },
+    {
+      label: 'Bitcoin — copy address',
+      icon: 'fa fa-bitcoin',
+      command: () => navigator.clipboard.writeText('bc1q6kpuaygvp2a0mnv6n74jg4dlcggw35llynm3p9')
+        .then(() => this.toast.success('BTC address copied to clipboard')),
+    },
+  ];
 
 }
