@@ -23,7 +23,7 @@ import {bySha} from '../../utils/log-utils';
 import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {Commit} from '../../lib/github-desktop/model/commit';
 import {once} from 'lodash-es';
-import {commitColor, hasName, isCommit, isIndex, isStash} from '../../utils/commit-utils';
+import {commitColor, findCurrentHeadCommit, hasName, isCommit, isIndex, isStash} from '../../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
 import {DragDropModule} from '@angular/cdk/drag-drop';
@@ -250,7 +250,8 @@ export class LogsComponent {
 
   private computeDisplayLog = (workingDirHasChanges: boolean, logs: Commit[], stashes: Commit[]) => {
     const headCommit = workingDirHasChanges
-      ? logs.find(c => /(?<!\/)HEAD/.test(c.branches)) // (?<!\/) excludes origin/HEAD; matches both "HEAD -> branch" and bare "HEAD" (detached)
+      // IF detached mode, index(WIP) commit is on top of checked out commit, else checked out branch
+      ? findCurrentHeadCommit(logs)
       : undefined;
 
     const indexParent = headCommit
