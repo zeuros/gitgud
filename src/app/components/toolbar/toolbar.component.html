@@ -121,10 +121,11 @@
     <p-button class="sober" icon="fa fa-cog" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (onClick)="openSettingsDialog()"/>
 </div>
 
+<p-menu #donateMenu [model]="donateItems" [popup]="true"/>
 <p-button
         class="sober coffee-btn" icon="fa fa-coffee" [text]="true" [rounded]="true"
-        pTooltip="Support GitGud ☕ — click to copy BTC address" tooltipPosition="bottom"
-        (onClick)="copyBtcAddress()"/>
+        pTooltip="Support GitGud ☕ - give me riches aplenty" tooltipPosition="bottom"
+        (onClick)="donateMenu.toggle($event)"/>
 
 <p-select
         [options]="zoomLevels"
