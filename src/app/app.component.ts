@@ -21,6 +21,10 @@ import {CommonModule} from '@angular/common';
 import {ToastModule} from 'primeng/toast';
 import {ConfirmDialog} from 'primeng/confirmdialog';
 import {ContextMenu} from 'primeng/contextmenu';
+import {Dialog} from 'primeng/dialog';
+import {Button} from 'primeng/button';
+import {GitApiService} from './services/electron-cmd-parser-layer/git-api.service';
+import {SettingsService} from './services/settings.service';
 import {GitRepositoryStore} from './stores/git-repos.store';
 import {AutoFetchService} from './services/auto-fetch.service';
 import {Router, RouterOutlet} from '@angular/router';
@@ -32,7 +36,7 @@ import {MessageService} from 'primeng/api';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, SettingsDialogComponent, ContextMenu],
+  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, SettingsDialogComponent, ContextMenu, Dialog, Button],
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
@@ -42,14 +46,18 @@ export class AppComponent {
 
   protected activeContextMenu = inject(ActiveContextMenuService);
   protected fixup = inject(FixupService);
+  protected gitApi = inject(GitApiService);
+  protected installInfo = this.getInstallInfo();
   private messageService = inject(MessageService);
+  private settings = inject(SettingsService);
+  private gitRepositoryStore = inject(GitRepositoryStore);
+  private router = inject(Router);
+
+  private globalMenu = viewChild.required<ContextMenu>('globalMenu');
 
   protected dismissToastOnClick = (event: Event) => {
     if ((event.target as Element).closest('.p-toast-message')) this.messageService.clear();
   };
-  private gitRepositoryStore = inject(GitRepositoryStore);
-  private router = inject(Router);
-  private globalMenu = viewChild.required<ContextMenu>('globalMenu');
 
   constructor() {
     inject(AutoFetchService); // Starts auto-fetch
@@ -60,4 +68,30 @@ export class AppComponent {
 
     console.log('Process env: ', window.electron.process.env);
   }
+
+  private getInstallInfo() {
+    const p = window.electron.process.platform;
+    return {
+      cmd: p === 'win32'  ? 'winget install Git.Git' :
+           p === 'darwin' ? 'brew install git' :
+                            'sudo apt install git  /  sudo dnf install git',
+      url: p === 'win32'  ? 'https://git-scm.com/download/win' :
+           p === 'darwin' ? 'https://git-scm.com/download/mac' :
+                            'https://git-scm.com/download/linux',
+    };
+  }
+
+  protected openDownloadPage = () => window.electron.openExternal(this.installInfo.url);
+
+  protected browseForGit = () => {
+    const paths = window.electron.dialog.showOpenDialogSync({
+      title: 'Select git executable',
+      filters: window.electron.process.platform === 'win32' ? [{name: 'Executable', extensions: ['exe']}] : [],
+      properties: ['openFile'],
+    });
+    if (paths?.[0]) {
+      this.settings.gitBin = paths[0];
+      this.gitApi.recheckGit();
+    }
+  };
 }
