@@ -16,12 +16,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {inject, Injectable, isDevMode} from '@angular/core';
+import {inject, Injectable, isDevMode, signal} from '@angular/core';
 
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting JavaScript file will look as if you never imported the module at all.
 // import type {ExecOptions} from 'child_process';
-import {defer, from, map, Observable, of, retry, switchMap, tap, throwError} from 'rxjs';
+import {catchError, defer, from, map, Observable, of, retry, switchMap, tap, throwError} from 'rxjs';
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
 import {type ExecOptions, type SpawnOptionsWithoutStdio} from 'node:child_process';
 import {GitCommandHistoryService} from '../git-command-history.service';
@@ -37,20 +37,13 @@ export class GitApiService {
   private history = inject(GitCommandHistoryService);
   private settings = inject(SettingsService);
 
+  gitFound = signal(true);
+
   constructor() {
-    // Notes :
-    // * A NodeJS's dependency imported with 'window.require' MUST BE present in `dependencies` of both `app/package.json`
-    // and `package.json (root folder)` in order to make it work here in Electron's Renderer process (src folder)
-    // because it will be loaded at runtime by Electron.
-    // * A NodeJS's dependency imported with TS module import (ex: import { Dropbox } from 'dropbox') CAN only be present
-    // in `dependencies` of `package.json (root folder)` because it is loaded during build phase and does not need to be
-    // in the final bundle. Reminder : only if not used in Electron's Main process (app folder)
-
-    // If you want to use a NodeJS 3rd party deps in Renderer process,
-    // ipcRenderer.invoke can serve many common use cases.
-    // https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrendererinvokechannel-args
-
-    this.git(['--version']).pipe(map(v => `Git binary: ${this.settings.gitBin}, version: ${v.trim()}`)).subscribe(console.log);
+    this.git(['--version']).pipe(
+      map(v => `Git binary: ${this.settings.gitBin}, version: ${v.trim()}`),
+      catchError(() => { this.gitFound.set(false); return of(null); }),
+    ).subscribe(v => v && console.log({v}));
   }
 
   git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
@@ -116,5 +109,10 @@ export class GitApiService {
     })
       .pipe(retry({delay: intervalMs, count: 10}));
   };
+
+  recheckGit = () =>
+    this.git(['--version'])
+      .pipe(catchError(() => of(null)))
+      .subscribe(v => { if (v) this.gitFound.set(true); });
 
 }

@@ -7,3 +7,14 @@
 <p-confirmDialog/>
 <gitgud-settings-dialog/>
 <p-contextMenu #globalMenu [model]="activeContextMenu.contextMenu()" appendTo="body"/>
+
+<p-dialog header="Git not found" [visible]="!gitApi.gitFound()" [modal]="true" [closable]="false" [style]="{width: '28rem'}">
+  <p>Git is not installed or not in PATH.</p>
+  <p>Install command:</p>
+  <code>{{ installInfo.cmd }}</code>
+  <p style="margin-top: 1rem">Then restart GitGud.</p>
+  <ng-template pTemplate="footer">
+    <p-button label="Browse for git..." severity="secondary" (onClick)="browseForGit()"/>
+    <p-button label="Open download page" (onClick)="openDownloadPage()"/>
+  </ng-template>
+</p-dialog>
