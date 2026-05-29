@@ -40,9 +40,10 @@ export class CommitContextMenuService {
   selectedCommit = signal<DisplayRef | undefined>(undefined);
   private sha = computed(() => this.selectedCommit()!.sha);
   private parentSha = computed(() => this.selectedCommit()!.parentSHAs[0]);
-  private childSha = computed(() => {
+  private childCommitSha = computed(() => {
     const selectedSha = this.sha();
-    return this.currentRepo.logs().find(c => c.parentSHAs[0] === selectedSha)?.sha;
+    const stashes = this.currentRepo.stashes().map(s => s.parentSHAs[1]);
+    return this.currentRepo.logs().filter(c => !stashes.includes(c.sha)).find(c => c.parentSHAs[0] === selectedSha)?.sha;
   });
 
   commitContextMenu = computed<MenuItem[]>(() => [
@@ -83,8 +84,8 @@ export class CommitContextMenuService {
     {separator: true},
     // {label: 'Interactive Rebase', icon: 'fa fa-list-ol', command: this.interactiveRebase},
     {label: 'Drop commit', icon: 'fa fa-trash', command: this.dropCommit},
-    {label: 'Move commit up', icon: 'fa fa-arrow-up', command: () => this.moveCommit('up'), visible: !!this.childSha()},
-    {label: 'Move commit down', icon: 'fa fa-arrow-down', command: () => this.moveCommit('down')},
+    {label: 'Move commit up', icon: 'fa fa-arrow-up', command: () => this.moveCommit('up'), visible: !!this.childCommitSha()},
+    {label: 'Move commit down', icon: 'fa fa-arrow-down', command: () => this.moveCommit('down'), visible: !!this.parentSha()},
     {separator: true},
     {label: 'Copy commit sha', icon: 'fa fa-copy', command: this.copyCommitSha},
     {separator: true},
@@ -118,7 +119,7 @@ export class CommitContextMenuService {
   };
 
   protected moveCommit = (direction: 'up' | 'down') => {
-    const toExchange = direction === 'up' ? this.childSha() : this.parentSha();
+    const toExchange = direction === 'up' ? this.childCommitSha() : this.parentSha();
     if (!toExchange) throw new Error('Cannot move commit - boundary reached');
     const startRebaseFrom = `${direction == 'up' ? this.sha() : this.parentSha()}^`;
 
