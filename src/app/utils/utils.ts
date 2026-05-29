@@ -59,7 +59,7 @@ export const workingDirHasChanges = (status?: WorkDirStatus) =>
   (status?.unstaged.length ?? 0) > 0 || (status?.staged.length ?? 0) > 0 || (status?.conflicted.length ?? 0) > 0;
 
 // Signals diff comparators
-export const logsComparison = (a: Commit[], b: Commit[]) => a.length === b.length && a.every((c, i) => c.sha === b[i].sha);
+export const logsComparison = (a: Commit[], b: Commit[]) => a.length === b.length && a.every((c, i) => c.sha === b[i].sha && c.branches === b[i].branches);
 export const keyComparison = (a?: object, b?: object) => !!a && !!b && shallowArrayEqual(Object.keys(a), Object.keys(b));
 export const shallowArrayEqual = <T>(a?: T[], b?: T[]) => a === b || (!!a && !!b && a.length === b.length && a.every((v, i) => v === b[i]));
 
