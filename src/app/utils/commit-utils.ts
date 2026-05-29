@@ -112,3 +112,15 @@ export const headCommit = (branches: Branch[], logs: Commit[], offset = 0) => {
   }
   return commit;
 };
+
+/**
+ * Returns commit pointed at by HEAD (detached or attached).
+ * In detached mode, the checked-out commit has a bare "HEAD" entry.
+ * In attached mode, the checked-out commit has a "HEAD -> <branch>" entry.
+ */
+export const findCurrentHeadCommit = (logs: Commit[]) => {
+  const heads =  logs.filter(c => c.branches?.length && c.branches.includes('HEAD'));
+
+  return heads.find(c => c.branches.split(', ').some(b => b === 'HEAD'))
+    ?? heads.find(c => c.branches.split(', ').some(b => b.startsWith('HEAD ->')));
+};
