@@ -68,6 +68,7 @@ export class GitRefreshService {
   refreshAll = () => this.track(forkJoin({
     workDirStatus: this.updateWorkingDirChanges(),
     logsAndBranches: this.updateLogsAndBranches(), // refresh log and wait for it so that selected commit sha can be updated
+    isRebasing: this.updateRebaseStatus(),
   }));
 
   doRefreshAll = () => this.refreshAll().subscribe();
@@ -92,6 +93,14 @@ export class GitRefreshService {
       ));
 
   doUpdateLogsAndBranches = () => this.updateLogsAndBranches().subscribe();
+
+
+
+  updateRebaseStatus = () =>
+    of(window.electron.fs.existsSync(`${this.currentRepo.cwd()}/.git/rebase-merge`))
+      .pipe(tap(isRebasing => this.currentRepo.update({isRebasing})));
+
+  doUpdateRebaseStatus = () => this.updateRebaseStatus().subscribe();
 
 
   /**

@@ -125,7 +125,8 @@ export class CommitContextMenuService {
 
     const swapCommits = (actions: string[]) => this.swapActions(actions, this.sha(), toExchange);
 
-    this.gitWorkflow.rebaseAndEditActions(startRebaseFrom, swapCommits).subscribe(() => this.toast.success(`Moved commit ${direction}`));
+    this.gitWorkflow.rebaseAndEditActions(startRebaseFrom, swapCommits, false)
+      .subscribe(() => this.toast.success(`Moved commit ${direction}`));
   };
 
   private swapActions(actions: string[], shaActionA: string, shaActionB: string) {

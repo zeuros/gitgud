@@ -25,11 +25,10 @@ import {Tooltip} from 'primeng/tooltip';
 import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import {Menu} from 'primeng/menu';
-import {type MenuItem} from 'primeng/api';
+import {type MenuItem, PrimeTemplate} from 'primeng/api';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {ToastService} from '../../services/toast.service';
-import {PrimeTemplate} from 'primeng/api';
 import {AutoFetchService} from '../../services/auto-fetch.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {SettingsService} from '../../services/settings.service';
@@ -41,7 +40,7 @@ import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell
 import {UndoService} from '../../services/undo.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
-import {openBehindRemoteDialog, type BehindRemoteAction} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
+import {type BehindRemoteAction, openBehindRemoteDialog} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
 import {RebaseService} from '../../services/rebase.service';
@@ -64,16 +63,15 @@ export class ToolbarComponent implements OnInit {
   protected createBranch = inject(CreateBranchService);
   protected gitRefresh = inject(GitRefreshService);
   protected updateCheck = inject(UpdateCheckService);
+  protected rebase = inject(RebaseService);
   protected loading = signal<'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-continue' | 'rebase-skip' | 'rebase-abort' | undefined>(undefined);
   protected hasWorkDirChanges = computed(() => workingDirHasChanges(this.currentRepo.workDirStatus()));
   protected hasStashes = computed(() => this.currentRepo.stashes().length > 0);
-  protected isRebasing = computed(() => { this.currentRepo.workDirStatus(); return this.rebase.isRebasing(); });
   protected short = short;
   protected zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
   private branchAheadBehind = inject(BranchAheadBehindService);
   private toast = inject(ToastService);
-  private rebase = inject(RebaseService);
   private dialog = inject(DialogService);
   private settingsDialog = viewChild.required(SettingsDialogComponent);
   private cloneDialog = viewChild.required(CloneDialogComponent);
@@ -138,26 +136,23 @@ export class ToolbarComponent implements OnInit {
 
   protected continueRebase = () => {
     this.loading.set('rebase-continue');
-    this.gitApi.gitAction(['rebase', '--continue']).pipe(
-      switchMap(this.gitRefresh.refreshAll),
-      finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
-    ).subscribe(() => this.toast.success('Rebase continued'));
+    this.gitApi.gitAction(['rebase', '--continue'])
+      .pipe(finalize(() => { this.loading.set(undefined); this.gitRefresh.doRefreshAll(); }))
+      .subscribe(() => this.toast.success('Rebase continued'));
   };
 
   protected skipRebase = () => {
     this.loading.set('rebase-skip');
-    this.gitApi.gitAction(['rebase', '--skip']).pipe(
-      switchMap(this.gitRefresh.refreshAll),
-      finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
-    ).subscribe(() => this.toast.success('Commit skipped'));
+    this.gitApi.gitAction(['rebase', '--skip'])
+      .pipe(finalize(() => { this.loading.set(undefined); this.gitRefresh.doRefreshAll(); }))
+      .subscribe(() => this.toast.success('Commit skipped'));
   };
 
   protected abortRebase = () => {
     this.loading.set('rebase-abort');
-    this.rebase.abortRebase().pipe(
-      switchMap(this.gitRefresh.refreshAll),
-      finalize(() => { this.loading.set(undefined); this.gitRefresh.doUpdateWorkingDirChanges(); }),
-    ).subscribe(() => this.toast.success('Rebase aborted'));
+    this.rebase.abortRebase()
+      .pipe(finalize(() => { this.loading.set(undefined); this.gitRefresh.doRefreshAll(); }))
+      .subscribe(() => this.toast.success('Rebase aborted'));
   };
 
   // Returns false when there is no upstream or the upstream branch name differs from the local branch name.
