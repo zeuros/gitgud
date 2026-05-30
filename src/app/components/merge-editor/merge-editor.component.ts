@@ -172,7 +172,7 @@ export class MergeEditorComponent {
     const read = (p: string) => { try { return window.electron.fs.readFileSync(p).trim(); } catch { return ''; } };
     const exists = (p: string) => window.electron.fs.existsSync(p);
 
-    if (exists(`${git}/rebase-merge`)) {
+    if (this.currentRepo.isRebasing()) {
       const branch = read(`${git}/rebase-merge/head-name`).replace('refs/heads/', '') || 'our branch';
       const onto = read(`${git}/rebase-merge/onto`).slice(0, 7) || 'upstream';
       return {operation: 'rebase', oursLabel: `${branch} (ours)`, theirsLabel: `onto ${onto}`};
@@ -202,7 +202,7 @@ export class MergeEditorComponent {
     const read = (p: string) => { try { return window.electron.fs.readFileSync(p).trim(); } catch { return ''; } };
     const exists = (p: string) => window.electron.fs.existsSync(p);
 
-    if (!exists(`${git}/MERGE_HEAD`) || exists(`${git}/rebase-merge`) || exists(`${git}/CHERRY_PICK_HEAD`)) return;
+    if (!exists(`${git}/MERGE_HEAD`) || this.currentRepo.isRebasing() || exists(`${git}/CHERRY_PICK_HEAD`)) return;
     const mergeHead = read(`${git}/MERGE_HEAD`);
     const stashRef = read(`${git}/refs/stash`);
     if (stashRef && mergeHead === stashRef) return;

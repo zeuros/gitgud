@@ -40,6 +40,7 @@ export class GitRepository {
     // Editor config
     public editorConfig: { viewType: ViewType } = {viewType: 'split'},
     public workDirStatus: WorkDirStatus = {unstaged: [], staged: [], conflicted: []},
+    public isRebasing = false,
   ) {
   }
 }

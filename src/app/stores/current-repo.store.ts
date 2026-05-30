@@ -73,6 +73,7 @@ export class CurrentRepoStore {
     const sha = this.selectedCommitSha();
     return this.tags().find(s => s.sha == sha);
   });
+  isRebasing = computed(() => this.reposStore.selectedRepository()?.isRebasing ?? false);
   headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
 
   headSha = () => this.headBranch()?.tip?.sha ?? this.detachedHeadSha();

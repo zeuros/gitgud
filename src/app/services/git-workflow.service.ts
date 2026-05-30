@@ -47,7 +47,7 @@ export class GitWorkflowService {
     ).pipe(
       catchError(e => {
         // Conflict: git left rebase-merge in place — don't abort, refresh and let user resolve
-        if (this.rebase.isRebasing()) {
+        if (this.rebase.hasRebaseFile()) {
           return this.gitRefresh.refreshAll().pipe(
             switchMap(() => throwError(() => e)),
           );

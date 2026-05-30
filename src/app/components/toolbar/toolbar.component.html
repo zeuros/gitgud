@@ -12,7 +12,7 @@
 <p-divider layout="vertical"/>
 
 <div class="actions">
-    @if (isRebasing()) {
+    @if (currentRepo.isRebasing()) {
         <span class="rebase-label">Rebase in progress</span>
         <p-button class="sober rebase-continue"
                   [text]="true"

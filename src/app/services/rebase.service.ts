@@ -48,31 +48,30 @@ export class RebaseService {
   startInteractiveRebase = (sha: string, autosquash = false) =>
     defer(() => {
       this.cleanWaitFile();
-      if (this.isRebasing()) throw new Error('Rebase is already in progress');
+      if (this.hasRebaseFile()) throw new Error('Rebase is already in progress');
       this.spawnRebaseProcess(sha, autosquash);
       return this.readRebaseActionsFile();
     });
 
   // Spawn a git rebase process, it should create a file with all rebase actions and wait for user input
   // Once rebase actions file is created, we next pendingRebase$ finishRebase can change actions and ... finish the rebase
-  private spawnRebaseProcess = (sha: string, autosquash: boolean) =>
+  private spawnRebaseProcess = (sha: string, autosquash: boolean) => {
     this.gitApi.spawn('git', ['rebase', '-i', ...(autosquash ? ['--autosquash'] : []), sha], {
       env: {...window.electron.process.env, GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript()},
     }).pipe(
-      finalize(() => this.pendingRebase$.next()),
       catchError(e => {
         this.pendingRebase$.error(e);
         return throwError(() => e);
       }),
+      finalize(() => this.pendingRebase$.next()),
     ).subscribe();
+  };
 
   private readRebaseActionsFile = () =>
     defer(() => of(this.parseInteractiveRebaseOutput(window.electron.fs.readFileSync(this.rebaseActionsFilePath())))).pipe(
       retry({count: 10, delay: 150}),
       catchError(e => this.abortRebase().pipe(switchMap(() => throwError(() => e)))),
     );
-
-  isRebasing = () => window.electron.fs.existsSync(`${this.currentRepo.cwd()}/.git/rebase-merge`);
 
   // FIXME: if main electron process (the one calling git rebase) crashes during a git operation,
   //  git could keep a lock file, we have to write the .done and git lock file on error so that git rebase can finish and state be ok
@@ -98,13 +97,17 @@ export class RebaseService {
       ? 'sh -c "while [ ! -f \\"$0.done\\" ]; do sleep 0.3; done && rm \\"$0.done\\""' // Fixme: double check it's $0 and not $1 on git bash
       : 'sh -c \'while [ ! -f "$0.done" ]; do sleep 0.3; done && rm "$0.done"\'';
 
+  hasRebaseFile = () => window.electron.fs.existsSync(`${this.currentRepo.cwd()}/.git/rebase-merge`);
+
   private rebaseActionsFilePath = () => `${this.currentRepo.cwd()}/.git/rebase-merge/git-rebase-todo`;
 
   abortRebase = () =>
-    this.gitApi.gitAction(['rebase', '--abort']).pipe(catchError(e => {
-      console.error(e);
-      return EMPTY;
-    }));
+    this.gitApi.gitAction(['rebase', '--abort']).pipe(
+      catchError(e => {
+        console.error(e);
+        return EMPTY;
+      }),
+    );
 
   private parseInteractiveRebaseOutput = (contents: string): string[] =>
     contents.split('\n')

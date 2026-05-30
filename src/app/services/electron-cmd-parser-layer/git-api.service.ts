@@ -28,6 +28,11 @@ import {GitCommandHistoryService} from '../git-command-history.service';
 import {SettingsService} from '../settings.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 
+// Git invokes GIT_EDITOR as: `$GIT_EDITOR /path/to/msg/file` — we want a no-op that exits 0.
+// On Windows (cmd.exe): "cmd /c exit 0" — ignores extra args. On Unix: "true".
+const noopEditor = () =>
+  window.electron.process.platform === 'win32' ? 'cmd /c exit 0' : 'true';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -49,7 +54,7 @@ export class GitApiService {
   git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
     return this.waitForLock().pipe(
-      switchMap(() => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: window.electron.process.env, ...options})),
+      switchMap(() => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {...window.electron.process.env, GIT_EDITOR: noopEditor()}, ...options})),
     );
   };
 
