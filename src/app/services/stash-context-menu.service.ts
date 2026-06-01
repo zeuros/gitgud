@@ -21,7 +21,7 @@ import {type MenuItem} from 'primeng/api';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {ToastService} from './toast.service';
-import {switchMap} from 'rxjs';
+import {finalize} from 'rxjs';
 import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
 
 @Injectable({providedIn: 'root'})
@@ -51,7 +51,7 @@ export class StashContextMenuService {
 
   private run = (args: (string | undefined)[], successMsg?: string) =>
     this.gitApi.gitAction(args)
-      .pipe(switchMap(this.gitRefresh.refreshAll))
+      .pipe(finalize(this.gitRefresh.doRefreshAll))
       .subscribe(() => successMsg && this.toast.success(successMsg));
 
   private stashSummary = computed(() => this.selectedCommit()?.summary ?? this.stashRef());
