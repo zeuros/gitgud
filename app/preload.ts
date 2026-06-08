@@ -20,14 +20,20 @@ import {BrowserWindow, contextBridge, shell} from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import {createHash} from 'crypto';
-import {execFile, ExecFileOptions} from 'child_process';
+import {ExecFileOptions} from 'child_process';
 import {app, dialog, getCurrentWindow} from '@electron/remote';
 import {ChokidarOptions, FSWatcher, watch} from 'chokidar';
 import type {WriteFileOptions} from 'node:fs';
 import {spawn, SpawnOptionsWithoutStdio, spawnSync, SpawnSyncOptions} from 'node:child_process';
-import {promisify} from 'node:util';
+import {ShellPool} from './shell-pool';
 
 const watchers = new Map<string, FSWatcher>();
+const shellPools = new Map<string, ShellPool>();
+
+function getPool(cwd: string, env: NodeJS.ProcessEnv): ShellPool {
+  if (!shellPools.has(cwd)) shellPools.set(cwd, new ShellPool(cwd, env));
+  return shellPools.get(cwd)!;
+}
 
 // To sync with electron-api.ts
 contextBridge.exposeInMainWorld('electron', {
@@ -64,8 +70,11 @@ contextBridge.exposeInMainWorld('electron', {
     md5: (data: string) => createHash('md5').update(data).digest('hex'),
   },
 
-  // Buffers all output in memory; do not use for large or streaming output
-  execFile: promisify(execFile) as (cmd: string, args: string[], input: string, options: ExecFileOptions) => Promise<{ stdout: string; stderr: string }>,
+  execFile: (cmd: string, args: string[], options: ExecFileOptions) => {
+    const cwd = (options.cwd as string | undefined) ?? process.cwd();
+    const env = (options.env ?? process.env) as NodeJS.ProcessEnv;
+    return getPool(cwd, env).exec(cmd, args).then(stdout => ({stdout, stderr: ''}));
+  },
 
   // Blocks the event loop until exit; only use for fast, short-lived commands
   spawnSync: (cmd: string, args: string[], options: SpawnSyncOptions) => spawnSync(cmd, args, {...options, encoding: 'utf-8'}),
