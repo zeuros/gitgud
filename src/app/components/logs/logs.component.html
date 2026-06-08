@@ -39,10 +39,14 @@
         [rowHover]="true"
         [scrollable]="true"
         [resizableColumns]="true"
+        [virtualScroll]="true"
+        [virtualScrollItemSize]="ROW_HEIGHT"
+        [virtualScrollOptions]="virtualScrollOptions"
         scrollHeight="flex"
         selectionMode="multiple" [metaKeySelection]="true"
         class="pointer borderless p-datatable-sm"
 >
+<!--        [virtualScrollDelay]="0"-->
     <ng-template pTemplate="header">
         <tr class="uppercase text-gray">
             <th pResizableColumn>Branch / Tag</th>

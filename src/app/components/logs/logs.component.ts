@@ -58,6 +58,8 @@ import {LogBranchChip} from './chips/log-branch-chip/log-branch-chip.component';
 import {LogTagChip} from './chips/log-tag-chip/log-tag-chip.component';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
+import {type ScrollerOptions} from 'primeng/api';
+import {ScrollerScrollEvent} from 'primeng/scroller';
 
 @Component({
   selector: 'gitgud-logs',
@@ -129,17 +131,27 @@ export class LogsComponent {
   private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
   private logTableContainer = computed(() => this.logTableRef()?.querySelector<HTMLElement>('.p-datatable-table-container'));
 
+  protected readonly virtualScrollOptions: ScrollerOptions = {
+    autoSize: false,
+    onScroll: (sse: ScrollerScrollEvent) => {
+      const {scrollTop, scrollLeft} = sse.originalEvent!.target as HTMLElement;
+      this.activeContextMenu.hide();
+      this.firstCommitOffsetPx.set(scrollTop % ROW_HEIGHT);
+      this._tableScrollLeft.set(scrollLeft);
+      this.currentRepo.update({startCommit: Math.floor(scrollTop / ROW_HEIGHT)});
+    },
+  };
+
   constructor() {
 
     // Scroll to selected commit / stash
     effect(() => {
       const sha = this.currentRepo.selectedCommitSha();
-      const logTable = this.logTableContainer();
       const startCommit = untracked(() => this.currentRepo.startCommit());
       const visibleCommitsCount = this.visibleCommitsCount();
 
-      if (sha && logTable && visibleCommitsCount) {
-        untracked(() => this.scrollToCommit(sha, logTable, startCommit, startCommit + visibleCommitsCount));
+      if (sha && visibleCommitsCount) {
+        untracked(() => this.scrollToCommit(sha, startCommit, startCommit + visibleCommitsCount));
       }
     });
 
@@ -177,7 +189,7 @@ export class LogsComponent {
 
       if (this._canvasResized() && canvas && displayLog.length && stashImg && avatarImages && visibleCommitsCount && visibleCommitsCount > 0 && logTableContainer) {
         drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages, canvasColors);
-        untracked(() => this.setupScrollListeners(logTableContainer));// will be called once
+        untracked(() => this.restoreLastScrollPosition()); // will be called once
       }
     });
 
@@ -245,7 +257,11 @@ export class LogsComponent {
       ))
       .forEach(commit => commit.highlight = 'not-matched');
 
-    // TODO: Apply this filter on the displayed elements only
+    const firstMatchIdx = computedDisplayLog.findIndex(c => !c.highlight);
+    if (firstMatchIdx > 0) {
+      this.currentRepo.update({startCommit: firstMatchIdx});
+      this.logTable()?.scroller?.scrollTo({top: firstMatchIdx * ROW_HEIGHT});
+    }
   };
 
   private computeDisplayLog = (workingDirHasChanges: boolean, logs: Commit[], stashes: Commit[]) => {
@@ -273,32 +289,17 @@ export class LogsComponent {
     }
   };
 
-  // Called after canvas is available (runs once)
-  private setupScrollListeners = once((logTableContainer: Element) => {
-    // On first load, scroll down to last saved position, synchronous, fires no scroll events
-    logTableContainer.scrollTop = this.currentRepo.startCommit() * ROW_HEIGHT;
-
-    // Only after initial automatic scrolling we start recording user scrolling
-    logTableContainer.addEventListener('scroll', e => this.onTableScroll(e));
-
-  });
-
-  private onTableScroll: EventListener = ({target}) => {
-    this.activeContextMenu.hide();
-    this.firstCommitOffsetPx.set((target as HTMLElement).scrollTop % ROW_HEIGHT); // Update pixel-based scroll for smooth canvas drawing
-    this._tableScrollLeft.set((target as HTMLElement).scrollLeft);
-    const startCommit = Math.floor((target as HTMLElement).scrollTop / ROW_HEIGHT);
-    this.currentRepo.update({startCommit}); // First commit to raw
-  };
+  // Called after canvas is available (runs once) — restores last scroll position
+  private restoreLastScrollPosition = once(() => this.logTable()?.scroller?.scrollTo({top: this.currentRepo.startCommit() * ROW_HEIGHT}));
 
   // Scroll view to display the selected commit
-  private scrollToCommit = (sha: string, logTable: HTMLElement, startCommit: number, endCommit: number) => {
+  private scrollToCommit = (sha: string, startCommit: number, endCommit: number) => {
     const indexCommitToSelect = this.computedDisplayLog().findIndex(bySha(sha));
 
     if (!this.isOnView(indexCommitToSelect, startCommit, endCommit)) {
       const scrollToThisCommit = Math.max(Math.ceil(indexCommitToSelect - this.visibleCommitsCount()! / 2), 0);
       this.currentRepo.update({startCommit: scrollToThisCommit});
-      logTable.scrollTo({top: scrollToThisCommit * ROW_HEIGHT});
+      this.logTable()?.scroller?.scrollTo({top: scrollToThisCommit * ROW_HEIGHT});
     }
   };
 
@@ -363,6 +364,7 @@ export class LogsComponent {
   protected GRAPH_COLUMN_MIN_WIDTH = GRAPH_COLUMN_MIN_WIDTH;
   protected NODES_VERTICAL_SPACING = NODES_VERTICAL_SPACING;
   protected DRAWING_PAD_LEFT = DRAWING_PAD_LEFT;
+  protected ROW_HEIGHT = ROW_HEIGHT;
   protected $displayRef = (c: DisplayRef) => c;
 
 }
