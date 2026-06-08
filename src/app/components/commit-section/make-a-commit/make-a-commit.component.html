@@ -17,6 +17,8 @@
                 [rowHover]="true"
                 [scrollable]="true"
                 scrollHeight="flex"
+                [virtualScroll]="true"
+                [virtualScrollItemSize]="28"
                 size="small"
                 class="borderless show-button-on-row-hover flex-1">
             <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
@@ -75,6 +77,8 @@
                         [rowHover]="true"
                         [scrollable]="true"
                         scrollHeight="flex"
+                        [virtualScroll]="true"
+                        [virtualScrollItemSize]="28"
                         size="small"
                         class="borderless show-button-on-row-hover flex-1">
                     <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
@@ -127,6 +131,8 @@
                         [rowHover]="true"
                         [scrollable]="true"
                         scrollHeight="flex"
+                        [virtualScroll]="true"
+                        [virtualScrollItemSize]="28"
                         size="small"
                         class="borderless show-button-on-row-hover flex-1">
                     <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
