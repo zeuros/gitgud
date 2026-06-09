@@ -4,7 +4,7 @@
   "author": {
     "name": "zeuros"
   },
-  "version": "2.3.0",
+  "version": "2.4.0",
   "homepage": "https://github.com/zeuros/gitgud",
   "license": "GPL-3.0-only",
   "main": "main.js",
