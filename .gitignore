@@ -145,6 +145,11 @@ app/preload.js.map
 app/main.js
 app/preload.js
 app/dist
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
 # E2E
 e2e/test-results/
 e2e/playwright-report/
