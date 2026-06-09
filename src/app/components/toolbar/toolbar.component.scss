@@ -28,8 +28,14 @@ $repo-track-max-width: 260px;
     width: max-content;
     padding: 0 4px;
     white-space: nowrap;
-    animation: repo-marquee 25s ease-in-out infinite alternate;
+    animation: repo-marquee 3s ease-in-out infinite alternate;
+    animation-play-state: paused;
     will-change: transform;
+  }
+
+  &:hover .repo-info-track,
+  &:hover .repo-name {
+    animation-play-state: running;
   }
 
   .repo-name {
@@ -68,14 +74,14 @@ $repo-track-max-width: 260px;
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: repo-flames 120s ease-in-out infinite;
     }
 
     background-size: 100% 280%;
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: repo-flames 120s ease-in-out infinite;
+    animation: repo-flames 3s ease-in-out infinite;
+    animation-play-state: paused;
 
     .sword {
       display: inline-block;
@@ -111,13 +117,10 @@ $repo-track-max-width: 260px;
   }
 }
 
+
 @keyframes repo-flames {
-  0%, 100% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 0% 100%;
-  }
+  0%, 100% { background-position: 0% 0%; }
+  50%       { background-position: 0% 100%; }
 }
 
 @keyframes spin {
@@ -189,6 +192,7 @@ $repo-track-max-width: 260px;
       border-radius: 50% 50% 20% 20%;
       background: rgba(200, 200, 200, 0.55);
       animation: coffee-smoke 2.2s ease-in infinite;
+      animation-play-state: paused;
       pointer-events: none;
     }
 
@@ -200,6 +204,10 @@ $repo-track-max-width: 260px;
     &::after {
       left: calc(50% + 2px);
       animation-delay: 1.1s;
+    }
+
+    &:hover::before, &:hover::after {
+      animation-play-state: running;
     }
   }
 }
