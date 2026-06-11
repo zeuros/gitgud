@@ -16,6 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {groupBy} from 'lodash-es';
 import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
 import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
@@ -26,8 +27,10 @@ import {CANVAS_DPR_MULTIPLIER, DRAWING_PAD_LEFT, NODE_DIAMETER, NODE_RADIUS, ROW
 import {type CanvasColors} from '../../models/theme.model';
 
 /**
- * Draw each commit / stash and their connections
- * Uses scrollOffset to position canvas continuously without jumps
+ * Draw each commit / stash and their connections.
+ * Uses scrollOffset to position canvas continuously without jumps.
+ * Edges are batched by color to minimize canvas state changes.
+ * canvas.filter is never used — colors are pre-computed in CanvasColors.graphColors.
  */
 export const drawLog = (
   canvas: CanvasRenderingContext2D,
@@ -43,36 +46,50 @@ export const drawLog = (
 ) => {
   const devicePixelRatio = CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1);
 
-  // clearRect() doesn't clear properly with transform applied, we remove it before clearing
   canvas.resetTransform();
-
   canvas.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
-
   // Scale by devicePixelRatio so all logical coordinates (xPosition/yPosition) render at native resolution
   canvas.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, DRAWING_PAD_LEFT, (ROW_HEIGHT - scrollOffset) * devicePixelRatio);
 
-  // Draw edges (connections between commits)
-  edges.search(startCommit, endCommit).forEach(edge => drawEdge(canvas, edge, startCommit, colors));
+  drawEdges(canvas, edges.search(startCommit, endCommit), colors, startCommit);
 
   // Draw commit nodes
-  displayLog.slice(startCommit, endCommit)
-    .forEach((ref, indexForThisSlice) =>
-      drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref, stashImg, avatarImages, colors),
-    );
+  displayLog
+    .slice(startCommit, endCommit)
+    .forEach((ref, indexForThisSlice) => drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref, stashImg, avatarImages, colors));
 
   // Erase the area behind the sticky table header so graph lines don't show through it
   canvas.resetTransform();
   canvas.clearRect(0, 0, canvas.canvas.width, headerHeight * devicePixelRatio);
 };
 
-const drawEdge = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: number, colors: CanvasColors) => {
+// Batch edges by color key — reduces stroke() calls from O(edges) to O(distinct colors)
+function drawEdges(canvas: CanvasRenderingContext2D, edgesToDisplay: Edge[], colors: CanvasColors, startCommit: number) {
+  canvas.lineWidth = 2;
+  canvas.shadowBlur = 0; // No shadow on edges
+
+  const solidEdgesByColor = groupBy(edgesToDisplay.filter(e => e.type !== RefType.INDEX), e => e.type === RefType.MERGE_COMMIT ? e.parentCol : e.childCol);
+  const dashedEdgesByColor = groupBy(edgesToDisplay.filter(e => e.type === RefType.INDEX), e => e.type === RefType.MERGE_COMMIT ? e.parentCol : e.childCol);
+
+  Object.entries(solidEdgesByColor).forEach(([key, group]) => strokeEdges(canvas, group, +key, colors, startCommit, false));
+  Object.entries(dashedEdgesByColor).forEach(([key, group]) => strokeEdges(canvas, group, +key, colors, startCommit, true));
+}
+
+const strokeEdges = (canvas: CanvasRenderingContext2D, group: Edge[], colorKey: number, colors: CanvasColors, startCommit: number, dashed: boolean) => {
+  canvas.beginPath();
+  canvas.strokeStyle = colors.graphColors[colorKey % colors.graphColors.length];
+  canvas.setLineDash(dashed ? [3] : []);
+  group.forEach(edge => addEdgePath(canvas, edge, startCommit));
+  canvas.stroke();
+};
+
+/** Add path commands for one edge to the current canvas path (no style, no stroke). */
+const addEdgePath = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: number) => {
   const topScroll = startCommit * ROW_HEIGHT;
   const [xParent, yParent] = [xPosition(edge.parentCol), yPosition(edge.parentRow) - topScroll];
   const [xChild, yChild] = [xPosition(edge.childCol), yPosition(edge.childRow) - topScroll];
 
-  const isMergeCommit = edge.type == RefType.MERGE_COMMIT;
-  prepareStyleForDrawingCommit(canvas, isMergeCommit ? edge.parentCol : edge.childCol, colors);
-
+  const isMergeCommit = edge.type === RefType.MERGE_COMMIT;
   const isChildrenRight = xParent < xChild;
 
   if (isMergeCommit) {
@@ -90,7 +107,7 @@ const drawEdge = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: num
       }
     }
   } else {
-    if (xParent == xChild) {
+    if (xParent === xChild) {
       canvas.moveTo(xParent, yParent - NODE_RADIUS);
       canvas.lineTo(xParent, yChild + NODE_RADIUS);
     } else {
@@ -107,9 +124,6 @@ const drawEdge = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: num
       }
     }
   }
-
-  canvas.setLineDash(edge.type == RefType.INDEX ? [3] : []);
-  canvas.stroke();
 };
 
 const drawNode = (
@@ -122,7 +136,7 @@ const drawNode = (
 ) => {
   const [x, y] = [xPosition(commitCoordinates.col), yPosition(commitCoordinates.row)];
 
-  prepareStyleForDrawingCommit(canvas, ref.indent!, colors);
+  prepareNodeStyle(canvas, ref.indent!, colors);
 
   if (isMergeCommit(ref)) {
     canvas.arc(x, y, NODE_RADIUS / 2.3, 0, 2 * Math.PI, true);
@@ -142,7 +156,6 @@ const drawNode = (
 
       canvas.save();
       canvas.shadowBlur = 0;
-      canvas.filter = 'none';
       canvas.beginPath();
       canvas.arc(x, y, NODE_RADIUS, 0, 2 * Math.PI, true);
       canvas.clip();
@@ -165,9 +178,10 @@ const drawNode = (
     canvas.fill();
     canvas.setLineDash([3]);
     canvas.stroke();
-  } else { // Stash
-    // We made sure to load stashImg before drawing the log
+  } else { // Stash — filter is only used here; stashes are rare so the cost is negligible
+    canvas.filter = commitColor(ref.indent!);
     canvas.drawImage(stashImg, x - NODE_RADIUS, y - NODE_RADIUS, NODE_DIAMETER, NODE_DIAMETER);
+    canvas.filter = 'none';
   }
 };
 
@@ -181,12 +195,11 @@ const prepareForCommitTextDraw = (canvas: CanvasRenderingContext2D, colors: Canv
   canvas.shadowBlur = 3;
 };
 
-const prepareStyleForDrawingCommit = (canvas: CanvasRenderingContext2D, indent: number, colors: CanvasColors) => {
+const prepareNodeStyle = (canvas: CanvasRenderingContext2D, indent: number, colors: CanvasColors) => {
   canvas.beginPath();
   canvas.lineWidth = 2;
   canvas.setLineDash([]);
-  canvas.fillStyle = canvas.strokeStyle = colors.primary;
-  canvas.filter = commitColor(indent);
+  canvas.fillStyle = canvas.strokeStyle = colors.graphColors[indent % colors.graphColors.length];
   canvas.shadowColor = colors.nodeShadowColor;
   canvas.shadowBlur = colors.nodeShadowBlur;
 };
