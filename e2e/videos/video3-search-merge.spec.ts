@@ -5,11 +5,11 @@
  *            3-way merge editor for conflict resolution
  */
 import {test} from '@playwright/test';
-import {DEMO_BASE, DEMO_CONFLICT, electronReload, launchWithRepo, see, waitForMerge} from '../utils/helpers';
+import {DEMO_BASE, DEMO_CONFLICT, tauriReload, launchWithRepo, see, waitForMerge} from '../utils/helpers';
 import {annotateWithArrowAndText, setupAnnotations} from '../utils/annotateWithArrowAndText';
 
 test('video3 – search and merge editor', async () => {
-  const {app, page} = await launchWithRepo(DEMO_BASE, {record: true});
+  const {page, close} = await launchWithRepo(DEMO_BASE, {record: true});
   await setupAnnotations(page);
   await see(page, 800);
 
@@ -66,7 +66,7 @@ test('video3 – search and merge editor', async () => {
     localStorage.setItem('GitRepositories', JSON.stringify(repos));
   }, DEMO_CONFLICT);
 
-  await electronReload(app, page);
+  await tauriReload(page);
   await page.waitForSelector('tr.commit-row', {timeout: 15_000});
   await see(page, 1000);
 
@@ -96,5 +96,5 @@ test('video3 – search and merge editor', async () => {
   await see(page, 1500);
   await annotateWithArrowAndText(page, 'tr.commit-row:nth-child(1)', 'File marked resolved\nReady to commit the merge', 'right');
 
-  await app.close();
+  await close();
 });

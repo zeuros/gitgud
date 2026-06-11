@@ -162,6 +162,8 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       const diffEditorEditor = editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions);
       this.diffEditor.set({editor: diffEditorEditor, contextMenuUpdater: this.hunkActions.registerEditorRightClick(diffEditorEditor)});
       diffEditorEditor.onDidUpdateDiff(this.clearEditorWhenNoChangesToDisplay(diffEditorEditor));
+      // Expose for e2e tests (window.monaco is not available in the main thread)
+      (window as any).__e2eDiffEditor = diffEditorEditor;
     }
   }
 

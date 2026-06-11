@@ -3,12 +3,11 @@
  * Showcases: commit graph · branch panel · fetch · stash/pop · branch creation · tab switching
  */
 import {test} from '@playwright/test';
-import {DEMO_BASE, electronReload, launchWithRepo} from '../utils/helpers';
+import {DEMO_BASE, tauriReload, launchWithRepo} from '../utils/helpers';
 import {annotateWithArrowAndText, setupAnnotations} from '../utils/annotateWithArrowAndText';
 
-
 test('video1 – git operations', async () => {
-  const {app, page} = await launchWithRepo(DEMO_BASE, {record: true});
+  const {page, close} = await launchWithRepo(DEMO_BASE, {record: true});
 
   await setupAnnotations(page);
 
@@ -24,9 +23,13 @@ test('video1 – git operations', async () => {
   await annotateWithArrowAndText(page, '.p-tree-node-selectable span:has-text("main")', 'Click a branch to jump to its commit', 'bottom', 0, 0, 2500);
 
   // ── 3. Fetch ────────────────────────────────────────────────────────────────
-  await annotateWithArrowAndText(page, 'button:has(i.fa-refresh)', 'Fetch remote changes\nNo merge — updates tracking branches', 'bottom');await page.locator('button:has(i.fa-refresh)').click();
+  await annotateWithArrowAndText(page, 'button:has(i.fa-refresh)', 'Fetch remote changes\nNo merge — updates tracking branches', 'bottom');
+  await page.locator('button:has(i.fa-refresh)').click();
+
   // ── 4. Stash ────────────────────────────────────────────────────────────────
-  await annotateWithArrowAndText(page, 'button:has(i.fa-archive)', 'Stash your working directory for later', 'bottom');await page.locator('button:has(i.fa-archive)').click();await annotateWithArrowAndText(page, 'tr.commit-row:nth-child(1)', 'Stash appears in graph\nWorking dir is clean', 'right');
+  await annotateWithArrowAndText(page, 'button:has(i.fa-archive)', 'Stash your working directory for later', 'bottom');
+  await page.locator('button:has(i.fa-archive)').click();
+  await annotateWithArrowAndText(page, 'tr.commit-row:nth-child(1)', 'Stash appears in graph\nWorking dir is clean', 'right');
 
   // ── 5. Pop stash ────────────────────────────────────────────────────────────
   await annotateWithArrowAndText(page, 'button:has(i.fa-inbox)', 'Pop restores stashed changes\nand removes the entry', 'bottom');
@@ -50,7 +53,7 @@ test('video1 – git operations', async () => {
     });
     localStorage.setItem('GitRepositories', JSON.stringify(repos));
   });
-  await electronReload(app, page);
+  await tauriReload(page);
   await page.waitForFunction(
     () => document.querySelectorAll('tr.commit-row').length > 0,
     {timeout: 10_000},
@@ -60,5 +63,5 @@ test('video1 – git operations', async () => {
   await annotateWithArrowAndText(page, 'p-tab', 'Switch repos instantly', 'bottom');
   await page.locator('p-tab').nth(0).click();
 
-  await app.close();
+  await close();
 });
