@@ -125,6 +125,7 @@ export class LogsComponent {
   protected visibleCommitsCount = computed(() => this.countVisibleCommits(this._tableHeight(), this.computedDisplayLog()));
   private _layoutReady = signal(false);
   private _tableHeight = signal(0);
+  private _tableHeaderHeight = signal(0);
   private _avatarImages = signal<Map<string, HTMLImageElement> | undefined>(undefined);
   private canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   private logTable = viewChild<Table<DisplayRef>>('logTable');
@@ -186,9 +187,10 @@ export class LogsComponent {
       const canvas = this.canvas()?.nativeElement?.getContext('2d');
       const avatarImages = this._avatarImages(); // re-run when new avatars load
       const {canvas: canvasColors} = this.theme.tokens(); // re-run on theme switch
+      const headerHeight = this._tableHeaderHeight();
 
       if (this._canvasResized() && canvas && displayLog.length && stashImg && avatarImages && visibleCommitsCount && visibleCommitsCount > 0 && logTableContainer) {
-        drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages, canvasColors);
+        drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages, canvasColors, headerHeight);
         untracked(() => this.restoreLastScrollPosition()); // will be called once
       }
     });
@@ -197,7 +199,10 @@ export class LogsComponent {
     effect(() => {
       const logTableHeaders = this.logTableRef()?.querySelector('table')?.querySelectorAll('th');
       const branchTh = logTableHeaders?.[0];
-      if (branchTh) new ResizeObserver(() => this._branchColumnWidth.set(branchTh.clientWidth)).observe(branchTh);
+      if (branchTh) new ResizeObserver(() => {
+        this._branchColumnWidth.set(branchTh.clientWidth);
+        this._tableHeaderHeight.set(branchTh.clientHeight);
+      }).observe(branchTh);
 
       const graphTh = logTableHeaders?.[1];
       if (graphTh) new ResizeObserver(() => {
