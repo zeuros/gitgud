@@ -18,12 +18,13 @@ export async function launchWithRepo(
   options: { record?: boolean } = {},
 ): Promise<{ app: ElectronApplication; page: Page; repoDir: string }> {
   const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gitgud-e2e-'));
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gitgud-e2e-profile-'));
   execSync(`cp -r ${template}/. ${repoDir}`);
   execSync(`chmod -R u+w "${repoDir}/.git"`); // cp preserves source permissions; .git/index may be read-only
 
   const app = await electron.launch({
     executablePath: BINARY,
-    args: ['--no-sandbox', '--ozone-platform=x11'],
+    args: ['--no-sandbox', '--ozone-platform=x11', `--user-data-dir=${userDataDir}`],
     ...(options.record ? {recordVideo: {dir: VIDEO_DIR, size: {width: 1920, height: 1080}}} : {}),
   } as Parameters<typeof electron.launch>[0]);
 
@@ -48,35 +49,23 @@ export async function launchWithRepo(
     if (rec) win.setContentSize(1920, 1080);
     else win.maximize();
   }, options.record ?? false);
-  // waitForLoadState misses events that fired before Playwright attached to the window;
-  // waitForFunction polls the live DOM so it works regardless of when we got the page ref.
-  await page.waitForFunction(() => document.readyState !== 'loading', {timeout: 10_000});
 
-  // Seed localStorage so Angular routes straight to /repo (bypasses file dialog)
-  const repoName = path.basename(repoDir);
-  await page.evaluate(([dir, name]) => {
+  // Set config before Angular bootstraps so it reads the correct values on first init
+  await page.evaluate(() => {
     localStorage.clear();
     localStorage.setItem('zoom', '1.1');
     localStorage.setItem('theme', 'dark');
-    localStorage.setItem('GitRepositories', JSON.stringify([{
-      id: dir,
-      name: name,
-      selected: true,
-      logs: [], stashes: [], tags: [], remoteTags: [], branches: [],
-      selectedCommitsShas: ['index'],
-      startCommit: 0,
-      remotes: [],
-      editorConfig: {viewType: 'split'},
-      workDirStatus: {unstaged: [], staged: [], conflicted: []},
-    }]));
-  }, [repoDir, repoName] as [string, string]);
+  });
 
-  await electronReload(app, page);
-  // waitForFunction polls the live DOM — survives Angular bootstrapping after readyState fires
-  await page.waitForFunction(
-    () => document.querySelectorAll('tr.commit-row').length > 0,
-    {timeout: 40_000},
-  );
+  // Wait for Angular to show the welcome screen
+  await page.waitForSelector('gitgud-welcome-screen p-button[label="Open"] button', {timeout: 10_000});
+
+  // Mock the native file dialog in the main process (contextBridge freezes window.electron in the renderer)
+  await app.evaluate(({dialog}, dir) => { (dialog as any).showOpenDialogSync = () => [dir]; }, repoDir);
+
+  await page.getByRole('button', {name: 'Open'}).click();
+
+  await page.waitForFunction(() => document.querySelectorAll('tr.commit-row').length > 0, {timeout: 10_000});
 
   return {app, page, repoDir};
 }
@@ -89,8 +78,6 @@ export async function electronReload(app: ElectronApplication, page: Page): Prom
   await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0]?.webContents.reload());
   // 'complete' (not 'interactive') ensures scripts have run before we poll for Angular content
   await page.waitForFunction(() => document.readyState === 'complete', {timeout: 10_000});
-  // Annotation scripts are wiped on reload — re-inject so arrows work for the rest of the test
-  await setupAnnotations(page);
 }
 
 // ── Timing helpers ─────────────────────────────────────────────────────────────
