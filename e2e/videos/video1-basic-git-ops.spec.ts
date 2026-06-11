@@ -53,7 +53,7 @@ test('video1 – git operations', async () => {
   await electronReload(app, page);
   await page.waitForFunction(
     () => document.querySelectorAll('tr.commit-row').length > 0,
-    {timeout: 30_000},
+    {timeout: 10_000},
   );
   await annotateWithArrowAndText(page, 'p-tab', 'Multiple repos in tabs\nEach keeps its own state', 'bottom');
   await page.locator('p-tab').nth(1).click();

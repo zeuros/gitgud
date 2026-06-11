@@ -28,8 +28,8 @@ test('git ops — commit graph, branch nav, stash, create branch', async () => {
   await expect(page.locator('tr.commit-row')).toHaveCount(initialCount);
 
   // Create branch — appears in branch panel
-  await page.locator('button:has(i.fa-code-fork)').first().dispatchEvent('click');
-  await page.locator('input.branch-name-input').focus();
+  await page.waitForTimeout(200);
+  await page.locator('button').filter({hasText: 'Branch'}).first().dispatchEvent('click');
   await page.keyboard.type('ci/test-branch', {delay: 30});
   await page.keyboard.press('Enter');
   await expect(
