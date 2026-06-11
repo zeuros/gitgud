@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "types": ["node", "mocha", "@wdio/globals/types"]
+  },
+  "include": ["./**/*.ts", "../wdio.conf.ts"],
+  "exclude": ["./videos/**"]
+}

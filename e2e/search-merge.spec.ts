@@ -1,68 +1,59 @@
-import {ElectronApplication, expect, test} from '@playwright/test';
-import {DEMO_BASE, DEMO_CONFLICT, electronReload, launchWithRepo, waitForMerge} from './utils/helpers';
+import { addRepoViaUI, byText, clearInput, DEMO_BASE, DEMO_CONFLICT, initRepo, jsClick, pressKey, typeInto, waitForMerge } from './utils/helpers.js';
 
-let app: ElectronApplication;
-test.afterEach(async () => await app?.close());
+describe('graph search, git command log & merge editor', () => {
+  before(async () => {
+    await initRepo(DEMO_BASE);
+  });
 
-test('graph search, git command log & merge editor', async () => {
-  const {page} = ({app} = await launchWithRepo(DEMO_BASE));
+  it('search by keyword, SHA, author; command log; merge editor conflict resolution', async () => {
+    // ── Graph search ─────────────────────────────────────────────────────────
+    await pressKey('f', { ctrl: true });
+    await $('gitgud-search-logs input[name="search"]').waitForDisplayed({ timeout: 10_000 });
 
-  // ── Graph search ────────────────────────────────────────────────────────────
-  await page.keyboard.press('Control+f');
-  await page.waitForSelector('gitgud-search-logs input[name="search"]');
+    const searchInput = await $('gitgud-search-logs input[name="search"]');
 
-  // Search by keyword
-  await page.locator('gitgud-search-logs input[name="search"]').type('keyboard', {delay: 50});
-  await expect(page.locator('tr.commit-row').first()).toBeVisible();
+    // Search by keyword
+    await typeInto(searchInput, 'keyboard');
+    await expect($('tr.commit-row')).toBeDisplayed();
 
-  // Search by SHA prefix
-  await page.locator('gitgud-search-logs input[name="search"]').clear();
-  const firstSha = await page.locator('tr.commit-row').first().getAttribute('id') ?? '';
-  const shaPrefix = firstSha.slice(0, 7);
-  if (shaPrefix) {
-    await page.locator('gitgud-search-logs input[name="search"]').type(shaPrefix, {delay: 50});
-    await expect(page.locator('tr.commit-row').first()).toBeVisible();
-  }
+    // Search by SHA prefix
+    await clearInput(searchInput);
+    const firstSha = await (await $('tr.commit-row')).getAttribute('id') ?? '';
+    const shaPrefix = firstSha.slice(0, 7);
+    if (shaPrefix) {
+      await typeInto(searchInput, shaPrefix);
+      await expect($('tr.commit-row')).toBeDisplayed();
+    }
 
-  // Search by author
-  await page.locator('gitgud-search-logs input[name="search"]').clear();
-  await page.locator('gitgud-search-logs input[name="search"]').type('Demo Dev', {delay: 50});
-  await expect(page.locator('tr.commit-row').first()).toBeVisible();
-  await page.keyboard.press('Escape');
+    // Search by author
+    await clearInput(searchInput);
+    await typeInto(searchInput, 'Demo Dev');
+    await expect($('tr.commit-row')).toBeDisplayed();
+    await pressKey('Escape');
 
-  // ── Git command log ─────────────────────────────────────────────────────────
-  await page.locator('button:has(span.fa-terminal)').dispatchEvent('click');
-  await expect(page.getByText('Git Command History')).toBeVisible();
-  await page.keyboard.press('Escape');
+    // ── Git command log ───────────────────────────────────────────────────────
+    await jsClick(await $('button:has(span.fa-terminal)'));
+    await expect($('//*[contains(text(),"Git Command History")]')).toBeDisplayed();
+    await pressKey('Escape');
 
-  // ── Merge editor ────────────────────────────────────────────────────────────
-  await page.evaluate((conflictDir: string) => {
-    const repos = JSON.parse(localStorage.getItem('GitRepositories') ?? '[]');
-    repos.push({
-      id: conflictDir, name: 'todo-app (merge conflict)',
-      selected: true, logs: [], stashes: [], tags: [], remoteTags: [], branches: [],
-      selectedCommitsShas: ['index'], startCommit: 0, remotes: [],
-      editorConfig: {viewType: 'split'}, workDirStatus: {unstaged: [], staged: [], conflicted: []},
-    });
-    localStorage.setItem('GitRepositories', JSON.stringify(repos));
-  }, DEMO_CONFLICT);
+    // ── Merge editor ──────────────────────────────────────────────────────────
+    // Open the conflict repo via the UI + button — no reload needed.
+    // pickFolderAndOpenRepository selects the new repo and starts refreshAll().
+    await addRepoViaUI(DEMO_CONFLICT);
+    await expect($('.conflicted-section')).toBeDisplayed({ timeout: 10_000 });
 
-  await electronReload(app, page);
-  await page.waitForSelector('tr.commit-row', {timeout: 10_000});
-  await page.locator('p-tab').last().dispatchEvent('click');
-  await expect(page.locator('.conflicted-section')).toBeVisible({timeout: 10_000});
+    // Conflicted file opens three-way merge editor
+    await jsClick(await $('.conflicted-section tr'));
+    await waitForMerge();
+    await expect($('gitgud-merge-editor')).toBeDisplayed();
 
-  // Conflicted file opens three-way merge editor
-  await page.locator('.conflicted-section tr').first().dispatchEvent('click');
-  await waitForMerge(page);
-  await expect(page.locator('gitgud-merge-editor')).toBeVisible();
+    // Accept ours and theirs
+    const acceptBtns = await $$('button.accept-all-btn');
+    await jsClick(acceptBtns[0]);
+    await jsClick(acceptBtns[1]);
 
-  // Accept ours and theirs for individual hunks
-  await page.getByRole('button', {name: '↑ Accept All', description: 'Accept all ours', exact: true}).dispatchEvent('click');
-  await page.getByRole('button', {name: '↑ Accept All', description: 'Accept all theirs', exact: true}).dispatchEvent('click');
-
-  // Mark as resolved
-  await page.getByRole('button', {name: ' Save & Mark Resolved'}).first().dispatchEvent('click');
-  await expect(page.locator('gitgud-merge-editor')).not.toBeVisible({timeout: 10_000});
-
+    // Mark as resolved
+    await jsClick(await byText('button', 'Save & Mark Resolved'));
+    await $('gitgud-merge-editor').waitForDisplayed({ reverse: true, timeout: 10_000 });
+  });
 });

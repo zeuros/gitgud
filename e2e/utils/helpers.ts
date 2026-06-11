@@ -1,153 +1,188 @@
-import {_electron as electron, type ElectronApplication, type Page} from '@playwright/test';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import {execSync} from 'child_process';
-import {setupAnnotations} from './annotateWithArrowAndText';
-
-const BINARY = path.join(__dirname, '../../dist/linux-unpacked/gitgud');
-const VIDEO_DIR = path.join(__dirname, '../recordings');
+import { execSync } from 'child_process';
 
 export const DEMO_BASE = '/tmp/gitgud-demo-base';
 export const DEMO_CONFLICT = '/tmp/gitgud-demo-conflict';
 
-// ── App launch ────────────────────────────────────────────────────────────────
+// ── XPath helpers (WebKitWebDriver only accepts CSS or XPath natively) ────────
 
-export async function launchWithRepo(
-  template: string,
-  options: { record?: boolean } = {},
-): Promise<{ app: ElectronApplication; page: Page; repoDir: string }> {
+export const byText = (tag: string, text: string) =>
+  $(`//${tag}[contains(.,"${text}")]`);
+
+export const allByText = (tag: string, text: string) =>
+  $$(`//${tag}[contains(.,"${text}")]`);
+
+// ── Interaction helpers — all via browser.execute; WebKitWebDriver does not  ──
+// ── support the Actions API, element/click, or element/value endpoints.      ──
+
+export const jsClick = async (el: WebdriverIO.Element) =>
+  browser.execute(
+    (e: Element) => e.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })),
+    el,
+  );
+
+export const rightClick = async (el: WebdriverIO.Element) =>
+  browser.execute(
+    (e: Element) => e.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 })),
+    el,
+  );
+
+/** Click by CSS selector index — avoids stale-ref on elements that re-render (e.g. Monaco lines).
+ *  Dispatches the full mousedown+mouseup+click sequence so Monaco registers cursor position. */
+export const jsClickAt = async (css: string, index = 0) =>
+  browser.execute((sel: string, i: number) => {
+    const el = document.querySelectorAll(sel)[i] as HTMLElement | undefined;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const opts: MouseEventInit = { bubbles: true, cancelable: true, clientX: x, clientY: y };
+    el.dispatchEvent(new MouseEvent('mousedown', opts));
+    el.dispatchEvent(new MouseEvent('mouseup', opts));
+    el.dispatchEvent(new MouseEvent('click', opts));
+  }, css, index);
+
+/** Right-click by CSS selector index — dispatches full mousedown+mouseup+contextmenu sequence. */
+export const rightClickAt = async (css: string, index = 0) =>
+  browser.execute((sel: string, i: number) => {
+    const el = document.querySelectorAll(sel)[i] as HTMLElement | undefined;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const base: MouseEventInit = { bubbles: true, cancelable: true, clientX: x, clientY: y };
+    el.dispatchEvent(new MouseEvent('mousedown', { ...base, button: 2, buttons: 2 }));
+    el.dispatchEvent(new MouseEvent('mouseup', { ...base, button: 2, buttons: 2 }));
+    el.dispatchEvent(new MouseEvent('contextmenu', { ...base, button: 2, buttons: 2 }));
+  }, css, index);
+
+export const focus = async (el: WebdriverIO.Element) =>
+  browser.execute((e: HTMLElement) => e.focus(), el);
+
+/** Type text into an input/textarea without using the WebDriver value endpoint. */
+export const typeInto = async (el: WebdriverIO.Element, text: string) =>
+  browser.execute((e: HTMLInputElement | HTMLTextAreaElement, t: string) => {
+    e.focus();
+    e.value += t;
+    e.dispatchEvent(new InputEvent('input', { bubbles: true, data: t }));
+    e.dispatchEvent(new Event('change', { bubbles: true }));
+  }, el, text);
+
+/** Clear an input/textarea without using the WebDriver value endpoint. */
+export const clearInput = async (el: WebdriverIO.Element) =>
+  browser.execute((e: HTMLInputElement | HTMLTextAreaElement) => {
+    e.focus();
+    e.value = '';
+    e.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    e.dispatchEvent(new Event('change', { bubbles: true }));
+  }, el);
+
+/** Send a key event to the currently focused element (bypasses the Actions API).
+ *  `code` is auto-derived: single letters → 'KeyX', digits → 'DigitN', others pass through as-is. */
+export const pressKey = async (key: string, modifiers: { ctrl?: boolean; shift?: boolean; alt?: boolean } = {}) =>
+  browser.execute((k: string, m: { ctrl?: boolean; shift?: boolean; alt?: boolean }) => {
+    const code = k.length === 1 && /[a-z]/i.test(k)
+      ? `Key${k.toUpperCase()}`
+      : k.length === 1 && /[0-9]/.test(k)
+        ? `Digit${k}`
+        : k;
+    const target = (document.activeElement as HTMLElement | null) ?? document.body;
+    const init: KeyboardEventInit = {
+      key: k, code, bubbles: true, cancelable: true,
+      ctrlKey: !!m.ctrl, shiftKey: !!m.shift, altKey: !!m.alt,
+    };
+    target.dispatchEvent(new KeyboardEvent('keydown', init));
+    target.dispatchEvent(new KeyboardEvent('keyup', init));
+  }, key, modifiers);
+
+// ── Timing helpers ────────────────────────────────────────────────────────────
+
+export const beat = (ms = 400) => browser.pause(ms);
+export const see = (ms = 1200) => browser.pause(ms);
+
+// ── Repo helpers ──────────────────────────────────────────────────────────────
+
+function copyRepo(template: string): string {
   const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gitgud-e2e-'));
-  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gitgud-e2e-profile-'));
-  execSync(`cp -r ${template}/. ${repoDir}`);
-  execSync(`chmod -R u+w "${repoDir}/.git"`); // cp preserves source permissions; .git/index may be read-only
+  execSync(`cp -r "${template}/." "${repoDir}"`);
+  execSync(`chmod -R u+w "${repoDir}/.git"`);
+  return repoDir;
+}
 
-  const app = await electron.launch({
-    executablePath: BINARY,
-    args: ['--no-sandbox', '--ozone-platform=x11', `--user-data-dir=${userDataDir}`],
-    ...(options.record ? {recordVideo: {dir: VIDEO_DIR, size: {width: 1920, height: 1080}}} : {}),
-  } as Parameters<typeof electron.launch>[0]);
+export async function initRepo(template: string): Promise<void> {
+  const repoDir = copyRepo(template);
 
-  // The app shows a splash window first, which auto-closes once the main window
-  // is ready.  Poll until exactly one non-closed window remains (= main window).
-  const page = await new Promise<Page>((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Timed out waiting for main window')), 10_000);
-    const check = setInterval(() => {
-      const alive = app.windows().filter(w => !w.isClosed());
-      if (alive.length === 1) {
-        clearInterval(check);
-        clearTimeout(timeout);
-        resolve(alive[0]);
-      }
-    }, 300);
-  });
-
-  await app.evaluate(({BrowserWindow}, rec) => {
-    const win = BrowserWindow.getAllWindows()[0];
-    if (!win) return;
-    // setContentSize pins the viewport to exactly the recording canvas size — avoids gray padding
-    if (rec) win.setContentSize(1920, 1080);
-    else win.maximize();
-  }, options.record ?? false);
-
-  // Set config before Angular bootstraps so it reads the correct values on first init
-  await page.evaluate(() => {
+  // Clear any stale state from a previous run, then reload so Angular starts fresh.
+  await browser.execute(() => {
     localStorage.clear();
     localStorage.setItem('zoom', '1.1');
     localStorage.setItem('theme', 'dark');
   });
+  await browser.refresh();
 
-  // Wait for Angular to show the welcome screen
-  await page.waitForSelector('gitgud-welcome-screen p-button[label="Open"] button', {timeout: 10_000});
+  await $('gitgud-welcome-screen p-button[label="Open"] button').waitForDisplayed({ timeout: 15_000 });
 
-  // Mock the native file dialog in the main process (contextBridge freezes window.electron in the renderer)
-  await app.evaluate(({dialog}, dir) => { (dialog as any).showOpenDialogSync = () => [dir]; }, repoDir);
+  await browser.execute((dir: string) => {
+    (window as any).tauri.dialog.showOpenDialog = async () => [dir];
+  }, repoDir);
 
-  await page.getByRole('button', {name: 'Open'}).click();
+  await jsClick(await $('gitgud-welcome-screen p-button[label="Open"] button'));
 
-  await page.waitForFunction(() => document.querySelectorAll('tr.commit-row').length > 0, {timeout: 10_000});
+  await browser.waitUntil(
+    async () => (await $$('tr.commit-row')).length > 0,
+    { timeout: 40_000, timeoutMsg: 'commit rows never appeared after initRepo' },
+  );
+}
 
-  return {app, page, repoDir};
+/** Add a second repo through the UI (the + button) without reloading the app. */
+export async function addRepoViaUI(template: string): Promise<void> {
+  const repoDir = copyRepo(template);
+  await browser.execute((dir: string) => {
+    (window as any).tauri.dialog.showOpenDialog = async () => [dir];
+  }, repoDir);
+  await jsClick(await $('//p-button[@icon="pi pi-plus"]//button'));
+  // Wait for the new tab to appear (more tabs than before)
+  await browser.waitUntil(
+    async () => (await $$('p-tab')).length > 1,
+    { timeout: 15_000, timeoutMsg: 'new repo tab never appeared after addRepoViaUI' },
+  );
+}
+
+export async function addRepo(template: string): Promise<void> {
+  const repoDir = copyRepo(template);
+
+  await browser.execute((dir: string) => {
+    const repos = JSON.parse(localStorage.getItem('GitRepositories') ?? '[]');
+    repos.push({
+      id: dir,
+      name: dir.split('/').filter(Boolean).at(-1) ?? dir,
+      selected: false,
+      logs: [], stashes: [], tags: [], remoteTags: [], branches: [],
+      selectedCommitsShas: ['index'], startCommit: 0, remotes: [],
+      editorConfig: { viewType: 'split' },
+      workDirStatus: { unstaged: [], staged: [], conflicted: [] },
+    });
+    localStorage.setItem('GitRepositories', JSON.stringify(repos));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'GitRepositories' }));
+  }, repoDir);
 }
 
 // ── App utilities ─────────────────────────────────────────────────────────────
 
-/** Reload via Electron's webContents.reload() instead of page.reload().
- *  page.reload() sends a raw CDP command that bypasses Electron's file:// interception. */
-export async function electronReload(app: ElectronApplication, page: Page): Promise<void> {
-  await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0]?.webContents.reload());
-  // 'complete' (not 'interactive') ensures scripts have run before we poll for Angular content
-  await page.waitForFunction(() => document.readyState === 'complete', {timeout: 10_000});
+export async function tauriReload(): Promise<void> {
+  // Navigate to root so Tauri always serves index.html (avoid SPA-path 404s on refresh)
+  await browser.execute(() => { window.location.href = window.location.origin + '/'; });
+  // Wait until commit rows render from the cached localStorage repos
+  await browser.waitUntil(
+    async () => (await browser.execute(() => document.querySelectorAll('tr.commit-row').length)) > 0,
+    { timeout: 15_000, timeoutMsg: 'commit rows never appeared after tauriReload' },
+  );
 }
 
-// ── Timing helpers ─────────────────────────────────────────────────────────────
+export const waitForDiff = () =>
+  $('gitgud-monaco-editor-view').waitForDisplayed({ timeout: 10_000 });
 
-/** Pause so the viewer can see a result before the next action. */
-export const see = (page: Page, ms = 1200) => page.waitForTimeout(ms);
-/** Short beat between consecutive clicks / inputs. */
-export const beat = (page: Page, ms = 400) => page.waitForTimeout(ms);
-
-// ── Common interactions ────────────────────────────────────────────────────────
-
-/** Click a toolbar button by its Font Awesome icon class. */
-export const toolbarBtn = (page: Page, faClass: string) =>
-  page.locator(`.actions button:has(i.${faClass})`).dispatchEvent('click');
-
-/** Add a second repo tab and switch back — shows the tab switching feature. */
-export async function demoSecondTab(page: Page, secondRepoPath: string) {
-  // Click the "+" tab button
-  await page.locator('p-tablist p-button:has(i.pi-plus)').dispatchEvent('click');
-  await beat(page);
-  // The file dialog is mocked by evaluating localStorage directly
-  await page.evaluate((dir) => {
-    const repos = JSON.parse(localStorage.getItem('GitRepositories') ?? '[]');
-    repos.push({
-      id: dir, name: dir.split('/').filter(Boolean).at(-1) ?? dir,
-      selected: false, logs: [], stashes: [], tags: [], remoteTags: [], branches: [],
-      selectedCommitsShas: ['index'], startCommit: 0, remotes: [],
-      editorConfig: {viewType: 'split'}, workDirStatus: {unstaged: [], staged: [], conflicted: []},
-    });
-    localStorage.setItem('GitRepositories', JSON.stringify(repos));
-    window.dispatchEvent(new StorageEvent('storage', {key: 'GitRepositories'}));
-  }, secondRepoPath);
-}
-
-/** Wait for the Monaco diff editor to appear. */
-export const waitForDiff = (page: Page) =>
-  page.waitForSelector('gitgud-monaco-editor-view', {timeout: 10_000});
-
-/** Wait for the merge editor overlay to appear. */
-export const waitForMerge = (page: Page) =>
-  page.waitForSelector('gitgud-merge-editor', {timeout: 10_000});
-
-/**
- * Resolve every file in the "Conflicted files" list:
- *   1. Click each file row to open the three-way merge editor
- *   2. Click all visible merge-hunk buttons to accept hunks
- *   3. Click "Save & Mark Resolved" until the list is empty
- */
-export async function resolveAllConflicts(page: Page): Promise<void> {
-  // The conflicted-section lives in the commit detail panel — make sure the
-  // WIP/index row is selected so the panel is visible before we start looping.
-  await page.locator('tr.commit-row').first().dispatchEvent('click');
-  await page.waitForTimeout(400);
-
-  while (true) {
-    const conflictRow = page.locator('.conflicted-section tr').first();
-    if (!await conflictRow.isVisible({timeout: 2_000}).catch(() => false)) break;
-
-    await conflictRow.dispatchEvent('click');
-    await waitForMerge(page);
-
-    // Click first merge-hunk button — for hunks with two choices this picks
-    // whichever was rendered last (THEIRS/RHS), which is fine for demo purposes.
-    const buttons = page.locator('button.msm__merge-button');
-    await buttons.nth(0).dispatchEvent('click');
-    await page.waitForTimeout(80);
-
-    await page.getByRole('button', {name: 'Save & Mark Resolved'}).dispatchEvent('click');
-    // Wait for the editor to close before moving to the next file
-    await page.waitForSelector('gitgud-merge-editor', {state: 'hidden', timeout: 10_000});
-    await page.waitForTimeout(400);
-  }
-}
+export const waitForMerge = () =>
+  $('gitgud-merge-editor').waitForDisplayed({ timeout: 10_000 });

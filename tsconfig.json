@@ -22,7 +22,7 @@
     "useDefineForClassFields": false,
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "src-tauri"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "src-tauri", "e2e", "wdio.conf.ts"],
   "angularCompilerOptions": {
     "strictTemplates": true,
     "fullTemplateTypeCheck": true,

@@ -1,39 +1,40 @@
-import {ElectronApplication, expect, test} from '@playwright/test';
-import {DEMO_BASE, launchWithRepo} from './utils/helpers';
+import { beat, DEMO_BASE, initRepo, jsClick, pressKey, typeInto } from './utils/helpers.js';
 
-let app: ElectronApplication;
-test.afterEach(async () => await app?.close());
+describe('git ops — commit graph, branch nav, stash, create branch', () => {
+  before(async () => {
+    await initRepo(DEMO_BASE);
+  });
 
-test('git ops — commit graph, branch nav, stash, create branch', async () => {
-  const {page} = ({app} = await launchWithRepo(DEMO_BASE));
+  it('commit graph, branch navigation, stash/pop, create branch', async () => {
+    // Commit graph loaded
+    await expect($('tr.commit-row')).toBeDisplayed();
+    const initialCount = (await $$('tr.commit-row')).length;
+    expect(initialCount).toBeGreaterThan(3);
 
-  // Commit graph loaded
-  await expect(page.locator('tr.commit-row').first()).toBeVisible();
-  const initialCount = await page.locator('tr.commit-row').count();
-  expect(initialCount).toBeGreaterThan(3);
+    // Branch navigation — XPath to match span text inside tree node
+    await jsClick(await $('//*[contains(@class,"p-tree-node-selectable")]//span[contains(.,"dark-mode")]'));
+    await jsClick(await $('//*[contains(@class,"p-tree-node-selectable")]//span[normalize-space(.)="main"]'));
 
-  // Branch navigation — dispatchEvent bypasses coordinate hit-testing which fails under xvfb
-  await page.locator('.p-tree-node-selectable span').filter({hasText: 'dark-mode'}).first().dispatchEvent('click');
-  await page.locator('.p-tree-node-selectable span').filter({hasText: 'main'}).first().dispatchEvent('click');
+    // Fetch — button exists and responds
+    await jsClick(await $('button:has(i.fa-refresh)'));
 
-  // Fetch — button exists and responds
-  await page.locator('button:has(i.fa-refresh)').dispatchEvent('click');
+    // Stash — WIP entry disappears
+    await jsClick(await $('button:has(i.fa-archive)'));
+    await beat();
+    await expect($$('tr.commit-row')).toBeElementsArrayOfSize(initialCount);
 
-  // Stash — entry appears in graph and wip disappears
-  await page.locator('button:has(i.fa-archive)').dispatchEvent('click');
-  await expect(page.locator('tr.commit-row')).toHaveCount(initialCount);
+    // Pop — stash entry removed
+    await jsClick(await $('button:has(i.fa-inbox)'));
+    await beat();
+    await expect($$('tr.commit-row')).toBeElementsArrayOfSize(initialCount);
 
-  // Pop — stash entry removed
-  await page.locator('button:has(i.fa-inbox)').dispatchEvent('click');
-  await expect(page.locator('tr.commit-row')).toHaveCount(initialCount);
-
-  // Create branch — appears in branch panel
-  await page.waitForTimeout(200);
-  await page.locator('button').filter({hasText: 'Branch'}).first().dispatchEvent('click');
-  await page.keyboard.type('ci/test-branch', {delay: 30});
-  await page.keyboard.press('Enter');
-  await expect(
-    page.locator('.p-splitterpanel .p-tree-node-selectable span').filter({hasText: 'test-branch'}).nth(1),
-  ).toBeVisible();
-
+    // Create branch — appears in branch panel
+    await jsClick((await $$('button:has(i.fa-code-fork)'))[0]);
+    const input = await $('input.branch-name-input');
+    await typeInto(input, 'ci/test-branch');
+    await pressKey('Enter');
+    await expect(
+      $('//*[contains(@class,"p-splitterpanel")]//*[contains(@class,"p-tree-node-selectable")]//span[contains(.,"test-branch")]'),
+    ).toBeDisplayed();
+  });
 });
