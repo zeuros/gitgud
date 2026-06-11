@@ -39,6 +39,7 @@ export const drawLog = (
   stashImg: HTMLImageElement,
   avatarImages: Map<string, HTMLImageElement>,
   colors: CanvasColors,
+  headerHeight: number,
 ) => {
   const devicePixelRatio = CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1);
 
@@ -58,6 +59,10 @@ export const drawLog = (
     .forEach((ref, indexForThisSlice) =>
       drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref, stashImg, avatarImages, colors),
     );
+
+  // Erase the area behind the sticky table header so graph lines don't show through it
+  canvas.resetTransform();
+  canvas.clearRect(0, 0, canvas.canvas.width, headerHeight * devicePixelRatio);
 };
 
 const drawEdge = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: number, colors: CanvasColors) => {
