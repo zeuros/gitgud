@@ -23,7 +23,7 @@ import {FileDiffService} from '../../services/file-diff.service';
 import {FormsModule} from '@angular/forms';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
-import {combineLatest, of} from 'rxjs';
+import {combineLatest, from} from 'rxjs';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {type ViewType} from '../../models/git-repository';
@@ -116,7 +116,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       const after$ = isWorkingDirectoryFileChange(file)
         ? (file.staged
           ? this.fileDiff.getFileAtRevision(file.path, '')   // git show :path  (index)
-          : of(window.electron.fs.readFileSync(window.electron.path.resolve(this.currentRepo.cwd()!, file.path))))
+          : from(window.tauri.fs.readFile(window.tauri.path.resolve(this.currentRepo.cwd()!, file.path))))
         : this.fileDiff.getFileAtRevision(file.path, (file as CommittedFileChange).commitish);
 
       combineLatest([before$, after$]).subscribe(([before, after]) => {

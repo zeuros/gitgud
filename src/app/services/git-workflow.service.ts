@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {catchError, finalize, map, of, switchMap, tap, throwError} from 'rxjs';
+import {catchError, finalize, from, map, of, switchMap, tap, throwError} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {ToastService} from './toast.service';
 import {StashService} from './stash.service';
@@ -45,18 +45,22 @@ export class GitWorkflowService {
         switchMap(actions => this.rebase.finishRebase(actions.join('\n'))),
       ),
     ).pipe(
-      catchError(e => {
-        // Conflict: git left rebase-merge in place — don't abort, refresh and let user resolve
-        if (this.rebase.hasRebaseFile()) {
-          return this.gitRefresh.refreshAll().pipe(
-            switchMap(() => throwError(() => e)),
-          );
-        }
-        return this.rebase.abortRebase().pipe(
-          switchMap(() => this.gitRefresh.refreshAll()),
-          switchMap(() => throwError(() => e)),
-        );
-      }),
+      catchError(e =>
+        from(this.rebase.hasRebaseFile()).pipe(
+          switchMap(isRebasing => {
+            // Conflict: git left rebase-merge in place — don't abort, refresh and let user resolve
+            if (isRebasing) {
+              return this.gitRefresh.refreshAll().pipe(
+                switchMap(() => throwError(() => e)),
+              );
+            }
+            return this.rebase.abortRebase().pipe(
+              switchMap(() => this.gitRefresh.refreshAll()),
+              switchMap(() => throwError(() => e)),
+            );
+          }),
+        ),
+      ),
       switchMap(this.gitRefresh.refreshAll),
     );
 
@@ -117,7 +121,7 @@ export class GitWorkflowService {
   // Uses a detached worktree to avoid the "branch already checked out" lock.
   rebaseBranchOnto = (src: string, onto: string, msg: string) => {
     const isCheckedOut = this.currentRepo.headBranch()?.name === src;
-    const env = window.electron.process.env as Record<string, string>;
+    const env = window.tauri.process.env as Record<string, string>;
     const tmpPath = `${env['TMPDIR'] ?? env['TEMP'] ?? env['TMP'] ?? '/tmp'}/gitgud-rebase-${Date.now()}`;
 
     const rebase$ = this.gitApi.git(['worktree', 'add', '--detach', tmpPath, `refs/heads/${src}`]).pipe(

@@ -5,7 +5,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows%20%7C%20mac-lightgrey)](#)
 [![Angular](https://img.shields.io/badge/Angular-21-red)](https://angular.dev)
-[![Electron](https://img.shields.io/badge/Electron-42-47848F)](https://www.electronjs.org)
+[![Tauri](https://img.shields.io/badge/Tauri-2-FFC131)](https://tauri.app)
 [![Stars](https://img.shields.io/github/stars/zeuros/gitgud?style=social)](https://github.com/zeuros/gitgud/stargazers)
 
 > **Get gud at git.**
@@ -42,21 +42,32 @@ A cross-platform Git GUI that doesn't get in your way.
 
 ### Prerequisites
 
-Node.js and npm. Then:
+Node.js, npm, and a [Rust toolchain](https://rustup.rs). On Linux you also need the WebKitGTK dev libraries:
+
+```bash
+# Fedora / RHEL
+sudo dnf install webkit2gtk4.1-devel libappindicator-gtk3-devel
+
+# Ubuntu / Debian
+sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev
+```
+
+Then:
 
 ```bash
 npm i
-npm start
+npm start        # tauri dev — Angular dev server + Tauri shell
 ```
 
-### Test the production build locally
+### Build packages
 
 ```bash
-npm run build:preview
-npm run preview
+npm run tauri:build               # native installer for current platform
+npm run tauri:build:linux-deb     # .deb
+npm run tauri:build:linux-rpm     # .rpm
+npm run tauri:build:win           # .exe (NSIS)
+npm run tauri:build:mac           # .dmg
 ```
-
-Builds, packages, and launches the app in one step.
 
 ---
 
@@ -65,10 +76,10 @@ Builds, packages, and launches the app in one step.
 - [Gitkraken](https://github.com/Krf/gitcraken) — inspiring GUI and graph work
 - [PVigier/gitamine](https://github.com/pvigier/gitamine) — open-source commit graph algorithm
 - [Gitsquid](https://gitsquid.dev/) — Great interface ideas
-- [github-desktop](https://github.com/desktop/desktop) — git/electron layer reference (bit too complex)
+- [github-desktop](https://github.com/desktop/desktop) — git layer reference (bit too complex)
 
 ## Built with
 
-[Electron](https://www.electronjs.org) · [Angular](https://angular.dev) · [Monaco Editor](https://microsoft.github.io/monaco-editor/) · [PrimeNG](https://primeng.org)
+[Tauri 2](https://tauri.app) · [Angular](https://angular.dev) · [Monaco Editor](https://microsoft.github.io/monaco-editor/) · [PrimeNG](https://primeng.org)
 
 ---

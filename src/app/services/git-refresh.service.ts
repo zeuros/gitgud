@@ -17,7 +17,7 @@
  */
 
 import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
-import {defer, finalize, forkJoin, map, Observable, of, switchMap, tap} from 'rxjs';
+import {defer, finalize, forkJoin, from, map, Observable, of, switchMap, tap, throttleTime, asyncScheduler} from 'rxjs';
 import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
 import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
 import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
@@ -60,9 +60,12 @@ export class GitRefreshService {
 
   constructor() {
     if (this.currentRepo.cwd()) this.doRefreshAll();
-    window.electron.onWindowFocus(this.doRefreshAll);
-    this.destroyRef.onDestroy(() => window.electron.offWindowFocus(this.doRefreshAll));
-    this.fileWatcher.onWorkingDirFileChange$.subscribe(this.doUpdateWorkingDirChanges);
+    window.tauri.onWindowFocus(this.doRefreshAll);
+    this.destroyRef.onDestroy(() => window.tauri.offWindowFocus(this.doRefreshAll));
+    this.fileWatcher.onWorkingDirFileChange$.pipe(
+      throttleTime(500, asyncScheduler, {leading: false, trailing: true}),
+      switchMap(() => this.updateWorkingDirChanges()),
+    ).subscribe();
   }
 
   refreshAll = () => this.track(forkJoin({
@@ -97,7 +100,7 @@ export class GitRefreshService {
 
 
   updateRebaseStatus = () =>
-    of(window.electron.fs.existsSync(`${this.currentRepo.cwd()}/.git/rebase-merge`))
+    from(window.tauri.fs.exists(`${this.currentRepo.cwd()}/.git/rebase-merge`))
       .pipe(tap(isRebasing => this.currentRepo.update({isRebasing})));
 
   doUpdateRebaseStatus = () => this.updateRebaseStatus().subscribe();

@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {catchError, defer, EMPTY, finalize, first, of, retry, Subject, switchMap, throwError} from 'rxjs';
+import {catchError, defer, EMPTY, finalize, first, from, map, Observable, retry, Subject, switchMap, throwError} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 
@@ -46,18 +46,20 @@ export class RebaseService {
    * ```
    */
   startInteractiveRebase = (sha: string, autosquash = false) =>
-    defer(() => {
-      this.cleanWaitFile();
-      if (this.hasRebaseFile()) throw new Error('Rebase is already in progress');
-      this.spawnRebaseProcess(sha, autosquash);
-      return this.readRebaseActionsFile();
-    });
+    defer(() => from(this.hasRebaseFile())).pipe(
+      switchMap(isRebasing => {
+        if (isRebasing) throw new Error('Rebase is already in progress');
+        this.cleanWaitFile();
+        this.spawnRebaseProcess(sha, autosquash);
+        return this.readRebaseActionsFile();
+      }),
+    );
 
   // Spawn a git rebase process, it should create a file with all rebase actions and wait for user input
   // Once rebase actions file is created, we next pendingRebase$ finishRebase can change actions and ... finish the rebase
   private spawnRebaseProcess = (sha: string, autosquash: boolean) => {
     this.gitApi.spawn('git', ['rebase', '-i', ...(autosquash ? ['--autosquash'] : []), sha], {
-      env: {...window.electron.process.env, GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript()},
+      env: {...window.tauri.process.env, GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript()},
     }).pipe(
       catchError(e => {
         this.pendingRebase$.error(e);
@@ -67,8 +69,10 @@ export class RebaseService {
     ).subscribe();
   };
 
-  private readRebaseActionsFile = () =>
-    defer(() => of(this.parseInteractiveRebaseOutput(window.electron.fs.readFileSync(this.rebaseActionsFilePath())))).pipe(
+  private readRebaseActionsFile = (): Observable<string[]> =>
+    defer(() => from(window.tauri.fs.readFile(this.rebaseActionsFilePath())).pipe(
+      map(contents => this.parseInteractiveRebaseOutput(contents)),
+    )).pipe(
       retry({count: 10, delay: 150}),
       catchError(e => this.abortRebase().pipe(switchMap(() => throwError(() => e)))),
     );
@@ -76,28 +80,24 @@ export class RebaseService {
   // FIXME: if main electron process (the one calling git rebase) crashes during a git operation,
   //  git could keep a lock file, we have to write the .done and git lock file on error so that git rebase can finish and state be ok
   finishRebase = (contents: string) => {
-    window.electron.fs.writeFileSync(this.rebaseActionsFilePath(), contents);
+    // Fire-and-forget writes; the pending rebase observable waits for the .done signal
+    window.tauri.fs.writeFile(this.rebaseActionsFilePath(), contents).catch(console.error);
     this.cleanWaitFile();
-
     return this.pendingRebase$.pipe(first());
   };
 
   // terminates the waitForFileSaveScript (process waiting for .done file) script and finishes the 'git rebase ...' spawned observable
   private cleanWaitFile = () => {
-    try {
-      window.electron.fs.writeFileSync(this.rebaseActionsFilePath() + '.done', '');
-    } catch (e) {
-      console.warn(e);
-    }
+    window.tauri.fs.writeFile(this.rebaseActionsFilePath() + '.done', '').catch(e => console.warn(e));
   };
 
   // TODO: make it portable, test on other platforms (e.g: windaube without git bash)
   private waitForFileSaveScript = () =>
-    window.electron.process.platform === 'win32'
+    window.tauri.process.platform === 'win32'
       ? 'sh -c "while [ ! -f \\"$0.done\\" ]; do sleep 0.3; done && rm \\"$0.done\\""' // Fixme: double check it's $0 and not $1 on git bash
       : 'sh -c \'while [ ! -f "$0.done" ]; do sleep 0.3; done && rm "$0.done"\'';
 
-  hasRebaseFile = () => window.electron.fs.existsSync(`${this.currentRepo.cwd()}/.git/rebase-merge`);
+  hasRebaseFile = () => window.tauri.fs.exists(`${this.currentRepo.cwd()}/.git/rebase-merge`);
 
   private rebaseActionsFilePath = () => `${this.currentRepo.cwd()}/.git/rebase-merge/git-rebase-todo`;
 

@@ -81,14 +81,13 @@ export class SettingsDialogComponent {
   }
 
   protected pickGitBinaryPath() {
-    const picked = window.electron.dialog.showOpenDialogSync({
+    window.tauri.dialog.showOpenDialog({
       properties: ['openFile'],
       filters: [{name: 'Executables', extensions: ['*']}],
+    }).then(picked => {
+      if (!picked?.[0]) return;
+      this.checkGitPathIsValid(picked[0]);
     });
-
-    if (!picked?.[0]) return;
-
-    this.checkGitPathIsValid(picked[0]);
   }
 
   protected validateGitPath() {

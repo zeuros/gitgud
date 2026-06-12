@@ -39,8 +39,9 @@ export class AvatarService {
 
   // Tries GitHub avatar first (if noreply email), then Gravatar. Returns null if both fail.
   findAvatarImgAndConvertToBlobUrl = (email: string) => {
-    const avatarUrl = this.githubUrl(email) ?? this.gravatarUrl(email);
-    return from(this.get(avatarUrl));
+    const ghUrl = this.githubUrl(email);
+    if (ghUrl) return from(this.get(ghUrl));
+    return from(this.gravatarUrl(email)).pipe(switchMap(url => from(this.get(url))));
   };
 
   private blobUrlToHtmlImg = (email: string, objectUrl: string) =>
@@ -80,8 +81,8 @@ export class AvatarService {
     return id ? `https://avatars.githubusercontent.com/u/${id}?v=4` : `https://avatars.githubusercontent.com/${username}`;
   }
 
-  private gravatarUrl(email: string) {
-    const hash = window.electron.crypto.md5(email.trim().toLowerCase());
+  private async gravatarUrl(email: string): Promise<string> {
+    const hash = await window.tauri.crypto.md5(email.trim().toLowerCase());
     return `https://www.gravatar.com/avatar/${hash}?d=404`;
   }
 }

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "GitGud",
+  "version": "2.4.0",
+  "identifier": "com.gitgud.app",
+  "build": {
+    "beforeDevCommand": "npm run ng:serve",
+    "devUrl": "http://localhost:4200",
+    "beforeBuildCommand": "npm run build:angular",
+    "frontendDist": "../dist/gitgud"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "GitGud",
+        "width": 1400,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false,
+        "devtools": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "rpm"],
+    "icon": [
+      "icons/icon.png"
+    ],
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "rpm": {
+        "depends": []
+      }
+    }
+  }
+}
