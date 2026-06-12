@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitGud — A fast, native Git GUI</title>
+  <meta name="description" content="GitGud is a fast, native Git GUI client built with Electron and Angular. Branch graphs, diff viewer, interactive rebase, and more." />
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/zeuros/gitgud/main/build/icons/32x32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Unbounded:wght@900&family=Syne:wght@400;600;700;800&family=Manrope:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f111a;
+      --bg2:      #13162100;
+      --surface:  #181c2c;
+      --border:   #262d45;
+      --text:     #dde1f0;
+      --muted:    #6b7494;
+      --purple:   #a78bfa;
+      --teal:     #2dd4bf;
+      --coral:    #fb923c;
+      --green:    #4ade80;
+      --blue:     #60a5fa;
+      --r:        8px;
+      --max:      1080px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Manrope', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Fixed scene background ─────────────────────────────────────── */
+    #scene-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background: url('img/background.png') center/cover no-repeat;
+      filter: blur(2px);
+      transform: scale(1.04);
+      will-change: opacity, transform;
+    }
+
+    /* ── Centre dimmer — kills fire brightness behind content ──────── */
+    #vignette {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 65% 55% at 50% 52%,
+          rgba(6, 5, 14, 0.72) 0%,
+          rgba(6, 5, 14, 0.30) 55%,
+          transparent 80%);
+    }
+
+    /* ── Scroll colour aurora ───────────────────────────────────────── */
+    #aurora {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      will-change: opacity, background;
+    }
+
+    /* ── Nav ─────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(1.5rem, 5vw, 3rem);
+      height: 56px;
+      background: rgba(15,17,26,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+
+    .nav-logo {
+      font-family: 'Cinzel Decorative', serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: -.02em;
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+    }
+
+    .nav-logo .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--purple);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(.7); }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .875rem;
+      font-weight: 500;
+      transition: color .2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .btn-nav {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .4rem .9rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text) !important;
+      font-size: .8125rem !important;
+      background: var(--surface);
+      transition: border-color .2s, background .2s !important;
+    }
+
+    .btn-nav:hover {
+      border-color: var(--purple) !important;
+      background: rgba(167,139,250,.08) !important;
+      color: var(--text) !important;
+    }
+
+    /* ── Hero ────────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 100px clamp(1.5rem, 5vw, 3rem) 4rem;
+    }
+
+    .hero-text {
+      text-align: center;
+      max-width: 680px;
+    }
+
+    .hero-sub { margin-left: auto; margin-right: auto; }
+
+    .hero-cta { justify-content: center; }
+
+    .platform-pills { justify-content: center; }
+
+    .hero-text { max-width: 520px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .28rem .75rem;
+      background: rgba(167,139,250,.1);
+      border: 1px solid rgba(167,139,250,.25);
+      border-radius: 99px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--purple);
+      margin-bottom: 1.75rem;
+      animation: fadeUp .6s ease both;
+    }
+
+    h1 {
+      font-family: 'Cinzel Decorative', serif;
+      font-weight: 900;
+      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+      line-height: 1.1;
+      letter-spacing: -.01em;
+      color: #fff;
+      margin-bottom: 1.25rem;
+      animation: fadeUp .6s .1s ease both;
+    }
+
+    h1 em {
+      font-style: normal;
+      display: block;
+      background: linear-gradient(135deg, var(--purple) 0%, var(--teal) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 1.0625rem;
+      color: var(--muted);
+      max-width: 420px;
+      margin-bottom: 2.25rem;
+      animation: fadeUp .6s .2s ease both;
+    }
+
+    .hero-cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-bottom: 2.25rem;
+      animation: fadeUp .6s .3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .75rem 1.5rem;
+      background: var(--purple);
+      color: #fff;
+      font-family: 'Manrope', sans-serif;
+      font-weight: 600;
+      font-size: .9375rem;
+      border-radius: var(--r);
+      text-decoration: none;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 0 0 0 rgba(167,139,250,0);
+    }
+
+    .btn-primary:hover {
+      background: #b8a1fd;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(167,139,250,.3);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .75rem 1.5rem;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Manrope', sans-serif;
+      font-weight: 600;
+      font-size: .9375rem;
+      border-radius: var(--r);
+      text-decoration: none;
+      background: transparent;
+      transition: border-color .2s, background .2s, transform .15s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--muted);
+      background: var(--surface);
+      transform: translateY(-1px);
+    }
+
+    .platform-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      animation: fadeUp .6s .4s ease both;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      padding: .25rem .65rem;
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: .75rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Hero log image ─────────────────────────────────────────────── */
+    .hero-graph {
+      width: 100%;
+      animation: fadeIn .8s .2s ease both;
+    }
+
+    .hero-graph img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ── Section shared ─────────────────────────────────────────────── */
+    section {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 5rem clamp(1.5rem, 5vw, 3rem);
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--purple);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .75rem;
+    }
+
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.75rem, 3.5vw, 2.4rem);
+      letter-spacing: -.02em;
+      color: #fff;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 520px;
+      margin-bottom: 3rem;
+    }
+
+    /* ── Demo ────────────────────────────────────────────────────────── */
+    .demo { padding-top: 0; }
+
+    .video-wrap {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 32px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04);
+      position: relative;
+    }
+
+    .video-bar {
+      background: #1c2035;
+      padding: .6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot-red   { width:10px;height:10px;border-radius:50%;background:#ff5f57; }
+    .dot-yellow{ width:10px;height:10px;border-radius:50%;background:#febc2e; }
+    .dot-green { width:10px;height:10px;border-radius:50%;background:#28c840; }
+
+    .video-wrap video {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #0a0c14;
+    }
+
+    .play-btn {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(167,139,250,.18);
+      border: 2px solid rgba(167,139,250,.55);
+      backdrop-filter: blur(8px);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s, transform .15s, border-color .2s;
+      z-index: 10;
+    }
+
+    .play-btn:hover {
+      background: rgba(167,139,250,.32);
+      border-color: var(--purple);
+      transform: translate(-50%, -50%) scale(1.08);
+    }
+
+    .play-btn svg {
+      flex-shrink: 0;
+      color: #fff;
+      margin: 0;
+    }
+
+    .play-btn.hidden { display: none; }
+
+    /* ── Features ───────────────────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .feature-card {
+      background: var(--bg);
+      padding: 1.75rem 2rem;
+      transition: background .2s;
+    }
+
+    .feature-card:hover { background: var(--surface); }
+
+    .feature-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .fi-purple { background: rgba(167,139,250,.15); }
+    .fi-teal   { background: rgba(45,212,191,.15);  }
+    .fi-coral  { background: rgba(251,146,60,.15);  }
+    .fi-green  { background: rgba(74,222,128,.15);  }
+    .fi-blue   { background: rgba(96,165,250,.15);  }
+    .fi-pink   { background: rgba(244,114,182,.15); }
+
+    .feature-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #fff;
+      margin-bottom: .4rem;
+    }
+
+    .feature-card p {
+      font-size: .875rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ── Screenshot ─────────────────────────────────────────────────── */
+    .screenshot-wrap {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 32px 80px rgba(0,0,0,.5);
+    }
+
+    .screenshot-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ── Split section (text left, image right) ─────────────────────── */
+    .split-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 4rem;
+    }
+
+    .split-text .section-sub { margin-bottom: 0; }
+
+    @media (max-width: 700px) {
+      .split-section { grid-template-columns: 1fr; }
+    }
+
+    /* ── Vertical log image with fades ─────────────────────────────── */
+    .log-wrap {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 32px 80px rgba(0,0,0,.5);
+    }
+
+    .log-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .graph-fades {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(to right,  var(--bg) 0%,    transparent 12%),
+        linear-gradient(to left,   var(--bg) 0%,    transparent 12%),
+        linear-gradient(to bottom, transparent 65%, var(--bg) 100%),
+        linear-gradient(to top,    var(--bg) 0%,    transparent 8%);
+    }
+
+    /* ── Download ───────────────────────────────────────────────────── */
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .platform-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: border-color .2s, box-shadow .2s, transform .15s;
+    }
+
+    .platform-card:hover {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 1px rgba(167,139,250,.15), 0 8px 32px rgba(0,0,0,.3);
+      transform: translateY(-2px);
+    }
+
+    .platform-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .platform-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(167,139,250,.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .platform-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .platform-arch {
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    .dl-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+
+    .dl-list a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .5rem .75rem;
+      border-radius: 6px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid transparent;
+      color: var(--text);
+      text-decoration: none;
+      font-size: .8125rem;
+      font-family: 'JetBrains Mono', monospace;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+
+    .dl-list a:hover {
+      background: rgba(167,139,250,.1);
+      border-color: rgba(167,139,250,.25);
+      color: var(--purple);
+    }
+
+    .dl-badge {
+      font-size: .6875rem;
+      padding: .1rem .4rem;
+      border-radius: 4px;
+      background: rgba(74,222,128,.12);
+      color: var(--green);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 2.5rem clamp(1.5rem, 5vw, 3rem);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .footer-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .footer-sep { color: var(--border); }
+
+    .footer-right {
+      display: flex;
+      gap: 1.25rem;
+    }
+
+    .footer-right a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .8125rem;
+      transition: color .2s;
+    }
+
+    .footer-right a:hover { color: var(--text); }
+
+    /* ── Divider ────────────────────────────────────────────────────── */
+    .full-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    /* ── Animations ─────────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────────── */
+    @media (max-width: 720px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 90px;
+      }
+      .hero-graph { display: none; }
+      .nav-links .nav-hidden { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div id="scene-bg"></div>
+<div id="vignette"></div>
+<div id="aurora"></div>
+
+<!-- ── Nav ──────────────────────────────────────────────────────────── -->
+<nav>
+  <a class="nav-logo" href="#">
+    <span class="dot"></span>
+    GitGud
+  </a>
+  <div class="nav-links">
+    <a href="#features" class="nav-hidden">Features</a>
+    <a href="#download" class="nav-hidden">Download</a>
+    <a href="https://github.com/zeuros/gitgud" class="btn-nav" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-text">
+    <div class="hero-badge">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.5"/><circle cx="5" cy="5" r="1.5" fill="currentColor"/></svg>
+      v2.4.1 · Free &amp; open source
+    </div>
+
+    <h1>Get Gud<br/><em>at Git.</em></h1>
+
+    <p class="hero-sub">
+      A fast, native Git GUI for developers who care about their workflow. Built with Electron.
+    </p>
+
+    <div class="hero-cta">
+      <a class="btn-primary" href="#download">
+        <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L9 11.586V3a1 1 0 0 1 1-1zM3 15a1 1 0 1 0 0 2h14a1 1 0 1 0 0-2H3z"/></svg>
+        Download
+      </a>
+      <a class="btn-secondary" href="https://github.com/zeuros/gitgud" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View source
+      </a>
+    </div>
+
+    <div class="platform-pills">
+      <span class="pill">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 14.4c-.8.4-1.7.7-2.6.7-3.1 0-5.6-2.5-5.6-5.6 0-.9.2-1.8.7-2.6C10.2 7.6 8.3 10 8.3 12.8c0 4 3.2 7.2 7.2 7.2 2.8 0 5.2-1.6 6.4-4H21c.4-.7.6-1.5.6-2.3l-.1-.3zm-5.4-4.9c.9-1.1.7-2.7-.4-3.5-.3-.2-.6-.3-.9-.4.5.6.8 1.3.8 2.1 0 1.9-1.5 3.5-3.4 3.5h-.4c.7 1.1 1.9 1.9 3.3 1.9 1.1 0 2.1-.5 2.8-1.2-.7-.5-1.4-1.4-1.8-2.4z"/></svg>
+        Linux
+      </span>
+      <span class="pill">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+        Windows
+      </span>
+      <span class="pill">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+        macOS
+      </span>
+    </div>
+  </div>
+
+  <!-- Hero visual -->
+  <div class="hero-graph screenshot-wrap">
+    <img src="img/overview.png" alt="GitGud overview" />
+  </div>
+</div>
+
+<hr class="full-divider" />
+<br>
+<br>
+
+<!-- ── Demo Video ────────────────────────────────────────────────────── -->
+<section class="demo">
+  <p class="section-label">See it in action</p>
+  <h2>Everything you need,<br/>nothing you don't.</h2>
+  <p class="section-sub">Branch graphs, diffs, staging, rebasing — all in one native window that stays fast even on large repositories.</p>
+
+  <div class="video-wrap">
+    <div class="video-bar">
+      <span class="dot-red"></span>
+      <span class="dot-yellow"></span>
+      <span class="dot-green"></span>
+    </div>
+    <video id="demo-video" muted loop playsinline preload="auto">
+      <source src="show.webm" type="video/webm" />
+      <source src="show.mp4"  type="video/mp4" />
+      <img src="img/overview.png" alt="GitGud screenshot" />
+    </video>
+    <button class="play-btn" id="play-btn" aria-label="Play demo video">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- ── Features ─────────────────────────────────────────────────────── -->
+<section id="features">
+  <p class="section-label">Features</p>
+  <h2>Built for how developers</h2>
+  <p class="section-sub">No subscription, no telemetry, no fluff. Just a solid Git GUI that covers your daily workflow.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon fi-purple">🌿</div>
+      <h3>Visual branch graph</h3>
+      <p>Keep track of your full project history at a glance — merges, rebases, and divergences rendered clearly.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon fi-teal">⚡</div>
+      <h3>Monaco diff viewer</h3>
+      <p>Side-by-side and inline diffs with syntax highlighting for every language.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon fi-coral">🎯</div>
+      <h3>Interactive staging</h3>
+      <p>Stage individual hunks or lines. Craft precise, atomic commits without touching the command line.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon fi-green">🔄</div>
+      <h3>Rebase &amp; stash</h3>
+      <p>Interactive rebase flow, stash management, and conflict resolution — all from the same interface.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon fi-blue">✨</div>
+      <h3>Clean history</h3>
+      <p>Fixup and squash commits with one click. Reword messages, reorder, drop — keep your history clean before it hits the remote.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon fi-pink">🏷️</div>
+      <h3>Tags, remotes &amp; more</h3>
+      <p>Push, pull, fetch, create and delete branches, manage remote refs, and tag releases — everything in one place.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- ── Screenshot ────────────────────────────────────────────────────── -->
+<section class="split-section">
+  <div class="split-text">
+    <p class="section-label">Branch graph</p>
+    <h2>Your history,<br/>at a glance.</h2>
+    <p class="section-sub">Multi-lane branch visualization with color-coded lanes, author avatars, and instant filtering.</p>
+  </div>
+  <div class="log-wrap">
+    <img src="img/log.png" alt="GitGud branch graph view" loading="lazy" />
+    <div class="graph-fades"></div>
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- ── Download ──────────────────────────────────────────────────────── -->
+<section id="download">
+  <p class="section-label">Download</p>
+  <h2>Get GitGud.</h2>
+  <p class="section-sub">Free, open source, and available on Linux, macOS, and Windows. No account required.</p>
+
+  <div class="download-grid">
+
+    <!-- Linux x64 -->
+    <div class="platform-card">
+      <div class="platform-header">
+        <div class="platform-icon">🐧</div>
+        <div>
+          <div class="platform-name">Linux</div>
+          <div class="platform-arch">x86_64</div>
+        </div>
+      </div>
+      <ul class="dl-list">
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-amd64.deb" download>.deb <span class="dl-badge">Ubuntu / Debian</span></a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-x86_64.rpm" download>.rpm <span class="dl-badge">Fedora / RHEL</span></a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-x86_64.AppImage" download>.AppImage</a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/GitGud-2.4.1-Linux-x64.flatpak" download>.flatpak</a></li>
+      </ul>
+    </div>
+
+    <!-- Linux arm64 -->
+    <div class="platform-card">
+      <div class="platform-header">
+        <div class="platform-icon">🐧</div>
+        <div>
+          <div class="platform-name">Linux</div>
+          <div class="platform-arch">arm64</div>
+        </div>
+      </div>
+      <ul class="dl-list">
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-arm64.deb" download>.deb</a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-aarch64.rpm" download>.rpm</a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-arm64.AppImage" download>.AppImage</a></li>
+      </ul>
+    </div>
+
+    <!-- macOS -->
+    <div class="platform-card">
+      <div class="platform-header">
+        <div class="platform-icon">🍎</div>
+        <div>
+          <div class="platform-name">macOS</div>
+          <div class="platform-arch">Apple Silicon &amp; Intel</div>
+        </div>
+      </div>
+      <ul class="dl-list">
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Mac-arm64.dmg" download>.dmg  <span class="dl-badge">Apple Silicon</span></a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Mac-x64.dmg" download>.dmg  <span class="dl-badge">Intel</span></a></li>
+      </ul>
+    </div>
+
+    <!-- Windows -->
+    <div class="platform-card">
+      <div class="platform-header">
+        <div class="platform-icon">🪟</div>
+        <div>
+          <div class="platform-name">Windows</div>
+          <div class="platform-arch">x64</div>
+        </div>
+      </div>
+      <ul class="dl-list">
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-Setup-2.4.1.exe" download>.exe installer</a></li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Footer ───────────────────────────────────────────────────────── -->
+<hr class="full-divider" />
+<footer>
+  <div class="footer-left">
+    <span class="footer-name">GitGud</span>
+    <span class="footer-sep">·</span>
+    <span style="font-size:.8125rem;color:var(--muted);">GPL-3.0 · Free &amp; open source</span>
+  </div>
+  <div class="footer-right">
+    <a href="https://github.com/zeuros/gitgud" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/zeuros/gitgud/issues" target="_blank" rel="noopener">Issues</a>
+    <a href="https://github.com/zeuros/gitgud/releases" target="_blank" rel="noopener">Releases</a>
+  </div>
+</footer>
+
+
+<script>
+  // ── Video autoplay ────────────────────────────────────────────────────
+  window.addEventListener('load', () => {
+    const v   = document.getElementById('demo-video');
+    const btn = document.getElementById('play-btn');
+    if (!v || !btn) return;
+
+    function startVideo() {
+      v.muted = true;
+      v.play().then(() => btn.classList.add('hidden')).catch(() => {});
+    }
+
+    btn.addEventListener('click', startVideo);
+    v.muted = true;
+    v.play().then(() => btn.classList.add('hidden')).catch(() => {});
+  });
+
+  // ── Background scroll effect ──────────────────────────────────────────
+  (function () {
+    const sceneBg  = document.getElementById('scene-bg');
+    const vignette = document.getElementById('vignette');
+    const aurora   = document.getElementById('aurora');
+    if (!sceneBg || !aurora) return;
+
+    // Aurora colour waypoints: [scrollFraction, colour]
+    const waypoints = [
+      [0.00, 'rgba(255, 120,  40, 0.18)'],   // fire orange
+      [0.25, 'rgba(160,  60, 220, 0.28)'],   // deep purple
+      [0.55, 'rgba( 20, 180, 160, 0.26)'],   // teal
+      [0.85, 'rgba( 30,  90, 220, 0.30)'],   // deep blue
+      [1.00, 'rgba(  0,   0,   0, 0.00)'],   // fade out
+    ];
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    function parseRgba(str) {
+      const m = str.match(/[\d.]+/g).map(Number);
+      return m;
+    }
+
+    function toRgba([r, g, b, a]) {
+      return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a.toFixed(3)})`;
+    }
+
+    function interpolateColour(frac) {
+      for (let i = 0; i < waypoints.length - 1; i++) {
+        const [f0, c0] = waypoints[i];
+        const [f1, c1] = waypoints[i + 1];
+        if (frac <= f1) {
+          const t = (frac - f0) / (f1 - f0);
+          const col0 = parseRgba(c0);
+          const col1 = parseRgba(c1);
+          return toRgba(col0.map((v, j) => lerp(v, col1[j], t)));
+        }
+      }
+      return 'rgba(0,0,0,0)';
+    }
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const vh   = window.innerHeight;
+        const sy   = window.scrollY;
+        const maxY = document.documentElement.scrollHeight - vh;
+
+        // Fade out scene-bg as user scrolls past the first viewport
+        const bgOpacity = Math.max(0, 1 - sy / vh);
+        sceneBg.style.opacity       = bgOpacity;
+        sceneBg.style.transform     = `scale(${1.04 + sy * 0.00008})`;
+        if (vignette) vignette.style.opacity = bgOpacity;
+
+        // Aurora: show only while bg is visible, shifts colour
+        const scrollFrac = maxY > 0 ? sy / maxY : 0;
+        const colour     = interpolateColour(scrollFrac);
+        aurora.style.background = `radial-gradient(ellipse 120% 80% at 50% 40%, ${colour}, transparent 70%)`;
+        aurora.style.opacity    = bgOpacity.toFixed(3);
+
+        ticking = false;
+      });
+    }, { passive: true });
+  })();
+</script>
+</body>
+</html>
