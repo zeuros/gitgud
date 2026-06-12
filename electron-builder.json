@@ -40,7 +40,28 @@
   "linux": {
     "icon": "build/icons",
     "target": [
-      "AppImage"
+      "AppImage",
+      "tar.gz"
+    ]
+  },
+  "flatpak": {
+    "base": "org.electronjs.Electron2.BaseApp",
+    "baseVersion": "24.08",
+    "runtimeVersion": "24.08",
+    "runtime": "org.freedesktop.Platform",
+    "sdk": "org.freedesktop.Sdk",
+    "finishArgs": [
+      "--share=ipc",
+      "--socket=x11",
+      "--socket=wayland",
+      "--share=network",
+      "--device=dri",
+      "--filesystem=home",
+      "--socket=ssh-auth",
+      "--talk-name=org.freedesktop.Notifications",
+      "--talk-name=org.freedesktop.portal.OpenURI",
+      "--talk-name=org.freedesktop.portal.FileChooser",
+      "--env=ELECTRON_OZONE_PLATFORM_HINT=auto"
     ]
   }
 }
