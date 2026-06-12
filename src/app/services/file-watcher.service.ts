@@ -17,7 +17,7 @@
  */
 
 import {Injectable} from '@angular/core';
-import {debounceTime, Subject} from 'rxjs';
+import {auditTime, Subject} from 'rxjs';
 import {createWatcher} from '../utils/file-watcher.utils';
 
 @Injectable({
@@ -26,11 +26,14 @@ import {createWatcher} from '../utils/file-watcher.utils';
 export class FileWatcherService {
 
   private watcher?: ReturnType<typeof createWatcher>;
+  private watchedPath?: string;
   private fileChangeSubject$ = new Subject<string>();
 
-  onWorkingDirFileChange$ = this.fileChangeSubject$.pipe(debounceTime(50));
+  onWorkingDirFileChange$ = this.fileChangeSubject$.pipe(auditTime(300));
 
   setWatcher = (projectPath: string) => {
+    if (projectPath === this.watchedPath) return;
+    this.watchedPath = projectPath;
 
     // Remove existing watcher if any
     this.watcher?.close();

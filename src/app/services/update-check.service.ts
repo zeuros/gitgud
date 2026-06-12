@@ -36,7 +36,7 @@ const ONE_HOUR_MS = 60 * 60 * 1000;
 export class UpdateCheckService {
 
   private http = inject(HttpClient);
-  private currentVersion = window.electron.appVersion;
+  private currentVersion = window.tauri.appVersion;
 
   availableRelease = signal<Release | null>(null);
 
@@ -54,7 +54,7 @@ export class UpdateCheckService {
     timer(0, ONE_HOUR_MS).subscribe(this.checkForDailyUpdate);
   }
 
-  downloadUpdate = () => window.electron.openExternal(this.appDownloadUrl(this.availableRelease()!.version));
+  downloadUpdate = () => window.tauri.openExternal(this.appDownloadUrl(this.availableRelease()!.version));
 
   private checkForDailyUpdate = () => {
     const lastChecked = Number(localStorage.getItem(VERSION_CHECKED_KEY) ?? 0);
@@ -76,13 +76,13 @@ export class UpdateCheckService {
   private appDownloadUrl = (version: string) => `https://github.com/zeuros/gitgud/releases/download/v${version}/${this.getAssetName(version)}`;
 
   private getAssetName = (version: string) => {
-    const {platform, arch, execPath} = window.electron.process;
+    const {platform, arch, execPath} = window.tauri.process;
 
     if (platform === 'win32') return `GitGud-${version}-Windows-Setup.exe`;
     if (platform === 'darwin') return `GitGud-${version}-Mac-${arch}.dmg`;
 
     // Linux: use build-time injected format, fall back to execPath heuristic
-    const linuxPackageFormat = window.electron.packageFormat ?? (execPath.includes('/rpm/') || execPath.endsWith('.rpm') ? 'rpm' : 'deb');
+    const linuxPackageFormat = window.tauri.packageFormat ?? (execPath.includes('/rpm/') || execPath.endsWith('.rpm') ? 'rpm' : 'deb');
     return `GitGud-${version}-Linux-${arch}.${linuxPackageFormat}`;
   };
 

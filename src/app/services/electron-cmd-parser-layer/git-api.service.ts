@@ -31,7 +31,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 // Git invokes GIT_EDITOR as: `$GIT_EDITOR /path/to/msg/file` — we want a no-op that exits 0.
 // On Windows (cmd.exe): "cmd /c exit 0" — ignores extra args. On Unix: "true".
 const noopEditor = () =>
-  window.electron.process.platform === 'win32' ? 'cmd /c exit 0' : 'true';
+  window.tauri.process.platform === 'win32' ? 'cmd /c exit 0' : 'true';
 
 @Injectable({
   providedIn: 'root',
@@ -45,7 +45,12 @@ export class GitApiService {
   gitFound = signal(true);
 
   constructor() {
-    this.git(['--version']).pipe(
+    // Must supply a cwd so exec_file routes through the shell pool (bash) which has
+    // a full PATH — without it exec_file_direct runs with the bare launch environment
+    // and misses git even when git is installed.
+    const env = window.tauri?.process?.env;
+    const cwd = env?.['HOME'] ?? env?.['USERPROFILE'] ?? '/tmp';
+    this.git(['--version'], {cwd}).pipe(
       map(v => `Git binary: ${this.settings.gitBin}, version: ${v.trim()}`),
       catchError(() => { this.gitFound.set(false); return of(null); }),
     ).subscribe(v => v && console.log({v}));
@@ -54,7 +59,7 @@ export class GitApiService {
   git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
     return this.waitForLock().pipe(
-      switchMap(() => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {...window.electron.process.env, GIT_EDITOR: noopEditor()}, ...options})),
+      switchMap(() => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {...window.tauri.process.env, GIT_EDITOR: noopEditor()}, ...options})),
     );
   };
 
@@ -71,17 +76,28 @@ export class GitApiService {
   };
 
   gitWithInput = (args: string[], input: string) =>
-    this.waitForLock().pipe(map(() => {
-      const result = window.electron.spawnSync(this.settings.gitBin, args, {cwd: this.currentRepo.cwd(), input, env: window.electron.process.env});
-      if (result.status !== 0) throw new Error(`Git exited ${result.status}\n${result.stderr}`);
-      return result.stdout;
-    }));
+    this.waitForLock().pipe(
+      switchMap(() => from(window.tauri.spawnSync(
+        this.settings.gitBin, args,
+        {cwd: this.currentRepo.cwd(), input, env: window.tauri.process.env as Record<string, string>},
+      ))),
+      map(result => {
+        if (result.status !== 0) throw new Error(`Git exited ${result.status}\n${result.stderr}`);
+        return result.stdout;
+      }),
+    );
 
   clone = (url: string, repoName: string, dir: string) =>
-    this.git(['clone', url, repoName], {cwd: dir, env: window.electron.process.env});
+    this.git(['clone', url, repoName], {cwd: dir, env: window.tauri.process.env});
 
   exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
-    from(window.electron.execFile(`${cmd}`, args, omitUndefined({...options, stdio: 'inherit', maxBuffer: 10000000})))
+    from(window.tauri.execFile(`${cmd}`, args, omitUndefined({
+      ...options,
+      cwd: options?.cwd as string | undefined,
+      env: options?.env as Record<string, string> | undefined,
+      stdio: 'inherit',
+      maxBuffer: 10000000,
+    })))
       .pipe(
         map(({stdout}) => stdout),
         tap(isDevMode() ? showPerf(cmd, args) : () => 0),
@@ -89,7 +105,7 @@ export class GitApiService {
 
   spawn = (cmd: string, args: string[] = [], options?: SpawnOptionsWithoutStdio) =>
     this.waitForLock().pipe(switchMap(() => new Observable<string>(observer => {
-      window.electron.spawn(cmd === 'git' ? this.settings.gitBin : cmd, args, {cwd: this.currentRepo.cwd(), env: window.electron.process.env, ...options})
+      window.tauri.spawn(cmd === 'git' ? this.settings.gitBin : cmd, args, {cwd: this.currentRepo.cwd() ?? undefined, env: window.tauri.process.env, ...(options as Record<string, unknown>)})
         .then(out => {
           if (isDevMode()) showPerf(cmd, args, out);
           observer.next(out);
@@ -107,12 +123,15 @@ export class GitApiService {
     const lockFile = `${this.currentRepo.cwd()}/.git/index.lock`;
     const start = Date.now();
 
-    return defer(() => {
-      if (!window.electron.fs.existsSync(lockFile)) return of(undefined);
-      if (Date.now() - start > maxWaitMs) return throwError(() => new Error('Git lock timeout'));
-      return throwError(() => new Error('Lock exists')); // triggers retry
-    })
-      .pipe(retry({delay: intervalMs, count: 10}));
+    return defer(() =>
+      from(window.tauri.fs.exists(lockFile)).pipe(
+        switchMap(exists => {
+          if (!exists) return of(undefined as void);
+          if (Date.now() - start > maxWaitMs) return throwError(() => new Error('Git lock timeout'));
+          return throwError(() => new Error('Lock exists'));
+        }),
+      ),
+    ).pipe(retry({delay: intervalMs, count: 10}));
   };
 
   recheckGit = () =>

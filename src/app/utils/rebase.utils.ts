@@ -22,8 +22,8 @@ import {short} from './commit-utils';
 export const rewordCommitAction = (cwd: string, selectedCommitSha: string, newMessage: string) => {
     const msgFile = '.git/COMMIT_EDIT_MSG';
 
-    // Write message file
-    window.electron.fs.writeFileSync(`${cwd}/${msgFile}`, newMessage);
+    // Write message file (fire-and-forget; git waits for the .done signal, not this file)
+    window.tauri.fs.writeFile(`${cwd}/${msgFile}`, newMessage).catch(console.error);
 
     return (actions: string[]) =>
       actions.flatMap(action =>

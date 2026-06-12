@@ -48,9 +48,7 @@ export class CloneDialogComponent {
   protected repoName = signal('');
   protected loading = signal(false);
   protected repoPath = computed(() => `${this.targetDir()}/${this.repoName()}`);
-  protected repoExists = computed(() =>
-    !!(this.targetDir() && this.repoName() && window.electron.fs.existsSync(`${this.repoPath()}/.git`)),
-  );
+  protected repoExists = signal(false);
 
   open() {
     this.url.set('');
@@ -60,8 +58,16 @@ export class CloneDialogComponent {
   }
 
   protected pickDirectory() {
-    const picked = window.electron.dialog.showOpenDialogSync({properties: ['openDirectory']});
-    if (picked?.[0]) this.targetDir.set(picked[0]);
+    window.tauri.dialog.showOpenDialog({properties: ['openDirectory']}).then(picked => {
+      if (picked?.[0]) this.targetDir.set(picked[0]);
+      this.refreshRepoExists();
+    });
+  }
+
+  private refreshRepoExists() {
+    const path = this.repoPath();
+    if (!this.targetDir() || !this.repoName()) { this.repoExists.set(false); return; }
+    window.tauri.fs.exists(`${path}/.git`).then(e => this.repoExists.set(e));
   }
 
   protected onUrlChange(url: string) {

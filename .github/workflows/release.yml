@@ -16,24 +16,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux
-            arch: x64
+          - os: ubuntu-24.04
+            args: '--bundles deb,rpm,appimage'
           - os: ubuntu-24.04-arm
-            platform: linux
-            arch: arm64
+            args: '--bundles deb,rpm,appimage'
           - os: windows-2025
-            platform: win
-            arch: x64
+            args: '--bundles nsis'
           - os: windows-11-arm
-            platform: win
-            arch: arm64
+            args: '--bundles nsis'
           - os: macos-latest
-            platform: mac
-            arch: x64
+            rust-target: x86_64-apple-darwin
+            args: '--target x86_64-apple-darwin --bundles dmg'
           - os: macos-latest
-            platform: mac
-            arch: arm64
+            rust-target: aarch64-apple-darwin
+            args: '--target aarch64-apple-darwin --bundles dmg'
 
     runs-on: ${{ matrix.os }}
 
@@ -45,60 +41,40 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install Linux packaging tools
-        if: matrix.platform == 'linux'
-        run: sudo apt-get install -y rpm flatpak flatpak-builder
-
-      - name: Cache Flatpak SDK
-        if: matrix.platform == 'linux'
-        uses: actions/cache@v5
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          path: ~/.local/share/flatpak
-          key: flatpak-sdk-24.08-${{ matrix.arch }}
+          targets: ${{ matrix.rust-target }}
 
-      - name: Install Flatpak SDK
-        if: matrix.platform == 'linux'
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
         run: |
-          flatpak remote-add --user --if-not-exists flathub \
-            https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user --noninteractive -y \
-            org.electronjs.Electron2.BaseApp//24.08 \
-            org.freedesktop.Platform//24.08 \
-            org.freedesktop.Sdk//24.08
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            rpm \
+            xdg-utils
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
+
+      - run: npm run build:angular
+
+      - name: Build Tauri
+        run: npx tauri build ${{ matrix.args }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build
-        run: npm run build:prod
-
-      - name: Package
-        run: npx electron-builder --${{ matrix.platform }} --${{ matrix.arch }} --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v6
+      - uses: softprops/action-gh-release@v3
         with:
-          node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build:prod && npx electron-builder --linux --dir
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get install -y xvfb libgbm-dev libasound2t64
-          npx playwright install-deps
-
-      - name: Run e2e tests
-        run: npm run e2e
+          files: |
+            src-tauri/target/**/bundle/**/*.deb
+            src-tauri/target/**/bundle/**/*.rpm
+            src-tauri/target/**/bundle/**/*.AppImage
+            src-tauri/target/**/bundle/**/*.exe
+            src-tauri/target/**/bundle/**/*.dmg

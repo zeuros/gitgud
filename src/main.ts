@@ -22,17 +22,26 @@ import {AppComponent} from './app/app.component';
 import {ErrorHandler} from '@angular/core';
 import {editor} from 'monaco-editor';
 import {config} from 'rxjs';
+import {installTauriBridge} from './app/api/tauri-bridge';
 
 editor.setTheme('vs-dark');
 
-bootstrapApplication(AppComponent, appConfig).then(appRef => {
-  const globalErrorHandler = appRef.injector.get(ErrorHandler);
-
-  config.onUnhandledError = err => globalErrorHandler.handleError(err);
-
-  // Catch unhandled Promise rejections (async/await, explicit Promise chains).
-  window.addEventListener('unhandledrejection', (event) => {
-    globalErrorHandler.handleError(event.reason);
-    event.preventDefault();
-  });
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+    e.preventDefault();
+    window.location.reload();
+  }
 });
+
+installTauriBridge()
+  .catch(err => console.error('[tauri-bridge] init failed, falling back to stub:', err))
+  .then(() => bootstrapApplication(AppComponent, appConfig))
+  .then(appRef => {
+    const globalErrorHandler = appRef.injector.get(ErrorHandler);
+    config.onUnhandledError = err => globalErrorHandler.handleError(err);
+    window.addEventListener('unhandledrejection', (event) => {
+      globalErrorHandler.handleError(event.reason);
+      event.preventDefault();
+    });
+  })
+  .catch(err => console.error('[bootstrap] Angular failed to start:', err));
