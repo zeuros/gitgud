@@ -5,7 +5,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows%20%7C%20mac-lightgrey)](#)
 [![Angular](https://img.shields.io/badge/Angular-21-red)](https://angular.dev)
-[![Electron](https://img.shields.io/badge/Electron-40-47848F)](https://www.electronjs.org)
+[![Electron](https://img.shields.io/badge/Electron-42-47848F)](https://www.electronjs.org)
 [![Stars](https://img.shields.io/github/stars/zeuros/gitgud?style=social)](https://github.com/zeuros/gitgud/stargazers)
 
 > **Get gud at git.**
@@ -18,9 +18,9 @@ A cross-platform Git GUI that doesn't get in your way.
 
 | Platform | Package | Architecture |
 |----------|---------|--------------|
-| 🐧 Linux | [.deb (Ubuntu/Debian)](https://github.com/zeuros/gitgud/releases/latest) · [.rpm (Fedora/RHEL)](https://github.com/zeuros/gitgud/releases/latest) | x64 · ARM64 |
-| 🪟 Windows | [.exe installer](https://github.com/zeuros/gitgud/releases/latest) | x64 |
-| 🍎 macOS | [.dmg (Apple Silicon)](https://github.com/zeuros/gitgud/releases/latest) · [.dmg (Intel)](https://github.com/zeuros/gitgud/releases/latest) | M1–M4 · x64 | Dark interface, fast, and built for developers who know what they're doing.
+| 🐧 Linux | [.deb](https://github.com/zeuros/gitgud/releases/latest) · [.rpm](https://github.com/zeuros/gitgud/releases/latest) · [AppImage](https://github.com/zeuros/gitgud/releases/latest) · [Flatpak](https://github.com/zeuros/gitgud/releases/latest) · [.tar.gz](https://github.com/zeuros/gitgud/releases/latest) | x64 · ARM64 |
+| 🪟 Windows | [installer](https://github.com/zeuros/gitgud/releases/latest) · [portable](https://github.com/zeuros/gitgud/releases/latest) | x64 · ARM64 |
+| 🍎 macOS | [.dmg (Apple Silicon)](https://github.com/zeuros/gitgud/releases/latest) · [.dmg (Intel)](https://github.com/zeuros/gitgud/releases/latest) | M1–M4 · x64 |
 
 ## Features
 

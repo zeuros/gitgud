@@ -7,6 +7,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   build:
     strategy:
@@ -19,9 +22,12 @@ jobs:
           - os: ubuntu-24.04-arm
             platform: linux
             arch: arm64
-          - os: windows-latest
+          - os: windows-2025
             platform: win
             arch: x64
+          - os: windows-11-arm
+            platform: win
+            arch: arm64
           - os: macos-latest
             platform: mac
             arch: x64
@@ -39,9 +45,26 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install rpm tools
+      - name: Install Linux packaging tools
         if: matrix.platform == 'linux'
-        run: sudo apt-get install -y rpm
+        run: sudo apt-get install -y rpm flatpak flatpak-builder
+
+      - name: Cache Flatpak SDK
+        if: matrix.platform == 'linux'
+        uses: actions/cache@v5
+        with:
+          path: ~/.local/share/flatpak
+          key: flatpak-sdk-24.08-${{ matrix.arch }}
+
+      - name: Install Flatpak SDK
+        if: matrix.platform == 'linux'
+        run: |
+          flatpak remote-add --user --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y \
+            org.electronjs.Electron2.BaseApp//24.08 \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08
 
       - name: Install dependencies
         run: npm ci
