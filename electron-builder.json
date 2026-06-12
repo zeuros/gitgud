@@ -38,7 +38,7 @@
     ]
   },
   "linux": {
-    "icon": "dist/assets/icons",
+    "icon": "build/icons",
     "target": [
       "AppImage"
     ]
