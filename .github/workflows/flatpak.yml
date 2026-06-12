@@ -1,0 +1,224 @@
+name: Flatpak
+
+# Builds a .flatpak bundle and a Linux tar.gz on every tag push using
+# flatpak-builder directly (NOT electron-builder's flatpak target, which
+# produces a Snap package, not a Flatpak).
+#
+# Required secrets / variables for Flathub publishing:
+#   vars.FLATHUB_MANIFEST_REPO  — e.g. "zeuros/io.github.zeuros.gitgud"
+#   secrets.FLATHUB_REPO_TOKEN  — fine-grained PAT with Contents+PR write access
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build Flatpak for (e.g. v2.4.0)'
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  APP_ID: io.github.zeuros.gitgud
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      sha256_x64: ${{ steps.tar.outputs.sha256_x64 }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Extract version
+        id: meta
+        run: |
+          TAG=${{ github.ref_name || inputs.tag }}
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build app
+        run: npm run build:prod
+
+      - name: Package unpacked x64
+        run: npx electron-builder --linux --x64 --dir
+
+      - name: Create tar.gz (includes icons for Flathub manifest)
+        id: tar
+        run: |
+          VERSION=${{ steps.meta.outputs.version }}
+          mkdir -p release
+          cp -r build/icons dist/linux-unpacked/icons
+          tar -czf "release/GitGud-${VERSION}-Linux-x64.tar.gz" \
+            -C dist/linux-unpacked .
+          SHA=$(sha256sum "release/GitGud-${VERSION}-Linux-x64.tar.gz" | cut -d' ' -f1)
+          echo "sha256_x64=${SHA}" >> $GITHUB_OUTPUT
+
+      # ── Flatpak bundle via flatpak-builder ─────────────────────────────────
+      - name: Cache Flatpak SDK
+        uses: actions/cache@v5
+        with:
+          path: ~/.local/share/flatpak
+          key: flatpak-sdk-24.08-x64
+
+      - name: Install Flatpak build tools
+        run: |
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y \
+            org.electronjs.Electron2.BaseApp//24.08 \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08
+
+      - name: Write CI manifest (uses local dir source, no remote download)
+        run: |
+          cat > /tmp/ci-manifest.yml << 'MANIFEST'
+          app-id: io.github.zeuros.gitgud
+          runtime: org.freedesktop.Platform
+          runtime-version: "24.08"
+          sdk: org.freedesktop.Sdk
+          base: org.electronjs.Electron2.BaseApp
+          base-version: "24.08"
+          command: gitgud
+          separate-locales: false
+          finish-args:
+            - --share=ipc
+            - --socket=x11
+            - --socket=wayland
+            - --share=network
+            - --device=dri
+            - --filesystem=home
+            - --socket=ssh-auth
+            - --talk-name=org.freedesktop.Notifications
+            - --talk-name=org.freedesktop.portal.OpenURI
+            - --talk-name=org.freedesktop.portal.FileChooser
+            - --env=ELECTRON_OZONE_PLATFORM_HINT=auto
+          modules:
+            - name: gitgud
+              buildsystem: simple
+              build-commands:
+                - mkdir -p /app/gitgud
+                - cp -r app/* /app/gitgud/
+                - chmod +x /app/gitgud/gitgud
+                - install -Dm755 /app/gitgud/gitgud /app/bin/gitgud
+                - install -Dm644 io.github.zeuros.gitgud.desktop
+                    /app/share/applications/io.github.zeuros.gitgud.desktop
+                - install -Dm644 io.github.zeuros.gitgud.metainfo.xml
+                    /app/share/metainfo/io.github.zeuros.gitgud.metainfo.xml
+                - for s in 16 32 48 64 128 256 512; do
+                    install -Dm644 icons/${s}x${s}.png
+                      /app/share/icons/hicolor/${s}x${s}/apps/io.github.zeuros.gitgud.png;
+                  done
+              sources:
+                - type: dir
+                  path: SOURCE_DIR
+                  dest: app
+                - type: file
+                  path: DESKTOP_FILE
+                - type: file
+                  path: METAINFO_FILE
+                - type: dir
+                  path: ICONS_DIR
+                  dest: icons
+          MANIFEST
+
+          # Substitute absolute paths (flatpak-builder doesn't support ../ traversal)
+          sed -i \
+            -e "s|SOURCE_DIR|$GITHUB_WORKSPACE/dist/linux-unpacked|" \
+            -e "s|DESKTOP_FILE|$GITHUB_WORKSPACE/build/flatpak/io.github.zeuros.gitgud.desktop|" \
+            -e "s|METAINFO_FILE|$GITHUB_WORKSPACE/build/io.github.zeuros.gitgud.metainfo.xml|" \
+            -e "s|ICONS_DIR|$GITHUB_WORKSPACE/build/icons|" \
+            /tmp/ci-manifest.yml
+
+      - name: Build Flatpak
+        run: |
+          flatpak-builder --user \
+            --install-deps-from=flathub \
+            --force-clean \
+            --repo=/tmp/flatpak-repo \
+            /tmp/flatpak-build \
+            /tmp/ci-manifest.yml
+
+      - name: Bundle Flatpak
+        run: |
+          VERSION=${{ steps.meta.outputs.version }}
+          flatpak build-bundle /tmp/flatpak-repo \
+            "release/GitGud-${VERSION}-Linux-x64.flatpak" \
+            io.github.zeuros.gitgud
+
+      # ── Upload to GitHub release ───────────────────────────────────────────
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION=${{ steps.meta.outputs.version }}
+          gh release upload "${{ github.ref_name }}" \
+            "release/GitGud-${VERSION}-Linux-x64.tar.gz" \
+            "release/GitGud-${VERSION}-Linux-x64.flatpak" \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: flatpak-bundle
+          path: |
+            release/GitGud-*-Linux-x64.tar.gz
+            release/GitGud-*-Linux-x64.flatpak
+          retention-days: 7
+
+  # ── Open a PR in the Flathub manifest repo ──────────────────────────────────
+  update-flathub:
+    runs-on: ubuntu-latest
+    needs: build
+    if: |
+      startsWith(github.ref, 'refs/tags/') &&
+      vars.FLATHUB_MANIFEST_REPO != '' &&
+      needs.build.outputs.sha256_x64 != ''
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Checkout Flathub manifest repo
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ vars.FLATHUB_MANIFEST_REPO }}
+          token: ${{ secrets.FLATHUB_REPO_TOKEN }}
+          path: flathub-manifest
+
+      - name: Update manifest checksums
+        run: |
+          python3 scripts/update-flatpak-manifest.py \
+            --version "${{ needs.build.outputs.version }}" \
+            --sha256-x64 "${{ needs.build.outputs.sha256_x64 }}" \
+            --sha256-arm64 "PLACEHOLDER_arm64" \
+            --manifest "flathub-manifest/${{ env.APP_ID }}.yml"
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.FLATHUB_REPO_TOKEN }}
+          path: flathub-manifest
+          commit-message: "Update to v${{ needs.build.outputs.version }}"
+          title: "Update to v${{ needs.build.outputs.version }}"
+          branch: "update-v${{ needs.build.outputs.version }}"
+          delete-branch: true
+          body: |
+            Automated manifest update for v${{ needs.build.outputs.version }}.
+
+            Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.build.outputs.version }}

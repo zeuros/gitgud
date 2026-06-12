@@ -1,0 +1,69 @@
+app-id: io.github.zeuros.gitgud
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: "24.08"
+command: gitgud
+separate-locales: false
+
+finish-args:
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --share=network
+  - --device=dri
+  - --filesystem=home
+  - --socket=ssh-auth
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.portal.OpenURI
+  - --talk-name=org.freedesktop.portal.FileChooser
+  - --env=ELECTRON_OZONE_PLATFORM_HINT=auto
+
+modules:
+  - name: gitgud
+    buildsystem: simple
+    build-commands:
+      # Install the Electron app bundle
+      - mkdir -p /app/gitgud
+      - cp -r app/* /app/gitgud/
+      - chmod +x /app/gitgud/gitgud
+      # Wrapper so Flatpak can find the binary at /app/bin/gitgud
+      - install -Dm755 /app/gitgud/gitgud /app/bin/gitgud
+      # Desktop integration
+      - install -Dm644 io.github.zeuros.gitgud.desktop
+          /app/share/applications/io.github.zeuros.gitgud.desktop
+      - install -Dm644 io.github.zeuros.gitgud.metainfo.xml
+          /app/share/metainfo/io.github.zeuros.gitgud.metainfo.xml
+      # Icons
+      - for s in 16 32 48 64 128 256 512; do
+          install -Dm644 icons/${s}x${s}.png
+            /app/share/icons/hicolor/${s}x${s}/apps/io.github.zeuros.gitgud.png;
+        done
+
+    sources:
+      # x86_64 binary — updated by scripts/update-flatpak-manifest.py on each release
+      - type: archive
+        only-arches: [x86_64]
+        url: https://github.com/zeuros/gitgud/releases/download/v2.4.0/GitGud-2.4.0-Linux-x64.tar.gz
+        sha256: PLACEHOLDER_x64
+        dest: app
+
+      # aarch64 binary — updated by scripts/update-flatpak-manifest.py on each release
+      - type: archive
+        only-arches: [aarch64]
+        url: https://github.com/zeuros/gitgud/releases/download/v2.4.0/GitGud-2.4.0-Linux-arm64.tar.gz
+        sha256: PLACEHOLDER_arm64
+        dest: app
+
+      # Desktop and metadata files
+      - type: file
+        path: io.github.zeuros.gitgud.desktop
+
+      - type: file
+        path: io.github.zeuros.gitgud.metainfo.xml
+
+      # Icons from the source tree
+      - type: dir
+        path: ../../build/icons
+        dest: icons

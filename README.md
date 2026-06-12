@@ -32,16 +32,9 @@ A cross-platform Git GUI that doesn't get in your way.
 
 ---
 
-## TODOs
+## Next steps
 
-- Make diff editor disappear once all contents moved to staging area
-- broken state management (rebasing / ...)
-- Light mode depends on system but is currently ugly, add it in settings, and make an ok light mode based on existing, use dotted background very stily 
-- test all the stuff
-
-## BUGs
-
-- reset mixed to previous commit doesn't refresh log correctly
+- Find edge cases, list bugs, make it more reliable / practical
 
 ---
 

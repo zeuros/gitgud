@@ -25,6 +25,7 @@
 
     "package:linux-deb": "npm run build:prod && electron-builder --linux deb",
     "package:linux-rpm": "npm run build:prod && electron-builder --linux rpm",
+    "package:linux-flatpak": "npm run build:prod && electron-builder --linux flatpak --x64",
     "package:win":       "npm run build:prod && electron-builder --win",
     "package:mac":       "npm run build:prod && electron-builder --mac",
 
@@ -94,6 +95,7 @@
     "xvfb-maybe": "^0.2.1"
   },
   "build": {
+    "appId": "io.github.zeuros.gitgud",
     "publish": {
       "provider": "github"
     },
@@ -123,6 +125,20 @@
             "x64",
             "arm64"
           ]
+        },
+        {
+          "target": "tar.gz",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "flatpak",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
     },
@@ -135,6 +151,26 @@
             "x64"
           ]
         }
+      ]
+    },
+    "flatpak": {
+      "base": "org.electronjs.Electron2.BaseApp",
+      "baseVersion": "24.08",
+      "runtimeVersion": "24.08",
+      "runtime": "org.freedesktop.Platform",
+      "sdk": "org.freedesktop.Sdk",
+      "finishArgs": [
+        "--share=ipc",
+        "--socket=x11",
+        "--socket=wayland",
+        "--share=network",
+        "--device=dri",
+        "--filesystem=home",
+        "--socket=ssh-auth",
+        "--talk-name=org.freedesktop.Notifications",
+        "--talk-name=org.freedesktop.portal.OpenURI",
+        "--talk-name=org.freedesktop.portal.FileChooser",
+        "--env=ELECTRON_OZONE_PLATFORM_HINT=auto"
       ]
     },
     "mac": {

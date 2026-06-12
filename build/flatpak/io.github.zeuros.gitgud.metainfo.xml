@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.zeuros.gitgud</id>
+  <name>GitGud</name>
+  <summary>Fast, native Git GUI client</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+
+  <description>
+    <p>
+      GitGud is a fast, native Git GUI built with Electron and Angular. It provides an
+      intuitive interface for managing Git repositories with branch visualization, commit
+      history, staging area management, interactive rebase, diff viewer, and more.
+    </p>
+    <ul>
+      <li>Visual branch and log graph</li>
+      <li>Side-by-side and inline diff viewer powered by Monaco Editor</li>
+      <li>Interactive staging and unstaging of changes</li>
+      <li>Push, pull, fetch, and remote management</li>
+      <li>Stash, tag, and branch operations</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.zeuros.gitgud.desktop</launchable>
+
+  <url type="homepage">https://github.com/zeuros/gitgud</url>
+  <url type="bugtracker">https://github.com/zeuros/gitgud/issues</url>
+  <url type="vcs-browser">https://github.com/zeuros/gitgud</url>
+
+  <developer id="io.github.zeuros">
+    <name>zeuros</name>
+  </developer>
+
+  <categories>
+    <category>Development</category>
+    <category>RevisionControl</category>
+  </categories>
+
+  <keywords>
+    <keyword>git</keyword>
+    <keyword>vcs</keyword>
+    <keyword>version control</keyword>
+    <keyword>repository</keyword>
+  </keywords>
+
+  <provides>
+    <binary>gitgud</binary>
+  </provides>
+
+  <releases>
+    <release version="2.4.0" date="2025-01-01">
+      <description>
+        <p>Improved draw performance and multi-size desktop icons.</p>
+      </description>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+</component>

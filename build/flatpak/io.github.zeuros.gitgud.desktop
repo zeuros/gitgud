@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=GitGud
+Comment=Fast, native Git GUI client
+Exec=gitgud
+Icon=io.github.zeuros.gitgud
+Type=Application
+Terminal=false
+Categories=Development;RevisionControl;
+StartupWMClass=gitgud
+MimeType=inode/directory;
+Keywords=git;vcs;version control;repository;
