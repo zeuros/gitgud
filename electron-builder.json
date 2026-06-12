@@ -25,11 +25,22 @@
   "win": {
     "icon": "dist/assets/icons",
     "target": [
-      "portable"
+      {
+        "target": "nsis",
+        "arch": ["x64", "arm64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
     ]
   },
   "portable": {
-    "splashImage": "dist/assets/icons/electron.bmp"
+    "splashImage": "dist/assets/icons/electron.bmp",
+    "artifactName": "${productName}-${version}-Windows-${arch}-Portable.${ext}"
+  },
+  "nsis": {
+    "artifactName": "${productName}-${version}-Windows-${arch}-Setup.${ext}"
   },
   "mac": {
     "icon": "dist/assets/icons",
@@ -40,28 +51,10 @@
   "linux": {
     "icon": "build/icons",
     "target": [
+      "deb",
+      "rpm",
       "AppImage",
       "tar.gz"
-    ]
-  },
-  "flatpak": {
-    "base": "org.electronjs.Electron2.BaseApp",
-    "baseVersion": "24.08",
-    "runtimeVersion": "24.08",
-    "runtime": "org.freedesktop.Platform",
-    "sdk": "org.freedesktop.Sdk",
-    "finishArgs": [
-      "--share=ipc",
-      "--socket=x11",
-      "--socket=wayland",
-      "--share=network",
-      "--device=dri",
-      "--filesystem=home",
-      "--socket=ssh-auth",
-      "--talk-name=org.freedesktop.Notifications",
-      "--talk-name=org.freedesktop.portal.OpenURI",
-      "--talk-name=org.freedesktop.portal.FileChooser",
-      "--env=ELECTRON_OZONE_PLATFORM_HINT=auto"
     ]
   }
 }
