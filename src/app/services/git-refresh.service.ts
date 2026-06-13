@@ -22,6 +22,7 @@ import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
 import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
 import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
 import {TagReaderService} from './electron-cmd-parser-layer/tag-reader.service';
+import {WorktreeReaderService} from './electron-cmd-parser-layer/worktree-reader.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {filterOutStashes} from '../utils/repository-utils';
 import {GitRepository} from '../models/git-repository';
@@ -42,6 +43,7 @@ export class GitRefreshService {
   private branchReader = inject(BranchReaderService);
   private stashReader = inject(StashReaderService);
   private tagReader = inject(TagReaderService);
+  private worktreeReader = inject(WorktreeReaderService);
   private gitRepositoryStore = inject(GitRepositoryStore);
   private gitApi = inject(GitApiService);
   private currentRepo = inject(CurrentRepoStore);
@@ -91,6 +93,7 @@ export class GitRefreshService {
           stashes: of(stashes),
           tags: this.tagReader.getTags(),
           remoteTags: of(remoteTags),
+          worktrees: this.worktreeReader.getWorktrees(),
         })),
         tap((r: Partial<GitRepository>) => this.gitRepositoryStore.updateSelectedRepository(r)),
       ));

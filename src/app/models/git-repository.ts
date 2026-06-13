@@ -20,6 +20,7 @@ import {Commit} from '../lib/github-desktop/model/commit';
 import {Branch} from '../lib/github-desktop/model/branch';
 import {type WorkDirStatus} from '../lib/github-desktop/model/workdir';
 import {type GitTag} from './git-tag';
+import {type GitWorktree} from './git-worktree';
 
 export type ViewType = 'hunk' | 'inline' | 'split';
 
@@ -41,6 +42,7 @@ export class GitRepository {
     public editorConfig: { viewType: ViewType } = {viewType: 'split'},
     public workDirStatus: WorkDirStatus = {unstaged: [], staged: [], conflicted: []},
     public isRebasing = false,
+    public worktrees: GitWorktree[] = [],
   ) {
   }
 }

@@ -1,0 +1,48 @@
+.dialog-header-content {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.worktree-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px 0 4px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  label {
+    font-size: 0.85rem;
+    color: var(--text-color-secondary);
+    font-weight: 500;
+  }
+}
+
+.dir-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.branch-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-icon {
+  color: var(--text-color-secondary);
+  font-size: 0.85em;
+  width: 14px;
+  text-align: center;
+}
+
+::ng-deep {
+  .p-select {
+    width: 100%;
+  }
+}

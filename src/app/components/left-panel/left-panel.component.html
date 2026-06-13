@@ -1,10 +1,11 @@
 @if (currentRepo.cwd(); as repoId) {
+<gitgud-create-worktree-dialog/>
     <p-splitter
             [style]="{ height: '100%' }"
             layout="vertical"
             stateStorage="local"
             [stateKey]="'splitter-left-panel-' + repoId"
-            [minSizes]="[20, 20, 20, 10]"
+            [minSizes]="[15, 15, 15, 10, 10]"
     >
         <ng-template pTemplate="panel">
             <div class="panel">
@@ -136,6 +137,43 @@
                                     <i class="fa fa-github"></i>
                                 }
                             </span>
+                        </div>
+                    </ng-template>
+                </p-listbox>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="panel">
+            <div class="panel">
+                <div class="title flex align-items-center">
+                    <i class="fa fa-code-fork mr-2"></i>Worktrees
+                    <i class="fa fa-plus ml-auto cursor-pointer" (click)="addWorktree()" title="Add worktree"></i>
+                </div>
+                <p-listbox
+                        [options]="currentRepo.worktrees()"
+                        scrollHeight="auto"
+                        class="border-none"
+                        emptyMessage="No linked worktrees"
+                >
+                    <ng-template #item let-wt>
+                        @let worktree = $worktree(wt);
+                        @let isCurrent = isCurrentWorktree(worktree);
+                        <div class="flex align-items-center gap-2 ellipsis worktree-entry"
+                             [class.worktree-current]="isCurrent"
+                             (click)="selectWorktree(worktree)"
+                             (dblclick)="openWorktreeInNewTab(worktree)"
+                             (contextmenu)="openWorktreeContextMenu(worktree, $event)">
+                            <i [class]="worktree.isMain ? 'fa fa-home' : (worktree.isDetached ? 'fa fa-scissors' : 'fa fa-code-fork')" class="text-gray worktree-icon"></i>
+                            <span class="ellipsis flex-1" [class.text-gray]="!isCurrent">
+                                {{ worktree.branch ?? 'HEAD' }}
+                            </span>
+                            @let ab = aheadBehind.aheadBehindMap()[worktree.branch ?? ''];
+                            @if (ab?.ahead) {
+                                <span class="ahead-behind"><i class="fa fa-arrow-up"></i>{{ ab.ahead }}</span>
+                            }
+                            @if (ab?.behind) {
+                                <span class="ahead-behind"><i class="fa fa-arrow-down"></i>{{ ab.behind }}</span>
+                            }
                         </div>
                     </ng-template>
                 </p-listbox>
