@@ -48,6 +48,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .manage(shell_pool::ShellPoolManager::new())
+        .plugin(tauri_plugin_prevent_default::with_flags(tauri_plugin_prevent_default::Flags::CONTEXT_MENU))
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
