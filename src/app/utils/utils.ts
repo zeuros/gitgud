@@ -52,7 +52,7 @@ export const fileName = (path: string) => path.split('/').pop();
 
 export const showPerf = (cmd: string, args: string[] = [], out?: any) => {
   const start = performance.now();
-  return () => console.warn(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`, out);
+  return () => console.debug(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`, out);
 };
 
 export const workingDirHasChanges = (status?: WorkDirStatus) =>

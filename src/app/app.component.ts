@@ -66,11 +66,11 @@ export class AppComponent {
     effect(() => this.activeContextMenu.register(this.globalMenu()));
     effect(() => this.router.navigate([this.gitRepositoryStore.hasRepositories() ? 'repo' : 'welcome-screen']));
 
-    console.log('Process env: ', window.electron.process.env);
+    console.log('Process env: ', window.tauri.process.env);
   }
 
   private getInstallInfo() {
-    const p = window.electron.process.platform;
+    const p = window.tauri.process.platform;
     return {
       cmd: p === 'win32'  ? 'winget install Git.Git' :
            p === 'darwin' ? 'brew install git' :
@@ -81,17 +81,18 @@ export class AppComponent {
     };
   }
 
-  protected openDownloadPage = () => window.electron.openExternal(this.installInfo.url);
+  protected openDownloadPage = () => window.tauri.openExternal(this.installInfo.url);
 
   protected browseForGit = () => {
-    const paths = window.electron.dialog.showOpenDialogSync({
+    window.tauri.dialog.showOpenDialog({
       title: 'Select git executable',
-      filters: window.electron.process.platform === 'win32' ? [{name: 'Executable', extensions: ['exe']}] : [],
+      filters: window.tauri.process.platform === 'win32' ? [{name: 'Executable', extensions: ['exe']}] : [],
       properties: ['openFile'],
+    }).then(paths => {
+      if (paths?.[0]) {
+        this.settings.gitBin = paths[0];
+        this.gitApi.recheckGit();
+      }
     });
-    if (paths?.[0]) {
-      this.settings.gitBin = paths[0];
-      this.gitApi.recheckGit();
-    }
   };
 }

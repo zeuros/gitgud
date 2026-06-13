@@ -9,7 +9,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "angular-electron": {
+    "gitgud": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -27,7 +27,7 @@
         "build": {
           "builder": "@angular-builders/custom-webpack:browser",
           "options": {
-            "outputPath": "app/dist",
+            "outputPath": "dist/gitgud",
             "index": "src/index.html",
             "main": "src/main.ts",
             "tsConfig": "src/tsconfig.app.json",
@@ -83,21 +83,21 @@
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
-            "buildTarget": "angular-electron:build"
+            "buildTarget": "gitgud:build"
           },
           "configurations": {
             "dev": {
-              "buildTarget": "angular-electron:build:dev"
+              "buildTarget": "gitgud:build:dev"
             },
             "production": {
-              "buildTarget": "angular-electron:build:production"
+              "buildTarget": "gitgud:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "angular-electron:build"
+            "buildTarget": "gitgud:build"
           }
         },
         "test": {
@@ -119,7 +119,7 @@
         }
       }
     },
-    "angular-electron-e2e": {
+    "gitgud-e2e": {
       "root": "e2e",
       "projectType": "application",
       "architect": {

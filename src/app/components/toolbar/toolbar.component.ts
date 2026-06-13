@@ -17,7 +17,7 @@
  */
 
 import {ChangeDetectionStrategy, Component, computed, inject, type OnInit, signal, viewChild} from '@angular/core';
-import {toSignal} from '@angular/core/rxjs-interop';
+import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {catchError, EMPTY, finalize, interval, map, of, switchMap} from 'rxjs';
 import {Button} from 'primeng/button';
 import {Divider} from 'primeng/divider';
@@ -76,7 +76,12 @@ export class ToolbarComponent implements OnInit {
   private settingsDialog = viewChild.required(SettingsDialogComponent);
   private cloneDialog = viewChild.required(CloneDialogComponent);
   private shellHistoryDialog = viewChild.required(ShellHistoryDialogComponent);
-  private now = toSignal(interval(1000).pipe(map(() => Date.now())), {initialValue: Date.now()});
+  private now = toSignal(
+    toObservable(this.autoFetch.lastFetchedAt).pipe(
+      switchMap(at => at ? interval(1000).pipe(map(() => Date.now())) : EMPTY),
+    ),
+    {initialValue: Date.now()},
+  );
   protected fetchedAgo = computed(() => {
     const at = this.autoFetch.lastFetchedAt();
     if (!at) return undefined;
@@ -202,7 +207,7 @@ export class ToolbarComponent implements OnInit {
     {
       label: 'Liberapay',
       icon: 'fa fa-heart',
-      command: () => window.electron.openExternal('https://liberapay.com/zeuros/donate'),
+      command: () => window.tauri.openExternal('https://liberapay.com/zeuros/donate'),
     },
     {
       label: 'Bitcoin — copy address',

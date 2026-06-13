@@ -1,0 +1,32 @@
+[package]
+name = "gitgud"
+version = "2.4.0"
+edition = "2021"
+
+[lib]
+name = "gitgud_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-os = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+md5 = "0.7"
+notify = "6"
+notify-debouncer-full = "0.3"
+tokio = { version = "1", features = ["full"] }
+tauri-plugin-window-state = "2.4.1"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

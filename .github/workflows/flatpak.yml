@@ -1,8 +1,6 @@
 name: Flatpak
 
-# Builds a .flatpak bundle and a Linux tar.gz on every tag push using
-# flatpak-builder directly (NOT electron-builder's flatpak target, which
-# produces a Snap package, not a Flatpak).
+# Builds a .flatpak bundle and a Linux tar.gz on every tag push.
 #
 # Required secrets / variables for Flathub publishing:
 #   vars.FLATHUB_MANIFEST_REPO  — e.g. "zeuros/io.github.zeuros.gitgud"
@@ -29,8 +27,8 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      version: ${{ steps.meta.outputs.version }}
-      sha256_x64: ${{ steps.tar.outputs.sha256_x64 }}
+      version:     ${{ steps.meta.outputs.version }}
+      sha256_x64:  ${{ steps.tar.outputs.sha256_x64 }}
 
     steps:
       - uses: actions/checkout@v6
@@ -39,6 +37,14 @@ jobs:
         with:
           node-version: 24
           cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
 
       - name: Extract version
         id: meta
@@ -51,20 +57,32 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build app
-        run: npm run build:prod
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
 
-      - name: Package unpacked x64
-        run: npx electron-builder --linux --x64 --dir
+      - name: Build frontend
+        run: npm run build:angular
 
-      - name: Create tar.gz (includes icons for Flathub manifest)
+      - name: Build Tauri binary
+        run: cargo build --release
+        working-directory: src-tauri
+
+      - name: Create tar.gz (binary + icons for Flathub manifest)
         id: tar
         run: |
           VERSION=${{ steps.meta.outputs.version }}
-          mkdir -p release
-          cp -r build/icons dist/linux-unpacked/icons
-          tar -czf "release/GitGud-${VERSION}-Linux-x64.tar.gz" \
-            -C dist/linux-unpacked .
+          mkdir -p release staging/bin staging/icons
+          cp src-tauri/target/release/gitgud staging/bin/gitgud
+          cp src-tauri/icons/32x32.png    staging/icons/32x32.png
+          cp src-tauri/icons/64x64.png    staging/icons/64x64.png
+          cp src-tauri/icons/128x128.png  staging/icons/128x128.png
+          tar -czf "release/GitGud-${VERSION}-Linux-x64.tar.gz" -C staging .
           SHA=$(sha256sum "release/GitGud-${VERSION}-Linux-x64.tar.gz" | cut -d' ' -f1)
           echo "sha256_x64=${SHA}" >> $GITHUB_OUTPUT
 
@@ -73,7 +91,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.local/share/flatpak
-          key: flatpak-sdk-24.08-x64
+          key: flatpak-sdk-gnome-47-x64
 
       - name: Install Flatpak build tools
         run: |
@@ -81,19 +99,16 @@ jobs:
           flatpak remote-add --user --if-not-exists flathub \
             https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user --noninteractive -y \
-            org.electronjs.Electron2.BaseApp//24.08 \
-            org.freedesktop.Platform//24.08 \
-            org.freedesktop.Sdk//24.08
+            org.gnome.Platform//47 \
+            org.gnome.Sdk//47
 
-      - name: Write CI manifest (uses local dir source, no remote download)
+      - name: Write CI manifest (uses local staging dir, no remote download)
         run: |
           cat > /tmp/ci-manifest.yml << 'MANIFEST'
           app-id: io.github.zeuros.gitgud
-          runtime: org.freedesktop.Platform
-          runtime-version: "24.08"
-          sdk: org.freedesktop.Sdk
-          base: org.electronjs.Electron2.BaseApp
-          base-version: "24.08"
+          runtime: org.gnome.Platform
+          runtime-version: "47"
+          sdk: org.gnome.Sdk
           command: gitgud
           separate-locales: false
           finish-args:
@@ -107,42 +122,34 @@ jobs:
             - --talk-name=org.freedesktop.Notifications
             - --talk-name=org.freedesktop.portal.OpenURI
             - --talk-name=org.freedesktop.portal.FileChooser
-            - --env=ELECTRON_OZONE_PLATFORM_HINT=auto
           modules:
             - name: gitgud
               buildsystem: simple
               build-commands:
-                - mkdir -p /app/gitgud
-                - cp -r app/* /app/gitgud/
-                - chmod +x /app/gitgud/gitgud
-                - install -Dm755 /app/gitgud/gitgud /app/bin/gitgud
+                - install -Dm755 bin/gitgud /app/bin/gitgud
                 - install -Dm644 io.github.zeuros.gitgud.desktop
                     /app/share/applications/io.github.zeuros.gitgud.desktop
                 - install -Dm644 io.github.zeuros.gitgud.metainfo.xml
                     /app/share/metainfo/io.github.zeuros.gitgud.metainfo.xml
-                - for s in 16 32 48 64 128 256 512; do
-                    install -Dm644 icons/${s}x${s}.png
-                      /app/share/icons/hicolor/${s}x${s}/apps/io.github.zeuros.gitgud.png;
-                  done
+                - install -Dm644 icons/32x32.png
+                    /app/share/icons/hicolor/32x32/apps/io.github.zeuros.gitgud.png
+                - install -Dm644 icons/64x64.png
+                    /app/share/icons/hicolor/64x64/apps/io.github.zeuros.gitgud.png
+                - install -Dm644 icons/128x128.png
+                    /app/share/icons/hicolor/128x128/apps/io.github.zeuros.gitgud.png
               sources:
                 - type: dir
-                  path: SOURCE_DIR
-                  dest: app
+                  path: STAGING_DIR
                 - type: file
                   path: DESKTOP_FILE
                 - type: file
                   path: METAINFO_FILE
-                - type: dir
-                  path: ICONS_DIR
-                  dest: icons
           MANIFEST
 
-          # Substitute absolute paths (flatpak-builder doesn't support ../ traversal)
           sed -i \
-            -e "s|SOURCE_DIR|$GITHUB_WORKSPACE/dist/linux-unpacked|" \
+            -e "s|STAGING_DIR|$GITHUB_WORKSPACE/staging|" \
             -e "s|DESKTOP_FILE|$GITHUB_WORKSPACE/build/flatpak/io.github.zeuros.gitgud.desktop|" \
-            -e "s|METAINFO_FILE|$GITHUB_WORKSPACE/build/io.github.zeuros.gitgud.metainfo.xml|" \
-            -e "s|ICONS_DIR|$GITHUB_WORKSPACE/build/icons|" \
+            -e "s|METAINFO_FILE|$GITHUB_WORKSPACE/build/flatpak/io.github.zeuros.gitgud.metainfo.xml|" \
             /tmp/ci-manifest.yml
 
       - name: Build Flatpak
@@ -182,10 +189,80 @@ jobs:
             release/GitGud-*-Linux-x64.flatpak
           retention-days: 7
 
-  # ── Open a PR in the Flathub manifest repo ──────────────────────────────────
+  build-arm64:
+    runs-on: ubuntu-24.04-arm
+
+    outputs:
+      sha256_arm64: ${{ steps.tar.outputs.sha256_arm64 }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Extract version
+        id: meta
+        run: |
+          TAG=${{ github.ref_name || inputs.tag }}
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Build frontend
+        run: npm run build:angular
+
+      - name: Build Tauri binary (arm64)
+        run: cargo build --release
+        working-directory: src-tauri
+
+      - name: Create tar.gz (arm64)
+        id: tar
+        run: |
+          VERSION=${{ steps.meta.outputs.version }}
+          mkdir -p release staging/bin staging/icons
+          cp src-tauri/target/release/gitgud staging/bin/gitgud
+          cp src-tauri/icons/32x32.png    staging/icons/32x32.png
+          cp src-tauri/icons/64x64.png    staging/icons/64x64.png
+          cp src-tauri/icons/128x128.png  staging/icons/128x128.png
+          tar -czf "release/GitGud-${VERSION}-Linux-arm64.tar.gz" -C staging .
+          SHA=$(sha256sum "release/GitGud-${VERSION}-Linux-arm64.tar.gz" | cut -d' ' -f1)
+          echo "sha256_arm64=${SHA}" >> $GITHUB_OUTPUT
+
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION=${{ steps.meta.outputs.version }}
+          gh release upload "${{ github.ref_name }}" \
+            "release/GitGud-${VERSION}-Linux-arm64.tar.gz" \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Push updated manifest to the fork (open PR to Flathub by hand) ──────────
   update-flathub:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, build-arm64]
     if: |
       startsWith(github.ref, 'refs/tags/') &&
       vars.FLATHUB_MANIFEST_REPO != '' &&
@@ -193,6 +270,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
 
       - name: Checkout Flathub manifest repo
         uses: actions/checkout@v6
@@ -206,19 +285,13 @@ jobs:
           python3 scripts/update-flatpak-manifest.py \
             --version "${{ needs.build.outputs.version }}" \
             --sha256-x64 "${{ needs.build.outputs.sha256_x64 }}" \
-            --sha256-arm64 "PLACEHOLDER_arm64" \
+            --sha256-arm64 "${{ needs.build-arm64.outputs.sha256_arm64 }}" \
             --manifest "flathub-manifest/${{ env.APP_ID }}.yml"
 
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@v8
-        with:
-          token: ${{ secrets.FLATHUB_REPO_TOKEN }}
-          path: flathub-manifest
-          commit-message: "Update to v${{ needs.build.outputs.version }}"
-          title: "Update to v${{ needs.build.outputs.version }}"
-          branch: "update-v${{ needs.build.outputs.version }}"
-          delete-branch: true
-          body: |
-            Automated manifest update for v${{ needs.build.outputs.version }}.
-
-            Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.build.outputs.version }}
+      - name: Commit and push to manifest repo
+        run: |
+          git -C flathub-manifest config user.name  "github-actions[bot]"
+          git -C flathub-manifest config user.email "github-actions[bot]@users.noreply.github.com"
+          git -C flathub-manifest add "${{ env.APP_ID }}.yml"
+          git -C flathub-manifest commit -m "Update to v${{ needs.build.outputs.version }}"
+          git -C flathub-manifest push
