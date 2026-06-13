@@ -21,7 +21,7 @@ import {IntervalTree} from 'node-interval-tree';
 import {Edge} from '../../models/edge';
 import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {RefType} from '../../enums/ref-type.enum';
-import {commitColor, hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
+import {hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
 import {CANVAS_DPR_MULTIPLIER, DRAWING_PAD_LEFT, NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {type CanvasColors} from '../../models/theme.model';
@@ -30,7 +30,7 @@ import {type CanvasColors} from '../../models/theme.model';
  * Draw each commit / stash and their connections.
  * Uses scrollOffset to position canvas continuously without jumps.
  * Edges are batched by color to minimize canvas state changes.
- * canvas.filter is never used — colors are pre-computed in CanvasColors.graphColors.
+ * canvas.filter is never used — colors come from CanvasColors.graphColors (WebKit-compatible).
  */
 export const drawLog = (
   canvas: CanvasRenderingContext2D,
@@ -178,10 +178,14 @@ const drawNode = (
     canvas.fill();
     canvas.setLineDash([3]);
     canvas.stroke();
-  } else { // Stash — filter is only used here; stashes are rare so the cost is negligible
-    canvas.filter = commitColor(ref.indent!);
+  } else { // Stash
+    canvas.save();
     canvas.drawImage(stashImg, x - NODE_RADIUS, y - NODE_RADIUS, NODE_DIAMETER, NODE_DIAMETER);
-    canvas.filter = 'none';
+    canvas.globalCompositeOperation = 'source-atop';
+    canvas.shadowBlur = 0;
+    canvas.fillStyle = colors.graphColors[ref.indent! % colors.graphColors.length];
+    canvas.fillRect(x - NODE_RADIUS, y - NODE_RADIUS, NODE_DIAMETER, NODE_DIAMETER);
+    canvas.restore();
   }
 };
 
