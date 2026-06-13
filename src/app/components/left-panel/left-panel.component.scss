@@ -98,3 +98,17 @@
   display: flex;
   flex-shrink: 0;
 }
+
+.worktree-entry {
+  border-radius: 3px;
+
+  .worktree-icon {
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+}
+
+.worktree-current {
+  background: var(--row-selected-background-color);
+}
+
