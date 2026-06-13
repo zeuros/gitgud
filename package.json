@@ -6,31 +6,28 @@
   "author": {
     "name": "zeuros"
   },
-  "main": "app/main.js",
   "license": "GPL-3.0-only",
   "private": true,
   "scripts": {
-    "version": "node -e \"const fs=require('fs'),p=require('./app/package.json');p.version=process.env.npm_new_version;fs.writeFileSync('./app/package.json',JSON.stringify(p,null,2)+'\\n')\" && git add app/package.json",
-    "postinstall": "electron-builder install-app-deps",
-    "start": "npm-run-all -p electron:serve ng:serve",
-    "electron:serve": "wait-on tcp:4200 && npm run build:electron && electron . --serve",
+    "version": "node -e \"const fs=require('fs');['src-tauri/Cargo.toml','src-tauri/tauri.conf.json'].forEach(f=>{const c=fs.readFileSync(f,'utf8');fs.writeFileSync(f,c.replace(/version = \\\"[^\\\"]+\\\"/,'version = \\\"'+process.env.npm_new_version+'\\\"').replace(/\\\"version\\\": \\\"[^\\\"]+\\\"/,'\\\"version\\\": \\\"'+process.env.npm_new_version+'\\\"'))})\" && git add src-tauri/Cargo.toml src-tauri/tauri.conf.json",
+
+    "start": "npm run tauri:dev",
     "ng:serve": "node --max-old-space-size=4096 ./node_modules/@angular/cli/bin/ng serve -c dev",
-    "build:prod": "npm run build:electron && npm run build:angular -c production",
     "build:angular": "ng build --base-href ./",
-    "build:electron": "tsc -p tsconfig.serve.json",
-    "build:preview": "npm run build:prod && electron-builder --dir && npm run preview",
-    "preview": "node scripts/preview.js",
-    "package:linux-deb": "npm run build:prod && electron-builder --linux deb",
-    "package:linux-rpm": "npm run build:prod && electron-builder --linux rpm",
-    "package:linux-flatpak": "npm run build:prod && electron-builder --linux flatpak --x64",
-    "package:win": "npm run build:prod && electron-builder --win",
-    "package:mac": "npm run build:prod && electron-builder --mac",
+
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:build:linux-deb": "tauri build --bundles deb",
+    "tauri:build:linux-rpm": "tauri build --bundles rpm",
+    "tauri:build:win": "tauri build --bundles nsis",
+    "tauri:build:mac": "tauri build --bundles dmg",
+
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e:setup": "bash e2e/utils/setup-repo.sh",
-    "e2e": "npm run e2e:setup && xvfb-maybe -- playwright test",
-    "e2e:debug": "npm run e2e:setup && playwright test --debug",
-    "videos": "npm run e2e:setup && rm e2e/recordings/*.webm && playwright test --config playwright.video.config.ts"
+    "e2e": "npm run e2e:setup && xvfb-maybe -- wdio run wdio.conf.ts",
+    "e2e:debug": "npm run e2e:setup && WDIO_DEBUG=1 wdio run wdio.conf.ts --logLevel debug"
   },
   "dependencies": {
     "@angular/animations": "^21.2.12",
@@ -43,12 +40,14 @@
     "@angular/platform-browser": "^21.2.12",
     "@angular/platform-browser-dynamic": "^21.2.12",
     "@angular/router": "^21.2.12",
-    "@electron/remote": "2.1.3",
     "@mismerge/core": "^1.2.1",
     "@ngx-translate/core": "17.0.0",
     "@ngx-translate/http-loader": "17.0.0",
     "@primeuix/themes": "^2.0.3",
-    "chokidar": "^5.0.0",
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-opener": "^2.5.4",
+    "@tauri-apps/plugin-os": "^2.3.2",
     "font-awesome": "4.7.0",
     "identicon.js": "^2.3.3",
     "lodash-es": "^4.18.1",
@@ -72,13 +71,21 @@
     "@angular-eslint/template-parser": "^21.3.1",
     "@angular/cli": "^21.2.10",
     "@angular/compiler-cli": "^21.2.12",
-    "@playwright/test": "^1.60.0",
+    "@crabnebula/tauri-driver": "^2.0.0",
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/mocha": "^10.0.0",
+    "@wdio/cli": "^9.0.0",
+    "@wdio/globals": "^9.0.0",
+    "@wdio/local-runner": "^9.0.0",
+    "@wdio/mocha-framework": "^9.0.0",
+    "@wdio/spec-reporter": "^9.0.0",
+    "@wdio/types": "^9.0.0",
+    "tsx": "^4.19.0",
+    "webdriverio": "^9.0.0",
     "@types/identicon.js": "^2.3.5",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "25.6.2",
     "css-loader": "^7.1.4",
-    "electron": "42.0.1",
-    "electron-builder": "26.8.1",
     "eslint": "^10.3.0",
     "monaco-editor-webpack-plugin": "^7.1.1",
     "npm-run-all": "4.1.5",
@@ -88,49 +95,5 @@
     "vitest": "^4.1.6",
     "wait-on": "9.0.5",
     "xvfb-maybe": "^0.2.1"
-  },
-  "build": {
-    "appId": "io.github.zeuros.gitgud",
-    "publish": {
-      "provider": "github"
-    },
-    "icon": "build/icon.png",
-    "extraResources": [
-      {
-        "from": "app/dist",
-        "to": "dist"
-      }
-    ],
-    "linux": {
-      "icon": "build/icons",
-      "maintainer": "zeuros <13236310+zeuros@users.noreply.github.com>",
-      "category": "Development;RevisionControl;",
-      "artifactName": "${productName}-${version}-Linux-${arch}.${ext}",
-      "target": ["deb", "rpm", "AppImage"]
-    },
-    "win": {},
-    "flatpak": {
-      "base": "org.electronjs.Electron2.BaseApp",
-      "baseVersion": "24.08",
-      "runtimeVersion": "24.08",
-      "runtime": "org.freedesktop.Platform",
-      "sdk": "org.freedesktop.Sdk",
-      "finishArgs": [
-        "--share=ipc",
-        "--socket=x11",
-        "--socket=wayland",
-        "--share=network",
-        "--device=dri",
-        "--filesystem=home",
-        "--socket=ssh-auth",
-        "--talk-name=org.freedesktop.Notifications",
-        "--talk-name=org.freedesktop.portal.OpenURI",
-        "--talk-name=org.freedesktop.portal.FileChooser",
-        "--env=ELECTRON_OZONE_PLATFORM_HINT=auto"
-      ]
-    },
-    "mac": {
-      "artifactName": "${productName}-${version}-Mac-${arch}.${ext}"
-    }
   }
 }

@@ -77,14 +77,14 @@ export class UnstagedFileContextMenuService {
 
   private copyPath = () => {
     const file = this.selectedFiles()[0];
-    const fullPath = window.electron.path.resolve(this.currentRepo.cwd()!, file.path);
+    const fullPath = window.tauri.path.resolve(this.currentRepo.cwd()!, file.path);
     navigator.clipboard.writeText(fullPath);
     this.toast.success('Path copied');
   };
 
   private showInFolder = () => {
     const file = this.selectedFiles()[0];
-    const fullPath = window.electron.path.resolve(this.currentRepo.cwd()!, file.path);
-    window.electron.showItemInFolder(fullPath);
+    const fullPath = window.tauri.path.resolve(this.currentRepo.cwd()!, file.path);
+    window.tauri.showItemInFolder(fullPath);
   };
 }

@@ -49,9 +49,11 @@ export class AutoFetchService {
       const cwd = this.currentRepo.cwd();
       if (!cwd) return;
       const fetchHead = `${cwd}/.git/FETCH_HEAD`;
-      untracked(() => this.lastFetchedAt.set(
-        window.electron.fs.existsSync(fetchHead) ? window.electron.fs.mtimeMs(fetchHead) : undefined,
-      ));
+      window.tauri.fs.exists(fetchHead).then(exists =>
+        exists
+          ? window.tauri.fs.mtime(fetchHead).then(ms => untracked(() => this.lastFetchedAt.set(ms)))
+          : untracked(() => this.lastFetchedAt.set(undefined)),
+      );
     });
   }
 

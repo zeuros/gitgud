@@ -16,7 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {effect, inject, Injectable} from '@angular/core';
+import {computed, effect, inject, Injectable} from '@angular/core';
+import {from, switchMap} from 'rxjs';
 import {isRootDirectory, throwEx} from '../utils/utils';
 import {createRepository} from '../utils/repository-utils';
 import {FileWatcherService} from './file-watcher.service';
@@ -32,15 +33,21 @@ export class GitRepositoryService {
   private gitRepositoryStore = inject(GitRepositoryStore);
   private gitRefresh = inject(GitRefreshService);
 
+  // Memoized on string equality — only changes when the actual repo path switches,
+  // not on every workDirStatus / selectedCommitsShas update.
+  private selectedRepoId = computed(() => this.gitRepositoryStore.selectedRepository()?.id);
+
   constructor() {
     effect(() => {
-      const repo = this.gitRepositoryStore.selectedRepository();
-      if (repo) this.fileWatcher.setWatcher(repo.id);
+      const id = this.selectedRepoId();
+      if (id) this.fileWatcher.setWatcher(id);
     });
   }
 
   pickFolderAndOpenRepository = () => {
-    this.openRepository(this.pickGitFolder()).subscribe();
+    from(this.pickGitFolder()).pipe(
+      switchMap(path => this.openRepository(path)),
+    ).subscribe();
   };
 
   /**
@@ -68,30 +75,30 @@ export class GitRepositoryService {
     return this.gitRefresh.refreshAll();
   };
 
-  pickGitFolder = () => {
-
-    const pickedGitFolder = (window.electron.dialog.showOpenDialogSync({properties: ['openDirectory']}) ?? throwEx('No folder picked'))[0];
-
-    return this.findGitDir(pickedGitFolder);
-
+  pickGitFolder = async (): Promise<string> => {
+    const picked = await window.tauri.dialog.showOpenDialog({properties: ['openDirectory']});
+    if (!picked?.length) throwEx('No folder picked');
+    return this.findGitDir(picked![0]);
   };
 
   /**
    * Walks up the picked directory tree until a `.git` folder is found.
    * Throws if no git repository exists.
    */
-  findGitDir = (gitDir: string): string => {
+  findGitDir = async (gitDir: string): Promise<string> => {
+    const isFile = await window.tauri.fs.isFile(gitDir).catch(() => false);
+    if (isFile)
+      return this.findGitDir(window.tauri.path.dirname(gitDir));
 
-    if (window.electron.fs.isFile(gitDir))
-      return this.findGitDir(window.electron.path.dirname(gitDir));
-
-    const files = window.electron.fs.readdirSync(gitDir);
+    const files = await window.tauri.fs.readdir(gitDir);
     if (files.includes('.git'))
       return gitDir;
     else if (isRootDirectory(gitDir))
-      return throwEx(`This folder is not a valid git repository`);
+      throwEx(`This folder is not a valid git repository`);
     else
-      return this.findGitDir(window.electron.path.resolve(gitDir, '..'));
+      return this.findGitDir(window.tauri.path.resolve(gitDir, '..'));
+
+    return gitDir;
   };
 
 }

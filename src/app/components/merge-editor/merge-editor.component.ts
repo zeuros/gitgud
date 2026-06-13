@@ -102,7 +102,7 @@ export class MergeEditorComponent {
       const ours$ = this.gitApi.git(['show', `:2:${path}`]).pipe(catchError(() => of('')));
       const theirs$ = this.gitApi.git(['show', `:3:${path}`]).pipe(catchError(() => of('')));
 
-      this.conflictCtx.set(this.detectConflictContext());
+      this.detectConflictContext().then(ctx => this.conflictCtx.set(ctx));
       this.refineMergeLabel();
 
       combineLatest([ours$, base$, theirs$]).subscribe(([ours, base, theirs]) => {
@@ -136,16 +136,17 @@ export class MergeEditorComponent {
     this.saving.set(true);
 
     const merged = this.mergeEl()?.nativeElement?.ctr ?? this.ctr();
-    const absPath = window.electron.path.resolve(this.currentRepo.cwd()!, file.path);
-    window.electron.fs.writeFileSync(absPath, merged);
+    const absPath = window.tauri.path.resolve(this.currentRepo.cwd()!, file.path);
 
-    this.gitApi.gitAction(['add', '--', file.path])
-      .pipe(finalize(() => {
-        this.saving.set(false);
-        this.fileDiffPanel.closeViews();
-        this.gitRefresh.doUpdateWorkingDirChanges();
-      }))
-      .subscribe();
+    window.tauri.fs.writeFile(absPath, merged).then(() =>
+      this.gitApi.gitAction(['add', '--', file.path])
+        .pipe(finalize(() => {
+          this.saving.set(false);
+          this.fileDiffPanel.closeViews();
+          this.gitRefresh.doUpdateWorkingDirChanges();
+        }))
+        .subscribe(),
+    );
   }
 
   protected async acceptAll(side: 'ours' | 'theirs'): Promise<void> {
@@ -164,28 +165,28 @@ export class MergeEditorComponent {
     }
   }
 
-  private detectConflictContext(): ConflictCtx {
+  private async detectConflictContext(): Promise<ConflictCtx> {
     const cwd = this.currentRepo.cwd();
     if (!cwd) return {operation: 'unknown', oursLabel: 'Ours', theirsLabel: 'Theirs'};
 
     const git = `${cwd}/.git`;
-    const read = (p: string) => { try { return window.electron.fs.readFileSync(p).trim(); } catch { return ''; } };
-    const exists = (p: string) => window.electron.fs.existsSync(p);
+    const read = async (p: string) => { try { return (await window.tauri.fs.readFile(p)).trim(); } catch { return ''; } };
+    const exists = (p: string) => window.tauri.fs.exists(p);
 
     if (this.currentRepo.isRebasing()) {
-      const branch = read(`${git}/rebase-merge/head-name`).replace('refs/heads/', '') || 'our branch';
-      const onto = read(`${git}/rebase-merge/onto`).slice(0, 7) || 'upstream';
+      const branch = (await read(`${git}/rebase-merge/head-name`)).replace('refs/heads/', '') || 'our branch';
+      const onto = (await read(`${git}/rebase-merge/onto`)).slice(0, 7) || 'upstream';
       return {operation: 'rebase', oursLabel: `${branch} (ours)`, theirsLabel: `onto ${onto}`};
     }
 
-    if (exists(`${git}/CHERRY_PICK_HEAD`)) {
-      const sha = read(`${git}/CHERRY_PICK_HEAD`).slice(0, 7);
+    if (await exists(`${git}/CHERRY_PICK_HEAD`)) {
+      const sha = (await read(`${git}/CHERRY_PICK_HEAD`)).slice(0, 7);
       return {operation: 'cherry-pick', oursLabel: 'HEAD (ours)', theirsLabel: `cherry-pick ${sha}`};
     }
 
-    if (exists(`${git}/MERGE_HEAD`)) {
-      const mergeHead = read(`${git}/MERGE_HEAD`);
-      const stashRef = read(`${git}/refs/stash`);
+    if (await exists(`${git}/MERGE_HEAD`)) {
+      const mergeHead = await read(`${git}/MERGE_HEAD`);
+      const stashRef = await read(`${git}/refs/stash`);
       if (stashRef && mergeHead === stashRef) {
         return {operation: 'stash', oursLabel: 'HEAD (ours)', theirsLabel: 'stash'};
       }
@@ -195,16 +196,16 @@ export class MergeEditorComponent {
     return {operation: 'unknown', oursLabel: 'Ours', theirsLabel: 'Theirs'};
   }
 
-  private refineMergeLabel(): void {
+  private async refineMergeLabel(): Promise<void> {
     const cwd = this.currentRepo.cwd();
     if (!cwd) return;
     const git = `${cwd}/.git`;
-    const read = (p: string) => { try { return window.electron.fs.readFileSync(p).trim(); } catch { return ''; } };
-    const exists = (p: string) => window.electron.fs.existsSync(p);
+    const read = async (p: string) => { try { return (await window.tauri.fs.readFile(p)).trim(); } catch { return ''; } };
+    const exists = (p: string) => window.tauri.fs.exists(p);
 
-    if (!exists(`${git}/MERGE_HEAD`) || this.currentRepo.isRebasing() || exists(`${git}/CHERRY_PICK_HEAD`)) return;
-    const mergeHead = read(`${git}/MERGE_HEAD`);
-    const stashRef = read(`${git}/refs/stash`);
+    if (!(await exists(`${git}/MERGE_HEAD`)) || this.currentRepo.isRebasing() || await exists(`${git}/CHERRY_PICK_HEAD`)) return;
+    const mergeHead = await read(`${git}/MERGE_HEAD`);
+    const stashRef = await read(`${git}/refs/stash`);
     if (stashRef && mergeHead === stashRef) return;
 
     this.gitApi.git(['name-rev', '--name-only', mergeHead]).subscribe(name => {

@@ -35,12 +35,12 @@ export class SettingsService {
   get gitBin() { return this._gitBin(); }
 
   constructor() {
-    window.electron.zoom?.setFactor(this._zoom());
+    window.tauri.zoom?.setFactor(this._zoom());
   }
 
   set zoom(factor: number) {
     this._zoom.set(factor);
-    window.electron.zoom?.setFactor(factor);
+    window.tauri.zoom?.setFactor(factor);
     localStorage.setItem('zoom', String(factor));
   }
 

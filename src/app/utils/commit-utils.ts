@@ -102,7 +102,10 @@ export const buildStashMap = (stashes: Commit[]) => {
 
 export const stashUntrackedChildren = (stashes: Commit[]) => stashes.map(s => s.parentSHAs?.[2]).filter(notUndefined);
 
-export const identIcon = (email: string) => new Identicon(window.electron.crypto.md5(email), {size: 48, format: 'png', background: [0, 0, 0, 0]});
+export const identIcon = async (email: string) => {
+  const hash = await window.tauri.crypto.md5(email);
+  return new Identicon(hash, {size: 48, format: 'png', background: [0, 0, 0, 0]});
+};
 
 export const headCommit = (branches: Branch[], logs: Commit[], offset = 0) => {
   const headBranch = branches.find(b => b.isHeadPointed);

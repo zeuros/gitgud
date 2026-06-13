@@ -2,71 +2,88 @@
  * GitGud - A Git GUI client
  * Copyright (C) 2026 zeuros
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * Window interface for the Tauri bridge (see src/app/api/tauri-bridge.ts).
  */
 
-import type {PathLike, readdirSync, WriteFileOptions} from 'node:fs';
-import type {dirname, extname, resolve} from 'node:path';
-import type {dialog} from '@electron/remote';
-import type {ChokidarOptions} from 'chokidar';
-import type {ExecOptions, SpawnOptionsWithoutStdio, SpawnSyncOptions, spawnSync} from 'node:child_process';
-import type {BrowserWindow} from 'electron';
+import type {SpawnSyncReturns} from 'node:child_process';
 
-// To sync with preload.ts
-interface ElectronApi {
-  fs: {
-    readdirSync: typeof readdirSync;
-    isFile: (file: PathLike) => boolean;
-    writeFileSync: (file: string, data: string, options?: WriteFileOptions) => void;
-    readFileSync: (file: PathLike) => string;
-    existsSync: (path: PathLike) => boolean;
-    mtimeMs: (path: string) => number;
-  };
-  path: {
-    resolve: typeof resolve;
-    dirname: typeof dirname;
-    extname: typeof extname;
-  };
-  chokidar: {
-    watch: (id: string, paths: string | string[], options?: ChokidarOptions) => void;
-    on: (id: string, event: string, cb: (...args: unknown[]) => void) => void;
-    close: (id: string) => void;
-  };
-  crypto: {
-    md5: (data: string) => string;
-  };
+interface FsApi {
+  readdir: (path: string) => Promise<string[]>;
+  isFile: (path: string) => Promise<boolean>;
+  writeFile: (path: string, data: string) => Promise<void>;
+  readFile: (path: string) => Promise<string>;
+  exists: (path: string) => Promise<boolean>;
+  mtime: (path: string) => Promise<number>;
+}
+
+interface PathApi {
+  resolve: (...parts: string[]) => string;
+  dirname: (path: string) => string;
+  extname: (path: string) => string;
+}
+
+interface ChokidarApi {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  watch: (id: string, paths: string | string[], options?: Record<string, any>) => void;
+  on: (id: string, event: string, cb: (...args: unknown[]) => void) => void;
+  close: (id: string) => void;
+}
+
+interface SpawnSyncResult {
+  stdout: string;
+  stderr: string;
+  status: number | null;
+}
+
+interface ExecOptions {
+  cwd?: string;
+  env?: Record<string, string>;
+  maxBuffer?: number;
+}
+
+interface SpawnOptions {
+  cwd?: string;
+  env?: Record<string, string>;
+}
+
+interface TauriApi {
+  fs: FsApi;
+  path: PathApi;
+  chokidar: ChokidarApi;
+  crypto: { md5: (data: string) => Promise<string> };
   dialog: {
-    showOpenDialogSync: typeof dialog.showOpenDialogSync;
+    showOpenDialog: (opts: {
+      title?: string;
+      defaultPath?: string;
+      filters?: Array<{name: string; extensions: string[]}>;
+      properties?: string[];
+    }) => Promise<string[] | null>;
   };
-  execFile: (cmd: string, args: string[], options: ExecOptions) => Promise<{ stdout: string; stderr: string }>;
-  spawnSync: (cmd: string, args: string[], options: SpawnSyncOptions) => ReturnType<typeof spawnSync>;
-  spawn: (cmd: string, args: string[], options: SpawnOptionsWithoutStdio) => Promise<string>;
+  execFile: (cmd: string, args: string[], options: ExecOptions) => Promise<{stdout: string; stderr: string}>;
+  spawnSync: (cmd: string, args: string[], options: SpawnOptions & {input?: string}) => Promise<SpawnSyncResult>;
+  spawn: (cmd: string, args: string[], options: SpawnOptions) => Promise<string>;
   zoom?: {
-    setFactor: (factor: number) => void;
-    getFactor: () => number;
+    setFactor: (factor: number) => void | Promise<void>;
+    getFactor: () => number | Promise<number>;
   };
   showItemInFolder: (fullPath: string) => void;
   openExternal: (url: string) => Promise<void>;
   appVersion: string;
   packageFormat?: string;
-  onWindowFocus: (cb: () => void) => BrowserWindow;
-  offWindowFocus: (cb: () => void) => BrowserWindow;
-  process: NodeJS.Process;
+  onWindowFocus: (cb: () => void) => unknown;
+  offWindowFocus: (cb: () => void) => unknown;
+  process: {
+    platform: string;
+    arch: string;
+    execPath: string;
+    env: Record<string, string>;
+    versions?: Record<string, string>;
+    argv?: string[];
+  };
 }
 
 declare global {
   interface Window {
-    electron: ElectronApi;
+    tauri: TauriApi;
   }
 }

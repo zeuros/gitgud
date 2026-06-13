@@ -8,7 +8,7 @@ import {beat, DEMO_BASE, launchWithRepo, see, waitForDiff} from '../utils/helper
 import {annotateWithArrowAndText, setupAnnotations} from '../utils/annotateWithArrowAndText';
 
 test('video2 – diff viewer and staging', async () => {
-  const {app, page} = await launchWithRepo(DEMO_BASE, {record: true});
+  const {page, close} = await launchWithRepo(DEMO_BASE, {record: true});
   await setupAnnotations(page);
 
   // ── 1. Click a committed file to open the diff viewer ───────────────────────
@@ -79,5 +79,5 @@ test('video2 – diff viewer and staging', async () => {
   await see(page, 1200);
   await page.keyboard.press('Escape');
 
-  await app.close();
+  await close();
 });
