@@ -104,7 +104,7 @@ export const see = (ms = 1200) => browser.pause(ms);
 
 // ── Repo helpers ──────────────────────────────────────────────────────────────
 
-function copyRepo(template: string): string {
+export function copyRepo(template: string): string {
   const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gitgud-e2e-'));
   execSync(`cp -r "${template}/." "${repoDir}"`);
   execSync(`chmod -R u+w "${repoDir}/.git"`);
@@ -186,3 +186,38 @@ export const waitForDiff = () =>
 
 export const waitForMerge = () =>
   $('gitgud-merge-editor').waitForDisplayed({ timeout: 10_000 });
+
+export async function initRepoWithWorktrees(
+  template: string,
+): Promise<{ repoDir: string; worktreeDir: string }> {
+  const repoDir = copyRepo(template);
+
+  // Do page setup first (same as initRepo) so browser.execute isn't called
+  // while the page is in WebKit's transient insecure startup state.
+  await browser.execute(() => {
+    localStorage.clear();
+    localStorage.setItem('zoom', '1.1');
+    localStorage.setItem('theme', 'dark');
+  });
+  await browser.refresh();
+
+  await $('gitgud-welcome-screen p-button[label="Open"] button').waitForDisplayed({ timeout: 15_000 });
+
+  // Create the linked worktree on disk now — the welcome screen is showing so
+  // the execSync blocking won't interfere with the WebKit startup sequence.
+  const worktreeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gitgud-wt-'));
+  execSync(`git -C "${repoDir}" worktree add "${worktreeDir}" feature/dark-mode`);
+
+  await browser.execute((dir: string) => {
+    (window as any).tauri.dialog.showOpenDialog = async () => [dir];
+  }, repoDir);
+
+  await jsClick(await $('gitgud-welcome-screen p-button[label="Open"] button'));
+
+  await browser.waitUntil(
+    async () => (await $$('tr.commit-row')).length > 0,
+    { timeout: 40_000, timeoutMsg: 'commit rows never appeared after initRepoWithWorktrees' },
+  );
+
+  return { repoDir, worktreeDir };
+}
