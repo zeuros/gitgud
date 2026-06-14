@@ -7,6 +7,10 @@
       padding: 0;
     }
 
+    .p-tree-node-icon {
+      font-size: var(--small-icon-size);
+    }
+
     .p-tree .p-tree-container .p-treenode .p-treenode-content {
       padding: 0;
       color: var(--hmmmmmmGray);
@@ -72,8 +76,10 @@
   color: var(--hmmmmmmGray);
 }
 
-.black-and-white {
+.black-and-white-stash-chest {
   filter: var(--icon-filter);
+  width: var(--small-icon-size);
+  height: var(--small-icon-size);
 }
 
 .p-highlight {
@@ -91,9 +97,12 @@
   }
 }
 
+.small-icon {
+  font-size: var(--small-icon-size);
+}
+
 .tag-presence-icons {
   margin-left: auto;
-  font-size: 14px;
   gap: 3px;
   display: flex;
   flex-shrink: 0;
@@ -103,7 +112,6 @@
   border-radius: 3px;
 
   .worktree-icon {
-    font-size: 0.85em;
     flex-shrink: 0;
   }
 }
@@ -111,4 +119,3 @@
 .worktree-current {
   background: var(--row-selected-background-color);
 }
-

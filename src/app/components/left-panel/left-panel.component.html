@@ -103,7 +103,7 @@
                     <ng-template #item let-s>
                         @let stash = $stash(s);
                         <div class="flex align-items-center gap-2 ellipsis" (contextmenu)="openStashContextMenu(stash, $event)">
-                            <img src="assets/images/chest.svg" width="16" height="16" alt="stash" class="black-and-white"/>
+                            <img src="assets/images/chest.svg" alt="stash" class="black-and-white-stash-chest"/>
                             <span class="ellipsis text-gray">{{ stash.summary }}</span>
                         </div>
                     </ng-template>
@@ -127,9 +127,9 @@
                     <ng-template #item let-t>
                         @let tag = $localAndDistantTagWithName(t);
                         <div class="flex align-items-center gap-2 ellipsis" (contextmenu)="openTagContextMenu(tag, $event)">
-                            <i class="fa fa-tag text-gray"></i>
+                            <i class="fa fa-tag text-gray small-icon"></i>
                             <span class="ellipsis text-gray">{{ (tag.local ?? tag.distant)?.name }}</span>
-                            <span class="tag-presence-icons text-gray">
+                            <span class="tag-presence-icons text-gray small-icon">
                                 @if (tag.local) {
                                     <i class="fa fa-laptop"></i>
                                 }
@@ -163,7 +163,7 @@
                              (click)="selectWorktree(worktree)"
                              (dblclick)="openWorktreeInNewTab(worktree)"
                              (contextmenu)="openWorktreeContextMenu(worktree, $event)">
-                            <i [class]="worktree.isMain ? 'fa fa-home' : (worktree.isDetached ? 'fa fa-scissors' : 'fa fa-code-fork')" class="text-gray worktree-icon"></i>
+                            <i [class]="worktree.isMain ? 'fa fa-home' : (worktree.isDetached ? 'fa fa-scissors' : 'fa fa-code-fork')" class="text-gray worktree-icon small-icon"></i>
                             <span class="ellipsis flex-1" [class.text-gray]="!isCurrent">
                                 {{ worktree.branch ?? 'HEAD' }}
                             </span>
