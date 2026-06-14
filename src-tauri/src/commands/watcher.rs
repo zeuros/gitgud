@@ -33,7 +33,11 @@ pub fn watch_paths(
         RecursiveMode::NonRecursive
     };
 
-    let event_name = format!("watcher-event:{id}");
+    // Tauri event names allow only [a-zA-Z0-9\-/:\_ ] — replace everything else with '_'.
+    let safe_id: String = id.chars()
+        .map(|c| if c.is_alphanumeric() || matches!(c, '-' | '/' | ':' | '_') { c } else { '_' })
+        .collect();
+    let event_name = format!("watcher-event:{safe_id}");
     let app_clone = app.clone();
 
     let mut skip: Vec<String> = vec![

@@ -71,7 +71,8 @@ async function buildBridge() {
       },
       on: (id: string, event: string, cb: (...args: unknown[]) => void) => {
         // Tauri emits 'watcher-event:{id}'; map to chokidar event names
-        listen<{ kind: string; paths: string[] }>(`watcher-event:${id}`, (tauriEvent) => {
+        const safeId = id.replace(/[^a-zA-Z0-9\-/:_]/g, '_');
+        listen<{ kind: string; paths: string[] }>(`watcher-event:${safeId}`, (tauriEvent) => {
           const payload = tauriEvent.payload;
           const paths: string[] = payload.paths ?? [];
           const kind = payload.kind?.toLowerCase() ?? '';
