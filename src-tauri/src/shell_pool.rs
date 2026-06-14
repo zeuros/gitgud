@@ -73,8 +73,9 @@ impl Shell {
             .collect::<Vec<_>>()
             .join(" ");
 
-        // Send command + sentinel printer to the persistent shell
-        let payload = format!("{quoted} 2>/dev/null\nprintf '\\nGITGUD_{id}:%d\\n' $?\n");
+        // Send command + sentinel printer to the persistent shell.
+        // Stderr is merged into stdout so non-zero exits include the git error message.
+        let payload = format!("{quoted} 2>&1; _rc=$?; printf '\\nGITGUD_{id}:%d\\n' $_rc\n");
         if let Err(e) = self.stdin.write_all(payload.as_bytes()).await {
             self.dead = true;
             return Err(format!("stdin write: {e}"));

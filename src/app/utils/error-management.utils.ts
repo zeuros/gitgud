@@ -26,8 +26,14 @@ export class GlobalErrorHandler implements ErrorHandler {
   handleError(error: unknown): void {
     console.error('[GlobalErrorHandler]', error);
 
+    let message: string | undefined;
     if (error instanceof Error) {
-      this.toast.err(error.message);
+      message = error.message;
+    } else if (typeof error === 'string') {
+      // Tauri IPC errors arrive as "exited N\n<stderr>" — strip the status prefix
+      message = error.replace(/^exited \d+\n/, '').trim();
     }
+
+    if (message) this.toast.err(message);
   }
 }
