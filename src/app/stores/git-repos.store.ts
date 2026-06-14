@@ -49,7 +49,19 @@ export class GitRepositoryStore {
     this._repositories.update(repos => repos.map((r, i) => ({...r, selected: typeof directoryOrIndex === 'number' ? i === directoryOrIndex : r.id === directoryOrIndex})));
 
   removeRepository = (indexOrId: number | string) =>
-    this._repositories.update(repos => repos.filter((r, i) => typeof indexOrId === 'number' ? i !== indexOrId : r.id !== indexOrId));
+    this._repositories.update(repos => {
+      // Remove repository from list
+      const repoToRemove = repos.findIndex((r, i) => typeof indexOrId === 'number' ? i == indexOrId : r.id == indexOrId);
+      const filtered = repos.filter((_, i) => i !== repoToRemove)
+
+      // Select next or previous repository (if we're closing the selected repo)
+      const repoToSelect = repos[repoToRemove]?.selected && filtered.length > 0
+        ? Math.min(repoToRemove, filtered.length - 1)
+        : undefined;
+      if (repoToSelect != null) filtered[repoToSelect].selected = true;
+
+      return filtered;
+    });
 
   updateSelectedRepository = (updates: Partial<GitRepository>) =>
     this._repositories.update(repos => repos.map(r => r.selected ? {...r, ...updates} : r));
