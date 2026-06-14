@@ -147,6 +147,7 @@ $repo-track-max-width: 260px;
     color: var(--hmmmmmmGray);
     margin-left: 2px;
     min-width: 53px; // avoid button width jitter when displaying seconds
+    text-wrap: nowrap;
   }
 
   .rebase-label {

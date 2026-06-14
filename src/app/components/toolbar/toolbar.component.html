@@ -132,6 +132,7 @@
         [(ngModel)]="settings.zoom"
         optionLabel="label"
         optionValue="value"
+        [style]="{'width': 'fit-content'}"
 >
     <ng-template pTemplate="selectedItem" let-item>
         Zoom ({{ item.label }})
