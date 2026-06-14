@@ -50,7 +50,7 @@ export class RepositoryViewComponent {
     effect((onCleanup) => {
       const el: HTMLElement | undefined = this.commitPanel()?.nativeElement;
       if (!el) return;
-      const ro = new ResizeObserver(() => this.editorRightPx.set(el.getBoundingClientRect().left - 4)); // 4 for accessing the splitter resize handle
+      const ro = new ResizeObserver(() => this.editorRightPx.set(el.offsetWidth));
       ro.observe(el);
       onCleanup(() => ro.disconnect());
     });

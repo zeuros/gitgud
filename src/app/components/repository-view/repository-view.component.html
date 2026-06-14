@@ -12,9 +12,9 @@
     </p-splitter>
 
     @if (fileDiffPanel.fileToDiff$ | async; as fileToDiff) {
-        <gitgud-monaco-editor-view [fileToDiff]="fileToDiff" class="editor-overlay" [style.width.px]="editorRightPx()"/>
+        <gitgud-monaco-editor-view [fileToDiff]="fileToDiff" class="editor-overlay" [style.right.px]="editorRightPx()"/>
     }
     @if (fileDiffPanel.conflictedFile()) {
-        <gitgud-merge-editor class="editor-overlay" [style.width.px]="editorRightPx()"/>
+        <gitgud-merge-editor class="editor-overlay" [style.right.px]="editorRightPx()"/>
     }
 }
