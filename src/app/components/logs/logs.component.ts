@@ -117,7 +117,10 @@ export class LogsComponent {
   private stashImg = loadStashImage();
 
   protected _canvasResized = signal({}); // When selectedRepository() changes, canvas is resized for some reason, it helps redraw the log at the good moment
-  protected _canvasOverflows = signal(false);
+  protected _canvasOverflows = computed(() => {
+    const canvasWidth = xPosition(this.graphColumnCount() - 1) + NODE_RADIUS + 2 * DRAWING_PAD_LEFT;
+    return canvasWidth > this._graphColumnWidth();
+  });
   protected _branchColumnWidth = signal(0);
   protected _graphColumnWidth = signal(0);
   protected _tableScrollLeft = signal(0);
@@ -196,30 +199,36 @@ export class LogsComponent {
     });
 
     // Position the canvas over the p-table GRAPH column
-    effect(() => {
+    effect((onCleanup) => {
       const logTableHeaders = this.logTableRef()?.querySelector('table')?.querySelectorAll('th');
       const branchTh = logTableHeaders?.[0];
-      if (branchTh) new ResizeObserver(() => {
+      const graphTh = logTableHeaders?.[1];
+      if (!branchTh || !graphTh) return;
+
+      const ro = new ResizeObserver(() => {
         this._branchColumnWidth.set(branchTh.clientWidth);
         this._tableHeaderHeight.set(branchTh.clientHeight);
-      }).observe(branchTh);
-
-      const graphTh = logTableHeaders?.[1];
-      if (graphTh) new ResizeObserver(() => {
         this._graphColumnWidth.set(graphTh.clientWidth);
-        const canvasWidth = xPosition(this.graphColumnCount() - 1) + NODE_RADIUS + 2 * DRAWING_PAD_LEFT;
-        this._canvasOverflows.set(canvasWidth > graphTh.clientWidth);
-      }).observe(graphTh);
+      });
+      ro.observe(branchTh);
+      ro.observe(graphTh);
+      onCleanup(() => ro.disconnect());
     });
 
-    effect(() => {
+    effect((onCleanup) => {
       const logTableContainer = this.logTableContainer();
-      if (logTableContainer) new ResizeObserver(() => this._tableHeight.set(logTableContainer.clientHeight)).observe(logTableContainer);
+      if (!logTableContainer) return;
+      const ro = new ResizeObserver(() => this._tableHeight.set(logTableContainer.clientHeight));
+      ro.observe(logTableContainer);
+      onCleanup(() => ro.disconnect());
     });
 
-    effect(() => {
+    effect((onCleanup) => {
       const canvas = this.canvas()?.nativeElement;
-      if (canvas) new ResizeObserver(() => this._canvasResized.set({})).observe(canvas);
+      if (!canvas) return;
+      const ro = new ResizeObserver(() => this._canvasResized.set({}));
+      ro.observe(canvas);
+      onCleanup(() => ro.disconnect());
     });
 
     afterNextRender(() => this._layoutReady.set(true));
