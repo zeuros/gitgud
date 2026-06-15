@@ -46,6 +46,7 @@ export const toBranchTree = (branches: Branch[], branchNameTransform = (n: strin
           leaf: true,
           expanded: true,
           selectable: true,
+          styleClass: branch.isHeadPointed ? 'worktree-current' : undefined,
         }
         : {
           key,

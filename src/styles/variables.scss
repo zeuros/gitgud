@@ -20,6 +20,8 @@
   --violet-jtc: #603A62;
 
   // App semantic colors — light
+  --branch-current-bg:                     rgba(142, 78, 140, 0.28);
+  --branch-current-color:                  #3d1f3f;
   --row-selected-background-color:         rgba(142, 78, 140, 0.18);
   --row-warning-background-color:          rgba(255, 120, 30, 0.12);
   --row-warning-selected-background-color: rgba(220, 100, 30, 0.28);
@@ -92,6 +94,8 @@ html.dark {
   --babedouGray:     #e5e5e5;
   --babedouGrayPlus: #efefef;
 
+  --branch-current-bg:                     rgba(160, 100, 210, 0.42);
+  --branch-current-color:                  rgb(217 255 220 / 0.93);
   --row-selected-background-color:         #755a975c;
   --row-warning-background-color:          rgba(255, 120, 30, 0.18);
   --row-warning-selected-background-color: rgba(220, 100, 30, 0.38);
@@ -124,6 +128,9 @@ html.dark {
   --p-text-color-secondary:  rgba(255, 255, 255, 0.6);
   --p-highlight-text-color:  var(--p-primary-color);
   --p-highlight-focus-color: #e5e5e5;
+
+  --p-highlight-background:       rgba(160, 100, 200, 0.20);
+  --p-highlight-focus-background: rgba(160, 100, 200, 0.32);
 
   --p-content-border-color: rgba(80, 65, 95, 0.45);
   --p-tabs-tablist-background: var(--app-chrome-bg);

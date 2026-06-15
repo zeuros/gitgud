@@ -116,6 +116,7 @@
   }
 }
 
-.worktree-current {
-  background: var(--row-selected-background-color);
+::ng-deep .worktree-current > .p-tree-node-content {
+  background: var(--branch-current-bg);
+  color: var(--branch-current-color);
 }
