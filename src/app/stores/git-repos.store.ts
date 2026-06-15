@@ -32,11 +32,25 @@ export class GitRepositoryStore {
   private localStorage = inject(LocalStorageService);
 
   private _repositories = signal<GitRepository[]>(this.localStorage.get<GitRepository[]>(StorageName.GitRepositories) ?? []);
+  private _recentIds = signal<string[]>([]);
 
   repositories = this._repositories.asReadonly();
   selectedRepository = computed(() => this._repositories().find(r => r.selected));
   selectedIndex = computed(() => this._repositories().findIndex(r => r.selected));
   hasRepositories = computed(() => this._repositories().length > 0);
+
+  recentIds = this._recentIds.asReadonly();
+
+  newTabOpen = signal(false);
+  newTabSelected = signal(false);
+
+  openNewTab = () => { this.newTabOpen.set(true); this.newTabSelected.set(true); };
+  closeNewTab = () => { this.newTabOpen.set(false); this.newTabSelected.set(false); };
+  activateNewTab = () => this.newTabSelected.set(true);
+  deactivateNewTab = () => this.newTabSelected.set(false);
+
+  removeRecent = (id: string) =>
+    this._recentIds.update(ids => ids.filter(i => i !== id));
 
   constructor() {
     syncToStorage(this._repositories, StorageName.GitRepositories, this.localStorage);

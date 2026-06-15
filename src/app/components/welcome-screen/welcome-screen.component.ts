@@ -16,26 +16,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
-import {GitRepositoryService} from '../../services/git-repository.service';
-import {ButtonModule} from 'primeng/button';
-import {DialogService} from 'primeng/dynamicdialog';
-import {openCloneDialog} from '../dialogs/clone-dialog/clone-dialog.component';
+import {ChangeDetectionStrategy, Component} from '@angular/core';
+import {NewTabComponent} from '../new-tab/new-tab.component';
 
 @Component({
   selector: 'gitgud-welcome-screen',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ButtonModule],
+  imports: [NewTabComponent],
   templateUrl: './welcome-screen.component.html',
   styleUrl: './welcome-screen.component.scss',
   host: {class: 'fill-height'},
 })
-export class WelcomeScreenComponent {
-
-  protected gitRepository = inject(GitRepositoryService);
-  private dialog = inject(DialogService);
-
-  protected openCloneDialog = () => openCloneDialog(this.dialog).subscribe();
-
-}
+export class WelcomeScreenComponent {}

@@ -17,12 +17,13 @@
  */
 
 import {computed, effect, inject, Injectable} from '@angular/core';
-import {from, switchMap} from 'rxjs';
+import {EMPTY, from, switchMap} from 'rxjs';
 import {isRootDirectory, throwEx} from '../utils/utils';
 import {createRepository} from '../utils/repository-utils';
 import {FileWatcherService} from './file-watcher.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {GitRefreshService} from './git-refresh.service';
+import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -32,6 +33,7 @@ export class GitRepositoryService {
   private fileWatcher = inject(FileWatcherService);
   private gitRepositoryStore = inject(GitRepositoryStore);
   private gitRefresh = inject(GitRefreshService);
+  private gitApi = inject(GitApiService);
 
   // Memoized on string equality — only changes when the actual repo path switches,
   // not on every workDirStatus / selectedCommitsShas update.
@@ -69,10 +71,22 @@ export class GitRepositoryService {
     }
 
     // Select it — cwd is derived from selectedRepository, so this also updates cwd
+    // Also closes the new tab if it was open (selectRepository calls deactivateNewTab)
     this.gitRepositoryStore.selectRepository(repoPath);
+    this.gitRepositoryStore.closeNewTab();
 
     // Refresh git data
     return this.gitRefresh.refreshAll();
+  };
+
+  initRepository = () => {
+    from(window.tauri.dialog.showOpenDialog({properties: ['openDirectory']})).pipe(
+      switchMap(picked => {
+        if (!picked?.length) return EMPTY;
+        const dir = picked[0];
+        return this.gitApi.init(dir).pipe(switchMap(() => this.openRepository(dir)));
+      }),
+    ).subscribe();
   };
 
   pickGitFolder = async (): Promise<string> => {
