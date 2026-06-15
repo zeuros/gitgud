@@ -93,7 +93,7 @@ export class MergeEditorComponent {
   private highlighter: Highlighter | null = null;
 
   constructor() {
-    effect(() => {
+    effect((onCleanup) => {
       const file = this.file();
       if (!file) return;
 
@@ -105,13 +105,14 @@ export class MergeEditorComponent {
       this.detectConflictContext().then(ctx => this.conflictCtx.set(ctx));
       this.refineMergeLabel();
 
-      combineLatest([ours$, base$, theirs$]).subscribe(([ours, base, theirs]) => {
+      const sub = combineLatest([ours$, base$, theirs$]).subscribe(([ours, base, theirs]) => {
         this.lhs.set(ours);
         this.ctr.set(base);
         this.rhs.set(theirs);
         this.highlightFn.set(undefined);
         this.initHighlight(path);
       });
+      onCleanup(() => sub.unsubscribe());
     });
 
     effect(() => {

@@ -103,7 +103,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     registerMonacoEditorThemes();
     effect(() => editor.setTheme(this.theme.tokens().monacoTheme));
 
-    effect(() => {
+    effect((onCleanup) => {
       const file = this.fileToDiff();
       if (!file) return;
 
@@ -119,7 +119,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
           : from(window.tauri.fs.readFile(window.tauri.path.resolve(this.currentRepo.cwd()!, file.path))))
         : this.fileDiff.getFileAtRevision(file.path, (file as CommittedFileChange).commitish);
 
-      combineLatest([before$, after$]).subscribe(([before, after]) => {
+      const sub = combineLatest([before$, after$]).subscribe(([before, after]) => {
         this.currentFile.set(isWorkingDirectoryFileChange(file) ? file : undefined);
 
         this.diffModels.set({
@@ -127,6 +127,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
           after: {code: renderWindowsShitEol(after), fileName: file.path},
         });
       });
+      onCleanup(() => sub.unsubscribe());
     });
 
     effect(() => {
