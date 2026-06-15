@@ -28,7 +28,6 @@ import {SettingsService} from './services/settings.service';
 import {GitRepositoryStore} from './stores/git-repos.store';
 import {AutoFetchService} from './services/auto-fetch.service';
 import {Router, RouterOutlet} from '@angular/router';
-import {SettingsDialogComponent} from './components/dialogs/settings-dialog/settings-dialog.component';
 import {ThemeService} from './services/theme.service'; // bootstraps theme reactivity
 import {ActiveContextMenuService} from './services/active-context-menu.service';
 import {FixupService} from './services/fixup.service';
@@ -36,7 +35,7 @@ import {MessageService} from 'primeng/api';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, SettingsDialogComponent, ContextMenu, Dialog, Button],
+  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, Button],
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',

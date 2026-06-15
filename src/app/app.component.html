@@ -5,7 +5,6 @@
 
 <p-toast position="bottom-center" (click)="dismissToastOnClick($event)"/>
 <p-confirmDialog/>
-<gitgud-settings-dialog/>
 <p-contextMenu #globalMenu [model]="activeContextMenu.contextMenu()" appendTo="body"/>
 
 <p-dialog header="Git not found" [visible]="!gitApi.gitFound()" [modal]="true" [closable]="false" [style]="{width: '28rem'}">

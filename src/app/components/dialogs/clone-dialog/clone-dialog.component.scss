@@ -24,3 +24,10 @@
 .arrow {
   font-size: 25px;
 }
+
+.clone-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}

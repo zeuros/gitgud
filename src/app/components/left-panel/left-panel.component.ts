@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, inject, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
 import {Tree} from 'primeng/tree';
 import {CdkDropList} from '@angular/cdk/drag-drop';
@@ -40,8 +40,9 @@ import {BranchService} from '../../services/branch.service';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {WorktreeContextMenuService} from '../../services/worktree-context-menu.service';
 import {type GitWorktree} from '../../models/git-worktree';
-import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';
+import {openCreateWorktreeDialog} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';
 import {GitRepositoryService} from '../../services/git-repository.service';
+import {DialogService} from 'primeng/dynamicdialog';
 
 
 @Component({
@@ -55,7 +56,6 @@ import {GitRepositoryService} from '../../services/git-repository.service';
     FormsModule,
     Splitter,
     CdkDropList,
-    CreateWorktreeDialogComponent,
   ],
   providers: [TerminalService],
   templateUrl: './left-panel.component.html',
@@ -81,7 +81,7 @@ export class LeftPanelComponent {
   protected aheadBehind = inject(BranchAheadBehindService);
   protected worktreeContextMenu = inject(WorktreeContextMenuService);
   private branch = inject(BranchService);
-  private createWorktreeDialog = viewChild(CreateWorktreeDialogComponent);
+  private dialog = inject(DialogService);
   private gitRepositoryService = inject(GitRepositoryService);
 
   protected selectBranchCommit = (branch?: Branch) => {
@@ -128,7 +128,7 @@ export class LeftPanelComponent {
     this.activeContextMenu.show(this.worktreeContextMenu.worktreeContextMenu(), event);
   };
 
-  protected addWorktree = () => this.createWorktreeDialog()?.open();
+  protected addWorktree = () => openCreateWorktreeDialog(this.dialog).subscribe();
 
   protected openWorktreeInNewTab = (wt: GitWorktree) => {
     if (!wt.isMain) this.gitRepositoryService.openRepository(wt.path).subscribe();

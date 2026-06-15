@@ -16,17 +16,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, inject, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {ButtonModule} from 'primeng/button';
-import {DialogModule} from 'primeng/dialog';
-import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.component';
+import {DialogService} from 'primeng/dynamicdialog';
+import {openCloneDialog} from '../dialogs/clone-dialog/clone-dialog.component';
 
 @Component({
   selector: 'gitgud-welcome-screen',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ButtonModule, DialogModule, CloneDialogComponent],
+  imports: [ButtonModule],
   templateUrl: './welcome-screen.component.html',
   styleUrl: './welcome-screen.component.scss',
   host: {class: 'fill-height'},
@@ -34,8 +34,8 @@ import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.compone
 export class WelcomeScreenComponent {
 
   protected gitRepository = inject(GitRepositoryService);
-  private cloneDialog = viewChild.required(CloneDialogComponent);
+  private dialog = inject(DialogService);
 
-  protected openCloneDialog = () => this.cloneDialog().open();
+  protected openCloneDialog = () => openCloneDialog(this.dialog).subscribe();
 
 }

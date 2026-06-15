@@ -19,20 +19,28 @@
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {Button} from 'primeng/button';
-import {Dialog} from 'primeng/dialog';
 import {InputText} from 'primeng/inputtext';
 import {FloatLabel} from 'primeng/floatlabel';
-import {PrimeTemplate} from 'primeng/api';
+import {Tooltip} from 'primeng/tooltip';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRepositoryService} from '../../../services/git-repository.service';
 import {ToastService} from '../../../services/toast.service';
-import {finalize, switchMap} from 'rxjs';
+import {finalize, type Observable, switchMap} from 'rxjs';
+import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
+
+export const openCloneDialog = (dialog: DialogService): Observable<void> =>
+  dialog.open(CloneDialogComponent, {
+    header: 'Clone Repository',
+    width: '480px',
+    modal: true,
+    dismissableMask: true,
+  })!.onClose;
 
 @Component({
   selector: 'gitgud-clone-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, Dialog, InputText, FloatLabel, FormsModule, PrimeTemplate],
+  imports: [Button, InputText, FloatLabel, FormsModule, Tooltip],
   templateUrl: './clone-dialog.component.html',
   styleUrl: './clone-dialog.component.scss',
 })
@@ -41,21 +49,14 @@ export class CloneDialogComponent {
   private gitApi = inject(GitApiService);
   private gitRepository = inject(GitRepositoryService);
   private toast = inject(ToastService);
+  protected ref = inject(DynamicDialogRef);
 
-  protected visible = signal(false);
   protected url = signal('');
   protected targetDir = signal('');
   protected repoName = signal('');
   protected loading = signal(false);
   protected repoPath = computed(() => `${this.targetDir()}/${this.repoName()}`);
   protected repoExists = signal(false);
-
-  open() {
-    this.url.set('');
-    this.targetDir.set('');
-    this.repoName.set('');
-    this.visible.set(true);
-  }
 
   protected pickDirectory() {
     window.tauri.dialog.showOpenDialog({properties: ['openDirectory']}).then(picked => {
@@ -86,7 +87,7 @@ export class CloneDialogComponent {
         finalize(() => this.loading.set(false)),
       )
       .subscribe(() => {
-        this.visible.set(false);
+        this.ref.close();
         this.toast.success(`Cloned ${this.repoName()} successfully`);
       });
   }
@@ -96,7 +97,7 @@ export class CloneDialogComponent {
     this.gitRepository.openRepository(this.repoPath())
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe(() => {
-        this.visible.set(false);
+        this.ref.close();
         this.toast.success(`Opened ${this.repoName()}`);
       });
   }
