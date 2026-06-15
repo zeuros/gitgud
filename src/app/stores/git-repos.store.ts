@@ -49,26 +49,33 @@ export class GitRepositoryStore {
   activateNewTab = () => this.newTabSelected.set(true);
   deactivateNewTab = () => this.newTabSelected.set(false);
 
+  constructor() {
+    syncToStorage(this._repositories, StorageName.GitRepositories, this.localStorage);
+    syncToStorage(this._recentIds, StorageName.RecentRepoIds, this.localStorage);
+  }
+
   removeRecent = (id: string) =>
     this._recentIds.update(ids => ids.filter(i => i !== id));
 
-  constructor() {
-    syncToStorage(this._repositories, StorageName.GitRepositories, this.localStorage);
-  }
-
-  addRepository = (repository: GitRepository) =>
+  addRepository = (repository: GitRepository) => {
     this._repositories.update(repos => [...repos, repository]);
+    this.touchRecent(repository.id);
+  };
 
-  selectRepository = (directoryOrIndex: string | number) =>
+  selectRepository = (directoryOrIndex: string | number) => {
+    this.deactivateNewTab();
     this._repositories.update(repos => repos.map((r, i) => ({...r, selected: typeof directoryOrIndex === 'number' ? i === directoryOrIndex : r.id === directoryOrIndex})));
+    const id = typeof directoryOrIndex === 'number'
+      ? this._repositories()[directoryOrIndex]?.id
+      : directoryOrIndex;
+    if (id) this.touchRecent(id);
+  };
 
-  removeRepository = (indexOrId: number | string) =>
+  removeRepository = (indexOrId: number | string) => {
     this._repositories.update(repos => {
-      // Remove repository from list
       const repoToRemove = repos.findIndex((r, i) => typeof indexOrId === 'number' ? i == indexOrId : r.id == indexOrId);
-      const filtered = repos.filter((_, i) => i !== repoToRemove)
+      const filtered = repos.filter((_, i) => i !== repoToRemove);
 
-      // Select next or previous repository (if we're closing the selected repo)
       const repoToSelect = repos[repoToRemove]?.selected && filtered.length > 0
         ? Math.min(repoToRemove, filtered.length - 1)
         : undefined;
@@ -76,6 +83,10 @@ export class GitRepositoryStore {
 
       return filtered;
     });
+  };
+
+  private touchRecent = (id: string) =>
+    this._recentIds.update(ids => [id, ...ids.filter(i => i !== id)].slice(0, 7));
 
   updateSelectedRepository = (updates: Partial<GitRepository>) =>
     this._repositories.update(repos => repos.map(r => r.selected ? {...r, ...updates} : r));
