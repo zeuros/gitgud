@@ -24,5 +24,5 @@ import {LocalStorageService} from '../services/local-storage.service';
 
 export const syncToStorage = <T>(signal: Signal<T>, key: StorageName, localStorageService: LocalStorageService) =>
   toObservable(signal)
-    .pipe(debounceTime(500))
+    .pipe(debounceTime(250))
     .subscribe(value => localStorageService.store(key, value));

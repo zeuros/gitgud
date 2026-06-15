@@ -90,6 +90,9 @@ export class GitApiService {
   clone = (url: string, repoName: string, dir: string) =>
     this.git(['clone', url, repoName], {cwd: dir, env: window.tauri.process.env});
 
+  init = (dir: string) =>
+    this.git(['init'], {cwd: dir, env: window.tauri.process.env});
+
   exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
     from(window.tauri.execFile(`${cmd}`, args, omitUndefined({
       ...options,

@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject} from '@angular/core';
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
 import {Button} from 'primeng/button';
 import {RepositoryViewComponent} from '../repository-view/repository-view.component';
@@ -25,6 +25,7 @@ import {GitRepositoryService} from '../../services/git-repository.service';
 import {ToolbarComponent} from '../toolbar/toolbar.component';
 import {CdkDrag, type CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 import {GitRefreshService} from '../../services/git-refresh.service';
+import {NewTabComponent} from '../new-tab/new-tab.component';
 
 @Component({
   selector: 'gitgud-repositories-view',
@@ -39,6 +40,7 @@ import {GitRefreshService} from '../../services/git-refresh.service';
     ToolbarComponent,
     CdkDropList,
     CdkDrag,
+    NewTabComponent,
   ],
   templateUrl: './repositories-view.component.html',
   styleUrl: './repositories-view.component.scss',
@@ -52,6 +54,10 @@ export class RepositoriesViewComponent {
   protected gitRepository = inject(GitRepositoryService);
   protected gitRefresh = inject(GitRefreshService);
 
+  protected activeTab = computed<number | string>(() =>
+    this.gitRepositoryStore.newTabSelected() ? 'new-tab' : this.gitRepositoryStore.selectedIndex()
+  );
+
   protected drop({previousIndex, currentIndex}: CdkDragDrop<string[]>): void {
     this.gitRepositoryStore.reorderRepositories(previousIndex, currentIndex);
   }
@@ -62,6 +68,14 @@ export class RepositoriesViewComponent {
       this.gitRepositoryStore.removeRepository(index);
     }
   }
+
+  protected onTabChange = (value: number | string | null | undefined) => {
+    if (value === 'new-tab') {
+      this.gitRepositoryStore.activateNewTab();
+      return;
+    }
+    this.selectRepository(value as number);
+  };
 
   protected selectRepository = (directoryOrIndex: string | number) => {
     this.gitRepositoryStore.selectRepository(directoryOrIndex);

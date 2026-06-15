@@ -1,0 +1,30 @@
+<img class="bg" src="assets/images/welcome-screen.svg" alt="">
+<div class="overlay"></div>
+<div class="fire-glow"></div>
+
+<div class="center">
+  <h2 class="title">GitGud</h2>
+
+  <div class="actions">
+    <p-button label="Open" icon="pi pi-folder-open" styleClass="action-btn" (onClick)="gitRepository.pickFolderAndOpenRepository()"/>
+    <p-button label="Clone" icon="pi pi-cloud-download" styleClass="action-btn" (onClick)="openClone()"/>
+    <p-button label="Init" icon="pi pi-plus-circle" styleClass="action-btn" (onClick)="gitRepository.initRepository()"/>
+  </div>
+
+  @if (gitRepositoryStore.recentIds().length > 0) {
+    <div class="recent">
+      <div class="recent-header">RECENT REPOSITORIES</div>
+      @for (path of gitRepositoryStore.recentIds(); track path) {
+        <div class="repo-item" (click)="gitRepository.openRepository(path).subscribe()">
+          <div class="repo-info">
+            <span class="repo-name">{{ lastFolderName(path) }}</span>
+            <span class="repo-path">{{ path }}</span>
+          </div>
+          <button class="remove-btn" (click)="gitRepositoryStore.removeRecent(path); $event.stopPropagation()">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

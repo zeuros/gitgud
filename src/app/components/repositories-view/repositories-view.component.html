@@ -2,7 +2,7 @@
 
 <gitgud-toolbar/>
 
-<p-tabs [value]="selectedIndex" (valueChange)="selectRepository($event!)" scrollable [class.refreshing]="gitRefresh.isRefreshing()">
+<p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" scrollable [class.refreshing]="gitRefresh.isRefreshing()">
 
     <p-tablist cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
         @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
@@ -20,18 +20,36 @@
             </p-tab>
         }
 
+        @if (gitRepositoryStore.newTabOpen()) {
+            <p-tab value="new-tab">
+                New tab
+                <p-button
+                        icon="pi pi-times"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="secondary"
+                        styleClass="close-tab-btn"
+                        (click)="gitRepositoryStore.closeNewTab(); $event.stopPropagation()"
+                />
+            </p-tab>
+        }
+
         <p-button
                 icon="pi pi-plus"
                 [text]="true"
                 class="flex"
                 severity="primary"
-                (click)="gitRepository.pickFolderAndOpenRepository()"
+                (click)="gitRepositoryStore.openNewTab()"
         />
     </p-tablist>
 
     <p-tabpanels class="fill-height">
         <p-tabpanel>
-            <gitgud-repository-view/>
+            @if (gitRepositoryStore.newTabSelected()) {
+                <gitgud-new-tab/>
+            } @else {
+                <gitgud-repository-view/>
+            }
         </p-tabpanel>
     </p-tabpanels>
 
