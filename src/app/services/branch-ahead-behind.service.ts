@@ -33,14 +33,15 @@ export class BranchAheadBehindService {
   aheadBehindMap = signal<Record<string, AheadBehind>>({});
 
   constructor() {
-    effect(() => {
+    effect((onCleanup) => {
       this.autoFetch.lastFetchedAt(); // Update every branch up / down diff count after every fetch
 
       const localTrackedBranches = this.currentRepo.branches().filter(b => b.type === BranchType.Local && b.upstream);
 
-      from(localTrackedBranches)
+      const sub = from(localTrackedBranches)
         .pipe(mergeMap(this.aheadBehindCountsForBranch))
         .subscribe(([branch, aheadBehind]) => this.aheadBehindMap.update(map => ({...map, [branch]: aheadBehind})));
+      onCleanup(() => sub.unsubscribe());
     });
   }
 
