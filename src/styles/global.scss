@@ -1,5 +1,6 @@
 html, body {
   height: 100%;
+  overflow-x: clip; // prevent body from growing when context menu overflows viewport edge
   margin: 0;
   padding: 0;
   background-color: var(--background);
