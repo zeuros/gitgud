@@ -16,9 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, OnInit, signal} from '@angular/core';
 import {Button} from 'primeng/button';
-import {Dialog} from 'primeng/dialog';
 import {InputNumber} from 'primeng/inputnumber';
 import {InputText} from 'primeng/inputtext';
 import {Select} from 'primeng/select';
@@ -26,22 +25,31 @@ import {FormsModule} from '@angular/forms';
 import {SettingsService} from '../../../services/settings.service';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
 import {ThemeService} from '../../../services/theme.service';
-import {catchError, forkJoin, of, throwError} from 'rxjs';
+import {catchError, forkJoin, of, throwError, type Observable} from 'rxjs';
 import {Tooltip} from 'primeng/tooltip';
 import {emptyStringOnFail} from '../../../utils/utils';
 import {ToastService} from '../../../services/toast.service';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {themeOptions} from '../../../models/theme.model';
+import {DialogService} from 'primeng/dynamicdialog';
+
+export const openSettingsDialog = (dialog: DialogService): Observable<void> =>
+  dialog.open(SettingsDialogComponent, {
+    header: 'Settings',
+    width: '460px',
+    modal: true,
+    dismissableMask: true,
+  })!.onClose;
 
 @Component({
   selector: 'gitgud-settings-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, Dialog, InputNumber, InputText, Select, FormsModule, Tooltip],
+  imports: [Button, InputNumber, InputText, Select, FormsModule, Tooltip],
   templateUrl: './settings-dialog.component.html',
   styleUrl: './settings-dialog.component.scss',
 })
-export class SettingsDialogComponent {
+export class SettingsDialogComponent implements OnInit {
 
   private gitApi = inject(GitApiService);
   private currentRepo = inject(CurrentRepoStore);
@@ -49,7 +57,6 @@ export class SettingsDialogComponent {
 
   protected settings = inject(SettingsService);
   protected theme = inject(ThemeService);
-  protected visible = signal(false);
   protected globalUserName = signal('');
   protected globalUserEmail = signal('');
   protected localUserName = signal('');
@@ -59,9 +66,7 @@ export class SettingsDialogComponent {
   protected gitPathDirty = computed(() => this.pendingGitPath() !== this.settings.gitBin);
   protected gitVersion = signal('');
 
-  open() {
-    this.visible.set(true);
-
+  ngOnInit() {
     this.pendingGitPath.set(this.settings.gitBin);
     this.gitApi.git(['--version']).pipe(emptyStringOnFail).subscribe(v => this.gitVersion.set(v.trim()));
     forkJoin({
@@ -72,7 +77,6 @@ export class SettingsDialogComponent {
         localEmail: this.gitApi.git(['config', '--local', 'user.email']).pipe(emptyStringOnFail),
       } : {}),
     }).subscribe(({globalName, globalEmail, localEmail, localName}) => {
-      console.log({localName, globalName});
       this.globalUserName.set(globalName.trim());
       this.globalUserEmail.set(globalEmail.trim());
       this.localUserName.set((localName ?? '').trim());

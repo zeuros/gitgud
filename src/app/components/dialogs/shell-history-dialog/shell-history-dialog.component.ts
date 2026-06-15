@@ -16,27 +16,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
-import {Dialog} from 'primeng/dialog';
+import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {Button} from 'primeng/button';
-import {PrimeTemplate} from 'primeng/api';
 import {DatePipe} from '@angular/common';
 import {GitCommandHistoryService} from '../../../services/git-command-history.service';
+import {type Observable} from 'rxjs';
+import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
+
+export const openShellHistoryDialog = (dialog: DialogService): Observable<void> =>
+  dialog.open(ShellHistoryDialogComponent, {
+    header: 'Git Command History',
+    width: '700px',
+    modal: true,
+    dismissableMask: true,
+  })!.onClose;
 
 @Component({
   selector: 'gitgud-shell-history-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Dialog, Button, PrimeTemplate, DatePipe],
+  imports: [Button, DatePipe],
   templateUrl: './shell-history-dialog.component.html',
   styleUrl: './shell-history-dialog.component.scss',
 })
 export class ShellHistoryDialogComponent {
 
   protected history = inject(GitCommandHistoryService);
-  protected visible = signal(false);
-
-  open() {
-    this.visible.set(true);
-  }
+  protected ref = inject(DynamicDialogRef);
 }

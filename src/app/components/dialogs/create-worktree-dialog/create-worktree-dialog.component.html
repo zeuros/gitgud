@@ -1,79 +1,64 @@
-<p-dialog
-        header="Create Worktree"
-        [visible]="visible()"
-        (visibleChange)="visible.set($event)"
-        [modal]="true"
-        [dismissableMask]="true"
-        [style]="{width: '520px'}"
->
-    <ng-template pTemplate="header">
-        <span class="dialog-header-content">
-            <i class="fa fa-bell mr-2"></i>Create Worktree
-        </span>
-    </ng-template>
-
-    <div class="worktree-form">
-        <div class="field">
-            <label>Reference to checkout</label>
-            <p-select
-                    [options]="branchOptions()"
-                    [ngModel]="reference()"
-                    (ngModelChange)="onReferenceSelect($event)"
-                    optionLabel="label"
-                    placeholder="Select a branch or commit"
-                    [filter]="true"
-                    filterBy="label"
-                    [showClear]="true"
-                    styleClass="w-full"
-            >
-                <ng-template pTemplate="selectedItem" let-opt>
-                    <span class="branch-option">
-                        <i [class]="opt.isRemote ? 'fa fa-cloud' : 'fa fa-code-fork'" class="option-icon"></i>
-                        {{ opt.label }}
-                    </span>
-                </ng-template>
-                <ng-template pTemplate="item" let-opt>
-                    <span class="branch-option">
-                        <i [class]="opt.isRemote ? 'fa fa-cloud' : 'fa fa-code-fork'" class="option-icon"></i>
-                        {{ opt.label }}
-                    </span>
-                </ng-template>
-            </p-select>
-        </div>
-
-        <div class="field">
-            <label>Worktree branch to create</label>
-            <input
-                    pInputText
-                    [ngModel]="newBranch()"
-                    (ngModelChange)="onNewBranchInput($event)"
-                    class="w-full"
-                    placeholder="new-branch-name"
-            />
-        </div>
-
-        <div class="field">
-            <label>Working directory</label>
-            <div class="dir-row">
-                <input
-                        pInputText
-                        [ngModel]="workDir()"
-                        (ngModelChange)="workDir.set($event)"
-                        class="flex-1"
-                        placeholder="/path/to/worktree"
-                />
-                <p-button label="Browse" severity="secondary" (onClick)="browse()"/>
-            </div>
-        </div>
+<div class="worktree-form">
+    <div class="field">
+        <label>Reference to checkout</label>
+        <p-select
+                [options]="branchOptions()"
+                [ngModel]="reference()"
+                (ngModelChange)="onReferenceSelect($event)"
+                optionLabel="label"
+                placeholder="Select a branch or commit"
+                [filter]="true"
+                filterBy="label"
+                [showClear]="true"
+                styleClass="w-full"
+        >
+            <ng-template pTemplate="selectedItem" let-opt>
+                <span class="branch-option">
+                    <i [class]="opt.isRemote ? 'fa fa-cloud' : 'fa fa-code-fork'" class="option-icon"></i>
+                    {{ opt.label }}
+                </span>
+            </ng-template>
+            <ng-template pTemplate="item" let-opt>
+                <span class="branch-option">
+                    <i [class]="opt.isRemote ? 'fa fa-cloud' : 'fa fa-code-fork'" class="option-icon"></i>
+                    {{ opt.label }}
+                </span>
+            </ng-template>
+        </p-select>
     </div>
 
-    <ng-template pTemplate="footer">
-        <p-button
-                label="Create Worktree"
-                severity="success"
-                [loading]="loading()"
-                [disabled]="!canSubmit()"
-                (onClick)="create()"
+    <div class="field">
+        <label>Worktree branch to create</label>
+        <input
+                pInputText
+                [ngModel]="newBranch()"
+                (ngModelChange)="onNewBranchInput($event)"
+                class="w-full"
+                placeholder="new-branch-name"
         />
-    </ng-template>
-</p-dialog>
+    </div>
+
+    <div class="field">
+        <label>Working directory</label>
+        <div class="dir-row">
+            <input
+                    pInputText
+                    [ngModel]="workDir()"
+                    (ngModelChange)="workDir.set($event)"
+                    class="flex-1"
+                    placeholder="/path/to/worktree"
+            />
+            <p-button label="Browse" severity="secondary" (onClick)="browse()"/>
+        </div>
+    </div>
+</div>
+
+<div class="worktree-footer">
+    <p-button
+            label="Create Worktree"
+            severity="success"
+            [loading]="loading()"
+            [disabled]="!canSubmit()"
+            (onClick)="create()"
+    />
+</div>

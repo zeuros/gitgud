@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, inject, type OnInit, signal, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, type OnInit, signal} from '@angular/core';
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {catchError, EMPTY, finalize, interval, map, of, switchMap} from 'rxjs';
 import {Button} from 'primeng/button';
@@ -30,13 +30,10 @@ import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.se
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {ToastService} from '../../services/toast.service';
 import {AutoFetchService} from '../../services/auto-fetch.service';
-import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {SettingsService} from '../../services/settings.service';
 import {short} from '../../utils/commit-utils';
 import {workingDirHasChanges} from '../../utils/utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
-import {CloneDialogComponent} from '../dialogs/clone-dialog/clone-dialog.component';
-import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 import {UndoService} from '../../services/undo.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
@@ -45,12 +42,15 @@ import {BranchAheadBehindService} from '../../services/branch-ahead-behind.servi
 import {CreateBranchService} from '../../services/create-branch.service';
 import {RebaseService} from '../../services/rebase.service';
 import {UpdateCheckService} from '../../services/update-check.service';
+import {openCloneDialog} from '../dialogs/clone-dialog/clone-dialog.component';
+import {openSettingsDialog} from '../dialogs/settings-dialog/settings-dialog.component';
+import {openShellHistoryDialog} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 
 @Component({
   selector: 'gitgud-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, CloneDialogComponent, ShellHistoryDialogComponent, SettingsDialogComponent, Menu],
+  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, Menu],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
 })
@@ -73,9 +73,6 @@ export class ToolbarComponent implements OnInit {
   private branchAheadBehind = inject(BranchAheadBehindService);
   private toast = inject(ToastService);
   private dialog = inject(DialogService);
-  private settingsDialog = viewChild.required(SettingsDialogComponent);
-  private cloneDialog = viewChild.required(CloneDialogComponent);
-  private shellHistoryDialog = viewChild.required(ShellHistoryDialogComponent);
   private now = toSignal(
     toObservable(this.autoFetch.lastFetchedAt).pipe(
       switchMap(at => at ? interval(1000).pipe(map(() => Date.now())) : EMPTY),
@@ -162,11 +159,11 @@ export class ToolbarComponent implements OnInit {
 
   // Returns false when there is no upstream or the upstream branch name differs from the local branch name.
 
-  protected openSettingsDialog = () => this.settingsDialog().open();
+  protected openSettingsDialog = () => openSettingsDialog(this.dialog).subscribe();
 
-  protected openCloneDialog = () => this.cloneDialog().open();
+  protected openCloneDialog = () => openCloneDialog(this.dialog).subscribe();
 
-  protected openShellHistoryDialog = () => this.shellHistoryDialog().open();
+  protected openShellHistoryDialog = () => openShellHistoryDialog(this.dialog).subscribe();
 
   private checkBehindThenPush = () =>
     this.branchAheadBehind.aheadBehindForHead().pipe(
@@ -216,5 +213,4 @@ export class ToolbarComponent implements OnInit {
         .then(() => this.toast.success('BTC address copied to clipboard')),
     },
   ];
-
 }

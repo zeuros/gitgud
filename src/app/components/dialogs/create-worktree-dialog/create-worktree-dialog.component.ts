@@ -19,14 +19,14 @@
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {Button} from 'primeng/button';
-import {Dialog} from 'primeng/dialog';
 import {InputText} from 'primeng/inputtext';
 import {Select} from 'primeng/select';
 import {PrimeTemplate} from 'primeng/api';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
 import {BranchType} from '../../../lib/github-desktop/model/branch';
-import {finalize} from 'rxjs';
+import {finalize, type Observable} from 'rxjs';
+import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 
 interface BranchOption {
   label: string;
@@ -34,11 +34,19 @@ interface BranchOption {
   isRemote: boolean;
 }
 
+export const openCreateWorktreeDialog = (dialog: DialogService): Observable<void> =>
+  dialog.open(CreateWorktreeDialogComponent, {
+    header: 'Create Worktree',
+    width: '520px',
+    modal: true,
+    dismissableMask: true,
+  })!.onClose;
+
 @Component({
   selector: 'gitgud-create-worktree-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, Dialog, InputText, Select, FormsModule, PrimeTemplate],
+  imports: [Button, InputText, Select, FormsModule, PrimeTemplate],
   templateUrl: './create-worktree-dialog.component.html',
   styleUrl: './create-worktree-dialog.component.scss',
 })
@@ -46,8 +54,8 @@ export class CreateWorktreeDialogComponent {
 
   private currentRepo = inject(CurrentRepoStore);
   private gitWorkflow = inject(GitWorkflowService);
+  protected ref = inject(DynamicDialogRef);
 
-  protected visible = signal(false);
   protected reference = signal<BranchOption | null>(null);
   protected newBranch = signal('');
   protected workDir = signal('');
@@ -60,13 +68,6 @@ export class CreateWorktreeDialogComponent {
       isRemote: b.type === BranchType.Remote,
     }))
   );
-
-  open() {
-    this.reference.set(null);
-    this.newBranch.set('');
-    this.workDir.set('');
-    this.visible.set(true);
-  }
 
   protected onReferenceSelect(opt: BranchOption | null) {
     this.reference.set(opt);
@@ -114,6 +115,6 @@ export class CreateWorktreeDialogComponent {
     this.loading.set(true);
     this.gitWorkflow.runAndRefresh(args, `Worktree created at ${path}`)
       .pipe(finalize(() => this.loading.set(false)))
-      .subscribe(() => this.visible.set(false));
+      .subscribe(() => this.ref.close());
   }
 }
