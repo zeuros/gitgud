@@ -67,6 +67,8 @@ export class AvatarService {
         return null;
       }
       const objectUrl = URL.createObjectURL(await resp.blob());
+      const prev = this.mailBlobsCache.get(url);
+      if (prev) URL.revokeObjectURL(prev); // guard against concurrent fetches for the same URL
       this.mailBlobsCache.set(url, objectUrl);
       return objectUrl;
     } catch {
