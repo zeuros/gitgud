@@ -23,7 +23,7 @@ import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {RefType} from '../../enums/ref-type.enum';
 import {hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
-import {CANVAS_DPR_MULTIPLIER, DRAWING_PAD_LEFT, NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
+import {DRAWING_PAD_LEFT, NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {type CanvasColors} from '../../models/theme.model';
 
 /**
@@ -43,8 +43,7 @@ export const drawLog = (
   avatarImages: Map<string, HTMLImageElement>,
   colors: CanvasColors,
   headerHeight: number,
-) => {
-  const devicePixelRatio = CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1);
+  devicePixelRatio: number) => {
 
   canvas.resetTransform();
   canvas.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);

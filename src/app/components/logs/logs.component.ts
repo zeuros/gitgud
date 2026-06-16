@@ -86,12 +86,12 @@ export class LogsComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
   protected createBranch = inject(CreateBranchService);
-  protected commitContextMenu = inject(CommitContextMenuService);
-  protected stashContextMenu = inject(StashContextMenuService);
-  protected tagContextMenu = inject(TagContextMenuService);
-  protected branchContextMenu = inject(BranchContextMenuService);
   protected logDragDrop = inject(LogDragDropService);
   protected fixup = inject(FixupService);
+  private branchContextMenu = inject(BranchContextMenuService);
+  private tagContextMenu = inject(TagContextMenuService);
+  private stashContextMenu = inject(StashContextMenuService);
+  private commitContextMenu = inject(CommitContextMenuService);
   private logBuilder = inject(LogBuilderService);
   private activeContextMenu = inject(ActiveContextMenuService);
   private theme = inject(ThemeService);
@@ -131,6 +131,7 @@ export class LogsComponent {
   private _tableHeaderHeight = signal(0);
   private _avatarImages = signal<Map<string, HTMLImageElement> | undefined>(undefined);
   private canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
+  private canvasContext = computed(() => this.canvas()?.nativeElement?.getContext('2d'));
   private logTable = viewChild<Table<DisplayRef>>('logTable');
   private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
   private logTableContainer = computed(() => this.logTableRef()?.querySelector<HTMLElement>('.p-datatable-table-container'));
@@ -187,13 +188,13 @@ export class LogsComponent {
       const stashImg = this.stashImg();
       const visibleCommitsCount = this.visibleCommitsCount();
       const logTableContainer = this.logTableContainer();
-      const canvas = this.canvas()?.nativeElement?.getContext('2d');
+      const canvas = this.canvasContext();
       const avatarImages = this._avatarImages(); // re-run when new avatars load
       const {canvas: canvasColors} = this.theme.tokens(); // re-run on theme switch
       const headerHeight = this._tableHeaderHeight();
 
       if (this._canvasResized() && canvas && displayLog.length && stashImg && avatarImages && visibleCommitsCount && visibleCommitsCount > 0 && logTableContainer) {
-        drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages, canvasColors, headerHeight);
+        drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages, canvasColors, headerHeight, this.dpr());
         untracked(() => this.restoreLastScrollPosition()); // will be called once
       }
     });

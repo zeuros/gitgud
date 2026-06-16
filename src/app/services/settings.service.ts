@@ -23,7 +23,7 @@ import { ThemeMode } from "../models/theme.model";
 @Injectable({providedIn: 'root'})
 export class SettingsService {
 
-  private _zoom = signal(parseFloat(localStorage.getItem('zoom') ?? '1'));
+  private _zoom = signal(window.tauri.zoom.getFactor());
   private _autoFetchInterval = signal(parseFloat(localStorage.getItem('auto-fetch-interval') ?? DEFAULT_AUTO_FETCH_INTERVAL));
   private _theme = signal<ThemeMode>(
     (localStorage.getItem('theme') as ThemeMode) ??
@@ -38,14 +38,9 @@ export class SettingsService {
   get theme() { return this._theme(); }
   get gitBin() { return this._gitBin(); }
 
-  constructor() {
-    window.tauri.zoom?.setFactor(this._zoom());
-  }
-
   set zoom(factor: number) {
     this._zoom.set(factor);
-    window.tauri.zoom?.setFactor(factor);
-    localStorage.setItem('zoom', String(factor));
+    window.tauri.zoom.setFactor(factor);
   }
 
   set autoFetchInterval(v: number) {
