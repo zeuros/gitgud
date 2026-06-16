@@ -197,11 +197,6 @@ export class BranchContextMenuService {
   private createTagHere = () => this.createTag.createTag(this.name());
 
   private editRemote = (remoteName: string) =>
-    this.dialog.open(EditRemoteComponent, {
-      header: `Edit remote: ${remoteName}`,
-      width: '450px',
-      modal: true,
-      dismissableMask: true,
-      data: {remoteName},
-    })?.onClose.subscribe(() => this.dialog.dialogComponentRefMap.clear());
+    this.dialog.open(EditRemoteComponent, {header: `Edit remote: ${remoteName}`, width: '450px', data: {remoteName}})!
+      .onClose.subscribe(() => this.dialog.dialogComponentRefMap.clear());
 }

@@ -43,8 +43,8 @@ import {CreateBranchService} from '../../services/create-branch.service';
 import {RebaseService} from '../../services/rebase.service';
 import {UpdateCheckService} from '../../services/update-check.service';
 import {openCloneDialog} from '../dialogs/clone-dialog/clone-dialog.component';
-import {openSettingsDialog} from '../dialogs/settings-dialog/settings-dialog.component';
-import {openShellHistoryDialog} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
+import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
+import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -159,11 +159,11 @@ export class ToolbarComponent implements OnInit {
 
   // Returns false when there is no upstream or the upstream branch name differs from the local branch name.
 
-  protected openSettingsDialog = () => openSettingsDialog(this.dialog).subscribe();
+  protected openSettingsDialog = () => this.dialog.open(SettingsDialogComponent, {header: 'Settings', width: '460px'});
 
-  protected openCloneDialog = () => openCloneDialog(this.dialog).subscribe();
+  protected openCloneDialog = () => openCloneDialog(this.dialog);
 
-  protected openShellHistoryDialog = () => openShellHistoryDialog(this.dialog).subscribe();
+  protected openShellHistoryDialog = () => this.dialog.open(ShellHistoryDialogComponent, {header: 'Git Command History', width: '700px'});
 
   private checkBehindThenPush = () =>
     this.branchAheadBehind.aheadBehindForHead().pipe(

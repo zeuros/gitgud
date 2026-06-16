@@ -25,16 +25,10 @@ import {Tooltip} from 'primeng/tooltip';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRepositoryService} from '../../../services/git-repository.service';
 import {ToastService} from '../../../services/toast.service';
-import {finalize, type Observable, switchMap} from 'rxjs';
+import {finalize, switchMap} from 'rxjs';
 import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 
-export const openCloneDialog = (dialog: DialogService): Observable<void> =>
-  dialog.open(CloneDialogComponent, {
-    header: 'Clone Repository',
-    width: '480px',
-    modal: true,
-    dismissableMask: true,
-  })!.onClose;
+export const openCloneDialog = (dialog: DialogService) => dialog.open(CloneDialogComponent, {header: 'Clone Repository', width: '480px'});
 
 @Component({
   selector: 'gitgud-clone-dialog',

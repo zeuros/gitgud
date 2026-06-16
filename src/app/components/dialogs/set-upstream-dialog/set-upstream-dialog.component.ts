@@ -31,13 +31,7 @@ export interface SetUpstreamResult {
 }
 
 export const openSetUpstreamDialog = (dialog: DialogService, branchName: string): Observable<SetUpstreamResult | null> =>
-  dialog.open(SetUpstreamDialogComponent, {
-    header: `Set upstream for "${branchName}"`,
-    width: '500px',
-    modal: true,
-    dismissableMask: true,
-    data: {branchName},
-  })!.onClose
+  dialog.open(SetUpstreamDialogComponent, {header: `Set upstream for "${branchName}"`, width: '500px', data: {branchName}})!.onClose
 
 @Component({
   selector: 'gitgud-set-upstream-dialog',

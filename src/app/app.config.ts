@@ -26,6 +26,7 @@ import {DialogService} from 'primeng/dynamicdialog';
 import {providePrimeNG} from 'primeng/config';
 import {GlobalErrorHandler} from './utils/error-management.utils';
 import {primeNGConfig} from './theme/gitgud-preset';
+import {GitGudDialogService} from './services/gitgud-dialog.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -37,7 +38,7 @@ export const appConfig: ApplicationConfig = {
     provideTranslateService({fallbackLang: 'en'}),
     MessageService,
     ConfirmationService,
-    DialogService,
+    {provide: DialogService, useClass: GitGudDialogService},
     provideHttpClient(),
   ],
 };

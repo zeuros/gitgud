@@ -25,22 +25,14 @@ import {PrimeTemplate} from 'primeng/api';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
 import {BranchType} from '../../../lib/github-desktop/model/branch';
-import {finalize, type Observable} from 'rxjs';
-import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
+import {finalize} from 'rxjs';
+import {DynamicDialogRef} from 'primeng/dynamicdialog';
 
 interface BranchOption {
   label: string;
   value: string;
   isRemote: boolean;
 }
-
-export const openCreateWorktreeDialog = (dialog: DialogService): Observable<void> =>
-  dialog.open(CreateWorktreeDialogComponent, {
-    header: 'Create Worktree',
-    width: '520px',
-    modal: true,
-    dismissableMask: true,
-  })!.onClose;
 
 @Component({
   selector: 'gitgud-create-worktree-dialog',
