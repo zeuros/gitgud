@@ -20,7 +20,6 @@ import {ChangeDetectionStrategy, Component, computed, inject, OnInit, signal} fr
 import {Button} from 'primeng/button';
 import {InputNumber} from 'primeng/inputnumber';
 import {InputText} from 'primeng/inputtext';
-import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import {SettingsService} from '../../../services/settings.service';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
@@ -30,13 +29,13 @@ import {Tooltip} from 'primeng/tooltip';
 import {emptyStringOnFail} from '../../../utils/utils';
 import {ToastService} from '../../../services/toast.service';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
-import {themeOptions} from '../../../models/theme.model';
+import {THEMES} from '../../../models/theme.model';
 
 @Component({
   selector: 'gitgud-settings-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, InputNumber, InputText, Select, FormsModule, Tooltip],
+  imports: [Button, InputNumber, InputText, FormsModule, Tooltip],
   templateUrl: './settings-dialog.component.html',
   styleUrl: './settings-dialog.component.scss',
 })
@@ -133,6 +132,6 @@ export class SettingsDialogComponent implements OnInit {
     });
   }
 
-  protected themeOptions = themeOptions;
+  protected themes = THEMES;
 
 }

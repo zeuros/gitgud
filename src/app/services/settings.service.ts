@@ -25,7 +25,11 @@ export class SettingsService {
 
   private _zoom = signal(parseFloat(localStorage.getItem('zoom') ?? '1'));
   private _autoFetchInterval = signal(parseFloat(localStorage.getItem('auto-fetch-interval') ?? DEFAULT_AUTO_FETCH_INTERVAL));
-  private _theme = signal<ThemeMode>((localStorage.getItem('theme') as ThemeMode) ?? 'system');
+  private _theme = signal<ThemeMode>(
+    (localStorage.getItem('theme') as ThemeMode) ??
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+  );
+  readonly themeSignal = this._theme.asReadonly();
   private _gitBin = signal(localStorage.getItem('git-binary-path') ?? 'git');
 
   get zoom() { return this._zoom(); }

@@ -84,7 +84,7 @@
   --small-icon-size: 0.85em;
 }
 
-// ── Dark theme overrides ──────────────────────────────────────────────────────
+// ── Dark base — all dark themes carry the `dark` class ────────────────────────
 html.dark {
   --background: #1c1e23;
 
@@ -134,4 +134,117 @@ html.dark {
 
   --p-content-border-color: rgba(80, 65, 95, 0.45);
   --p-tabs-tablist-background: var(--app-chrome-bg);
+}
+
+// ── Forest overrides ──────────────────────────────────────────────────────────
+html.dark.forest {
+  --background: #1b2520;
+  --app-chrome-bg: rgba(15, 22, 18, 0.96);
+
+  --branch-current-bg: rgba(100, 190, 100, 0.38);
+  --branch-current-color: rgb(210 255 210 / 0.93);
+  --row-selected-background-color: rgba(100, 190, 100, 0.20);
+  --row-hover-bg: rgba(100, 190, 100, 0.10);
+
+  --chip-bg-color: rgba(22, 50, 32, 0.92);
+  --chip-border-color: rgba(100, 190, 100, 0.62);
+  --graph-line-color: rgba(22, 50, 32, 0.9);
+
+  --scrollbar-track: #1a2820;
+  --scrollbar-thumb: #3d6e46;
+  --scrollbar-thumb-hover: #78c97e;
+
+  --p-primary-color: #78c97e;
+  --p-primary-contrast-color: #051008;
+  --p-primary-hover-color: #5eb564;
+  --p-primary-active-color: #4a9e50;
+  --p-highlight-background: rgba(100, 190, 100, 0.18);
+  --p-highlight-focus-background: rgba(100, 190, 100, 0.30);
+  --p-content-border-color: rgba(65, 125, 75, 0.45);
+}
+
+// ── Submarine overrides ───────────────────────────────────────────────────────
+html.dark.submarine {
+  --background: #0e1c2a;
+  --app-chrome-bg: rgba(9, 16, 26, 0.98);
+
+  --branch-current-bg: rgba(40, 182, 210, 0.38);
+  --branch-current-color: rgb(195 245 255 / 0.93);
+  --row-selected-background-color: rgba(40, 182, 210, 0.20);
+  --row-hover-bg: rgba(40, 182, 210, 0.10);
+
+  --chip-bg-color: rgba(12, 32, 55, 0.92);
+  --chip-border-color: rgba(40, 182, 210, 0.65);
+  --graph-line-color: rgba(12, 32, 55, 0.9);
+
+  --scrollbar-track: #0c1820;
+  --scrollbar-thumb: #1e5a7a;
+  --scrollbar-thumb-hover: #29b6d8;
+
+  --p-primary-color: #29b6d8;
+  --p-primary-contrast-color: #020d16;
+  --p-primary-hover-color: #1da0c0;
+  --p-primary-active-color: #1288a5;
+  --p-highlight-background: rgba(40, 182, 210, 0.18);
+  --p-highlight-focus-background: rgba(40, 182, 210, 0.30);
+  --p-content-border-color: rgba(28, 95, 135, 0.50);
+}
+
+// ── Darcula overrides ─────────────────────────────────────────────────────────
+html.dark.darcula {
+  --background: #2b2b2b;
+  --app-chrome-bg: rgba(34, 34, 34, 0.98);
+
+  --branch-current-bg: rgba(200, 120, 50, 0.36);
+  --branch-current-color: rgb(255 235 180 / 0.93);
+  --row-selected-background-color: rgba(200, 120, 50, 0.22);
+  --row-hover-bg: rgba(200, 120, 50, 0.12);
+
+  --chip-bg-color: rgba(62, 48, 28, 0.92);
+  --chip-border-color: rgba(200, 120, 50, 0.65);
+  --graph-line-color: rgba(62, 48, 28, 0.9);
+
+  --scrollbar-track: #2e2e2e;
+  --scrollbar-thumb: #6e5232;
+  --scrollbar-thumb-hover: #ffc66d;
+
+  --p-primary-color: #ffc66d;
+  --p-primary-contrast-color: #180e00;
+  --p-primary-hover-color: #e6ad55;
+  --p-primary-active-color: #cc9440;
+  --p-highlight-background: rgba(200, 120, 50, 0.20);
+  --p-highlight-focus-background: rgba(200, 120, 50, 0.32);
+  --p-content-border-color: rgba(100, 75, 38, 0.52);
+}
+
+// ── One Rainbow overrides — chaotic fun edition ───────────────────────────────
+html.dark.one-rainbow {
+  --background: #07001a;
+  --app-chrome-bg: rgba(5, 0, 14, 0.99);
+
+  --branch-current-bg: rgba(255, 0, 200, 0.30);
+  --branch-current-color: rgb(255 210 255 / 0.98);
+  --row-selected-background-color: rgba(0, 255, 120, 0.16);
+  --row-hover-bg: rgba(0, 210, 255, 0.11);
+  --row-warning-background-color: rgba(255, 210, 0, 0.20);
+  --row-warning-selected-background-color: rgba(255, 190, 0, 0.38);
+  --warning-text-color: #ffe040;
+  --row-dimmed-color: rgba(255, 255, 255, 0.15);
+
+  --chip-bg-color: rgba(90, 0, 68, 0.90);
+  --chip-border-color: rgba(255, 220, 0, 0.85);
+  --chip-shadow: 0 0 12px rgba(255, 0, 200, 0.5);
+  --graph-line-color: rgba(90, 0, 68, 0.9);
+
+  --scrollbar-track: #0d0024;
+  --scrollbar-thumb: #cc0066;
+  --scrollbar-thumb-hover: #ff00aa;
+
+  --p-primary-color: #ff00cc;
+  --p-primary-contrast-color: #fff0ff;
+  --p-primary-hover-color: #dd00aa;
+  --p-primary-active-color: #bb0088;
+  --p-highlight-background: rgba(255, 0, 200, 0.20);
+  --p-highlight-focus-background: rgba(255, 0, 200, 0.36);
+  --p-content-border-color: rgba(0, 210, 255, 0.55);
 }

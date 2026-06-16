@@ -18,7 +18,9 @@
 
 import {effect, inject, Injectable, signal} from '@angular/core';
 import {SettingsService} from './settings.service';
-import {DARK_TOKENS, LIGHT_TOKENS, ThemeMode} from '../models/theme.model';
+import {DARK_TOKENS, LIGHT_TOKENS, THEME_TOKENS, ThemeMode} from '../models/theme.model';
+
+const DARK_CLASSES: ReadonlyArray<ThemeMode> = ['dark', 'forest', 'submarine', 'darcula', 'one-rainbow'];
 
 @Injectable({providedIn: 'root'})
 export class ThemeService {
@@ -26,21 +28,23 @@ export class ThemeService {
   isDark = signal(true);
   tokens = signal(DARK_TOKENS);
 
-  private systemDarkMq = window.matchMedia('(prefers-color-scheme: dark)');
   private settings = inject(SettingsService);
 
   constructor() {
     effect(() => this.applyTheme(this.settings.theme));
-
-    this.systemDarkMq.addEventListener('change', () => {
-      if (this.settings.theme === 'system') this.applyTheme('system');
-    });
   }
 
   private applyTheme(mode: ThemeMode) {
-    const isDark = mode === 'dark' || (mode === 'system' && this.systemDarkMq.matches);
-    document.querySelector('html')?.classList?.toggle('dark', isDark);
+    const html = document.querySelector('html')!;
+
+    DARK_CLASSES.forEach(c => html.classList.remove(c));
+    if (mode !== 'light') {
+      html.classList.add('dark');
+      if (mode !== 'dark') html.classList.add(mode);
+    }
+
+    const isDark = mode !== 'light';
     this.isDark.set(isDark);
-    this.tokens.set(isDark ? DARK_TOKENS : LIGHT_TOKENS);
+    this.tokens.set(THEME_TOKENS[mode] ?? (isDark ? DARK_TOKENS : LIGHT_TOKENS));
   }
 }
