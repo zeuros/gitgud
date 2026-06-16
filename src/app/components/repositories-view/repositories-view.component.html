@@ -21,7 +21,7 @@
         }
 
         @if (gitRepositoryStore.newTabOpen()) {
-            <p-tab value="new-tab">
+            <p-tab value="new-tab" (auxclick)="$event.button === 1 && gitRepositoryStore.closeNewTab()">
                 New tab
                 <p-button
                         icon="pi pi-times"
