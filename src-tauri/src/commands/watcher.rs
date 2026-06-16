@@ -55,7 +55,7 @@ pub fn watch_paths(
 
     let mut debouncer = new_debouncer(
         Duration::from_millis(600),
-        None,
+        Some(Duration::from_millis(500)),
         move |res: DebounceEventResult| {
             let events = match res {
                 Ok(evs) => evs,
