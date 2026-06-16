@@ -9,6 +9,7 @@
 import {invoke} from '@tauri-apps/api/core';
 import {listen} from '@tauri-apps/api/event';
 import {getCurrentWindow} from '@tauri-apps/api/window';
+import {getCurrentWebview} from '@tauri-apps/api/webview';
 import {getVersion} from '@tauri-apps/api/app';
 import {open as openDialog} from '@tauri-apps/plugin-dialog';
 import {openUrl} from '@tauri-apps/plugin-opener';
@@ -132,14 +133,10 @@ async function buildBridge() {
 
     zoom: {
       setFactor: (factor: number) => {
-        // Persist the zoom factor; the settings service reads it back via getFactor
-        localStorage.setItem('zoomFactor', String(factor));
-        // Apply via CSS — Tauri doesn't expose a direct zoom/scale command
-        document.body.style.setProperty('zoom', String(factor));
+        localStorage.setItem('zoom', String(factor));
+        return getCurrentWebview().setZoom(factor);
       },
-      getFactor: (): number => {
-        return parseFloat(localStorage.getItem('zoomFactor') ?? '1');
-      },
+      getFactor: () => parseFloat(localStorage.getItem('zoom') ?? '1'),
     },
 
     showItemInFolder: (fullPath: string) => invoke('show_item_in_folder', {path: fullPath}).catch(console.error),

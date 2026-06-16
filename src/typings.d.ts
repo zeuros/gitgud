@@ -62,9 +62,9 @@ interface TauriApi {
   execFile: (cmd: string, args: string[], options: ExecOptions) => Promise<{stdout: string; stderr: string}>;
   spawnSync: (cmd: string, args: string[], options: SpawnOptions & {input?: string}) => Promise<SpawnSyncResult>;
   spawn: (cmd: string, args: string[], options: SpawnOptions) => Promise<string>;
-  zoom?: {
+  zoom: {
     setFactor: (factor: number) => void | Promise<void>;
-    getFactor: () => number | Promise<number>;
+    getFactor: () => number;
   };
   showItemInFolder: (fullPath: string) => void;
   openExternal: (url: string) => Promise<void>;
