@@ -120,3 +120,7 @@
   background: var(--branch-current-bg);
   color: var(--branch-current-color);
 }
+
+::ng-deep .checkout-icon {
+  color: var(--branch-current-color);
+}
