@@ -4,13 +4,27 @@
 
     <div>
         <label>Theme</label>
-        <p-select
-                [options]="themeOptions"
-                [(ngModel)]="settings.theme"
-                optionLabel="label"
-                optionValue="value"
-                class="settings-select"
-        />
+        <div class="theme-grid">
+            @for (t of themes; track t.id) {
+                <button
+                        class="theme-card"
+                        type="button"
+                        [attr.data-theme]="t.id"
+                        [class.selected]="settings.themeSignal() === t.id"
+                        (click)="settings.theme = t.id"
+                >
+                    <div class="theme-preview">
+                        <div class="preview-panel"></div>
+                        <div class="preview-content">
+                            <div class="preview-line"></div>
+                            <div class="preview-line accent"></div>
+                            <div class="preview-line short"></div>
+                        </div>
+                    </div>
+                    <span class="theme-label">{{ t.label }}</span>
+                </button>
+            }
+        </div>
     </div>
 
     <div>
