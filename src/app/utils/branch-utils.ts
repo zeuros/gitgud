@@ -40,7 +40,7 @@ export const toBranchTree = (branches: Branch[], branchNameTransform = (n: strin
       const node: TreeNode<Branch> = isLeaf
         ? {
           key,
-          icon: 'fa fa-code-fork',
+          icon: branch.isHeadPointed ? 'fa fa-check checkout-icon' : 'fa fa-code-fork',
           label: key.split('/').pop(),
           data: branch,
           leaf: true,
