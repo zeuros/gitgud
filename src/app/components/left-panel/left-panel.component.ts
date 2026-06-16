@@ -40,9 +40,9 @@ import {BranchService} from '../../services/branch.service';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {WorktreeContextMenuService} from '../../services/worktree-context-menu.service';
 import {type GitWorktree} from '../../models/git-worktree';
-import {openCreateWorktreeDialog} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {DialogService} from 'primeng/dynamicdialog';
+import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';
 
 
 @Component({
@@ -128,7 +128,7 @@ export class LeftPanelComponent {
     this.activeContextMenu.show(this.worktreeContextMenu.worktreeContextMenu(), event);
   };
 
-  protected addWorktree = () => openCreateWorktreeDialog(this.dialog).subscribe();
+  protected addWorktree = () => this.dialog.open(CreateWorktreeDialogComponent, {header: 'Create Worktree', width: '520px'});
 
   protected openWorktreeInNewTab = (wt: GitWorktree) => {
     if (!wt.isMain) this.gitRepositoryService.openRepository(wt.path).subscribe();

@@ -32,8 +32,6 @@ export const openBehindRemoteDialog = (
   dialog.open(BehindRemoteDialogComponent, {
     header: diverged ? 'Branches have diverged' : 'Branch is behind remote',
     width: '600px',
-    modal: true,
-    dismissableMask: true,
     data: {localRef, remoteRef, diverged},
   })!.onClose;
 

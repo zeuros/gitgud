@@ -20,16 +20,7 @@ import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {Button} from 'primeng/button';
 import {DatePipe} from '@angular/common';
 import {GitCommandHistoryService} from '../../../services/git-command-history.service';
-import {type Observable} from 'rxjs';
-import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
-
-export const openShellHistoryDialog = (dialog: DialogService): Observable<void> =>
-  dialog.open(ShellHistoryDialogComponent, {
-    header: 'Git Command History',
-    width: '700px',
-    modal: true,
-    dismissableMask: true,
-  })!.onClose;
+import {DynamicDialogRef} from 'primeng/dynamicdialog';
 
 @Component({
   selector: 'gitgud-shell-history-dialog',

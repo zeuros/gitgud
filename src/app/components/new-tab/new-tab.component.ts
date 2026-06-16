@@ -38,7 +38,7 @@ export class NewTabComponent implements OnInit {
   protected gitRepositoryStore = inject(GitRepositoryStore);
   private dialog = inject(DialogService);
   protected lastFolderName = lastFolderName;
-  protected openClone = () => openCloneDialog(this.dialog).subscribe();
+  protected openClone = () => openCloneDialog(this.dialog);
 
   ngOnInit() {
     const ids = this.gitRepositoryStore.recentIds();

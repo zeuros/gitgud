@@ -29,10 +29,8 @@ export class BranchService {
       this.dialog.open(DivergedBranchDialogComponent, {
         header: 'Branches have diverged',
         width: '480px',
-        modal: true,
-        dismissableMask: true,
         data: {localBranch: branchName, remoteBranch: branch.name},
-      })?.onClose.pipe(
+      })!.onClose.pipe(
         switchMap((action: DivergedBranchAction) => {
           if (action === 'reset') {
             return this.stash.stashAndRun(

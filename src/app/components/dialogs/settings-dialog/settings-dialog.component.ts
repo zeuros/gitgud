@@ -25,21 +25,12 @@ import {FormsModule} from '@angular/forms';
 import {SettingsService} from '../../../services/settings.service';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
 import {ThemeService} from '../../../services/theme.service';
-import {catchError, forkJoin, of, throwError, type Observable} from 'rxjs';
+import {catchError, forkJoin, of, throwError} from 'rxjs';
 import {Tooltip} from 'primeng/tooltip';
 import {emptyStringOnFail} from '../../../utils/utils';
 import {ToastService} from '../../../services/toast.service';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {themeOptions} from '../../../models/theme.model';
-import {DialogService} from 'primeng/dynamicdialog';
-
-export const openSettingsDialog = (dialog: DialogService): Observable<void> =>
-  dialog.open(SettingsDialogComponent, {
-    header: 'Settings',
-    width: '460px',
-    modal: true,
-    dismissableMask: true,
-  })!.onClose;
 
 @Component({
   selector: 'gitgud-settings-dialog',
