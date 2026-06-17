@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE26: 'true'
 
 jobs:
   build:
@@ -38,7 +38,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 26
           cache: npm
 
       - uses: dtolnay/rust-toolchain@stable
@@ -61,7 +61,7 @@ jobs:
             rpm \
             xdg-utils
 
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
 
       - run: npm run build:angular
 

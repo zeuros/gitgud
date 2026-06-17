@@ -20,7 +20,7 @@ permissions:
 
 env:
   APP_ID: io.github.zeuros.gitgud
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE26: 'true'
 
 jobs:
   build:
@@ -35,7 +35,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 26
           cache: npm
 
       - uses: dtolnay/rust-toolchain@stable
@@ -53,7 +53,7 @@ jobs:
           echo "version=${TAG#v}" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -200,7 +200,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 26
           cache: npm
 
       - uses: dtolnay/rust-toolchain@stable
@@ -218,7 +218,7 @@ jobs:
           echo "version=${TAG#v}" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Install Linux build dependencies
         run: |
