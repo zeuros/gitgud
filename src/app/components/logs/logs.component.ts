@@ -58,8 +58,6 @@ import {LogBranchChip} from './chips/log-branch-chip/log-branch-chip.component';
 import {LogTagChip} from './chips/log-tag-chip/log-tag-chip.component';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
-import {type ScrollerOptions} from 'primeng/api';
-import {ScrollerScrollEvent} from 'primeng/scroller';
 
 @Component({
   selector: 'gitgud-logs',
@@ -135,17 +133,6 @@ export class LogsComponent {
   private logTable = viewChild<Table<DisplayRef>>('logTable');
   private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
   private logTableContainer = computed(() => this.logTableRef()?.querySelector<HTMLElement>('.p-datatable-table-container'));
-
-  protected readonly virtualScrollOptions: ScrollerOptions = {
-    autoSize: false,
-    onScroll: (sse: ScrollerScrollEvent) => {
-      const {scrollTop, scrollLeft} = sse.originalEvent!.target as HTMLElement;
-      this.activeContextMenu.hide();
-      this.firstCommitOffsetPx.set(scrollTop % ROW_HEIGHT);
-      this._tableScrollLeft.set(scrollLeft);
-      this.currentRepo.update({startCommit: Math.floor(scrollTop / ROW_HEIGHT)});
-    },
-  };
 
   constructor() {
 
@@ -232,6 +219,21 @@ export class LogsComponent {
       onCleanup(() => ro.disconnect());
     });
 
+    // Native scroll listener — replaces virtualScrollOptions.onScroll
+    effect((onCleanup) => {
+      const logTable = this.logTableContainer();
+      if (!logTable) return;
+      const onScroll = ({target}: Event) => {
+        const {scrollTop, scrollLeft} = target as HTMLElement;
+        this.activeContextMenu.hide();
+        this.firstCommitOffsetPx.set(scrollTop % ROW_HEIGHT);
+        this._tableScrollLeft.set(scrollLeft);
+        this.currentRepo.update({startCommit: Math.floor(scrollTop / ROW_HEIGHT)});
+      };
+      logTable.addEventListener('scroll', onScroll, {passive: true});
+      onCleanup(() => logTable.removeEventListener('scroll', onScroll));
+    });
+
     afterNextRender(() => this._layoutReady.set(true));
     this.watchDpr();
   }
@@ -275,7 +277,7 @@ export class LogsComponent {
     const firstMatchIdx = computedDisplayLog.findIndex(c => !c.highlight);
     if (firstMatchIdx > 0) {
       this.currentRepo.update({startCommit: firstMatchIdx});
-      this.logTable()?.scroller?.scrollTo({top: firstMatchIdx * ROW_HEIGHT});
+      this.logTableContainer()?.scrollTo({top: firstMatchIdx * ROW_HEIGHT});
     }
   };
 
@@ -305,7 +307,7 @@ export class LogsComponent {
   };
 
   // Called after canvas is available (runs once) — restores last scroll position
-  private restoreLastScrollPosition = once(() => this.logTable()?.scroller?.scrollTo({top: this.currentRepo.startCommit() * ROW_HEIGHT}));
+  private restoreLastScrollPosition = once(() => this.logTableContainer()?.scrollTo({top: this.currentRepo.startCommit() * ROW_HEIGHT}));
 
   // Scroll view to display the selected commit
   private scrollToCommit = (sha: string, startCommit: number, endCommit: number) => {
@@ -314,7 +316,7 @@ export class LogsComponent {
     if (!this.isOnView(indexCommitToSelect, startCommit, endCommit)) {
       const scrollToThisCommit = Math.max(Math.ceil(indexCommitToSelect - this.visibleCommitsCount()! / 2), 0);
       this.currentRepo.update({startCommit: scrollToThisCommit});
-      this.logTable()?.scroller?.scrollTo({top: scrollToThisCommit * ROW_HEIGHT});
+      this.logTableContainer()?.scrollTo({top: scrollToThisCommit * ROW_HEIGHT});
     }
   };
 
