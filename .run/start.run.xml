@@ -6,7 +6,10 @@
       <script value="start" />
     </scripts>
     <node-interpreter value="project" />
-    <envs />
+    <envs>
+      <env name="GDK_BACKEND" value="x11" />
+      <env name="WEBKIT_DISABLE_DMABUF_RENDERER" value="1" />
+    </envs>
     <method v="2" />
   </configuration>
 </component>
