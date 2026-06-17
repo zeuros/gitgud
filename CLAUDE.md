@@ -77,10 +77,7 @@ Two Angular Signal stores:
 
 ### Linux / WebKitGTK notes
 
-`lib.rs` sets two env vars on Linux before building the Tauri app:
-
-- `GDK_BACKEND=x11` — forces XWayland; WebKitGTK's native Wayland backend is broken on many distros.
-- `WEBKIT_DISABLE_DMABUF_RENDERER=1` — disables WebKit's DMA-BUF compositing layer, which fails on NVIDIA proprietary drivers under XWayland. Side effect: GPU→CPU readback for every composited frame — keep CSS animations paused at idle (use `:hover` or explicit triggers to play them).
+No `GDK_BACKEND` or `WEBKIT_DISABLE_DMABUF_RENDERER` overrides are set — the app runs with whatever backend WebKitGTK negotiates at runtime. If rendering issues appear on specific drivers/compositors, these can be set via environment variable before launch.
 
 ## Known issues / active TODOs
 

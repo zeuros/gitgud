@@ -35,17 +35,6 @@ fn patch_path() {
 pub fn run() {
     patch_path();
 
-    // Force XWayland — WebKitGTK's native Wayland backend is broken on many distros.
-    // GDK_BACKEND=x11 makes GTK bypass Wayland entirely, so the compositor error
-    // (Error 71) never occurs.
-    // WEBKIT_DISABLE_DMABUF_RENDERER=1 stops WebKit's own DMA-BUF/GBM compositing layer,
-    // which fails on NVIDIA proprietary drivers even under XWayland (GBM buffer Invalid argument).
-    #[cfg(target_os = "linux")]
-    {
-        std::env::set_var("GDK_BACKEND", "x11");
-        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-    }
-
     tauri::Builder::default()
         .manage(shell_pool::ShellPoolManager::new())
         .plugin(tauri_plugin_prevent_default::with_flags(tauri_plugin_prevent_default::Flags::CONTEXT_MENU))
