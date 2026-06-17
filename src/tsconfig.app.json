@@ -3,7 +3,6 @@
   "compilerOptions": {
     "moduleResolution": "bundler",
     "outDir": "../out-tsc/app",
-    "baseUrl": "",
     "types": ["node"]
   },
   "include": [

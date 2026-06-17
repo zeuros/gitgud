@@ -25,20 +25,17 @@
       "prefix": "gitgud",
       "architect": {
         "build": {
-          "builder": "@angular-builders/custom-webpack:browser",
+          "builder": "@angular/build:application",
           "options": {
-            "outputPath": "dist/gitgud",
-            "index": "src/index.html",
-            "main": "src/main.ts",
-            "tsConfig": "src/tsconfig.app.json",
-            "polyfills": "src/polyfills.ts",
-            "inlineStyleLanguage": "scss",
-            "customWebpackConfig": {
-              "path": "./webpack.config.cjs",
-              "mergeStrategies": {
-                "module.rules": "prepend"
-              }
+            "outputPath": {
+              "base": "dist/gitgud",
+              "browser": ""
             },
+            "index": "src/index.html",
+            "browser": "src/main.ts",
+            "tsConfig": "src/tsconfig.app.json",
+            "polyfills": ["src/polyfills.ts"],
+            "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
               "src/assets",
@@ -55,6 +52,9 @@
               "identicon.js",
               "node-interval-tree"
             ],
+            "loader": {
+              ".ttf": "file"
+            },
             "scripts": []
           },
           "configurations": {
@@ -63,25 +63,19 @@
               "outputHashing": "none",
               "sourceMap": true,
               "namedChunks": false,
-              "aot": true,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": false
+              "extractLicenses": true
             },
             "production": {
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
-              "aot": true,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true
+              "extractLicenses": true
             }
           }
         },
         "serve": {
-          "builder": "@angular-builders/custom-webpack:dev-server",
+          "builder": "@angular/build:dev-server",
           "options": {
             "buildTarget": "gitgud:build"
           },
@@ -95,7 +89,7 @@
           }
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
             "buildTarget": "gitgud:build"
           }
