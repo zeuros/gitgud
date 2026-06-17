@@ -79,23 +79,26 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
   private editorOptions: IDiffEditorOptions = {
     readOnly: true,
-    automaticLayout: true,
+    automaticLayout: true,        // polls container size every ~100 ms; acceptable for a single editor
     ignoreTrimWhitespace: false,
     renderWhitespace: 'all',
     renderControlCharacters: true,
     unusualLineTerminators: 'off',
     diffAlgorithm: 'advanced',
     useInlineViewWhenSpaceIsLimited: true,
-    cursorBlinking: 'smooth',
-    cursorSmoothCaretAnimation: 'on',
+    cursorBlinking: 'phase',      // 'smooth' drives continuous CSS animation; 'phase' is simpler
+    cursorSmoothCaretAnimation: 'off',
     definitionLinkOpensInPeek: false,
     inlineSuggest: {enabled: false},
-    smoothScrolling: true,
+    smoothScrolling: false,       // eliminates multi-frame scroll deceleration paint
     snippetSuggestions: 'none',
     inlayHints: {enabled: 'off'},
     parameterHints: {enabled: false},
     hover: {enabled: false},
-    renderLineHighlight: 'all',
+    renderLineHighlight: 'gutter', // 'all' repaints the full-width highlight line on cursor move
+    folding: false,               // fold-range computation scans visible lines on every model change
+    links: false,                 // URL tokenization runs over every visible line continuously
+    fontLigatures: false,         // ligature shaping adds per-character GPU cost
   };
   private lastRevealedPath: string | undefined;
 
