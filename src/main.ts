@@ -24,6 +24,24 @@ import {editor} from 'monaco-editor';
 import {config} from 'rxjs';
 import {installTauriBridge} from './app/api/tauri-bridge';
 
+(window as any).MonacoEnvironment = {
+  getWorker(_: string, label: string): Worker {
+    if (label === 'json') {
+      return new Worker(new URL('./monaco-workers/json.worker', import.meta.url), {type: 'module'});
+    }
+    if (label === 'css' || label === 'scss' || label === 'less') {
+      return new Worker(new URL('./monaco-workers/css.worker', import.meta.url), {type: 'module'});
+    }
+    if (label === 'html' || label === 'handlebars' || label === 'razor') {
+      return new Worker(new URL('./monaco-workers/html.worker', import.meta.url), {type: 'module'});
+    }
+    if (label === 'typescript' || label === 'javascript') {
+      return new Worker(new URL('./monaco-workers/ts.worker', import.meta.url), {type: 'module'});
+    }
+    return new Worker(new URL('./monaco-workers/editor.worker', import.meta.url), {type: 'module'});
+  }
+};
+
 editor.setTheme('vs-dark');
 
 document.addEventListener('keydown', e => {
