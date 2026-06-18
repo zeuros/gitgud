@@ -23,14 +23,15 @@ import {CdkDropList} from '@angular/cdk/drag-drop';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import {type TreeNode} from 'primeng/api';
 import {Branch} from '../../lib/github-desktop/model/branch';
-import {findNode, local, remote, toBranchTree} from '../../utils/branch-utils';
+import {local, remote, toBranchTree} from '../../utils/branch-utils';
+import {findNode} from '../../utils/tree-utils';
 import {Commit} from '../../lib/github-desktop/model/commit';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {TableModule} from 'primeng/table';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
 import {Splitter} from 'primeng/splitter';
-import {LocalAndDistantTagWithName} from '../../utils/tag-utils';
+import {LocalAndDistantTagWithName, toTagTree} from '../../utils/tag-utils';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
 import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
@@ -66,6 +67,12 @@ export class LeftPanelComponent {
   protected currentRepo = inject(CurrentRepoStore);
   protected tagContextMenu = inject(TagContextMenuService);
   protected stashContextMenu = inject(StashContextMenuService);
+  protected tagTree = computed(() => toTagTree(this.currentRepo.allTagsByName()));
+  protected selectedTagNode = computed(() => {
+    const sha = this.currentRepo.selectedCommitSha();
+    if (!sha) return null;
+    return findNode(this.tagTree(), t => t.sha === sha);
+  });
   protected localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
   protected remoteBranches = computed(() =>
     toBranchTree(this.currentRepo.branches().filter(remote) ?? [])
@@ -73,7 +80,7 @@ export class LeftPanelComponent {
   protected selectedBranchNode = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
     if (!sha) return null;
-    return findNode([...this.localBranches(), ...this.remoteBranches()], sha);
+    return findNode([...this.localBranches(), ...this.remoteBranches()], b => b.tip.sha === sha);
   });
   protected branchContextMenu = inject(BranchContextMenuService);
   protected branchDragDrop = inject(BranchDragDropService);
@@ -103,10 +110,10 @@ export class LeftPanelComponent {
     this.activeContextMenu.show(this.stashContextMenu.stashContextMenu(), event);
   };
 
-  protected openTagContextMenu = (tag: LocalAndDistantTagWithName, event: MouseEvent) => {
-    event.preventDefault();
+  protected prepareTagContextMenu = (tag?: LocalAndDistantTagWithName) => {
+    if (!tag) return;
     this.tagContextMenu.selectedTag.set(tag);
-    this.activeContextMenu.show(this.tagContextMenu.tagContextMenu(), event);
+    this.activeContextMenu.contextMenu.set(this.tagContextMenu.tagContextMenu());
   };
 
   protected checkoutBranch = (branch?: Branch) => {
@@ -137,6 +144,7 @@ export class LeftPanelComponent {
   protected isCurrentWorktree = ({path}: GitWorktree) => path === this.currentRepo.cwd();
 
   protected $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
+  protected $tagNode = (node: TreeNode<LocalAndDistantTagWithName>) => node;
   protected $stash = (stash: Commit) => stash;
   protected $localAndDistantTagWithName = (t: LocalAndDistantTagWithName) => t;
   protected $worktree = (wt: GitWorktree) => wt;

@@ -40,7 +40,7 @@ export class TagReaderService {
     this.gitApi.git(['for-each-ref', 'refs/tags', this.parser.formatArg])
       .pipe(map(output =>
         this.parser.parse(output).map((t): GitTag => ({
-          name: t.name,
+          name: t.name.replace(/^(refs\/)?tags\//, ''),
           sha: t.sha || t.objectSha, // annotated tags have dereferenced sha, lightweight don't
           message: t.message || undefined,
         }))

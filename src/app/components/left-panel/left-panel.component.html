@@ -114,31 +114,36 @@
                 <div class="title">
                     <i class="fa fa-tag mr-2"></i>Tags
                 </div>
-                <p-listbox
-                        [options]="currentRepo.allTagsByName()"
-                        [ngModel]="currentRepo.selectedTag()"
-                        (ngModelChange)="selectTag($event)"
-                        scrollHeight="auto"
-                        dataKey="name"
-                        class="border-none"
-                        emptyMessage="No tags"
-                >
-                    <ng-template #item let-t>
-                        @let tag = $localAndDistantTagWithName(t);
-                        <div class="flex align-items-center gap-2 ellipsis" (contextmenu)="openTagContextMenu(tag, $event)">
-                            <i class="fa fa-tag text-gray small-icon"></i>
-                            <span class="ellipsis text-gray">{{ (tag.local ?? tag.distant)?.name }}</span>
-                            <span class="tag-presence-icons text-gray small-icon">
-                                @if (tag.local) {
-                                    <i class="fa fa-laptop"></i>
-                                }
-                                @if (tag.distant) {
-                                    <i class="fa fa-github"></i>
-                                }
-                            </span>
-                        </div>
-                    </ng-template>
-                </p-listbox>
+                <div class="content">
+                    <p-tree
+                            selectionMode="single"
+                            [value]="tagTree()"
+                            [selection]="selectedTagNode()"
+                            (onNodeSelect)="selectTag($tagNode($event.node).data)"
+                            [contextMenu]="activeContextMenu.menuRef"
+                            (onNodeContextMenuSelect)="prepareTagContextMenu($tagNode($event.node).data)"
+                            emptyMessage="No tags"
+                    >
+                        <ng-template pTemplate="default" let-node>
+                            @if (node.data) {
+                                @let tag = $localAndDistantTagWithName(node.data);
+                                <span class="flex align-items-center flex-1 gap-1">
+                                    <span class="ellipsis flex-1">{{ node.label }}</span>
+                                    <span class="tag-presence-icons text-gray small-icon">
+                                        @if (tag.local) {
+                                            <i class="fa fa-laptop"></i>
+                                        }
+                                        @if (tag.distant) {
+                                            <i class="fa fa-github"></i>
+                                        }
+                                    </span>
+                                </span>
+                            } @else {
+                                <span class="ellipsis flex-1">{{ node.label }}</span>
+                            }
+                        </ng-template>
+                    </p-tree>
+                </div>
             </div>
         </ng-template>
 
