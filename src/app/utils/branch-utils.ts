@@ -50,11 +50,11 @@ export const toBranchTree = (branches: Branch[], branchNameTransform = (n: strin
         }
         : {
           key,
-          icon: 'pi pi-fw pi-folder',
+          icon: 'pi pi-folder',
           label: key.split('/').pop(),
           leaf: false,
           expanded: true,
-          selectable: false,
+          selectable: true,
           children: [],
         };
 

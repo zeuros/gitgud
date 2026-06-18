@@ -31,7 +31,7 @@ export const toTagTree = (tags: LocalAndDistantTagWithName[]): TreeNode<LocalAnd
       const isLeaf = i === parts.length - 1;
       const node: TreeNode<LocalAndDistantTagWithName> = isLeaf
         ? {key, icon: 'fa fa-tag', label: key.split('/').pop(), data: tag, leaf: true, expanded: true, selectable: true}
-        : {key, icon: 'pi pi-fw pi-folder', label: key.split('/').pop(), leaf: false, expanded: true, selectable: false, children: []};
+        : {key, icon: 'pi pi-folder', label: key.split('/').pop(), leaf: false, expanded: true, selectable: false, children: []};
 
       nodeMap.set(key, node);
 
