@@ -200,13 +200,14 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     const diffEditor = this.diffEditor()!.editor;
     const oldModel = diffEditor.getModel();
 
+    diffEditor.setModel(null);
+    oldModel?.original.dispose();
+    oldModel?.modified.dispose();
+
     const original = editor.createModel(before.code, undefined, beforeUri);
     const modified = editor.createModel(after.code,  undefined, afterUri);
 
     diffEditor.setModel({original, modified});
-
-    oldModel?.original.dispose();
-    oldModel?.modified.dispose();
 
     // Scroll editor to first edited lines on first show
     if (after.fileName !== this.lastRevealedPath) {
