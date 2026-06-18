@@ -39,17 +39,18 @@
         [rowHover]="true"
         [scrollable]="true"
         [resizableColumns]="true"
+        columnResizeMode="fit"
         scrollHeight="flex"
         selectionMode="multiple" [metaKeySelection]="true"
         class="pointer borderless p-datatable-sm"
 >
     <ng-template pTemplate="header">
         <tr class="uppercase text-gray">
-            <th pResizableColumn>Branch / Tag</th>
-            <th pResizableColumn [style.min-width.px]="GRAPH_COLUMN_MIN_WIDTH">Graph</th>
-            <th pResizableColumn style="min-width: 100px;">Commit message</th>
-            <th pResizableColumn>Author</th>
-            <th pResizableColumn style="min-width: 170px;">Commit date / time</th>
+            <th pResizableColumn style="width: 15%">Branch / Tag</th>
+            <th pResizableColumn [style.width.px]="GRAPH_COLUMN_MIN_WIDTH" [style.min-width.px]="GRAPH_COLUMN_MIN_WIDTH">Graph</th>
+            <th pResizableColumn style="min-width: 100px">Commit message</th>
+            <th pResizableColumn style="width: 10%">Author</th>
+            <th pResizableColumn style="width: 170px; min-width: 170px">Commit date / time</th>
         </tr>
     </ng-template>
     <ng-template pTemplate="body" let-rowIndex="rowIndex" let-displayRef>
