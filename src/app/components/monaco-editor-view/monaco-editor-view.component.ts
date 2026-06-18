@@ -30,7 +30,6 @@ import {type ViewType} from '../../models/git-repository';
 import {registerMonacoEditorThemes, renderWindowsShitEol} from './monaco-utils';
 import {ThemeService} from '../../services/theme.service';
 import {SelectButton} from 'primeng/selectbutton';
-import ITextModel = editor.ITextModel;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import IEditorOptions = editor.IEditorOptions;
 import IDiffEditorOptions = editor.IDiffEditorOptions;
@@ -68,14 +67,13 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     split:  {label: 'Split',  icon: 'fa fa-columns'},
   } satisfies Record<ViewType, {label: string; icon: string}>).map(([value, {label, icon}]) => ({value, label, icon}));
 
-  fileToDiff = input<FileChange>();
+  fileToDiff = input<FileChange | null>();
   @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
   diffModels = signal<DiffModels | undefined>(undefined);
 
   protected viewType = computed(() => this.currentRepo.editorConfig()!.viewType);
 
   private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void } | undefined>(undefined);
-  private ownedModels = new Set<ITextModel>(); // Models are cached for the component's lifetime — switching between already-viewed files hits the URI cache
   private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
   private editorOptions: IDiffEditorOptions = {
     readOnly: true,
@@ -173,9 +171,10 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
 
   ngOnDestroy(): void {
+    const model = this.diffEditor()?.editor.getModel();
+    model?.original.dispose();
+    model?.modified.dispose();
     this.diffEditor()?.editor.dispose();
-    this.ownedModels.forEach(m => m.dispose());
-    this.ownedModels.clear();
   }
 
   @HostListener('document:keydown.escape')
@@ -186,34 +185,28 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   private clearEditorWhenNoChangesToDisplay = (diffEditorEditor: IStandaloneDiffEditor) => () => {
     const changes = diffEditorEditor.getLineChanges();
     if (this.currentFile() && changes !== null && changes.length === 0) {
-      this.diffEditor()?.editor.dispose();
+      const oldModel = diffEditorEditor.getModel();
+      diffEditorEditor.setModel(null);
+      oldModel?.original.dispose();
+      oldModel?.modified.dispose();
       this.fileDiffPanel.closeDiffView();
     }
   };
 
   private updateDiffEditor({before, after}: DiffModels) {
     const beforeUri = Uri.parse(`before-${before.fileName}`);
-    const afterUri = Uri.parse(`after-${after.fileName}`);
-
-    let original = editor.getModel(beforeUri);
-    let modified = editor.getModel(afterUri);
-
-    if (original) {
-      original.setValue(before.code);
-    } else {
-      original = editor.createModel(before.code, undefined, beforeUri);
-      this.ownedModels.add(original);
-    }
-
-    if (modified) {
-      modified.setValue(after.code);
-    } else {
-      modified = editor.createModel(after.code, undefined, afterUri);
-      this.ownedModels.add(modified);
-    }
+    const afterUri  = Uri.parse(`after-${after.fileName}`);
 
     const diffEditor = this.diffEditor()!.editor;
+    const oldModel = diffEditor.getModel();
+
+    const original = editor.createModel(before.code, undefined, beforeUri);
+    const modified = editor.createModel(after.code,  undefined, afterUri);
+
     diffEditor.setModel({original, modified});
+
+    oldModel?.original.dispose();
+    oldModel?.modified.dispose();
 
     // Scroll editor to first edited lines on first show
     if (after.fileName !== this.lastRevealedPath) {

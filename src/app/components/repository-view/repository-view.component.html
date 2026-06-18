@@ -11,9 +11,12 @@
         </ng-template>
     </p-splitter>
 
-    @if (fileDiffPanel.fileToDiff$ | async; as fileToDiff) {
-        <gitgud-monaco-editor-view [fileToDiff]="fileToDiff" class="editor-overlay" [style.right.px]="editorRightPx()"/>
-    }
+    @let file = fileDiffPanel.fileToDiff$ | async;
+    <gitgud-monaco-editor-view
+            [fileToDiff]="file"
+            class="editor-overlay"
+            [style.right.px]="editorRightPx()"
+            [style.display]="file ? '' : 'none'"/>
     @if (fileDiffPanel.conflictedFile()) {
         <gitgud-merge-editor class="editor-overlay" [style.right.px]="editorRightPx()"/>
     }
