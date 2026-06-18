@@ -81,16 +81,6 @@ export const parseRemote = (name: string): {remote: string; branch: string} => {
 };
 
 
-export const findNode = (nodes: TreeNode<Branch>[], sha: string): TreeNode<Branch> | null => {
-  for (const node of nodes) {
-    if (node.data?.tip?.sha === sha) return node;
-    if (node.children) {
-      const found = findNode(node.children, sha);
-      if (found) return found;
-    }
-  }
-  return null;
-};
 
 // For any name (local / distant) => filter out the origin part to keep branch name only
 export const normalizedBranchName = (b: {name: string} | null) => b?.name.replace('origin/', '')
