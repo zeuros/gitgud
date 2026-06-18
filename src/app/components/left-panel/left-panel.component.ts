@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, inject} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
 import {Tree} from 'primeng/tree';
 import {CdkDropList} from '@angular/cdk/drag-drop';
@@ -90,6 +90,7 @@ export class LeftPanelComponent {
   private branch = inject(BranchService);
   private dialog = inject(DialogService);
   private gitRepositoryService = inject(GitRepositoryService);
+  private cd = inject(ChangeDetectorRef);
 
   protected selectBranchCommit = (branch?: Branch) => {
     if (branch) this.currentRepo.update({selectedCommitsShas: [branch.tip.sha]});
@@ -102,6 +103,12 @@ export class LeftPanelComponent {
   protected selectTag = (tag?: LocalAndDistantTagWithName) => {
     if (!tag) return;
     this.currentRepo.update({selectedCommitsShas: [(tag.local ?? tag.distant)!.sha]});
+  };
+
+  protected toggleFolder = <T>(node: TreeNode<T>, event: Event) => {
+    event.stopPropagation();
+    node.expanded = !node.expanded;
+    this.cd.markForCheck();
   };
 
   protected openStashContextMenu = (stash: Commit, event: MouseEvent) => {
