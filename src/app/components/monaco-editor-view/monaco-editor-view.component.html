@@ -1,7 +1,7 @@
 <div class="editor-header">
     <span class="editor-file-name">
         <i class="fa fa-code-compare mr-2"></i>
-        Viewing {{ fileName(fileToDiff()!.path) }} diffs
+        Viewing {{ fileName(fileToDiff()?.path ?? '') }} diffs
     </span>
     <div class="editor-actions">
 
