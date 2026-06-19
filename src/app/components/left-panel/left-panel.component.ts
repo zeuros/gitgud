@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, effect, inject, signal, WritableSignal} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
 import {Tree} from 'primeng/tree';
 import {CdkDropList} from '@angular/cdk/drag-drop';
@@ -24,7 +24,7 @@ import {ActiveContextMenuService} from '../../services/active-context-menu.servi
 import {type TreeNode} from 'primeng/api';
 import {Branch} from '../../lib/github-desktop/model/branch';
 import {local, remote, toBranchTree} from '../../utils/branch-utils';
-import {findNode} from '../../utils/tree-utils';
+import {findNode, toggleNode} from '../../utils/tree-utils';
 import {Commit} from '../../lib/github-desktop/model/commit';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {TableModule} from 'primeng/table';
@@ -67,16 +67,14 @@ export class LeftPanelComponent {
   protected currentRepo = inject(CurrentRepoStore);
   protected tagContextMenu = inject(TagContextMenuService);
   protected stashContextMenu = inject(StashContextMenuService);
-  protected tagTree = computed(() => toTagTree(this.currentRepo.allTagsByName()));
+  protected tagTree = signal<TreeNode<LocalAndDistantTagWithName>[]>([]);
   protected selectedTagNode = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
     if (!sha) return null;
     return findNode(this.tagTree(), t => t.sha === sha);
   });
-  protected localBranches = computed(() => toBranchTree(this.currentRepo.branches().filter(local) ?? []));
-  protected remoteBranches = computed(() =>
-    toBranchTree(this.currentRepo.branches().filter(remote) ?? [])
-      .map(node => ({...node, type: 'remote-root'})));
+  protected localBranches = signal<TreeNode<Branch>[]>([]);
+  protected remoteBranches = signal<TreeNode<Branch>[]>([]);
   protected selectedBranchNode = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
     if (!sha) return null;
@@ -90,25 +88,25 @@ export class LeftPanelComponent {
   private branch = inject(BranchService);
   private dialog = inject(DialogService);
   private gitRepositoryService = inject(GitRepositoryService);
-  private cd = inject(ChangeDetectorRef);
 
-  protected selectBranchCommit = (branch?: Branch) => {
-    if (branch) this.currentRepo.update({selectedCommitsShas: [branch.tip.sha]});
+  constructor() {
+    effect(() => this.localBranches.set(toBranchTree(this.currentRepo.branches().filter(local) ?? [])));
+    effect(() => this.remoteBranches.set(toBranchTree(this.currentRepo.branches().filter(remote) ?? []).map(node => ({...node, type: 'remote-root'}))));
+    effect(() => this.tagTree.set(toTagTree(this.currentRepo.allTagsByName())));
+  }
+
+  protected selectBranchCommit = (node: TreeNode<Branch>, nodes: WritableSignal<TreeNode<Branch>[]>) => {
+    if (node.data) this.currentRepo.update({selectedCommitsShas: [node.data.tip.sha]});
+    else toggleNode(nodes, node);
   };
 
   protected selectStash = (stash?: Commit) => {
     if (stash) this.currentRepo.update({selectedCommitsShas: [stash.parentSHAs[1]]});
   };
 
-  protected selectTag = (tag?: LocalAndDistantTagWithName) => {
-    if (!tag) return;
-    this.currentRepo.update({selectedCommitsShas: [(tag.local ?? tag.distant)!.sha]});
-  };
-
-  protected toggleFolder = <T>(node: TreeNode<T>, event: Event) => {
-    event.stopPropagation();
-    node.expanded = !node.expanded;
-    this.cd.markForCheck();
+  protected selectTag = (node: TreeNode<LocalAndDistantTagWithName>, nodes: WritableSignal<TreeNode<LocalAndDistantTagWithName>[]>) => {
+    if (node.data) this.currentRepo.update({selectedCommitsShas: [(node.data.local ?? node.data.distant)!.sha]});
+    else toggleNode(nodes, node);
   };
 
   protected openStashContextMenu = (stash: Commit, event: MouseEvent) => {
