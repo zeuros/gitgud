@@ -14,6 +14,15 @@ let tauriDriver: ReturnType<typeof spawn> | undefined;
 
 const debug = !!process.env['WDIO_DEBUG'];
 
+// Node.js v24+ ships a built-in undici that is incompatible with how the
+// webdriverio npm package bundles its own undici (Headers/fetch mismatch).
+// This flag makes webdriverio use Node's native fetch instead.
+process.env['WDIO_USE_NATIVE_FETCH'] = '1';
+
+// Force X11 backend so the Tauri app doesn't try Wayland under Xvfb and crash
+// with "Error 71 (Protocol error) dispatching to Wayland display".
+process.env['GDK_BACKEND'] = 'x11';
+
 export const config: Options.Testrunner = {
   runner: 'local',
   specs: ['./e2e/**/*.spec.ts'],

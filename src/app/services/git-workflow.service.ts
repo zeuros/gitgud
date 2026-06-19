@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {catchError, finalize, from, map, of, switchMap, tap, throwError} from 'rxjs';
+import {catchError, defer, finalize, from, map, of, switchMap, tap, throwError} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {ToastService} from './toast.service';
 import {StashService} from './stash.service';
@@ -117,34 +117,49 @@ export class GitWorkflowService {
     ).subscribe();
   };
 
-  // Rebases src onto target without touching the checked-out branch or index.
-  // Uses a detached worktree to avoid the "branch already checked out" lock.
   rebaseBranchOnto = (src: string, onto: string, msg: string) => {
     const isCheckedOut = this.currentRepo.headBranch()?.name === src;
+
+    (isCheckedOut ? this.inPlaceRebase(onto) : this.worktreeRebase(src, onto))
+      .pipe(finalize(this.gitRefresh.doRefreshAll))
+      .subscribe(() => this.toast.success(msg));
+  };
+
+  // Rebase currently checked-out branch onto `onto` in the main working tree.
+  // Conflicts leave .git/rebase-merge → updateRebaseStatus → conflict UI activates.
+  private inPlaceRebase = (onto: string) =>
+    this.stash.stashAndRun(this.gitApi.gitAction(['rebase', '--empty=drop', onto]));
+
+  // Rebase `src` onto `onto` in a temp worktree to avoid touching the working tree.
+  // On any failure (conflict or otherwise): abort + remove worktree, then fall back to
+  // inPlaceRebase after checking out src so conflicts can be resolved interactively.
+  private worktreeRebase = (src: string, onto: string) => {
     const env = window.tauri.process.env as Record<string, string>;
     const tmpPath = `${env['TMPDIR'] ?? env['TEMP'] ?? env['TMP'] ?? '/tmp'}/gitgud-rebase-${Date.now()}`;
-
-    const rebase$ = this.gitApi.git(['worktree', 'add', '--detach', tmpPath, `refs/heads/${src}`]).pipe(
+    // defer() so stashAndRun's workingDirHasChanges check runs when the fallback fires, not at construction
+    const fallback$ = defer(() => this.stash.stashAndRun(
+      this.gitApi.gitAction(['checkout', src]).pipe(
+        switchMap(() => this.gitApi.gitAction(['rebase', '--empty=drop', onto])),
+      ),
+    ));
+    return this.gitApi.git(['worktree', 'add', '--detach', tmpPath, `refs/heads/${src}`]).pipe(
       switchMap(() => this.gitApi.git(['rebase', '--empty=drop', onto], {cwd: tmpPath}).pipe(
-        catchError(e =>
+        // catchError wraps only the rebase step — post-rebase failures (rev-parse, update-ref) propagate directly
+        catchError(() =>
           this.gitApi.git(['rebase', '--abort'], {cwd: tmpPath}).pipe(
             catchError(() => of(null)),
-            switchMap(() => this.gitApi.git(['worktree', 'remove', '--force', tmpPath])),
-            switchMap(() => throwError(() => e)),
-          )
+            switchMap(() => this.gitApi.git(['worktree', 'remove', '--force', tmpPath]).pipe(
+              catchError(() => of(null)), // don't block fallback if force-remove fails
+            )),
+            switchMap(() => fallback$),
+          ),
         ),
       )),
       switchMap(() => this.gitApi.git(['rev-parse', 'HEAD'], {cwd: tmpPath})),
       map(sha => sha.trim()),
       switchMap(newSha => this.gitApi.git(['update-ref', `refs/heads/${src}`, newSha])),
       switchMap(() => this.gitApi.git(['worktree', 'remove', tmpPath])),
-      switchMap(() => isCheckedOut ? this.gitApi.git(['reset', '--hard', 'HEAD']) : of(null)),
     );
-
-    (isCheckedOut ? this.stash.stashAndRun(rebase$) : rebase$).pipe(
-      tap(() => this.toast.success(msg)),
-      finalize(this.gitRefresh.doRefreshAll),
-    ).subscribe();
   };
 
   rewordCommit = ({summary, description}: { summary: string, description: string }) => {
