@@ -21,6 +21,18 @@ const brandPrimary = {
 };
 
 export const GitgudPreset = definePreset(Aura, {
+  components: {
+    toast: {
+      colorScheme: {
+        dark: {
+          info:    { background: 'color-mix(in srgb, color-mix(in srgb, {blue.500} 20%, {surface.900}) 85%, transparent)' },
+          success: { background: 'color-mix(in srgb, color-mix(in srgb, {green.500} 20%, {surface.900}) 85%, transparent)' },
+          warn:    { background: 'color-mix(in srgb, color-mix(in srgb, {yellow.500} 20%, {surface.900}) 85%, transparent)' },
+          error:   { background: 'color-mix(in srgb, color-mix(in srgb, {red.500} 20%, {surface.900}) 85%, transparent)' },
+        },
+      },
+    },
+  },
   semantic: {
     primary: brandPrimary,
 
