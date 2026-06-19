@@ -119,11 +119,10 @@ export class SettingsDialogComponent implements OnInit {
   private checkGitPathIsValid(candidate: string) {
     const previous = this.settings.gitBin;
 
+    this.settings.gitBin = candidate;
+
     this.gitApi.git(['--version']).subscribe({
-      next: v => {
-        this.settings.gitBin = candidate;
-        this.gitVersion.set(v.trim())
-      },
+      next: v => this.gitVersion.set(v.trim()),
       error: () => {
         this.settings.gitBin = previous;
         this.pendingGitPath.set(previous);
