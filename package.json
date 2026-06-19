@@ -10,18 +10,22 @@
   "private": true,
   "scripts": {
     "version": "node -e \"const fs=require('fs');['src-tauri/Cargo.toml','src-tauri/tauri.conf.json'].forEach(f=>{const c=fs.readFileSync(f,'utf8');fs.writeFileSync(f,c.replace(/version = \\\"[^\\\"]+\\\"/,'version = \\\"'+process.env.npm_new_version+'\\\"').replace(/\\\"version\\\": \\\"[^\\\"]+\\\"/,'\\\"version\\\": \\\"'+process.env.npm_new_version+'\\\"'))})\" && git add src-tauri/Cargo.toml src-tauri/tauri.conf.json",
+
     "start": "npm run tauri:dev",
     "ng:serve": "node --max-old-space-size=4096 ./node_modules/@angular/cli/bin/ng serve -c dev",
+
     "build:angular": "ng build --base-href ./",
-    "tauri": "tauri",
+
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "tauri:build:linux-deb": "tauri build --bundles deb",
     "tauri:build:linux-rpm": "tauri build --bundles rpm",
     "tauri:build:win": "tauri build --bundles nsis",
     "tauri:build:mac": "tauri build --bundles dmg",
+
     "test": "vitest run",
     "test:watch": "vitest",
+
     "e2e:setup": "bash e2e/utils/setup-repo.sh",
     "e2e": "npm run e2e:setup && xvfb-maybe -- wdio run wdio.conf.ts",
     "e2e:debug": "npm run e2e:setup && WDIO_DEBUG=1 wdio run wdio.conf.ts --logLevel debug"
