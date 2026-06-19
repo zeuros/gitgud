@@ -145,7 +145,7 @@ export class LogBuilderService {
     const children = (childrenMap[commit.sha] ?? []).filter(c => isCommit(c) || isStash(c) || isIndex(c));
     // If commit has a child having current commit as first parent, we align with this commit
     const childrenOfSameBranch = children.filter(child => child.parentSHAs[0] == commit.sha);
-    const leftChildOfSameBranch = childrenOfSameBranch.find(isMergeCommit) ?? childrenOfSameBranch[0]; // The children we align with
+    const leftChildOfSameBranch = childrenOfSameBranch.find(isMergeCommit) ?? childrenOfSameBranch.find(c => !isStash(c)) ?? childrenOfSameBranch[0]; // The children we align with; prefer non-stash for commit continuity
     const hasMergeChild = children.some(isMergeCommit);
     let distanceToNextMergeCommit = 0;
 
