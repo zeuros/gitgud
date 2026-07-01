@@ -28,7 +28,8 @@
 
     "e2e:setup": "bash e2e/utils/setup-repo.sh",
     "e2e": "npm run e2e:setup && xvfb-maybe -- wdio run wdio.conf.ts",
-    "e2e:debug": "npm run e2e:setup && WDIO_DEBUG=1 wdio run wdio.conf.ts --logLevel debug"
+    "e2e:debug": "npm run e2e:setup && WDIO_DEBUG=1 wdio run wdio.conf.ts --logLevel debug",
+    "video": "bash e2e/record.sh"
   },
   "dependencies": {
     "@angular/animations": "^22.0.1",

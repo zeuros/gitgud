@@ -114,12 +114,13 @@
       fill: 'rgb(25 0 28 / 0.86)', fillStyle: 'solid',
     }));
 
-    // Stacked tspan text with wobble filter
+    // Stacked tspan text.
+    // NOTE: the feDisplacementMap wobble filter is intentionally NOT applied here —
+    // WebKitGTK intermittently fails to paint filtered <text>, leaving empty boxes.
     const textElement = document.createElementNS(SVG_NAMESPACE, 'text');
     textElement.setAttribute('x', String(textX));
     textElement.setAttribute('y', String(textY));
     textElement.setAttribute('text-anchor', textAnchor);
-    textElement.setAttribute('filter', 'url(#__ann-wobble)');
     Object.assign(textElement.style, {
       font: 'bold 15px "Segoe UI", system-ui, sans-serif',
       fill: ANNOTATION_COLOR, letterSpacing: '0.03em',
