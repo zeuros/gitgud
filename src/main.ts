@@ -51,6 +51,27 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// WebKitGTK on Linux doesn't reliably forward undo/redo to web inputs.
+// execCommand is deprecated but remains the only way to drive the browser's undo buffer.
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const target = e.target as HTMLElement;
+  if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') return;
+  switch (e.key) {
+    case 'z':
+      e.preventDefault();
+      document.execCommand(e.shiftKey ? 'redo' : 'undo');
+      break;
+    case 'y':
+      if (!e.shiftKey) { e.preventDefault(); document.execCommand('redo'); }
+      break;
+    case 'a':
+      e.preventDefault();
+      (target as HTMLInputElement | HTMLTextAreaElement).select();
+      break;
+  }
+});
+
 installTauriBridge()
   .catch(err => console.error('[tauri-bridge] init failed, falling back to stub:', err))
   .then(() => bootstrapApplication(AppComponent, appConfig))
