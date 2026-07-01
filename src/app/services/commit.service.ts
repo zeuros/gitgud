@@ -19,7 +19,7 @@
 import {inject, Injectable} from '@angular/core';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {map, switchMap} from 'rxjs';
+import {map, switchMap, tap} from 'rxjs';
 import {workingDirHasChanges} from '../utils/utils';
 import {GitRefreshService} from './git-refresh.service';
 import {FileDiffPanelService} from './file-diff-panel.service';
@@ -34,12 +34,14 @@ export class CommitService {
 
   commit = (summary: string, description?: string, amend = false) =>
     this.gitApi.gitAction(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])])
-      .pipe(switchMap(this.gitRefresh.refreshAll))
-      .subscribe(({workDirStatus}) => {
-        this.fileDiffPanel.closeViews();
-        if (!workingDirHasChanges(workDirStatus))
-          this.headSha().subscribe(sha => this.currentRepo.update({selectedCommitsShas: [sha]}));
-      });
+      .pipe(
+        switchMap(this.gitRefresh.refreshAll),
+        tap(({workDirStatus}) => {
+          this.fileDiffPanel.closeViews();
+          if (!workingDirHasChanges(workDirStatus))
+            this.headSha().subscribe(sha => this.currentRepo.update({selectedCommitsShas: [sha]}));
+        }),
+      );
 
   private headSha = () => this.gitApi.git(['rev-parse', 'HEAD']).pipe(map(sha => sha.trim()));
 }
