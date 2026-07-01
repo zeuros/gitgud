@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/zeuros/gitgud)](https://github.com/zeuros/gitgud/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows%20%7C%20mac-lightgrey)](#)
-[![Angular](https://img.shields.io/badge/Angular-21-red)](https://angular.dev)
+[![Angular](https://img.shields.io/badge/Angular-22-red)](https://angular.dev)
 [![Tauri](https://img.shields.io/badge/Tauri-2-FFC131)](https://tauri.app)
 [![Stars](https://img.shields.io/github/stars/zeuros/gitgud?style=social)](https://github.com/zeuros/gitgud/stargazers)
 
@@ -12,7 +12,7 @@
 
 A cross-platform Git GUI that doesn't get in your way.
 
-<video src="https://github.com/user-attachments/assets/b6e6ef04-b569-4695-95f4-d9525c0a6748" autoplay loop muted playsinline width="100%"></video>
+<video src="docs/show.mp4" autoplay loop muted playsinline width="100%"></video>
 
 ## Download
 
