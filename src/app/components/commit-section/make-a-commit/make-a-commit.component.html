@@ -178,7 +178,7 @@
                             (click)="fixup.openFixupPicker()"/>
                     <label class="flex align-items-center gap-2 cursor-pointer">
                         <span>Amend</span>
-                        <p-checkbox [binary]="true" [ngModel]="amend()" (ngModelChange)="amend.set($event)" (onChange)="toggleAmendMode($event.checked)"/>
+                        <p-checkbox [binary]="true" [ngModel]="amend()" (onChange)="toggleAmendMode($event.checked)"/>
                     </label>
                 </div>
             </div>

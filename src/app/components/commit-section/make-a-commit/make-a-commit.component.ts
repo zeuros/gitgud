@@ -73,6 +73,7 @@ export class MakeACommitComponent {
     const alpha = this.theme.isDark() ? '' : '80';
     return `drop-shadow(0 0 5px ${FileStatusesIcons[kind].color}${alpha})`;
   }
+
   protected directory = directory;
   protected fileName = fileName;
   private commitService = inject(CommitService);
@@ -81,10 +82,15 @@ export class MakeACommitComponent {
 
   protected commit() {
     const {summary, description} = this.commitForm.value;
-    this.commitService.commit(summary!, description?.length ? description : undefined, this.amend());
+    const amend = this.amend();
+    this.commitService.commit(summary!, description?.length ? description : undefined, amend)
+      .subscribe(() => {
+        if (amend) this.toggleAmendMode(false);
+      });
   }
 
   protected toggleAmendMode(amend: boolean) {
+    this.amend.set(amend);
     if (amend) {
       // Save current form state
       this.savedFormState = this.commitForm.value;
@@ -93,11 +99,7 @@ export class MakeACommitComponent {
       const lastCommit = headCommit(this.currentRepo.branches(), this.currentRepo.logs());
       if (lastCommit) this.commitForm.patchValue({summary: lastCommit.summary, description: lastCommit.body ?? ''});
     } else {
-      // Restore saved state
-      if (this.savedFormState) {
-        this.commitForm.patchValue(this.savedFormState);
-        this.savedFormState = undefined;
-      }
+      this.restoreBeforeAmendSummary();
     }
   }
 
@@ -105,4 +107,12 @@ export class MakeACommitComponent {
     !!(this.commitForm.value.summary?.length && workDirStatus?.staged?.length && !workDirStatus.conflicted.length);
 
   protected $WorkDirFileChanges = (w: WorkingDirectoryFileChange) => w;
+
+  private restoreBeforeAmendSummary = () => {
+    if (this.savedFormState) {
+      this.commitForm.patchValue(this.savedFormState);
+      this.savedFormState = undefined;
+    } else
+      this.commitForm.reset({summary: '', description: ''});
+  };
 }
