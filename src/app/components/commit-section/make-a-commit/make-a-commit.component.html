@@ -5,7 +5,7 @@
 @if (hasConflicts) {
     <div class="conflicted-section">
         <div class="flex align-items-center justify-content-between h-3rem">
-            <h4 class="m-0 conflict-header">Conflicted files ({{ conflicted.length }})</h4>
+            <h4 class="conflict-header">Conflicted files ({{ conflicted.length }})</h4>
         </div>
         <p-divider class="mt-0"/>
         <p-table
@@ -21,7 +21,7 @@
                 [virtualScrollItemSize]="28"
                 size="small"
                 class="borderless show-button-on-row-hover flex-1">
-            <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
+            <ng-template #body let-rowIndex="rowIndex" let-workingDirFileChanges>
                 @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
                 <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex">
                     <td>
@@ -54,13 +54,12 @@
         layout="vertical"
         stateStorage="local"
         [stateKey]="'splitter-make-a-commit-' + currentRepo.cwd()"
-        [minSizes]="[20, 20, 20]"
 >
-    <ng-template pTemplate="panel">
+    <p-splitter-panel [minSize]="20">
         <!-- Unstaged files -->
         <div class="flex flex-column h-full">
             <div class="flex align-items-center justify-content-between h-3rem">
-                <h4 class="m-0">Unstaged files ({{ workDirStatus?.unstaged?.length ?? 0 }})</h4>
+                <h4>Unstaged files ({{ workDirStatus?.unstaged?.length ?? 0 }})</h4>
                 @if (workDirStatus?.unstaged?.length) {
                     <p-button styleClass="p-button-sm" (click)="workingDirectory.stageAll()" label="Stage all"/>
                 }
@@ -81,7 +80,7 @@
                         [virtualScrollItemSize]="28"
                         size="small"
                         class="borderless show-button-on-row-hover flex-1">
-                    <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
+                    <ng-template #body let-rowIndex="rowIndex" let-workingDirFileChanges>
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
                         <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex"
                             (contextmenu)="workingDirSelection.openFileContextMenu(fileChanges, false, $event)">
@@ -108,13 +107,13 @@
                 </p-table>
             }
         </div>
-    </ng-template>
+    </p-splitter-panel>
 
-    <ng-template pTemplate="panel">
+    <p-splitter-panel [minSize]="20">
         <!-- Staged files -->
         <div class="flex flex-column h-full">
             <div class="flex align-items-center justify-content-between h-3rem">
-                <h4 class="m-0">{{ hasConflicts ? 'Resolved files' : 'Staged files' }} ({{ workDirStatus?.staged?.length ?? 0 }})</h4>
+                <h4>{{ hasConflicts ? 'Resolved files' : 'Staged files' }} ({{ workDirStatus?.staged?.length ?? 0 }})</h4>
                 @if (workDirStatus?.staged?.length) {
                     <p-button styleClass="p-button-sm" (click)="workingDirectory.unstageAll()" label="Unstage all"/>
                 }
@@ -135,7 +134,7 @@
                         [virtualScrollItemSize]="28"
                         size="small"
                         class="borderless show-button-on-row-hover flex-1">
-                    <ng-template pTemplate="body" let-rowIndex="rowIndex" let-workingDirFileChanges>
+                    <ng-template #body let-rowIndex="rowIndex" let-workingDirFileChanges>
                         @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
                         <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex"
                             (contextmenu)="workingDirSelection.openFileContextMenu(fileChanges, true, $event)">
@@ -162,13 +161,13 @@
                 </p-table>
             }
         </div>
-    </ng-template>
+    </p-splitter-panel>
 
-    <ng-template pTemplate="panel">
+    <p-splitter-panel [minSize]="20">
         <!-- Commit form -->
         <div class="flex flex-column h-full" [style.min-height.px]="60">
             <div class="flex align-items-center justify-content-between h-3rem">
-                <h4 class="m-0">Commit message</h4>
+                <h4>Commit message</h4>
                 <div class="flex align-items-center gap-3">
                     <p-button
                             styleClass="p-button-sm p-button-text p-button-secondary"
@@ -193,6 +192,6 @@
                         [label]="amend() ? 'Amend last commit' : 'Commit staged changes'"/>
             </form>
         </div>
-    </ng-template>
+    </p-splitter-panel>
 
 </p-splitter>

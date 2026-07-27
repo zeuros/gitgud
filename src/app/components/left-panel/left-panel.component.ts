@@ -30,7 +30,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {TableModule} from 'primeng/table';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
-import {Splitter} from 'primeng/splitter';
+import {Splitter, SplitterPanel} from 'primeng/splitter';
 import {LocalAndDistantTagWithName, toTagTree} from '../../utils/tag-utils';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
@@ -56,6 +56,7 @@ import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/c
     Listbox,
     FormsModule,
     Splitter,
+    SplitterPanel,
     CdkDropList,
   ],
   providers: [TerminalService],

@@ -21,7 +21,6 @@ import {FormsModule} from '@angular/forms';
 import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {Select} from 'primeng/select';
-import {PrimeTemplate} from 'primeng/api';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
 import {BranchType} from '../../../lib/github-desktop/model/branch';
@@ -38,7 +37,7 @@ interface BranchOption {
   selector: 'gitgud-create-worktree-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, InputText, Select, FormsModule, PrimeTemplate],
+  imports: [Button, InputText, Select, FormsModule],
   templateUrl: './create-worktree-dialog.component.html',
   styleUrl: './create-worktree-dialog.component.scss',
 })

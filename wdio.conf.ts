@@ -19,9 +19,10 @@ const debug = !!process.env['WDIO_DEBUG'];
 // This flag makes webdriverio use Node's native fetch instead.
 process.env['WDIO_USE_NATIVE_FETCH'] = '1';
 
-// Force X11 backend so the Tauri app doesn't try Wayland under Xvfb and crash
+// Default to X11 so the Tauri app doesn't try Wayland under Xvfb and crash
 // with "Error 71 (Protocol error) dispatching to Wayland display".
-process.env['GDK_BACKEND'] = 'x11';
+// e2e/record.sh sets GDK_BACKEND=wayland when recording on the real desktop.
+process.env['GDK_BACKEND'] ??= 'x11';
 
 export const config: Options.Testrunner = {
   runner: 'local',

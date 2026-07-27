@@ -18,7 +18,7 @@
 
 import {ChangeDetectionStrategy, Component, effect, ElementRef, inject, signal, viewChild} from '@angular/core';
 import {LeftPanelComponent} from '../left-panel/left-panel.component';
-import {SplitterModule} from 'primeng/splitter';
+import {Splitter, SplitterPanel} from 'primeng/splitter';
 import {CommitSectionComponent} from '../commit-section/commit-section.component';
 import {LogsComponent} from '../logs/logs.component';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
@@ -31,7 +31,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
   selector: 'gitgud-repository-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [LeftPanelComponent, LogsComponent, CommitSectionComponent, SplitterModule, AsyncPipe, MonacoEditorViewComponent, MergeEditorComponent],
+  imports: [LeftPanelComponent, LogsComponent, CommitSectionComponent, Splitter, SplitterPanel, AsyncPipe, MonacoEditorViewComponent, MergeEditorComponent],
   templateUrl: './repository-view.component.html',
   styleUrl: './repository-view.component.scss',
   host: {
@@ -53,15 +53,6 @@ export class RepositoryViewComponent {
       const ro = new ResizeObserver(() => this.editorRightPx.set(el.offsetWidth));
       ro.observe(el);
       onCleanup(() => ro.disconnect());
-    });
-
-    effect(() => {
-      const repoId = this.currentRepo.cwd();
-      if (!repoId) return;
-      const key = 'splitter-main-view-' + repoId;
-      if (!localStorage.getItem(key)) {
-        localStorage.setItem(key, JSON.stringify([17, 80, 23]));
-      }
     });
   }
 }

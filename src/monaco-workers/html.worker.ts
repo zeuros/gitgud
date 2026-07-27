@@ -1,2 +1,2 @@
 // @ts-nocheck
-import 'monaco-editor/esm/vs/language/html/html.worker.js';
+import 'monaco-editor/language/html/html.worker.js';

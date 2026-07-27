@@ -1,14 +1,14 @@
 @if (currentRepo.cwd(); as repoId) {
-    <p-splitter stateStorage="local" [stateKey]="'splitter-main-view-' + repoId" [minSizes]="[8, 13, 10]" class="h-full">
-        <ng-template pTemplate>
+    <p-splitter stateStorage="local" [stateKey]="'splitter-main-view-' + repoId" class="h-full">
+        <p-splitter-panel [size]="14" [minSize]="8">
             <gitgud-left-panel/>
-        </ng-template>
-        <ng-template pTemplate>
+        </p-splitter-panel>
+        <p-splitter-panel [size]="67" [minSize]="13">
             <gitgud-logs/>
-        </ng-template>
-        <ng-template pTemplate>
+        </p-splitter-panel>
+        <p-splitter-panel [size]="19" [minSize]="10">
             <gitgud-commit-section #commitPanel/>
-        </ng-template>
+        </p-splitter-panel>
     </p-splitter>
 
     @let file = fileDiffPanel.fileToDiff$ | async;

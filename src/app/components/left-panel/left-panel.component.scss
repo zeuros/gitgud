@@ -20,7 +20,13 @@
     p-listbox {
       display: flex;
       flex-direction: column;
+      flex: 1;
       min-height: 0;
+
+      .p-listbox-list-container {
+        flex: 1;
+        min-height: 0;
+      }
 
       .p-listbox-option {
         padding: 0;
@@ -36,7 +42,7 @@
       }
     }
 
-    .p-splitterpanel {
+    .p-splitter-panel {
       display: flex;
       min-height: 0;
       overflow: hidden;
@@ -44,19 +50,25 @@
     }
 
     .p-tree .p-tree-node-label {
+      display: flex;
       flex: 1;
+      min-width: 0; // long branch names ellipsize instead of widening the panel
+
+      // v22 wraps the custom node template in an extra <span>
+      > span {
+        display: flex;
+        flex: 1;
+      }
+
+      span {
+        min-width: 0;
+      }
     }
 
     .p-tree-node-toggle-button {
       display: none;
     }
   }
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
 }
 
 .panel {
@@ -78,8 +90,12 @@
 }
 
 .content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px;
   color: var(--hmmmmmmGray);
 }
