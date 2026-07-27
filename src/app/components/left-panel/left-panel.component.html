@@ -4,9 +4,8 @@
             layout="vertical"
             stateStorage="local"
             [stateKey]="'splitter-left-panel-' + repoId"
-            [minSizes]="[15, 15, 15, 10, 10]"
     >
-        <ng-template pTemplate="panel">
+        <p-splitter-panel [minSize]="15">
             <div class="panel">
                 <div class="title">
                     <i class="fa fa-laptop mr-2"></i>Local
@@ -23,8 +22,8 @@
                             (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
                             emptyMessage="No local branches"
                     >
-                        <ng-template pTemplate="togglericon"></ng-template>
-                        <ng-template pTemplate="default" let-node>
+                        <ng-template #togglericon></ng-template>
+                        <ng-template #node let-node>
                             @if (node.data) {
                                 <span class="flex align-items-center flex-1 branch-drop-target"
                                       cdkDropList
@@ -49,9 +48,9 @@
                     </p-tree>
                 </div>
             </div>
-        </ng-template>
+        </p-splitter-panel>
 
-        <ng-template pTemplate="panel">
+        <p-splitter-panel [minSize]="15">
             <div class="panel">
                 <div class="title">
                     <i class="fa fa-cloud mr-2"></i>Remote
@@ -68,8 +67,8 @@
                             (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
                             emptyMessage="No branches on remote"
                     >
-                        <ng-template pTemplate="togglericon"></ng-template>
-                        <ng-template pTemplate="default" let-node>
+                        <ng-template #togglericon></ng-template>
+                        <ng-template #node let-node>
                             @if (node.data) {
                                 <span class="flex align-items-center flex-1 branch-drop-target"
                                       cdkDropList
@@ -87,9 +86,9 @@
                     </p-tree>
                 </div>
             </div>
-        </ng-template>
+        </p-splitter-panel>
 
-        <ng-template pTemplate="panel">
+        <p-splitter-panel [minSize]="15">
             <div class="panel">
                 <div class="title">
                     <i class="fa fa-archive mr-2"></i>Stashes
@@ -112,8 +111,8 @@
                     </ng-template>
                 </p-listbox>
             </div>
-        </ng-template>
-        <ng-template pTemplate="panel">
+        </p-splitter-panel>
+        <p-splitter-panel [minSize]="10">
             <div class="panel">
                 <div class="title">
                     <i class="fa fa-tag mr-2"></i>Tags
@@ -129,8 +128,8 @@
                             (onNodeContextMenuSelect)="prepareTagContextMenu($tagNode($event.node).data)"
                             emptyMessage="No tags"
                     >
-                        <ng-template pTemplate="togglericon"></ng-template>
-                        <ng-template pTemplate="default" let-node>
+                        <ng-template #togglericon></ng-template>
+                        <ng-template #node let-node>
                             @if (node.data) {
                                 @let tag = $localAndDistantTagWithName(node.data);
                                 <span class="flex align-items-center flex-1 gap-1">
@@ -151,9 +150,9 @@
                     </p-tree>
                 </div>
             </div>
-        </ng-template>
+        </p-splitter-panel>
 
-        <ng-template pTemplate="panel">
+        <p-splitter-panel [minSize]="10">
             <div class="panel">
                 <div class="title flex align-items-center">
                     <i class="fa fa-code-fork mr-2"></i>Worktrees
@@ -188,6 +187,6 @@
                     </ng-template>
                 </p-listbox>
             </div>
-        </ng-template>
+        </p-splitter-panel>
     </p-splitter>
 }

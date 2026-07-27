@@ -44,7 +44,7 @@
         selectionMode="multiple" [metaKeySelection]="true"
         class="pointer borderless p-datatable-sm"
 >
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <tr class="uppercase text-gray">
             <th pResizableColumn style="width: 15%">Branch / Tag</th>
             <th pResizableColumn [style.width.px]="GRAPH_COLUMN_MIN_WIDTH" [style.min-width.px]="GRAPH_COLUMN_MIN_WIDTH">Graph</th>
@@ -53,7 +53,7 @@
             <th pResizableColumn style="width: 170px; min-width: 170px">Commit date / time</th>
         </tr>
     </ng-template>
-    <ng-template pTemplate="body" let-rowIndex="rowIndex" let-displayRef>
+    <ng-template #body let-rowIndex="rowIndex" let-displayRef>
         @let commit = $displayRef(displayRef);
         @let isDetachedHead = currentRepo.detachedHeadSha() === commit.sha;
         <tr class="commit-row {{ commit.highlight }}"

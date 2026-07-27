@@ -92,7 +92,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     snippetSuggestions: 'none',
     inlayHints: {enabled: 'off'},
     parameterHints: {enabled: false},
-    hover: {enabled: false},
+    hover: {enabled: 'off'},
     renderLineHighlight: 'gutter', // 'all' repaints the full-width highlight line on cursor move
     folding: false,               // fold-range computation scans visible lines on every model change
     links: false,                 // URL tokenization runs over every visible line continuously
@@ -194,20 +194,17 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   };
 
   private updateDiffEditor({before, after}: DiffModels) {
-    const beforeUri = Uri.parse(`before-${before.fileName}`);
-    const afterUri  = Uri.parse(`after-${after.fileName}`);
-
     const diffEditor = this.diffEditor()!.editor;
     const oldModel = diffEditor.getModel();
 
-    diffEditor.setModel(null);
-    oldModel?.original.dispose();
-    oldModel?.modified.dispose();
-
-    const original = editor.createModel(before.code, undefined, beforeUri);
-    const modified = editor.createModel(after.code,  undefined, afterUri);
-
+    // Attach the new models before disposing the old ones: Monaco kills its diff worker as soon
+    // as no model exists, and respawning it on every file made showing a diff slow
+    const original = this.upsertModel(Uri.parse(`before-${before.fileName}`), before.code);
+    const modified = this.upsertModel(Uri.parse(`after-${after.fileName}`), after.code);
     diffEditor.setModel({original, modified});
+
+    for (const model of [oldModel?.original, oldModel?.modified])
+      if (model && model !== original && model !== modified) model.dispose();
 
     // Scroll editor to first edited lines on first show
     if (after.fileName !== this.lastRevealedPath) {
@@ -218,6 +215,14 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
         if (firstChange) diffEditor.getModifiedEditor().revealLineInCenter(firstChange.modifiedStartLineNumber);
       });
     }
+  }
+
+  // Re-showing the same file reuses its URI, and createModel throws while that model is alive
+  private upsertModel(uri: Uri, code: string) {
+    const existing = editor.getModel(uri);
+    if (!existing) return editor.createModel(code, undefined, uri);
+    existing.setValue(code);
+    return existing;
   }
 
   protected readonly fileName = fileName;

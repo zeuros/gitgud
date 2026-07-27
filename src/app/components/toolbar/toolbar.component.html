@@ -134,7 +134,7 @@
         optionValue="value"
         [style]="{'width': 'fit-content'}"
 >
-    <ng-template pTemplate="selectedItem" let-item>
+    <ng-template #selectedItem let-item>
         Zoom ({{ item.label }})
     </ng-template>
 </p-select>

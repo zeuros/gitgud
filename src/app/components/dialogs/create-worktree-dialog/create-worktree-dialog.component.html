@@ -12,13 +12,13 @@
                 [showClear]="true"
                 styleClass="w-full"
         >
-            <ng-template pTemplate="selectedItem" let-opt>
+            <ng-template #selectedItem let-opt>
                 <span class="branch-option">
                     <i [class]="opt.isRemote ? 'fa fa-cloud' : 'fa fa-code-fork'" class="option-icon"></i>
                     {{ opt.label }}
                 </span>
             </ng-template>
-            <ng-template pTemplate="item" let-opt>
+            <ng-template #item let-opt>
                 <span class="branch-option">
                     <i [class]="opt.isRemote ? 'fa fa-cloud' : 'fa fa-code-fork'" class="option-icon"></i>
                     {{ opt.label }}

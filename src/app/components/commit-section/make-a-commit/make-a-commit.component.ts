@@ -28,14 +28,13 @@ import {AppFileStatusKind, FileStatusesIcons} from '../../../lib/github-desktop/
 import {ThemeService} from '../../../services/theme.service';
 import {directory, fileName} from '../../../utils/utils';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
-import {PrimeTemplate} from 'primeng/api';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {CommitService} from '../../../services/commit.service';
 import {FixupService} from '../../../services/fixup.service';
 import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
 import {type WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
-import {Splitter} from 'primeng/splitter';
+import {Splitter, SplitterPanel} from 'primeng/splitter';
 import {WorkingDirFileSelectionService} from '../../../services/working-dir-file-selection.service';
 
 @Component({
@@ -48,9 +47,9 @@ import {WorkingDirFileSelectionService} from '../../../services/working-dir-file
     InputText,
     TableModule,
     Button,
-    PrimeTemplate,
     Checkbox,
     Splitter,
+    SplitterPanel,
     FormsModule,
   ],
   templateUrl: './make-a-commit.component.html',

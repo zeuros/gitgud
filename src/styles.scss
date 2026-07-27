@@ -10,5 +10,8 @@
 
 @use 'primeflex/primeflex';
 @use 'primeicons/primeicons';
+// Monaco's JS imports its own CSS, which the Angular builder emits as main.css but never links;
+// load the prebuilt sheet globally instead (by path: monaco 0.56's exports map hides it)
+@use '../node_modules/monaco-editor/min/vs/editor/editor.main.css';
 @use '@mismerge/core/styles.css';
 @use 'styles/mismerge-gitgud';

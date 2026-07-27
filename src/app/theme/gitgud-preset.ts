@@ -75,6 +75,7 @@ export const GitgudPreset = definePreset(Aura, {
 });
 
 export const primeNGConfig = {
+  license: 'eyJpZCI6ImE2N2QyZDg2LTI2M2MtNDE1Ny04NTA0LTdlNGMwZjUzOTk4YyIsInByb2R1Y3QiOiJwcmltZXVpIiwidGllciI6ImNvbW11bml0eSIsInR5cGUiOiJkZXYiLCJpYXQiOjE3ODkyNDA4MjQsImV4cCI6MTgyMDc3NjgyNH0.DAStf4GOkWfynE91gql0Y9kvhXg0-yZ5tSRzUOPIo9SXTYWhglJOqww7ONjvCgElHC74m8FDqJNMdpCohfBNBg',
   theme: {
     preset: GitgudPreset,
     options: {

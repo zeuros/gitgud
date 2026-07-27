@@ -25,7 +25,7 @@ import {Tooltip} from 'primeng/tooltip';
 import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import {Menu} from 'primeng/menu';
-import {type MenuItem, PrimeTemplate} from 'primeng/api';
+import {type MenuItem} from 'primeng/api';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {ToastService} from '../../services/toast.service';
@@ -50,7 +50,7 @@ import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell
   selector: 'gitgud-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, Divider, Tooltip, Select, FormsModule, PrimeTemplate, Menu],
+  imports: [Button, Divider, Tooltip, Select, FormsModule, Menu],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
 })
