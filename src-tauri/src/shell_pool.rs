@@ -55,7 +55,12 @@ impl Shell {
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::null())
             .spawn()
-            .map_err(|e| format!("shell spawn: {e}"))?;
+            .map_err(|e| {
+                // Name the cwd: ENOENT here almost always means the repo directory
+                // is gone (stale entry, deleted worktree), not that bash is missing.
+                let hint = if std::path::Path::new(cwd).is_dir() { "" } else { " (cwd does not exist)" };
+                format!("shell spawn in {cwd:?}{hint}: {e}")
+            })?;
 
         let stdin = child.stdin.take().ok_or("no stdin")?;
         let stdout = child.stdout.take().ok_or("no stdout")?;

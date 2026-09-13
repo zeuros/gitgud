@@ -44,18 +44,15 @@ async function injectAnnotations(): Promise<void> {
   await inject(engineSrc);
 }
 
-async function annotate(
-  selector: string,
+type Point = { x: number; y: number };
+
+/** Draw the annotation with its arrow tipping at `pt`, hold it, then clear it. */
+async function annotateAt(
+  pt: Point | null,
   text: string,
-  side: 'right' | 'bottom' = 'right',
+  side: 'right' | 'left' | 'bottom' = 'right',
   ms = 3000,
 ): Promise<void> {
-  const pt = await browser.execute((sel: string) => {
-    const el = document.querySelector(sel);
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  }, selector);
   if (!pt) return;
   await browser.execute(
     (t: string, x: number, y: number, s: string) => (window as any).__annDraw?.(t, x, y, s),
@@ -65,11 +62,32 @@ async function annotate(
   await browser.execute(() => (window as any).__annClear?.());
 }
 
+/** Centre of the first element matching `selector`, or null if it's absent / not laid out. */
+async function centerOf(selector: string): Promise<Point | null> {
+  return browser.execute((sel: string) => {
+    const r = document.querySelector(sel)?.getBoundingClientRect();
+    if (!r?.width || !r.height) return null;
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }, selector);
+}
+
+/** First row of the "Staged files" list — panel 1 of the commit section's vertical splitter. */
+const targetFirstStagedFile = () => centerOf('gitgud-make-a-commit [data-index="1"] tbody tr');
+
+async function annotate(
+  selector: string,
+  text: string,
+  side: 'right' | 'left' | 'bottom' = 'right',
+  ms = 3000,
+): Promise<void> {
+  await annotateAt(await centerOf(selector), text, side, ms);
+}
+
 /** Annotate pointing at the first element matching any of `selectors` (first that exists wins). */
 async function annotateFirst(
   selectors: string[],
   text: string,
-  side: 'right' | 'bottom' = 'right',
+  side: 'right' | 'left' | 'bottom' = 'right',
   ms = 3000,
 ): Promise<void> {
   const pt = await browser.execute((sels: string[]) => {
@@ -82,13 +100,7 @@ async function annotateFirst(
     }
     return null;
   }, selectors);
-  if (!pt) return;
-  await browser.execute(
-    (t: string, x: number, y: number, s: string) => (window as any).__annDraw?.(t, x, y, s),
-    text, pt.x, pt.y, side,
-  );
-  await browser.pause(ms);
-  await browser.execute(() => (window as any).__annClear?.());
+  await annotateAt(pt, text, side, ms);
 }
 
 // ── Spec ──────────────────────────────────────────────────────────────────────
@@ -135,7 +147,7 @@ describe('demo recording', () => {
       const styleFile = (await allByText('li', 'styles.css'))[0];
       if (styleFile) await jsClick(styleFile);
       await waitForDiff();
-      await annotate('gitgud-monaco-editor-view', 'Rich diffs in the Monaco editor\nThe same engine as VS Code', 'bottom', 3500);
+      await annotate('gitgud-monaco-editor-view', 'Rich diffs in the Monaco editor\n(VS Code style)', 'bottom', 3500);
     }
 
     // ── 3. Click "implement add" commit ───────────────────────────────────────
@@ -173,7 +185,7 @@ describe('demo recording', () => {
     // ── 5. Working directory with unstaged changes ────────────────────────────
     await jsClick(await $$('tr.commit-row').then(r => r[0]));
     await beat(1000);
-    await annotate('.p-splitter-panel:first-child h4', 'Live working directory\nUpdates the moment you save', 'right', 3000);
+    await annotate('.p-splitter-panel:first-child h4', 'Live working directory\nUpdates the moment you save', 'left', 3000);
 
     const unstagedFile = await $('//td[contains(.,"app.js")]');
     if (await unstagedFile.isExisting()) {
@@ -235,6 +247,9 @@ describe('demo recording', () => {
           .some(h => /Staged files \([1-9]/.test(h.textContent ?? ''))
       ), { timeout: 8000, interval: 300 }).catch(() => {});
       await beat(800);
+
+      // Point at the staged file row itself before reopening the diff
+      await annotateAt(await targetFirstStagedFile(), 'Check on your freshly staged changes', 'left', 3000);
 
       // Re-open the staged diff: click the app.js row inside the "Staged files" panel
       await browser.execute(() => {
