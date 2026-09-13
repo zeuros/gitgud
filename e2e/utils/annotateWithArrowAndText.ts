@@ -7,7 +7,7 @@ import {Locator, Page} from '@playwright/test';
 import * as path from 'path';
 import {see} from './helpers';
 
-export type Side = 'right' | 'bottom';
+export type Side = 'right' | 'left' | 'bottom';
 
 const ROUGH_JS  = path.join(__dirname, '../../node_modules/roughjs/bundled/rough.js');
 const ENGINE_JS = path.join(__dirname, 'annotation-engine.js');

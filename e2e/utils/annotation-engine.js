@@ -43,8 +43,9 @@
     // ── Tail position (label anchor) ──────────────────────────────────────────
     const tailMargin = 200;
     let tailX = tipX, tailY = tipY;
-    if (side === 'right') tailX = tipX + tailMargin;
-    else  /* bottom */    tailY = tipY + tailMargin;
+    if (side === 'right')     tailX = tipX + tailMargin;
+    else if (side === 'left') tailX = tipX - tailMargin;
+    else  /* bottom */        tailY = tipY + tailMargin;
 
     // ── Curved arrow stem ─────────────────────────────────────────────────────
     const stemMidX      = (tailX + tipX) / 2;
@@ -92,6 +93,12 @@
       boxLeft    = tailX + boxGap;
       boxTop     = tailY - boxHeight / 2;
       textX      = tailX + padding + boxGap;
+      textY      = boxTop + padding + lineHeight * 0.75;
+      textAnchor = 'start';
+    } else if (side === 'left') {
+      boxLeft    = tailX - boxGap - boxWidth;
+      boxTop     = tailY - boxHeight / 2;
+      textX      = boxLeft + padding;
       textY      = boxTop + padding + lineHeight * 0.75;
       textAnchor = 'start';
     } else { // 'bottom'

@@ -47,7 +47,7 @@ async function injectAnnotations(): Promise<void> {
 async function annotate(
   selector: string,
   text: string,
-  side: 'right' | 'bottom' = 'right',
+  side: 'right' | 'left' | 'bottom' = 'right',
   ms = 3000,
 ): Promise<void> {
   const pt = await browser.execute((sel: string) => {
@@ -69,7 +69,7 @@ async function annotate(
 async function annotateFirst(
   selectors: string[],
   text: string,
-  side: 'right' | 'bottom' = 'right',
+  side: 'right' | 'left' | 'bottom' = 'right',
   ms = 3000,
 ): Promise<void> {
   const pt = await browser.execute((sels: string[]) => {
@@ -173,7 +173,7 @@ describe('demo recording', () => {
     // ── 5. Working directory with unstaged changes ────────────────────────────
     await jsClick(await $$('tr.commit-row').then(r => r[0]));
     await beat(1000);
-    await annotate('.p-splitter-panel:first-child h4', 'Live working directory\nUpdates the moment you save', 'right', 3000);
+    await annotate('.p-splitter-panel:first-child h4', 'Live working directory\nUpdates the moment you save', 'left', 3000);
 
     const unstagedFile = await $('//td[contains(.,"app.js")]');
     if (await unstagedFile.isExisting()) {

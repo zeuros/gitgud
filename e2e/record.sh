@@ -17,6 +17,14 @@ OUTPUT_WEBM="$REPO_ROOT/docs/show.webm"
 
 cd "$REPO_ROOT"
 
+# The demo runs the prebuilt release binary (see wdio.conf.ts), which embeds the Angular
+# bundle at compile time: rebuild it if sources are newer, or the video shows an old UI
+BINARY="src-tauri/target/release/gitgud"
+if [[ ! -x "$BINARY" || -n "$(find src src-tauri/src src-tauri/Cargo.toml package.json -type f -newer "$BINARY" -print -quit)" ]]; then
+  echo "[record] release binary is missing or stale, rebuilding..."
+  npx tauri build --no-bundle
+fi
+
 cleanup() {
   [[ -n "${WDIO_PID:-}" ]]   && kill "$WDIO_PID"      2>/dev/null && wait "$WDIO_PID"      2>/dev/null || true
   [[ -n "${FFMPEG_PID:-}" ]] && kill -INT "$FFMPEG_PID" 2>/dev/null && wait "$FFMPEG_PID" 2>/dev/null || true
