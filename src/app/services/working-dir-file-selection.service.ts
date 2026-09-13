@@ -40,6 +40,9 @@ export class WorkingDirFileSelectionService {
   };
 
   onStagingFileSelectionChange = (files: WorkingDirectoryFileChange[], staged: boolean) => {
+    // PrimeNG emits [] before [row] on each click; ignore it so re-click detection sees the real previous selection
+    if (!files.length) return;
+
     const current = staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles();
 
     const isReclick = files.length === 1 && current.length === 1 && current[0].path === files[0].path;
