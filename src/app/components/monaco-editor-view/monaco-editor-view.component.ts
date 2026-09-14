@@ -27,7 +27,7 @@ import {combineLatest, from} from 'rxjs';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {type ViewType} from '../../models/git-repository';
-import {registerMonacoEditorThemes, renderWindowsShitEol} from './monaco-utils';
+import {disableMonacoLanguageServices, registerMonacoEditorThemes, renderWindowsShitEol} from './monaco-utils';
 import {ThemeService} from '../../services/theme.service';
 import {SelectButton} from 'primeng/selectbutton';
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
@@ -79,10 +79,10 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     readOnly: true,
     automaticLayout: true,        // polls container size every ~100 ms; acceptable for a single editor
     ignoreTrimWhitespace: false,
-    renderWhitespace: 'all',
-    renderControlCharacters: true,
+    renderWhitespace: 'none',
+    renderControlCharacters: false,
     unusualLineTerminators: 'off',
-    diffAlgorithm: 'advanced',
+    diffAlgorithm: 'legacy',
     useInlineViewWhenSpaceIsLimited: true,
     cursorBlinking: 'phase',      // 'smooth' drives continuous CSS animation; 'phase' is simpler
     cursorSmoothCaretAnimation: 'off',
@@ -97,11 +97,24 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     folding: false,               // fold-range computation scans visible lines on every model change
     links: false,                 // URL tokenization runs over every visible line continuously
     fontLigatures: false,         // ligature shaping adds per-character GPU cost
+    colorDecorators: false,       // color swatches: a color request and a decoration per CSS color
+    minimap: {enabled: false},    // whole-file canvas; the diff overview ruler already locates changes
+    stickyScroll: {enabled: false},                      // recomputes the scope outline on load and scroll
+    bracketPairColorization: {enabled: false},           // parses the whole model on load
+    guides: {bracketPairs: false, indentation: false},   // painted on every visible line
+    matchBrackets: 'never',
+    occurrencesHighlight: 'off',  // word scans on every cursor move
+    selectionHighlight: false,
+    unicodeHighlight: {ambiguousCharacters: false},      // editor-worker round trip per model; invisible chars stay highlighted
+    renderGutterMenu: false,      // diff gutter revert menu: read-only, staging goes through our context menu
+    renderMarginRevertIcon: false,
+    experimentalWhitespaceRendering: 'font', // cheaper than SVG glyphs with renderWhitespace: 'all'
   };
   private lastRevealedPath: string | undefined;
 
   constructor() {
     registerMonacoEditorThemes();
+    disableMonacoLanguageServices();
     effect(() => editor.setTheme(this.theme.tokens().monacoTheme));
 
     effect((onCleanup) => {
