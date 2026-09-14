@@ -24,5 +24,6 @@ import {identIcon} from '../utils/commit-utils';
   standalone: true,
 })
 export class IdenticonPipe implements PipeTransform {
-  transform = (email: string) => `data:image/png;base64,${identIcon(email).toString()}`;
+  // identIcon hashes through Tauri IPC, so the data URL arrives asynchronously: pipe the result through async
+  transform = (email: string) => identIcon(email).then(icon => `data:image/png;base64,${icon.toString()}`);
 }

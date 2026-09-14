@@ -6,6 +6,6 @@
          alt="user avatar"/>
 } @else {
     <img animate.enter="fade-slide-in"
-         [src]="identity().email | identicon"
+         [src]="identity().email | identicon | async"
          alt="user avatar identicon"/>
 }
