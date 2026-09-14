@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {editor} from 'monaco-editor';
+import {css, editor, html, json, typescript} from 'monaco-editor';
 import {once} from 'lodash-es';
 import ITextModel = editor.ITextModel;
 
@@ -55,6 +55,26 @@ export const registerMonacoEditorThemes = once(() => {
   });
 });
 
+// The diff view is read-only: language services (diagnostics, colors, symbols, completions…)
+// only cost worker startups (the TS worker alone is 6.8 MB) and main-thread decoration work.
+// Syntax highlighting comes from Monarch tokenizers on the main thread and is unaffected.
+export const disableMonacoLanguageServices = once(() => {
+  const off = {
+    completionItems: false, hovers: false, documentSymbols: false, definitions: false, references: false,
+    documentHighlights: false, rename: false, colors: false, foldingRanges: false, diagnostics: false,
+    selectionRanges: false, documentFormattingEdits: false, documentRangeFormattingEdits: false, links: false,
+    signatureHelp: false, onTypeFormattingEdits: false, codeActions: false, inlayHints: false,
+  };
+
+  for (const defaults of [typescript.typescriptDefaults, typescript.javascriptDefaults]) {
+    defaults.setModeConfiguration(off);
+    defaults.setDiagnosticsOptions({noSemanticValidation: true, noSyntaxValidation: true, noSuggestionDiagnostics: true});
+  }
+  for (const defaults of [css.cssDefaults, css.scssDefaults, css.lessDefaults]) defaults.setModeConfiguration(off);
+  for (const defaults of [html.htmlDefaults, html.handlebarDefaults, html.razorDefaults]) defaults.setModeConfiguration(off);
+  // JSON colouring comes from this language service's own main-thread tokenizer
+  json.jsonDefaults.setModeConfiguration({...off, tokens: true});
+});
 
 // Monaco consumes \r in \r\n as a line separator so it never reaches renderControlCharacters.
 // Replaced \r with ␍ (U+240D SYMBOL FOR CARRIAGE RETURN) so it survives as visible line content.
