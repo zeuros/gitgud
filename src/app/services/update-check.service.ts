@@ -23,9 +23,10 @@ import {catchError, EMPTY, timer} from 'rxjs';
 interface GithubRelease {
   tag_name: string;
   html_url: string;
+  assets: { name: string; browser_download_url: string }[];
 }
 
-type Release = { version: string; url: string };
+type Release = { version: string; url: string; downloadUrl?: string };
 
 const VERSION_CHECKED_KEY = 'update-last-checked';
 const RELEASE_KEY = 'update-available-release';
@@ -54,7 +55,10 @@ export class UpdateCheckService {
     timer(0, ONE_HOUR_MS).subscribe(this.checkForDailyUpdate);
   }
 
-  downloadUpdate = () => window.tauri.openExternal(this.appDownloadUrl(this.availableRelease()!.version));
+  downloadUpdate = () => {
+    const {url, downloadUrl} = this.availableRelease()!;
+    return window.tauri.openExternal(downloadUrl ?? url);
+  };
 
   private checkForDailyUpdate = () => {
     const lastChecked = Number(localStorage.getItem(VERSION_CHECKED_KEY) ?? 0);
@@ -63,27 +67,32 @@ export class UpdateCheckService {
     localStorage.setItem(VERSION_CHECKED_KEY, String(Date.now()));
     this.http.get<GithubRelease>('https://api.github.com/repos/zeuros/gitgud/releases/latest')
       .pipe(catchError(() => EMPTY)) // It's ok to not have internet :)
-      .subscribe(({tag_name, html_url}) => {
+      .subscribe(({tag_name, html_url, assets}) => {
         const latest = tag_name.replace(/^v/, '');
         if (this.isNewer(latest, this.currentVersion)) {
-          const release = {version: latest, url: html_url};
+          const assetPattern = this.getAssetPattern();
+          const downloadUrl = assets?.find(({name}) => assetPattern.test(name))?.browser_download_url;
+          const release = {version: latest, url: html_url, downloadUrl};
           this.availableRelease.set(release);
           localStorage.setItem(RELEASE_KEY, JSON.stringify(release));
         }
       });
   };
 
-  private appDownloadUrl = (version: string) => `https://github.com/zeuros/gitgud/releases/download/v${version}/${this.getAssetName(version)}`;
+  // Matches Tauri bundle names, e.g. GitGud_2.6.0_amd64.deb, GitGud-2.6.0-1.x86_64.rpm, GitGud_2.6.0_x64-setup.exe
+  private getAssetPattern = () => {
+    const {platform, arch, execPath, env} = window.tauri.process;
+    const arm = arch === 'arm64';
 
-  private getAssetName = (version: string) => {
-    const {platform, arch, execPath} = window.tauri.process;
+    if (platform === 'win32') return new RegExp(`_${arm ? 'arm64' : 'x64'}-setup\\.exe$`);
+    if (platform === 'darwin') return new RegExp(`_${arm ? 'aarch64' : 'x64'}\\.dmg$`);
 
-    if (platform === 'win32') return `GitGud-${version}-Windows-Setup.exe`;
-    if (platform === 'darwin') return `GitGud-${version}-Mac-${arch}.dmg`;
-
-    // Linux: use build-time injected format, fall back to execPath heuristic
-    const linuxPackageFormat = window.tauri.packageFormat ?? (execPath.includes('/rpm/') || execPath.endsWith('.rpm') ? 'rpm' : 'deb');
-    return `GitGud-${version}-Linux-${arch}.${linuxPackageFormat}`;
+    // Linux: use build-time injected format, fall back to env / execPath heuristic
+    const linuxPackageFormat = window.tauri.packageFormat
+      ?? (env?.['APPIMAGE'] ? 'AppImage' : execPath.includes('/rpm/') || execPath.endsWith('.rpm') ? 'rpm' : 'deb');
+    if (linuxPackageFormat === 'AppImage') return new RegExp(`_${arm ? 'aarch64' : 'amd64'}\\.AppImage$`);
+    if (linuxPackageFormat === 'rpm') return new RegExp(`\\.${arm ? 'aarch64' : 'x86_64'}\\.rpm$`);
+    return new RegExp(`_${arm ? 'arm64' : 'amd64'}\\.deb$`);
   };
 
   private isNewer = (latest: string, current: string) => {

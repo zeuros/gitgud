@@ -63,6 +63,11 @@ jobs:
 
       - run: npm ci --legacy-peer-deps
 
+      # Stamp package.json / tauri.conf.json / Cargo.toml with the tag version so bundles and appVersion match the release
+      - name: Sync version from tag
+        shell: bash
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
+
       - run: npm run build:angular
 
       - name: Build Tauri
