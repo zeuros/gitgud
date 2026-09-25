@@ -84,3 +84,22 @@ export const renderWindowsShitEol = (s: string) => s.replace(/\r\n/g, '␍\n');
 // feeding content to Monaco so it would render as visible content. Patch bytes must
 // contain the real \r, not the Unicode symbol.
 export const realLine = (model: ITextModel, i: number) => model.getLineContent(i).replace(/␍/g, '\r');
+const imageMimeTypes: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  bmp: 'image/bmp',
+  ico: 'image/x-icon',
+  avif: 'image/avif',
+};
+
+/** Mime type of a raster image path, undefined otherwise (svg stays a text diff) */
+export const imageMimeType = (path: string) => imageMimeTypes[path.split('.').pop()?.toLowerCase() ?? ''];
+
+/** Past this size (5MB text, 50MB image), the file isn't loaded at all */
+export const maxDisplaySize = (path: string) => (imageMimeType(path) ? 50 : 5) * 1024 * 1024;
+
+/** Same heuristic as git: a NUL in the first 8000 characters means binary */
+export const isBinaryContent = (text: string) => text.slice(0, 8000).includes('\0');

@@ -2,23 +2,24 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::Duration;
-use notify::{RecommendedWatcher, RecursiveMode, Watcher};
-use notify_debouncer_full::{new_debouncer, DebounceEventResult, Debouncer, FileIdMap};
+use notify::{RecommendedWatcher, RecursiveMode};
+use notify_debouncer_full::{new_debouncer, DebounceEventResult, Debouncer, RecommendedCache};
 use tauri::{AppHandle, Emitter};
 
-static WATCHERS: Mutex<Option<HashMap<String, Debouncer<RecommendedWatcher, FileIdMap>>>> =
+static WATCHERS: Mutex<Option<HashMap<String, Debouncer<RecommendedWatcher, RecommendedCache>>>> =
     Mutex::new(None);
 
 fn registry() -> std::sync::MutexGuard<
     'static,
-    Option<HashMap<String, Debouncer<RecommendedWatcher, FileIdMap>>>,
+    Option<HashMap<String, Debouncer<RecommendedWatcher, RecommendedCache>>>,
 > {
     WATCHERS.lock().unwrap()
 }
 
 /// Starts watching one or more paths; emits `watcher-event:{id}` on changes.
 /// Mirrors the chokidar.watch() API surface from the Electron preload.
-/// Events are debounced by 300 ms and coalesced per path via FileIdMap (inode-stable).
+/// Events are debounced by 300 ms and coalesced per path via the debouncer's
+/// RecommendedCache (inode-stable where the platform backend needs it).
 #[tauri::command]
 pub fn watch_paths(
     app: AppHandle,
@@ -94,14 +95,11 @@ pub fn watch_paths(
     )
     .map_err(|e| e.to_string())?;
 
+    // Debouncer::watch() both starts the watcher and registers the path as a cache root.
     for p in &paths {
         debouncer
-            .watcher()
             .watch(Path::new(p), mode)
             .map_err(|e| e.to_string())?;
-        debouncer
-            .cache()
-            .add_root(Path::new(p), mode);
     }
 
     let mut guard = registry();

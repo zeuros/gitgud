@@ -5,11 +5,13 @@
     </span>
     <div class="editor-actions">
 
+        @if (content().kind === 'text') {
         <p-select-button [allowEmpty]="false" [options]="viewOptions" [ngModel]="viewType()" (ngModelChange)="setViewType($event)" optionValue="value" class="display-modes">
             <ng-template #item let-opt>
                 <i [class]="opt.icon"></i> {{ opt.label }}
             </ng-template>
         </p-select-button>
+        }
 
         <p-button
                 styleClass="p-button-sm p-button-text p-button-secondary"
@@ -18,4 +20,42 @@
     </div>
 </div>
 
-<div #diffEditor class="diff-editor-container"></div>
+<!-- The monaco container stays in the DOM: the editor is created once in ngAfterViewInit -->
+<div #diffEditor class="diff-editor-container" [class.hidden]="content().kind !== 'text'"></div>
+
+@if (content().kind === 'binary') {
+    <div class="binary-placeholder">
+        <i class="fa fa-file mr-2"></i> Binary file
+    </div>
+}
+
+@if (content(); as content) {
+    @if (content.kind === 'too-large') {
+        <div class="binary-placeholder">
+            <i class="fa fa-weight-hanging mr-2"></i> File too large to display ({{ formatSize(content.size) }})
+        </div>
+    }
+}
+
+@if (images(); as images) {
+    <div class="image-diff">
+        @for (side of imageSides; track side) {
+            @let image = images[side];
+            <div class="image-side" [class]="side">
+                <div class="image-side-header">
+                    <span class="image-side-title">{{ side === 'before' ? 'Before' : 'After' }}</span>
+                    @if (image.url) {
+                        <span class="image-side-meta">{{ imageMeta(side, image.size) }}</span>
+                    }
+                </div>
+                <div class="image-frame">
+                    @if (image.url) {
+                        <img [src]="image.url" [alt]="side" (load)="onImageLoad(side, $event)"/>
+                    } @else {
+                        <span class="image-missing">{{ side === 'before' ? 'Added file' : 'Deleted file' }}</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

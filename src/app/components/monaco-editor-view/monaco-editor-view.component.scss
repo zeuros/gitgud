@@ -12,3 +12,75 @@
 .display-modes {
   margin-left: auto;
 }
+
+.hidden {
+  display: none;
+}
+
+.binary-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color-secondary);
+  font-size: 1.1rem;
+}
+
+.image-diff {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.image-side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+
+  &.before .image-side-title { color: #e06c75; }
+  &.after .image-side-title { color: #98c379; }
+}
+
+.image-side-header {
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+  font-size: .85rem;
+}
+
+.image-side-title {
+  font-weight: 600;
+}
+
+.image-side-meta {
+  color: var(--text-color-secondary);
+  white-space: nowrap;
+}
+
+// Checkerboard so transparent pixels stay visible in both themes
+.image-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 4px;
+  background: repeating-conic-gradient(#8882 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+  overflow: hidden;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+}
+
+.image-missing {
+  color: var(--text-color-secondary);
+  font-style: italic;
+}

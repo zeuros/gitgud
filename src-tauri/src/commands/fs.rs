@@ -32,6 +32,18 @@ pub fn fs_read_file(path: String) -> Result<String, String> {
     fs::read_to_string(&path).map_err(|e| e.to_string())
 }
 
+/// Reads a file as raw bytes (arrives as an ArrayBuffer in JS) — for binary or non-UTF-8 content.
+#[tauri::command]
+pub fn fs_read_file_bytes(path: String) -> Result<tauri::ipc::Response, String> {
+    fs::read(&path).map(tauri::ipc::Response::new).map_err(|e| e.to_string())
+}
+
+/// Returns the file size in bytes, without reading it.
+#[tauri::command]
+pub fn fs_size(path: String) -> Result<u64, String> {
+    fs::metadata(&path).map(|m| m.len()).map_err(|e| e.to_string())
+}
+
 /// Returns true if the path exists.
 #[tauri::command]
 pub fn fs_exists(path: String) -> bool {

@@ -12,6 +12,8 @@ interface FsApi {
   isFile: (path: string) => Promise<boolean>;
   writeFile: (path: string, data: string) => Promise<void>;
   readFile: (path: string) => Promise<string>;
+  readFileBytes: (path: string) => Promise<ArrayBuffer>;
+  size: (path: string) => Promise<number>;
   exists: (path: string) => Promise<boolean>;
   mtime: (path: string) => Promise<number>;
 }
@@ -60,6 +62,7 @@ interface TauriApi {
     }) => Promise<string[] | null>;
   };
   execFile: (cmd: string, args: string[], options: ExecOptions) => Promise<{stdout: string; stderr: string}>;
+  execFileBytes: (cmd: string, args: string[], options: ExecOptions) => Promise<ArrayBuffer>;
   spawnSync: (cmd: string, args: string[], options: SpawnOptions & {input?: string}) => Promise<SpawnSyncResult>;
   spawn: (cmd: string, args: string[], options: SpawnOptions) => Promise<string>;
   zoom: {

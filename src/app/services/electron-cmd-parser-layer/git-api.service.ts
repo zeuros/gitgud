@@ -63,6 +63,12 @@ export class GitApiService {
     );
   };
 
+  // Raw stdout bytes, for binary content (git show of an image blob…)
+  gitBytes = (args: string[]) =>
+    this.waitForLock().pipe(
+      switchMap(() => from(window.tauri.execFileBytes(this.settings.gitBin, args, {cwd: this.currentRepo.cwd() ?? undefined, env: window.tauri.process.env}))),
+    );
+
   // User git calls
   gitAction = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];

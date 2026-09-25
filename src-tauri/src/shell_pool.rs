@@ -86,11 +86,12 @@ impl Shell {
             return Err(format!("stdin write: {e}"));
         }
 
-        // Accumulate stdout lines until the sentinel line appears
-        let mut output = String::new();
+        // Accumulate stdout lines until the sentinel line appears. Read raw bytes: binary blobs
+        // (git show of an image…) aren't valid UTF-8 and read_line would fail and kill the shell
+        let mut output: Vec<u8> = Vec::new();
         loop {
-            let mut line = String::new();
-            match self.reader.read_line(&mut line).await {
+            let mut line: Vec<u8> = Vec::new();
+            match self.reader.read_until(b'\n', &mut line).await {
                 Ok(0) => {
                     self.dead = true;
                     return Err("shell closed unexpectedly".to_string());
@@ -103,11 +104,12 @@ impl Shell {
             }
 
             // Sentinel line: "GITGUD_<id>:<exit_code>\n"
-            let trimmed = line.trim_end_matches(['\n', '\r']);
-            if let Some(code_str) = trimmed.strip_prefix(&sentinel) {
-                let code: i32 = code_str.parse().unwrap_or(-1);
+            let trimmed = line.trim_ascii_end();
+            if let Some(code_str) = trimmed.strip_prefix(sentinel.as_bytes()) {
+                let code: i32 = std::str::from_utf8(code_str).ok().and_then(|c| c.parse().ok()).unwrap_or(-1);
                 // Drop the blank line that printf's leading \n produced
-                if output.ends_with('\n') { output.pop(); }
+                if output.ends_with(b"\n") { output.pop(); }
+                let output = String::from_utf8_lossy(&output).into_owned();
                 return if code == 0 {
                     Ok(output)
                 } else {
@@ -115,7 +117,7 @@ impl Shell {
                 };
             }
 
-            output.push_str(&line);
+            output.extend_from_slice(&line);
         }
     }
 }
