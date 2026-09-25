@@ -17,7 +17,8 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {AppFileStatusKind, FileChange} from '../lib/github-desktop/model/status';
+import {AppFileStatusKind, FileChange, isCommittedFileChange} from '../lib/github-desktop/model/status';
+import {type WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
 import {DiffHunk, DiffHunkHeader, type IRawDiff} from '../lib/github-desktop/model/diff/raw-diff';
 import {DiffLine, DiffLineType} from '../lib/github-desktop/model/diff/diff-line';
 import {throwEx} from '../utils/utils';
@@ -25,10 +26,25 @@ import {getHunkHeaderExpansionType} from '../lib/github-desktop/diff/diff-hunks'
 import {getLargestLineNumber} from '../lib/github-desktop/diff/diff-parser';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {type ChangeSet} from '../lib/github-desktop/model/change-set';
-import {catchError, forkJoin, map, Observable, of} from 'rxjs';
+import {catchError, combineLatest, forkJoin, from, map, Observable, of} from 'rxjs';
 import {parseRawLogWithNumstat} from '../lib/github-desktop/commit-files-changes';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {mergeChangeSets} from '../lib/github-desktop/diff/diff-utils';
+
+/** One side of a diff: a git revision ('' = index), or the working directory */
+export const WORKDIR = Symbol('workdir');
+export type DiffSide = string | typeof WORKDIR;
+
+/** Which versions of the file a diff compares */
+export const diffSides = (file: FileChange): {before: DiffSide, after: DiffSide} => {
+  if (isCommittedFileChange(file)) return {before: `${file.commitish}^`, after: file.commitish};
+  return (file as WorkingDirectoryFileChange).staged
+    ? {before: 'HEAD', after: ''}   // staged: HEAD vs index
+    : {before: '', after: WORKDIR}; // unstaged: index vs workdir
+};
+
+// ignoreBOM keeps the BOM like `git show` does, otherwise it would show up as a diff
+const utf8Decoder = new TextDecoder('utf-8', {ignoreBOM: true});
 
 // in which case s defaults to 1
 const diffHeaderRe = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
@@ -563,6 +579,39 @@ export class FileDiffService {
   /** Full content of a file at a given git revision. Returns empty string if the file didn't exist. */
   getFileAtRevision = (path: string, revision = 'HEAD') =>
     this.gitApi.git(['show', `${revision}:${path}`]).pipe(catchError(() => of('')));
+
+  /** Raw bytes of a file at a given git revision ('' = index). Empty buffer if the file didn't exist. */
+  getFileBytesAtRevision = (path: string, revision = 'HEAD') =>
+    this.gitApi.gitBytes(['show', `${revision}:${path}`]).pipe(catchError(() => of(new ArrayBuffer(0))));
+
+  /** Size in bytes of a file at a given git revision ('' = index), without reading it. 0 if the file didn't exist. */
+  getFileSizeAtRevision = (path: string, revision = 'HEAD') =>
+    this.gitApi.git(['cat-file', '-s', `${revision}:${path}`]).pipe(map(Number), catchError(() => of(0)));
+
+  // A missing file (added / deleted side) reads as empty
+  getFileSize = (path: string, side: DiffSide) =>
+    side === WORKDIR
+      ? from(window.tauri.fs.size(this.workDirPath(path))).pipe(catchError(() => of(0)))
+      : this.getFileSizeAtRevision(path, side);
+
+  /** Largest size of the two diffed versions of a file, read without loading them */
+  getDiffSize = (file: FileChange) => {
+    const {before, after} = diffSides(file);
+    return combineLatest([this.getFileSize(file.path, before), this.getFileSize(file.path, after)])
+      .pipe(map(sizes => Math.max(...sizes)));
+  };
+
+  getFileBytes = (path: string, side: DiffSide) =>
+    side === WORKDIR
+      ? from(window.tauri.fs.readFileBytes(this.workDirPath(path))).pipe(catchError(() => of(new ArrayBuffer(0))))
+      : this.getFileBytesAtRevision(path, side);
+
+  getFileText = (path: string, side: DiffSide) =>
+    side === WORKDIR
+      ? this.getFileBytes(path, side).pipe(map(bytes => utf8Decoder.decode(bytes)))
+      : this.getFileAtRevision(path, side);
+
+  private workDirPath = (path: string) => window.tauri.path.resolve(this.currentRepo.cwd()!, path);
 
   getChangedFilesForGivenCommit = (sha: string) =>
     this.gitApi.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])

@@ -42,6 +42,8 @@ async function buildBridge() {
       isFile: (path: string) => invoke<boolean>('fs_is_file', {path}),
       writeFile: (path: string, data: string) => invoke<void>('fs_write_file', {path, data}),
       readFile: (path: string) => invoke<string>('fs_read_file', {path}),
+      readFileBytes: (path: string) => invoke<ArrayBuffer>('fs_read_file_bytes', {path}),
+      size: (path: string) => invoke<number>('fs_size', {path}),
       exists: (path: string) => invoke<boolean>('fs_exists', {path}),
       mtime: (path: string) => invoke<number>('fs_mtime', {path}),
     },
@@ -124,6 +126,9 @@ async function buildBridge() {
 
     execFile: (cmd: string, args: string[], options: Record<string, unknown>) =>
       invoke<{ stdout: string; stderr: string }>('exec_file', {cmd, args, options}),
+
+    execFileBytes: (cmd: string, args: string[], options: Record<string, unknown>) =>
+      invoke<ArrayBuffer>('exec_file_bytes', {cmd, args, options}),
 
     spawnSync: (cmd: string, args: string[], options: Record<string, unknown>) =>
       invoke<{ stdout: string; stderr: string; status: number | null }>('spawn_sync_cmd', {cmd, args, options}),

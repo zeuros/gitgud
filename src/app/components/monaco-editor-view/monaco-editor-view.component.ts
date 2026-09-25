@@ -17,17 +17,17 @@
  */
 
 import {type AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, type OnDestroy, signal, ViewChild} from '@angular/core';
-import {CommittedFileChange, FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
+import {FileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {editor, Uri} from 'monaco-editor';
-import {FileDiffService} from '../../services/file-diff.service';
+import {diffSides, FileDiffService} from '../../services/file-diff.service';
 import {FormsModule} from '@angular/forms';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
-import {combineLatest, from} from 'rxjs';
+import {combineLatest, EMPTY, switchMap, tap} from 'rxjs';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {type ViewType} from '../../models/git-repository';
-import {disableMonacoLanguageServices, registerMonacoEditorThemes, renderWindowsShitEol} from './monaco-utils';
+import {disableMonacoLanguageServices, imageMimeType, isBinaryContent, maxDisplaySize, registerMonacoEditorThemes, renderWindowsShitEol} from './monaco-utils';
 import {ThemeService} from '../../services/theme.service';
 import {SelectButton} from 'primeng/selectbutton';
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
@@ -45,6 +45,25 @@ interface DiffModels {
   before: DiffModel,
   after: DiffModel
 }
+
+/** One side of an image diff; undefined url when the file doesn't exist on that side */
+interface ImageSide {
+  url?: string;
+  size: number;
+}
+
+type ImageSideName = 'before' | 'after';
+
+type DiffContent =
+  | {kind: 'text'}
+  | {kind: 'binary'}
+  | {kind: 'too-large', size: number}
+  | {kind: 'image', before: ImageSide, after: ImageSide};
+
+const formatSize = (bytes: number) =>
+  bytes < 1024 ? `${bytes} B`
+    : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB`
+      : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 @Component({
   standalone: true,
@@ -70,6 +89,13 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   fileToDiff = input<FileChange | null>();
   @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
   diffModels = signal<DiffModels | undefined>(undefined);
+  protected content = signal<DiffContent>({kind: 'text'});
+  protected images = computed(() => {
+    const content = this.content();
+    return content.kind === 'image' ? content : undefined;
+  });
+  protected readonly imageSides = ['before', 'after'] as const;
+  private imageDimensions = signal<Record<ImageSideName, string | undefined>>({before: undefined, after: undefined});
 
   protected viewType = computed(() => this.currentRepo.editorConfig()!.viewType);
 
@@ -121,26 +147,13 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       const file = this.fileToDiff();
       if (!file) return;
 
-      const before$ = isCommittedFileChange(file)
-        ? this.fileDiff.getFileAtRevision(file.path, `${file.commitish}^`)
-        : ((file as WorkingDirectoryFileChange).staged
-          ? this.fileDiff.getFileAtRevision(file.path)        // staged: HEAD vs index
-          : this.fileDiff.getFileAtRevision(file.path, ''));  // unstaged: index vs workdir
-
-      const after$ = isWorkingDirectoryFileChange(file)
-        ? (file.staged
-          ? this.fileDiff.getFileAtRevision(file.path, '')   // git show :path  (index)
-          : from(window.tauri.fs.readFile(window.tauri.path.resolve(this.currentRepo.cwd()!, file.path))))
-        : this.fileDiff.getFileAtRevision(file.path, (file as CommittedFileChange).commitish);
-
-      const sub = combineLatest([before$, after$]).subscribe(([before, after]) => {
-        this.currentFile.set(isWorkingDirectoryFileChange(file) ? file : undefined);
-
-        this.diffModels.set({
-          before: {code: renderWindowsShitEol(before), fileName: file.path},
-          after: {code: renderWindowsShitEol(after), fileName: file.path},
-        });
-      });
+      // Check sizes first so a huge file is never loaded
+      const sub = this.fileDiff.getDiffSize(file).pipe(
+        switchMap(size =>
+          size > maxDisplaySize(file.path) ? this.showTooLarge(size)
+            : imageMimeType(file.path) ? this.showImageDiff(file)
+              : this.showTextDiff(file)),
+      ).subscribe();
       onCleanup(() => sub.unsubscribe());
     });
 
@@ -184,6 +197,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
 
   ngOnDestroy(): void {
+    this.setContent({kind: 'text'});
     const model = this.diffEditor()?.editor.getModel();
     model?.original.dispose();
     model?.modified.dispose();
@@ -194,6 +208,65 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   protected onEscape = () => this.fileDiffPanel.closeDiffView();
 
   protected setViewType = (viewType: ViewType) => this.currentRepo.update({editorConfig: {viewType}});
+
+  // Monaco only handles text: blobs that aren't valid UTF-8 (images, videos…) must be fetched as raw bytes
+  private showTextDiff(file: FileChange) {
+    const {before, after} = diffSides(file);
+    return combineLatest([this.fileDiff.getFileText(file.path, before), this.fileDiff.getFileText(file.path, after)]).pipe(tap(([before, after]) => {
+      if (isBinaryContent(before) || isBinaryContent(after)) {
+        this.currentFile.set(undefined);
+        this.setContent({kind: 'binary'});
+        return;
+      }
+
+      this.currentFile.set(isWorkingDirectoryFileChange(file) ? file : undefined);
+      this.setContent({kind: 'text'});
+      this.diffModels.set({
+        before: {code: renderWindowsShitEol(before), fileName: file.path},
+        after: {code: renderWindowsShitEol(after), fileName: file.path},
+      });
+    }));
+  }
+
+  private showTooLarge(size: number) {
+    this.currentFile.set(undefined);
+    this.setContent({kind: 'too-large', size});
+    return EMPTY;
+  }
+
+  private showImageDiff(file: FileChange) {
+    const {before, after} = diffSides(file);
+    const mime = imageMimeType(file.path);
+    const toSide = (bytes: ArrayBuffer): ImageSide => ({
+      url: bytes.byteLength ? URL.createObjectURL(new Blob([bytes], {type: mime})) : undefined,
+      size: bytes.byteLength,
+    });
+
+    return combineLatest([this.fileDiff.getFileBytes(file.path, before), this.fileDiff.getFileBytes(file.path, after)]).pipe(tap(([before, after]) => {
+      this.currentFile.set(undefined);
+      this.setContent({kind: 'image', before: toSide(before), after: toSide(after)});
+    }));
+  }
+
+  // Releases the previous image blobs
+  private setContent(content: DiffContent) {
+    const previous = this.content();
+    if (previous.kind === 'image')
+      [previous.before.url, previous.after.url].forEach(url => url && URL.revokeObjectURL(url));
+    this.imageDimensions.set({before: undefined, after: undefined});
+    this.content.set(content);
+  }
+
+  protected onImageLoad = (side: ImageSideName, event: Event) => {
+    const img = event.target as HTMLImageElement;
+    this.imageDimensions.update(d => ({...d, [side]: `${img.naturalWidth} × ${img.naturalHeight}`}));
+  };
+
+  // "1920 × 1080 · 245.3 KB"
+  protected readonly formatSize = formatSize;
+
+  protected imageMeta = (side: ImageSideName, bytes: number) =>
+    [this.imageDimensions()[side], formatSize(bytes)].filter(Boolean).join(' · ');
 
   private clearEditorWhenNoChangesToDisplay = (diffEditorEditor: IStandaloneDiffEditor) => () => {
     const changes = diffEditorEditor.getLineChanges();

@@ -59,10 +59,13 @@ pub fn run() {
             fs_is_file,
             fs_write_file,
             fs_read_file,
+            fs_read_file_bytes,
+            fs_size,
             fs_exists,
             fs_mtime,
             // process
             exec_file,
+            exec_file_bytes,
             spawn_sync_cmd,
             spawn_cmd,
             // watcher

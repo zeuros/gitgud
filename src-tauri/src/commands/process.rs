@@ -83,6 +83,33 @@ async fn exec_file_direct(
     })
 }
 
+/// Runs a command and returns its raw stdout bytes (an ArrayBuffer in JS), e.g. `git show` of a binary blob.
+/// Direct spawn: the shell pool is line/text oriented.
+#[tauri::command]
+pub async fn exec_file_bytes(
+    cmd: String,
+    args: Vec<String>,
+    options: ExecOptions,
+) -> Result<tauri::ipc::Response, String> {
+    let mut command = Command::new(&cmd);
+    command.args(&args);
+    command.stdin(Stdio::null());
+
+    if let Some(cwd) = &options.cwd {
+        command.current_dir(cwd);
+    }
+    if let Some(env) = &options.env {
+        command.envs(env);
+    }
+
+    let output = command.output().map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        let code = output.status.code().unwrap_or(-1);
+        return Err(format!("Process exited with code {code}\n{}", String::from_utf8_lossy(&output.stderr)));
+    }
+    Ok(tauri::ipc::Response::new(output.stdout))
+}
+
 /// Runs a command with optional stdin input, collecting full output — mirrors Electron's spawnSync.
 #[tauri::command]
 pub fn spawn_sync_cmd(
