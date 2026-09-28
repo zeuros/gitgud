@@ -142,7 +142,9 @@ export class GitRefreshService {
    * HEAD along with the type of change.
    */
   updateWorkingDirChanges = () => this.track(
-    this.gitApi.git(['status', '--porcelain', '-z', '--untracked-files=all', '--'])
+    // --no-optional-locks: don't opportunistically rewrite .git/index (lock contention with the
+    // user's own git, and it would bump the index mtime used by the focus-refresh signature)
+    this.gitApi.git(['--no-optional-locks', 'status', '--porcelain', '-z', '--untracked-files=all', '--'])
       .pipe(
         map(parseWorkingDirChanges),
         tap(workDirStatus => this.currentRepo.update({workDirStatus})),
