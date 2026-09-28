@@ -1,6 +1,8 @@
 use std::collections::HashMap;
-use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
+use tokio::io::AsyncWriteExt;
+// Async process API: std::process::Command::output() inside an async command blocks a tokio worker
+use tokio::process::Command;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -76,7 +78,7 @@ async fn exec_file_direct(
         command.envs(env);
     }
 
-    let output = command.output().map_err(|e| e.to_string())?;
+    let output = command.output().await.map_err(|e| e.to_string())?;
     Ok(ExecResult {
         stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
         stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
@@ -102,7 +104,7 @@ pub async fn exec_file_bytes(
         command.envs(env);
     }
 
-    let output = command.output().map_err(|e| e.to_string())?;
+    let output = command.output().await.map_err(|e| e.to_string())?;
     if !output.status.success() {
         let code = output.status.code().unwrap_or(-1);
         return Err(format!("Process exited with code {code}\n{}", String::from_utf8_lossy(&output.stderr)));
@@ -111,8 +113,9 @@ pub async fn exec_file_bytes(
 }
 
 /// Runs a command with optional stdin input, collecting full output — mirrors Electron's spawnSync.
+/// Async: a sync #[tauri::command] runs on the main thread and would freeze the UI meanwhile.
 #[tauri::command]
-pub fn spawn_sync_cmd(
+pub async fn spawn_sync_cmd(
     cmd: String,
     args: Vec<String>,
     options: SpawnSyncOptions,
@@ -140,13 +143,14 @@ pub fn spawn_sync_cmd(
         Err(e) => return SpawnSyncResult { stdout: String::new(), stderr: e.to_string(), status: Some(-1) },
     };
 
-    if let Some(input) = &options.input {
-        if let Some(mut stdin) = child.stdin.take() {
-            let _ = stdin.write_all(input.as_bytes());
-        }
+    // Feed stdin concurrently with reading output, so a large input can't deadlock on a full stdout pipe
+    if let (Some(input), Some(mut stdin)) = (options.input, child.stdin.take()) {
+        tokio::spawn(async move {
+            let _ = stdin.write_all(input.as_bytes()).await;
+        });
     }
 
-    match child.wait_with_output() {
+    match child.wait_with_output().await {
         Ok(output) => SpawnSyncResult {
             stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
             stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
@@ -175,7 +179,7 @@ pub async fn spawn_cmd(
         command.envs(env);
     }
 
-    let output = command.output().map_err(|e| e.to_string())?;
+    let output = command.output().await.map_err(|e| e.to_string())?;
 
     if output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
