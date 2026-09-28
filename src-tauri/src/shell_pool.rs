@@ -49,7 +49,6 @@ impl Shell {
         let mut child = tokio::process::Command::new("bash")
             .args(["--norc", "--noprofile"])
             .current_dir(cwd)
-            .env_clear()
             .envs(env)
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())

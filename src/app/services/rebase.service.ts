@@ -59,7 +59,7 @@ export class RebaseService {
   // Once rebase actions file is created, we next pendingRebase$ finishRebase can change actions and ... finish the rebase
   private spawnRebaseProcess = (sha: string, autosquash: boolean) => {
     this.gitApi.spawn('git', ['rebase', '-i', ...(autosquash ? ['--autosquash'] : []), sha], {
-      env: {...window.tauri.process.env, GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript()},
+      env: {GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript()},
     }).pipe(
       catchError(e => {
         this.pendingRebase$.error(e);
