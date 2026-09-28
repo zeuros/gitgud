@@ -50,7 +50,9 @@ Reader services (`electron-cmd-parser-layer/`) each wrap one git command and par
 
 ### File watcher
 
-`watcher.rs` uses `notify-debouncer-full` with a 600 ms debounce window and inode-stable `FileIdMap`. Events are filtered by path component — ignored dirs: `.git`, `node_modules`, `dist`, `build`, `cache`, `tmp`, `target`, `.angular`.
+`watcher.rs` uses `notify` directly with its own debounce: a flush thread emits one batch of deduplicated paths after 600 ms of quiet, or at most 2 s after the first pending event. Events are filtered by path component — ignored dirs: `.git`, `node_modules`, `dist`, `build`, `cache`, `tmp`, `target`, `.angular`.
+
+On Linux, recursive watches are not delegated to inotify: `watch_tree` walks the repo and adds a non-recursive watch per directory, skipping ignored dirs and symlinks, so no watches are registered inside `node_modules`/`target`. Directories created later are watched by the flush thread. Other platforms use a single recursive watch.
 
 `FileWatcherService` (`src/app/services/file-watcher.service.ts`) wraps `window.electron.chokidar.watch/on/close` and exposes `onWorkingDirFileChange$` via `auditTime(300)`. Git-refresh subscribes with `switchMap(() => updateWorkingDirChanges())` so a new file event cancels the previous in-flight `git status`.
 
