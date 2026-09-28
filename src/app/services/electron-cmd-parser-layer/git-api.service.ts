@@ -33,6 +33,24 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 const noopEditor = () =>
   window.tauri.process.platform === 'win32' ? 'cmd /c exit 0' : 'true';
 
+// Subcommands that never write the index: they don't need to wait for .git/index.lock,
+// which saves an fs_exists IPC round trip per call on the hot refresh path.
+const READ_ONLY_SUBCOMMANDS = new Set([
+  '--version', 'log', 'show', 'diff', 'status', 'rev-parse', 'rev-list', 'for-each-ref', 'reflog',
+  'name-rev', 'ls-remote', 'cat-file', 'ls-files', 'merge-base', 'describe', 'blame',
+]);
+
+// First non-option arg, skipping `-c key=val` pairs
+const subcommand = (args: string[]) => {
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '-c' || args[i] === '-C') i++;
+    else if (args[i] === '--version' || !args[i].startsWith('-')) return args[i];
+  }
+  return undefined;
+};
+
+const needsLock = (args: string[]) => !READ_ONLY_SUBCOMMANDS.has(subcommand(args) ?? '');
+
 @Injectable({
   providedIn: 'root',
 })
@@ -58,16 +76,14 @@ export class GitApiService {
 
   git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
-    return this.waitForLock().pipe(
-      switchMap(() => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {...window.tauri.process.env, GIT_EDITOR: noopEditor()}, ...options})),
-    );
+    // env is overlaid on the backend's own environment, so only send what differs
+    const run = () => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {GIT_EDITOR: noopEditor()}, ...options});
+    return needsLock(filteredArgs) ? this.waitForLock().pipe(switchMap(run)) : defer(run);
   };
 
   // Raw stdout bytes, for binary content (git show of an image blob…)
   gitBytes = (args: string[]) =>
-    this.waitForLock().pipe(
-      switchMap(() => from(window.tauri.execFileBytes(this.settings.gitBin, args, {cwd: this.currentRepo.cwd() ?? undefined, env: window.tauri.process.env}))),
-    );
+    defer(() => from(window.tauri.execFileBytes(this.settings.gitBin, args, {cwd: this.currentRepo.cwd() ?? undefined})));
 
   // User git calls
   gitAction = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
@@ -85,7 +101,7 @@ export class GitApiService {
     this.waitForLock().pipe(
       switchMap(() => from(window.tauri.spawnSync(
         this.settings.gitBin, args,
-        {cwd: this.currentRepo.cwd(), input, env: window.tauri.process.env as Record<string, string>},
+        {cwd: this.currentRepo.cwd(), input},
       ))),
       map(result => {
         if (result.status !== 0) throw new Error(`Git exited ${result.status}\n${result.stderr}`);
@@ -94,10 +110,10 @@ export class GitApiService {
     );
 
   clone = (url: string, repoName: string, dir: string) =>
-    this.git(['clone', url, repoName], {cwd: dir, env: window.tauri.process.env});
+    this.git(['clone', url, repoName], {cwd: dir});
 
   init = (dir: string) =>
-    this.git(['init'], {cwd: dir, env: window.tauri.process.env});
+    this.git(['init'], {cwd: dir});
 
   exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
     from(window.tauri.execFile(`${cmd}`, args, omitUndefined({
@@ -114,7 +130,7 @@ export class GitApiService {
 
   spawn = (cmd: string, args: string[] = [], options?: SpawnOptionsWithoutStdio) =>
     this.waitForLock().pipe(switchMap(() => new Observable<string>(observer => {
-      window.tauri.spawn(cmd === 'git' ? this.settings.gitBin : cmd, args, {cwd: this.currentRepo.cwd() ?? undefined, env: window.tauri.process.env, ...(options as Record<string, unknown>)})
+      window.tauri.spawn(cmd === 'git' ? this.settings.gitBin : cmd, args, {cwd: this.currentRepo.cwd() ?? undefined, ...(options as Record<string, unknown>)})
         .then(out => {
           if (isDevMode()) showPerf(cmd, args, out);
           observer.next(out);
