@@ -114,7 +114,7 @@ export class GitRefreshService {
    * HEAD along with the type of change.
    */
   updateWorkingDirChanges = () => this.track(
-    this.gitApi.git(['status', '--porcelain', '-z', '--untracked-files=all', '--'])
+    this.gitApi.git(['--no-optional-locks', 'status', '--porcelain', '-z', '--untracked-files=all', '--'])
       .pipe(
         map(parseWorkingDirChanges),
         tap(workDirStatus => this.currentRepo.update({workDirStatus})),
