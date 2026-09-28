@@ -34,6 +34,9 @@ import {FileDiffPanelService} from './file-diff-panel.service';
 
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 
+// .git entries whose mtime changes whenever refs/HEAD/index move (commit, checkout, fetch, branch, stash…)
+const GIT_STATE_FILES = ['HEAD', 'index', 'packed-refs', 'FETCH_HEAD', 'ORIG_HEAD', 'logs/HEAD', 'refs/heads', 'refs/tags', 'refs/stash'];
+
 @Injectable({
   providedIn: 'root',
 })
@@ -62,8 +65,8 @@ export class GitRefreshService {
 
   constructor() {
     if (this.currentRepo.cwd()) this.doRefreshAll();
-    window.tauri.onWindowFocus(this.doRefreshAll);
-    this.destroyRef.onDestroy(() => window.tauri.offWindowFocus(this.doRefreshAll));
+    window.tauri.onWindowFocus(this.onWindowFocus);
+    this.destroyRef.onDestroy(() => window.tauri.offWindowFocus(this.onWindowFocus));
     this.fileWatcher.onWorkingDirFileChange$.pipe(
       throttleTime(500, asyncScheduler, {leading: false, trailing: true}),
       switchMap(() => this.updateWorkingDirChanges()),
@@ -77,6 +80,31 @@ export class GitRefreshService {
   }));
 
   doRefreshAll = () => this.refreshAll().subscribe();
+
+  private lastGitStateSignature?: string;
+
+  // Stats a few .git entries; a changed signature means refs/HEAD/index moved since last check.
+  // All-missing (e.g. worktree where .git is a file) yields undefined → caller must assume changed.
+  private gitStateSignature = async () => {
+    const cwd = this.currentRepo.cwd();
+    const mtimes = await Promise.all(GIT_STATE_FILES.map(f => window.tauri.fs.mtime(`${cwd}/.git/${f}`).catch(() => 0)));
+    return mtimes.some(Boolean) ? `${cwd}|${mtimes.join(',')}` : undefined;
+  };
+
+  // On focus, the working dir may have changed (editor), so always refresh status; only reload the
+  // (expensive) logs/branches/tags when git state actually moved while we were in the background.
+  private onWindowFocus = () => {
+    if (!this.currentRepo.cwd()) return;
+    from(this.gitStateSignature()).pipe(
+      switchMap(sig => {
+        const unchanged = sig !== undefined && sig === this.lastGitStateSignature;
+        this.lastGitStateSignature = sig;
+        return unchanged
+          ? this.track(forkJoin({workDirStatus: this.updateWorkingDirChanges(), isRebasing: this.updateRebaseStatus()}))
+          : this.refreshAll();
+      }),
+    ).subscribe();
+  };
 
   /**
    * Fetches logs, branches, and stashes for the current repository
