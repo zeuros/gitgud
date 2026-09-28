@@ -49,7 +49,8 @@ impl Shell {
         let mut child = tokio::process::Command::new("bash")
             .args(["--norc", "--noprofile"])
             .current_dir(cwd)
-            .env_clear()
+            // Overlay on our own environment (PATH already fixed up at startup), so callers only
+            // send the vars they need instead of the whole environment on every IPC call
             .envs(env)
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
