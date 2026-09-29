@@ -50,9 +50,18 @@ export const instanceOf = <T extends new (...args: any[]) => any>(o: any, theCla
 export const directory = (path: string) => path.split('/').slice(0, -1).join('/');
 export const fileName = (path: string) => path.split('/').pop();
 
-export const showPerf = (cmd: string, args: string[] = [], out?: any) => {
+export const showPerf = (cmd: string, args: string[] = []) => {
   const start = performance.now();
-  return () => console.debug(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`, out);
+  return (out: string) => perfLog(`exec ${cmd} ${args.join(' ').slice(0, 80)}`, performance.now() - start, `${out.length} chars`);
+};
+
+// [perf] temporary instrumentation — grep "[perf]" to remove
+export const perfLog = (label: string, ms: number, extra?: unknown) =>
+  console.log(`[perf] ${label}: ${ms.toFixed(1)}ms`, extra ?? '');
+
+export const timed = <T>(label: string, fn: () => T): T => {
+  const start = performance.now();
+  try { return fn(); } finally { perfLog(label, performance.now() - start); }
 };
 
 export const workingDirHasChanges = (status?: WorkDirStatus) =>

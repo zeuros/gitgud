@@ -23,6 +23,7 @@ import {map, Observable} from 'rxjs';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {GitApiService} from './git-api.service';
 import {short} from '../../utils/commit-utils';
+import {timed} from '../../utils/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -85,7 +86,7 @@ export class LogReaderService {
       '--',
     );
     return this.gitApi.git(args)
-      .pipe(map(log => this.parser.parse(log).map(commit => {
+      .pipe(map(log => timed(`parse log (${log.length} chars)`, () => this.parser.parse(log).map(commit => {
         // Ref is of the format: (HEAD -> master, tag: some-tag-name, tag: some-other-tag,with-a-comma, origin/master, origin/HEAD)
         // Refs are comma separated, but some like tags can also contain commas in the name, so we split on the pattern ", " and then
         // check each ref for the tag prefix. We used to use the regex /tag: ([^\s,]+)/g)`, but will clip a tag with a comma short.
@@ -114,6 +115,6 @@ export class LogReaderService {
           parseRawUnfoldedTrailers(commit.trailers, ':'),
           tags,
         );
-      })));
+      }))));
   };
 }

@@ -130,9 +130,10 @@ export class GitApiService {
 
   spawn = (cmd: string, args: string[] = [], options?: SpawnOptionsWithoutStdio) =>
     this.waitForLock().pipe(switchMap(() => new Observable<string>(observer => {
+      const perf = showPerf(cmd, args);
       window.tauri.spawn(cmd === 'git' ? this.settings.gitBin : cmd, args, {cwd: this.currentRepo.cwd() ?? undefined, ...(options as Record<string, unknown>)})
         .then(out => {
-          if (isDevMode()) showPerf(cmd, args, out);
+          if (isDevMode()) perf(out);
           observer.next(out);
           observer.complete();
         })

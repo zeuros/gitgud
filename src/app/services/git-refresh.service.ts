@@ -31,6 +31,7 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
 import {FileWatcherService} from './file-watcher.service';
 import {parseWorkingDirChanges} from '../lib/github-desktop/commit-files-changes';
 import {FileDiffPanelService} from './file-diff-panel.service';
+import {perfLog, timed} from '../utils/utils';
 
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 
@@ -64,6 +65,13 @@ export class GitRefreshService {
     });
 
   constructor() {
+    // [perf] main-thread freeze detector: a 50ms timer firing late means the thread was blocked
+    let expected = performance.now() + 50;
+    setInterval(() => {
+      const late = performance.now() - expected;
+      if (late > 100) perfLog('MAIN THREAD BLOCKED', late);
+      expected = performance.now() + 50;
+    }, 50);
     if (this.currentRepo.cwd()) this.doRefreshAll();
     window.tauri.onWindowFocus(this.onWindowFocus);
     this.destroyRef.onDestroy(() => window.tauri.offWindowFocus(this.onWindowFocus));
@@ -95,14 +103,17 @@ export class GitRefreshService {
   // (expensive) logs/branches/tags when git state actually moved while we were in the background.
   private onWindowFocus = () => {
     if (!this.currentRepo.cwd()) return;
+    const start = performance.now();
     from(this.gitStateSignature()).pipe(
       switchMap(sig => {
         const unchanged = sig !== undefined && sig === this.lastGitStateSignature;
+        perfLog(`focus: git state signature (unchanged=${unchanged})`, performance.now() - start);
         this.lastGitStateSignature = sig;
         return unchanged
           ? this.track(forkJoin({workDirStatus: this.updateWorkingDirChanges(), isRebasing: this.updateRebaseStatus()}))
           : this.refreshAll();
       }),
+      finalize(() => perfLog('focus: TOTAL refresh', performance.now() - start)),
     ).subscribe();
   };
 
@@ -110,9 +121,12 @@ export class GitRefreshService {
    * Fetches logs, branches, and stashes for the current repository
    * and returns a partial repository update.
    */
-  updateLogsAndBranches = () => this.track(
+  updateLogsAndBranches = () => defer(() => {
+    const start = performance.now();
+    return this.track(
     forkJoin({stashes: this.stashReader.getStashes(), remoteTags: this.tagReader.getRemoteTags()})
       .pipe(
+        tap(() => perfLog('logsAndBranches: phase 1 (stashes + ls-remote)', performance.now() - start)),
         switchMap(({stashes, remoteTags}) => forkJoin({
           logs: this.logReader.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', '--ignore-missing', ...stashes.map(s => s.sha), ...remoteTags.map(t => t.sha)])
             .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
@@ -123,8 +137,15 @@ export class GitRefreshService {
           remoteTags: of(remoteTags),
           worktrees: this.worktreeReader.getWorktrees(),
         })),
-        tap((r: Partial<GitRepository>) => this.gitRepositoryStore.updateSelectedRepository(r)),
+        tap(() => perfLog('logsAndBranches: phase 2 done (git + parse)', performance.now() - start)),
+        tap((r: Partial<GitRepository>) => timed('logsAndBranches: store update + sync effects', () => this.gitRepositoryStore.updateSelectedRepository(r))),
+        tap(() => {
+          const t = performance.now();
+          // rAF + setTimeout ≈ after change detection, render and paint of the new log
+          requestAnimationFrame(() => setTimeout(() => perfLog('logsAndBranches: until next painted frame', performance.now() - t)));
+        }),
       ));
+  });
 
   doUpdateLogsAndBranches = () => this.updateLogsAndBranches().subscribe();
 
@@ -144,9 +165,9 @@ export class GitRefreshService {
   updateWorkingDirChanges = () => this.track(
     this.gitApi.git(['--no-optional-locks', 'status', '--porcelain', '-z', '--untracked-files=all', '--'])
       .pipe(
-        map(parseWorkingDirChanges),
-        tap(workDirStatus => this.currentRepo.update({workDirStatus})),
-        tap(this.fileDiffPanel.refreshWorkingDirView),
+        map(out => timed('status: parse', () => parseWorkingDirChanges(out))),
+        tap(workDirStatus => timed('status: store update', () => this.currentRepo.update({workDirStatus}))),
+        tap(() => timed('status: refreshWorkingDirView', this.fileDiffPanel.refreshWorkingDirView)),
       ));
 
   /**
