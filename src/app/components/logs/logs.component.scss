@@ -78,6 +78,11 @@ $log-chip-parent-left-margin: 6px;
         width: 100%;
       }
 
+      // Paginator mode only serves to render the visible rows window (see LogsComponent.renderWindow)
+      .p-paginator {
+        display: none;
+      }
+
       .p-datatable-tbody > tr {
         background-color: transparent;
         height: $row-height;

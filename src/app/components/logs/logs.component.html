@@ -37,6 +37,9 @@
         (selectionChange)="onCommitsSelection($event)"
         dataKey="sha"
         [rowTrackBy]="trackBySha"
+        [paginator]="true"
+        [first]="renderWindow().from"
+        [rows]="renderWindow().to - renderWindow().from"
         [rowHover]="true"
         [scrollable]="true"
         [resizableColumns]="true"
@@ -55,7 +58,6 @@
         </tr>
     </ng-template>
     <ng-template #body let-rowIndex="rowIndex" let-displayRef>
-        @if (isRendered(rowIndex)) {
         @let commit = $displayRef(displayRef);
         @let isDetachedHead = currentRepo.detachedHeadSha() === commit.sha;
         <tr class="commit-row {{ commit.highlight }}"
@@ -176,9 +178,5 @@
             <td class="author text-gray ellipsis">{{ commit.author.name }}</td>
             <td class="date text-gray">{{ commit.author.date | date: DATE_FORMAT }}</td>
         </tr>
-        } @else {
-            <!-- Off-screen row: same height, no content -->
-            <tr class="commit-row"><td colspan="5"></td></tr>
-        }
     </ng-template>
 </p-table>
