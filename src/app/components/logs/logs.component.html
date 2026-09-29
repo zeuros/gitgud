@@ -76,7 +76,7 @@
                            [(ngModel)]="createBranch.name"
                            (keydown.enter)="createBranch.confirm()"
                            (keydown.escape)="createBranch.cancel()"
-                           (blur)="createBranch.cancel()"
+                           (blur)="onBranchInputBlur()"
                     />
                 }
                 @if (isDetachedHead) {
