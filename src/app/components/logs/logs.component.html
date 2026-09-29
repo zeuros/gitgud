@@ -36,6 +36,7 @@
         [selection]="commitsSelection()"
         (selectionChange)="onCommitsSelection($event)"
         dataKey="sha"
+        [rowTrackBy]="trackBySha"
         [rowHover]="true"
         [scrollable]="true"
         [resizableColumns]="true"
