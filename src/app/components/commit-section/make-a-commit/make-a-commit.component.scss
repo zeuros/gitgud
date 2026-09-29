@@ -28,6 +28,43 @@
         table-layout: fixed;
         width: 100%;
       }
+
+      // PrimeNG's virtual scroller content is absolute + min-width only: it sizes to max-content, pin it to the viewport
+      .p-virtualscroller-content {
+        width: 100%;
+      }
+    }
+
+    // Section headers: title ellipses, action button keeps its size
+    .h-3rem {
+      gap: 4px;
+
+      h4 {
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      p-button {
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+    }
+
+    // File rows: directory squeezes first, then the file name ellipses too
+    .file-row-content {
+      min-width: 0;
+
+      & > span.text-gray {
+        flex: 0 1000 auto;
+      }
+
+      & > span.white {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     }
 
   }
