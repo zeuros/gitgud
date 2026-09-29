@@ -73,6 +73,9 @@ $log-chip-parent-left-margin: 6px;
 
       table {
         border-collapse: collapse;
+        // Fixed layout so columns never grow past the panel (no horizontal scroll)
+        table-layout: fixed;
+        width: 100%;
       }
 
       .p-datatable-tbody > tr {
@@ -82,8 +85,6 @@ $log-chip-parent-left-margin: 6px;
         border-bottom: calc($row-spacing / 2) solid var(--p-content-background);
 
         & > td {
-          padding: 0;
-
           &.summary {
             padding-left: 10px;
           }
@@ -207,8 +208,6 @@ $log-chip-parent-left-margin: 6px;
 
       td.summary, td.author, td.date {
         color: var(--huaaaaaGray);
-        min-width: 100px;
-        max-width: 300px;
       }
 
       td.graph {
