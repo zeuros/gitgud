@@ -19,4 +19,5 @@
 export enum StorageName {
     GitRepositories = 'GitRepositories',
     RecentRepoIds   = 'RecentRepoIds',
+    MissingAvatars  = 'MissingAvatars',
 }
