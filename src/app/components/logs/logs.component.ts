@@ -59,6 +59,9 @@ import {LogTagChip} from './chips/log-tag-chip/log-tag-chip.component';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 
+// Rows rendered beyond the viewport, and granularity of render window moves
+const RENDER_CHUNK = 20;
+
 @Component({
   selector: 'gitgud-logs',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -124,6 +127,13 @@ export class LogsComponent {
   protected _tableScrollLeft = signal(0);
   protected dpr = signal(CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1));
   protected visibleCommitsCount = computed(() => this.countVisibleCommits(this._tableHeight(), this.computedDisplayLog()));
+  // Only rows near the viewport are rendered: p-table gets the whole log (selection, shift-click ranges and row indexes stay
+  // absolute) but renders the [first, first + rows) page of its hidden paginator; the rows above/below are table margins.
+  // The window moves by RENDER_CHUNK rows, so scrolling only re-renders rows when crossing a chunk boundary
+  protected renderWindow = computed(() => {
+    const chunkStart = Math.floor(this.currentRepo.startCommit() / RENDER_CHUNK) * RENDER_CHUNK;
+    return {from: Math.max(0, chunkStart - RENDER_CHUNK), to: chunkStart + (this.visibleCommitsCount() ?? 0) + 2 * RENDER_CHUNK};
+  }, {equal: (a, b) => a.from === b.from && a.to === b.to});
   private _layoutReady = signal(false);
   private _tableHeight = signal(0);
   private _tableHeaderHeight = signal(0);
@@ -164,6 +174,23 @@ export class LogsComponent {
     effect(() => {
       const commitMails = new Set(this.computedDisplayLog().filter(isCommit).map(c => (hasName(c.author) ? c.author : c.committer).email));
       this.avatar.loadAvatarImages(commitMails).subscribe(images => this._avatarImages.set(images));
+    });
+
+    // Stand in for the non-rendered rows, so scroll height and row positions are the same as with all rows rendered.
+    // Declared before the canvas effect: restoreLastScrollPosition needs the full scroll height
+    effect(() => {
+      const table = this.logTableRef()?.querySelector('table');
+      const {from, to} = this.renderWindow();
+      const logLength = this.computedDisplayLog().length;
+      if (!table) return;
+      table.style.marginTop = `${from * ROW_HEIGHT}px`;
+      table.style.marginBottom = `${Math.max(0, logLength - to) * ROW_HEIGHT}px`;
+      // stateStorage restores a saved first/rows (it's saved along column widths): keep the table on our window
+      const logTable = untracked(this.logTable);
+      if (logTable && (logTable.first() !== from || logTable.rows() !== to - from)) {
+        logTable.first.set(from);
+        logTable.rows.set(to - from);
+      }
     });
 
     // Reactively draw canvas when dependencies change
