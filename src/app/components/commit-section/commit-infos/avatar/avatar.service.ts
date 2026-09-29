@@ -16,14 +16,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Injectable} from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {forkJoin, from, map, Observable, of, switchMap} from 'rxjs';
 import {notUndefined} from '../../../../utils/utils';
+import {LocalStorageService} from '../../../../services/local-storage.service';
+import {StorageName} from '../../../../enums/storage-name.enum';
+
+// How long an avatar URL that answered 404 is not requested again (across restarts)
+const MISSING_AVATAR_TTL_MS = 24 * 60 * 60 * 1000;
 
 @Injectable({providedIn: 'root'})
 export class AvatarService {
 
-  private mailBlobsCache = new Map<string, string | null>(); // url → objectURL
+  private localStorage = inject(LocalStorageService);
+
+  // url → objectURL (null: no avatar). Promises, so concurrent requests for the same url share one fetch
+  private blobUrlCache = new Map<string, Promise<string | null>>();
+  // url → time of the 404, persisted
+  private missingAvatars: Record<string, number> = this.readMissingAvatars();
 
   // Resolves all emails in parallel, emits the full image map once all settle.
   loadAvatarImages(emails: Set<string>): Observable<Map<string, HTMLImageElement>> {
@@ -58,22 +68,39 @@ export class AvatarService {
       img.src = objectUrl;
     });
 
-  private async get(url: string) {
-    if (this.mailBlobsCache.has(url)) return this.mailBlobsCache.get(url)!;
+  private get = (url: string) => {
+    if (this.missingAvatars[url]) return Promise.resolve(null);
+    let objectUrl = this.blobUrlCache.get(url);
+    if (!objectUrl) {
+      objectUrl = this.fetchBlobUrl(url);
+      this.blobUrlCache.set(url, objectUrl);
+    }
+    return objectUrl;
+  };
+
+  private fetchBlobUrl = async (url: string) => {
     try {
       const resp = await fetch(url);
       if (!resp.ok) {
-        this.mailBlobsCache.set(url, null);
+        this.rememberMissing(url);
         return null;
       }
-      const objectUrl = URL.createObjectURL(await resp.blob());
-      const prev = this.mailBlobsCache.get(url);
-      if (prev) URL.revokeObjectURL(prev); // guard against concurrent fetches for the same URL
-      this.mailBlobsCache.set(url, objectUrl);
-      return objectUrl;
+      return URL.createObjectURL(await resp.blob());
     } catch {
+      this.blobUrlCache.delete(url); // network error: retry next time
       return null;
     }
+  };
+
+  private rememberMissing = (url: string) => {
+    this.missingAvatars[url] = Date.now();
+    this.localStorage.store(StorageName.MissingAvatars, this.missingAvatars);
+  };
+
+  private readMissingAvatars() {
+    const now = Date.now();
+    return Object.fromEntries(Object.entries(this.localStorage.get<Record<string, number>>(StorageName.MissingAvatars) ?? {})
+      .filter(([, missingSince]) => now - missingSince < MISSING_AVATAR_TTL_MS));
   }
 
   private githubUrl(email: string) {
