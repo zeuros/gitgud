@@ -20,6 +20,9 @@ import {Injectable} from '@angular/core';
 import {auditTime, Subject} from 'rxjs';
 import {createWatcher} from '../utils/file-watcher.utils';
 
+// TEMP perf experiment: set to true to re-enable working-dir file watching
+const FILE_WATCHER_ENABLED = false;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -32,6 +35,7 @@ export class FileWatcherService {
   onWorkingDirFileChange$ = this.fileChangeSubject$.pipe(auditTime(300));
 
   setWatcher = (projectPath: string) => {
+    if (!FILE_WATCHER_ENABLED) return;
     if (projectPath === this.watchedPath) return;
     this.watchedPath = projectPath;
 
