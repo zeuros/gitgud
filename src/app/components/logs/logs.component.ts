@@ -383,6 +383,8 @@ export class LogsComponent {
   protected DRAWING_PAD_LEFT = DRAWING_PAD_LEFT;
   protected ROW_HEIGHT = ROW_HEIGHT;
   protected $displayRef = (c: DisplayRef) => c;
+  // Display refs are rebuilt on every refresh: track by sha so p-table reuses row DOM instead of re-rendering all rows
+  protected trackBySha = (_: number, c: DisplayRef) => c.sha;
 
   // Blur also fires when the window loses focus (alt+tab): keep the input open in that case
   protected onBranchInputBlur = () => document.hasFocus() && this.createBranch.cancel();
