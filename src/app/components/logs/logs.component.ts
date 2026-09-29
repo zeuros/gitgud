@@ -18,7 +18,7 @@
 
 import {Table, TableModule} from 'primeng/table';
 import {RefType} from '../../enums/ref-type.enum';
-import {workingDirHasChanges} from '../../utils/utils';
+import {timed, workingDirHasChanges} from '../../utils/utils';
 import {bySha} from '../../utils/log-utils';
 import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {Commit} from '../../lib/github-desktop/model/commit';
@@ -167,7 +167,7 @@ export class LogsComponent {
       // Wait for stash image before drawing stashes in the graph
       if (!this.stashImg() || !logs.length || !workDirStatus) return;
 
-      untracked(() => this.computeDisplayLog(workingDirHasChanges(workDirStatus), logs, stashes));
+      untracked(() => timed(`logs: computeDisplayLog (${logs.length} commits)`, () => this.computeDisplayLog(workingDirHasChanges(workDirStatus), logs, stashes)));
     });
 
     // Pre-fetch avatars for all commits in the display log
@@ -208,7 +208,7 @@ export class LogsComponent {
       const headerHeight = this._tableHeaderHeight();
 
       if (this._canvasResized() && canvas && displayLog.length && stashImg && avatarImages && visibleCommitsCount && visibleCommitsCount > 0 && logTableContainer) {
-        drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages, canvasColors, headerHeight, this.dpr());
+        timed('logs: drawLog', () => drawLog(canvas, displayLog, edges, startCommit, startCommit + visibleCommitsCount, scrollOffset, stashImg, avatarImages, canvasColors, headerHeight, this.dpr()));
         untracked(() => this.restoreLastScrollPosition()); // will be called once
       }
     });
@@ -342,7 +342,7 @@ export class LogsComponent {
       ? {...headCommit, branchesDetails: [], isPointedByLocalHead: true, refType: RefType.COMMIT} as DisplayRef
       : undefined;
 
-    const {displayLog, edges, untrackedStashes, graphColumnCount} = this.logBuilder.buildDisplayLog(logs, stashes, indexParent);
+    const {displayLog, edges, untrackedStashes, graphColumnCount} = timed('logs: buildDisplayLog', () => this.logBuilder.buildDisplayLog(logs, stashes, indexParent));
 
     this.conflict.markWorkDirCommitConflicted(displayLog);
 
