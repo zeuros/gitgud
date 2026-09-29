@@ -59,6 +59,9 @@ import {LogTagChip} from './chips/log-tag-chip/log-tag-chip.component';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 
+// Rows rendered beyond the viewport, and granularity of render window moves
+const RENDER_CHUNK = 20;
+
 @Component({
   selector: 'gitgud-logs',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -124,6 +127,12 @@ export class LogsComponent {
   protected _tableScrollLeft = signal(0);
   protected dpr = signal(CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1));
   protected visibleCommitsCount = computed(() => this.countVisibleCommits(this._tableHeight(), this.computedDisplayLog()));
+  // Only rows near the viewport get the full row template (chips, drop zones…), the others are empty rows of the same height.
+  // The window moves by RENDER_CHUNK rows, so scrolling only re-evaluates the rows when crossing a chunk boundary
+  private renderWindow = computed(() => {
+    const chunkStart = Math.floor(this.currentRepo.startCommit() / RENDER_CHUNK) * RENDER_CHUNK;
+    return {from: chunkStart - RENDER_CHUNK, to: chunkStart + (this.visibleCommitsCount() ?? 0) + 2 * RENDER_CHUNK};
+  }, {equal: (a, b) => a.from === b.from && a.to === b.to});
   private _layoutReady = signal(false);
   private _tableHeight = signal(0);
   private _tableHeaderHeight = signal(0);
@@ -385,6 +394,10 @@ export class LogsComponent {
   protected $displayRef = (c: DisplayRef) => c;
   // Display refs are rebuilt on every refresh: track by sha so p-table reuses row DOM instead of re-rendering all rows
   protected trackBySha = (_: number, c: DisplayRef) => c.sha;
+  protected isRendered = (rowIndex: number) => {
+    const {from, to} = this.renderWindow();
+    return rowIndex >= from && rowIndex < to;
+  };
 
   // Blur also fires when the window loses focus (alt+tab): keep the input open in that case
   protected onBranchInputBlur = () => document.hasFocus() && this.createBranch.cancel();
