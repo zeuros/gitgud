@@ -384,4 +384,7 @@ export class LogsComponent {
   protected ROW_HEIGHT = ROW_HEIGHT;
   protected $displayRef = (c: DisplayRef) => c;
 
+  // Blur also fires when the window loses focus (alt+tab): keep the input open in that case
+  protected onBranchInputBlur = () => document.hasFocus() && this.createBranch.cancel();
+
 }
