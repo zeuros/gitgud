@@ -37,7 +37,7 @@ export type DiffSide = string | typeof WORKDIR;
 
 /** Which versions of the file a diff compares */
 export const diffSides = (file: FileChange): {before: DiffSide, after: DiffSide} => {
-  if (isCommittedFileChange(file)) return {before: `${file.commitish}^`, after: file.commitish};
+  if (isCommittedFileChange(file)) return {before: file.baseCommitish ?? `${file.commitish}^`, after: file.commitish};
   return (file as WorkingDirectoryFileChange).staged
     ? {before: 'HEAD', after: ''}   // staged: HEAD vs index
     : {before: '', after: WORKDIR}; // unstaged: index vs workdir

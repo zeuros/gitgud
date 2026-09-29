@@ -332,6 +332,8 @@ export class CommittedFileChange extends FileChange {
     public readonly path: string,
     status: AppFileStatus,
     public readonly commitish: string,
+    /** Revision to diff against, instead of the commit's parent: the older commit of a 2-commit range */
+    public readonly baseCommitish?: string,
   ) {
     super(path, status);
 

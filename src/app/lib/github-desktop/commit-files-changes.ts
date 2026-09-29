@@ -66,6 +66,8 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, shas: string[]): 
   let numStatCount = 0;
   const lines = rawFileChanges.split('\0');
   const latestSha = shas[shas.length - 1];
+  // 2-commit range (`git diff older newer`): files must be diffed against the older commit, not the newer one's parent
+  const baseSha = shas.length === 2 ? shas[0] : undefined;
 
   for (let i = 0 ; i < lines.length - 1 ; i++) {
     const line = lines[i];
@@ -99,6 +101,7 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, shas: string[]): 
         path,
         {kind: mapStatus(status, oldPath), oldPath} as AppFileStatus,
         latestSha,
+        baseSha,
       ));
     }
     // Numstat line: added deleted path
