@@ -18,7 +18,7 @@
 
 export const CANVAS_MARGIN = {left: 5, top: 0.5};
 export const NODE_DIAMETER = 26;
-export const GRAPH_COLUMN_MIN_WIDTH = 80;
+export const MESSAGE_COLUMN_MIN_WIDTH = 100;
 export const NODES_VERTICAL_SPACING = 8;
 export const NODE_RADIUS = NODE_DIAMETER / 2;
 export const ROW_HEIGHT = NODE_DIAMETER + NODES_VERTICAL_SPACING;

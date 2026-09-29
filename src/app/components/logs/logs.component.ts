@@ -34,7 +34,7 @@ import {local, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {LogBuilderService} from '../../services/log-builder.service';
-import {CANVAS_DPR_MULTIPLIER, CANVAS_MARGIN, DRAWING_PAD_LEFT, GRAPH_COLUMN_MIN_WIDTH, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
+import {CANVAS_DPR_MULTIPLIER, CANVAS_MARGIN, DRAWING_PAD_LEFT, MESSAGE_COLUMN_MIN_WIDTH, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
 import {ThemeService} from '../../services/theme.service';
 import {CommitContextMenuService} from '../../services/commit-context-menu.service';
@@ -213,20 +213,43 @@ export class LogsComponent {
       }
     });
 
+    // PrimeNG cancels a column resize that goes below a column's min-width (see Table.onColumnResizeEnd).
+    // Clamp the resize helper line while dragging instead, so the resize stops at the resized/next column's min-width.
+    effect(() => {
+      const table = this.logTable() as any; // PrimeNG internals: resizeColumnElement, lastResizerHelperX, resizeHelperViewChild
+      if (!table) return;
+      const onColumnResize = table.onColumnResize.bind(table);
+      table.onColumnResize = (event: MouseEvent) => {
+        onColumnResize(event);
+        const th: HTMLElement | undefined = table.resizeColumnElement;
+        const next = th?.nextElementSibling as HTMLElement | null;
+        const helper: HTMLElement | undefined = table.resizeHelperViewChild()?.nativeElement;
+        if (!th || !next || !helper) return;
+        const minWidth = (el: HTMLElement) => parseFloat(el.style.minWidth) || 16; // PrimeNG requires > 15px
+        const startX = table.lastResizerHelperX;
+        const min = startX - (th.offsetWidth - minWidth(th));
+        const max = startX + (next.offsetWidth - minWidth(next));
+        helper.style.left = `${Math.min(max, Math.max(min, parseFloat(helper.style.left)))}px`;
+      };
+    });
+
     // Position the canvas over the p-table GRAPH column
     effect((onCleanup) => {
-      const logTableHeaders = this.logTableRef()?.querySelector('table')?.querySelectorAll('th');
-      const branchTh = logTableHeaders?.[0];
-      const graphTh = logTableHeaders?.[1];
-      if (!branchTh || !graphTh) return;
+      const table = this.logTableRef()?.querySelector('table');
+      const logTableHeaders = [...table?.querySelectorAll('th') ?? []];
+      const [branchTh, graphTh, messageTh] = logTableHeaders;
+      if (!table || !branchTh || !graphTh || !messageTh) return;
+      const otherThs = logTableHeaders.filter(th => th !== messageTh);
 
       const ro = new ResizeObserver(() => {
         this._branchColumnWidth.set(branchTh.clientWidth);
         this._tableHeaderHeight.set(branchTh.clientHeight);
         this._graphColumnWidth.set(graphTh.clientWidth);
+        // Fixed table layout ignores cell min-width: enforce it on the table (message column takes the remaining space)
+        const otherColumnsWidth = otherThs.reduce((sum, th) => sum + th.offsetWidth, 0);
+        table.style.minWidth = `${otherColumnsWidth + MESSAGE_COLUMN_MIN_WIDTH}px`;
       });
-      ro.observe(branchTh);
-      ro.observe(graphTh);
+      otherThs.forEach(th => ro.observe(th));
       onCleanup(() => ro.disconnect());
     });
 
@@ -406,7 +429,6 @@ export class LogsComponent {
   protected DATE_FORMAT = DATE_FORMAT;
   protected NODE_RADIUS = NODE_RADIUS;
   protected CANVAS_MARGIN = CANVAS_MARGIN;
-  protected GRAPH_COLUMN_MIN_WIDTH = GRAPH_COLUMN_MIN_WIDTH;
   protected NODES_VERTICAL_SPACING = NODES_VERTICAL_SPACING;
   protected DRAWING_PAD_LEFT = DRAWING_PAD_LEFT;
   protected ROW_HEIGHT = ROW_HEIGHT;
