@@ -65,6 +65,8 @@ export class ToolbarComponent implements OnInit {
   protected updateCheck = inject(UpdateCheckService);
   protected rebase = inject(RebaseService);
   protected loading = signal<'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-continue' | 'rebase-skip' | 'rebase-abort' | undefined>(undefined);
+  protected bonfireHovered = signal(false);
+  protected bonfirePlaying = computed(() => this.bonfireHovered() || this.gitRefresh.isRefreshing());
   protected hasWorkDirChanges = computed(() => workingDirHasChanges(this.currentRepo.workDirStatus()));
   protected hasStashes = computed(() => this.currentRepo.stashes().length > 0);
   protected short = short;
