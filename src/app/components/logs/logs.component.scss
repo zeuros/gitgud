@@ -38,6 +38,10 @@ $row-spacing: 8px;
 $log-chip-parent-left-margin: 6px;
 
 :host {
+  // Custom elements default to inline: absolute children (search bar) would anchor to an empty inline box.
+  // Full height so the table's scrollHeight="flex" has a bounded parent to scroll in
+  display: block;
+  height: 100%;
   width: 100%;
   position: relative;
 
