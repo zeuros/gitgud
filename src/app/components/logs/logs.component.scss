@@ -183,14 +183,15 @@ $log-chip-parent-left-margin: 6px;
             opacity: 1;
 
             .log-chip-drop-zone {
-              transform: translateY(var(--offset)) scale(1.05);
-              max-width: 300px;
+              transform: translate(3px, var(--offset)) scale(1.05);
+              max-width: 1000px; // Full branch name; a length (not none) so it animates
+              transition: transform 0.12s ease, max-width 0.12s ease-in; // ease-in: the visible part (start) takes longer
             }
           }
         }
 
         .log-chip-parent {
-          transition: all 0.3s ease;
+          transition: all 0.12s ease;
           opacity: 0;
           margin-left: $log-chip-parent-left-margin;
 
@@ -200,8 +201,11 @@ $log-chip-parent-left-margin: 6px;
 
           .log-chip-drop-zone {
             display: flex;
+            width: max-content; // absolute boxes otherwise shrink to the td width
             max-width: calc(100% - 40px); // Column width, minus the left margin and the +N badge drawn on the chip's right
             transform: translateY(0) scale(1);
+            transform-origin: left center; // grow rightwards, the panel edge would clip the left side
+            transition: transform 0.2s ease, max-width 0.4s ease-out; // ease-out: skip quickly past the unused part of the 1000px
             z-index: 300; // Display this over commit graph
             position: absolute;
             left: $log-chip-parent-left-margin;
