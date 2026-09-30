@@ -133,7 +133,7 @@ export class ToolbarComponent implements OnInit {
     this.loading.set('fetch');
     this.gitApi.gitAction(['fetch'])
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => this.autoFetch.lastFetchedAt.set(Date.now()));
+      .subscribe(this.autoFetch.markFetched);
   };
 
   protected continueRebase = () => {

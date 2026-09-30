@@ -104,7 +104,12 @@
         <i class="fa fa-refresh"></i>
         <span>Fetch</span>
         @if (fetchedAgo(); as ago) {
-            <span class="fetched-ago">{{ ago }}</span>
+            <span class="fetched-ago" [title]="autoFetch.lastFetchError() ? 'Last auto-fetch failed: ' + autoFetch.lastFetchError() : ''">
+                @if (autoFetch.lastFetchError()) {
+                    <i class="fa fa-exclamation-triangle fetch-failed"></i>
+                }
+                {{ ago }}
+            </span>
         }
     </p-button>
 

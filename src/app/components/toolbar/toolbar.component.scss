@@ -148,6 +148,11 @@ $repo-track-max-width: 260px;
     margin-left: 2px;
     min-width: 53px; // avoid button width jitter when displaying seconds
     text-wrap: nowrap;
+
+    .fetch-failed {
+      color: var(--warning-text-color);
+      margin-right: 2px;
+    }
   }
 
   .rebase-label {
