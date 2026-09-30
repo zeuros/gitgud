@@ -34,7 +34,7 @@ import {local, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {LogBuilderService} from '../../services/log-builder.service';
-import {CANVAS_DPR_MULTIPLIER, CANVAS_MARGIN, DRAWING_PAD_LEFT, MESSAGE_COLUMN_MIN_WIDTH, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
+import {CANVAS_DPR_MULTIPLIER, CANVAS_MARGIN, DRAWING_PAD_LEFT, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import {drawLog, xPosition, yPosition} from './logs-canvas-drawer';
 import {ThemeService} from '../../services/theme.service';
 import {CommitContextMenuService} from '../../services/commit-context-menu.service';
@@ -58,9 +58,13 @@ import {LogBranchChip} from './chips/log-branch-chip/log-branch-chip.component';
 import {LogTagChip} from './chips/log-tag-chip/log-tag-chip.component';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
+import {fitColumnWidths} from './fit-column-widths';
 
 // Rows rendered beyond the viewport, and granularity of render window moves
 const RENDER_CHUNK = 20;
+// Default log column widths, relative to each other (Branch / Tag, Graph, Commit message, Author, Commit date / time).
+// Commit date / time is fixed at its min-width, which fits its content
+const LOG_COLUMN_SHARES = [3, 2, 5, 1.5, 0];
 
 @Component({
   selector: 'gitgud-logs',
@@ -237,20 +241,53 @@ export class LogsComponent {
     effect((onCleanup) => {
       const table = this.logTableRef()?.querySelector('table');
       const logTableHeaders = [...table?.querySelectorAll('th') ?? []];
-      const [branchTh, graphTh, messageTh] = logTableHeaders;
-      if (!table || !branchTh || !graphTh || !messageTh) return;
-      const otherThs = logTableHeaders.filter(th => th !== messageTh);
+      const [branchTh, graphTh] = logTableHeaders;
+      if (!table || !branchTh || !graphTh) return;
 
       const ro = new ResizeObserver(() => {
         this._branchColumnWidth.set(branchTh.clientWidth);
         this._tableHeaderHeight.set(branchTh.clientHeight);
         this._graphColumnWidth.set(graphTh.clientWidth);
-        // Fixed table layout ignores cell min-width: enforce it on the table (message column takes the remaining space)
-        const otherColumnsWidth = otherThs.reduce((sum, th) => sum + th.offsetWidth, 0);
-        table.style.minWidth = `${otherColumnsWidth + MESSAGE_COLUMN_MIN_WIDTH}px`;
       });
-      otherThs.forEach(th => ro.observe(th));
+      [branchTh, graphTh].forEach(th => ro.observe(th));
       onCleanup(() => ro.disconnect());
+    });
+
+    // Fit the columns to the panel width, keeping each column's share of it (from the saved / user-resized widths).
+    // Fixed table layout ignores cell min-width, so columns are sized here: a column that reaches its min-width stays
+    // there and the others keep shrinking. The table only overflows (horizontal scroll) once every column is at its min.
+    effect((onCleanup) => {
+      const logTable = this.logTable() as any; // PrimeNG internals: columnWidthsState, styleElement
+      const container = this.logTableContainer();
+      const table = container?.querySelector('table');
+      const ths = [...table?.querySelectorAll('th') ?? []];
+      if (!logTable || !container || !table || ths.length !== LOG_COLUMN_SHARES.length) return;
+
+      // Share 0 = fixed column, always at its min-width
+      const withFixedColumns = (shares: number[]) => shares.map((share, i) => LOG_COLUMN_SHARES[i] ? share : 0);
+      const minWidths = ths.map(th => parseFloat(th.style.minWidth) || 16);
+      const savedWidths = (logTable.columnWidthsState as string | undefined)?.split(',').map(Number);
+      let shares = withFixedColumns(savedWidths?.length === ths.length ? savedWidths : LOG_COLUMN_SHARES);
+
+      const layout = () => {
+        // PrimeNG applies restored / resized widths with a `width: …px !important` stylesheet, which would win over ours
+        if (logTable.styleElement) logTable.styleElement.innerHTML = '';
+        const widths = fitColumnWidths(container.clientWidth, shares, minWidths);
+        ths.forEach((th, i) => th.style.width = `${widths[i]}px`);
+        table.style.width = `${widths.reduce((sum, w) => sum + w, 0)}px`;
+        table.style.minWidth = '';
+      };
+
+      const ro = new ResizeObserver(layout);
+      ro.observe(container);
+      const sub = logTable.onColResize.subscribe(() => {
+        shares = withFixedColumns(ths.map(th => th.offsetWidth)); // widths PrimeNG just applied for the resize
+        layout();
+      });
+      onCleanup(() => {
+        ro.disconnect();
+        sub.unsubscribe();
+      });
     });
 
     effect((onCleanup) => {
