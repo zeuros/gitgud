@@ -1,8 +1,14 @@
 <div class="repo-info">
+    <!-- An animated image can't be paused: show its still first frame, and the animation on hover / while refreshing -->
+    <img class="bonfire" alt=""
+         [class.playing]="bonfirePlaying()"
+         [src]="bonfirePlaying() ? './assets/images/bonfire.webp' : './assets/images/bonfire-still.png'"
+         (mouseenter)="bonfireHovered.set(true)"
+         (mouseleave)="bonfireHovered.set(false)">
     <div class="repo-name-clip">
         <div class="repo-info-track">
             <span class="repo-name">
-                <span class="sword" [class.spinning]="gitRefresh.isRefreshing()">⚔</span> {{ currentRepo.name() }} <span class="sword" [class.spinning]="gitRefresh.isRefreshing()">⚔</span>
+                {{ currentRepo.name() }}
             </span>
         </div>
     </div>

@@ -17,6 +17,18 @@ $repo-track-max-width: 260px;
   gap: $spacing;
   align-items: center;
 
+  .bonfire {
+    height: 30px;
+    flex-shrink: 0;
+    margin-left: 4px; // same space on its left as between it and the repo name
+    position: relative;
+    top: -3px; // the fire's visual weight (logs, flame body) is in its lower half
+
+    &.playing {
+      animation: bonfire-bounce 0.6s ease-in-out infinite;
+    }
+  }
+
   .repo-name-clip {
     max-width: $repo-track-max-width;
     overflow: hidden;
@@ -82,18 +94,6 @@ $repo-track-max-width: 260px;
     -webkit-text-fill-color: transparent;
     animation: repo-flames 3s ease-in-out infinite;
     animation-play-state: paused;
-
-    .sword {
-      display: inline-block;
-      background: linear-gradient(180deg, var(--babedouGray) 0%, var(--huaaaaaGray) 100%);
-      background-size: 100% 280%;
-      background-clip: text;
-      -webkit-background-clip: text;
-
-      &.spinning {
-        animation: spin 1.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
-      }
-    }
   }
 
   .branch-badge {
@@ -123,9 +123,9 @@ $repo-track-max-width: 260px;
   50%       { background-position: 0% 100%; }
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+@keyframes bonfire-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
 }
 
 ::ng-deep p-divider.p-divider-vertical {
