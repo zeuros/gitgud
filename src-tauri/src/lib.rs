@@ -31,9 +31,29 @@ fn patch_path() {
     }
 }
 
+// WebKitGTK on Wayland with the NVIDIA proprietary driver dies with "Error 71 (Protocol error) dispatching to
+// Wayland display". Run through XWayland and disable WebKit's DMA-BUF renderer (which also fails on NVIDIA, even
+// under XWayland). Only on that combo, and never over a value the user set themselves.
+#[cfg(target_os = "linux")]
+fn patch_nvidia_wayland() {
+    let wayland = std::env::var_os("WAYLAND_DISPLAY").is_some()
+        || std::env::var("XDG_SESSION_TYPE").is_ok_and(|t| t == "wayland");
+    let nvidia = std::path::Path::new("/sys/module/nvidia").exists();
+    if !wayland || !nvidia {
+        return;
+    }
+    for (key, value) in [("GDK_BACKEND", "x11"), ("WEBKIT_DISABLE_DMABUF_RENDERER", "1")] {
+        if std::env::var_os(key).is_none() {
+            std::env::set_var(key, value);
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     patch_path();
+    #[cfg(target_os = "linux")]
+    patch_nvidia_wayland();
 
     tauri::Builder::default()
         .manage(shell_pool::ShellPoolManager::new())
