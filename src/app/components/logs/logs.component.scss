@@ -185,8 +185,10 @@ $log-chip-parent-left-margin: 6px;
             opacity: 1;
 
             .log-chip-drop-zone {
-              transform: translateY(var(--offset)) scale(1.05);
-              max-width: 300px;
+              transform: translate(3px, var(--offset)) scale(1.05);
+              // Full branch name: absolute boxes otherwise shrink to the td width
+              width: max-content;
+              max-width: none;
             }
           }
         }
@@ -204,6 +206,7 @@ $log-chip-parent-left-margin: 6px;
             display: flex;
             max-width: 90%;
             transform: translateY(0) scale(1);
+            transform-origin: left center; // grow rightwards, the panel edge would clip the left side
             z-index: 300; // Display this over commit graph
             position: absolute;
             left: $log-chip-parent-left-margin;
