@@ -23,4 +23,5 @@ export const NODES_VERTICAL_SPACING = 8;
 export const NODE_RADIUS = NODE_DIAMETER / 2;
 export const ROW_HEIGHT = NODE_DIAMETER + NODES_VERTICAL_SPACING;
 export const DRAWING_PAD_LEFT = 3;
+export const DRAWING_SHIFT_TOP = -3; // Nodes rendered slightly below the center of their table row
 export const CANVAS_DPR_MULTIPLIER = 2; // Canvas renders much smoother (linux)
