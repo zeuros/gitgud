@@ -266,11 +266,12 @@ export class LogsComponent {
 
     const searchStringL = searchString.toLowerCase();
     computedDisplayLog
-      .filter(({sha, summary, author, committer}) => !(
+      .filter(({sha, summary, author, committer, branchesDetails}) => !(
         sha.includes(searchStringL)
         || summary.toLowerCase().includes(searchStringL)
         || author?.name?.toLowerCase().includes(searchStringL)
         || committer?.name?.toLowerCase().includes(searchStringL)
+        || branchesDetails?.some(branch => branch.name.toLowerCase().includes(searchStringL))
       ))
       .forEach(commit => commit.highlight = 'not-matched');
 
