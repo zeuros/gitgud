@@ -32,8 +32,10 @@ fn patch_path() {
 }
 
 // WebKitGTK on Wayland with the NVIDIA proprietary driver dies with "Error 71 (Protocol error) dispatching to
-// Wayland display". Run through XWayland and disable WebKit's DMA-BUF renderer (which also fails on NVIDIA, even
-// under XWayland). Only on that combo, and never over a value the user set themselves.
+// Wayland display" because of the driver's explicit sync. Disabling it keeps native Wayland and GPU rendering
+// (XWayland + WEBKIT_DISABLE_DMABUF_RENDERER=1 also avoids the crash, but renders the page on the CPU: ~23 fps instead
+// of 60 when scrolling the log; XWayland with DMA-BUF fails to allocate GBM buffers on NVIDIA).
+// Only on that combo, and never over a value the user set themselves.
 #[cfg(target_os = "linux")]
 fn patch_nvidia_wayland() {
     let wayland = std::env::var_os("WAYLAND_DISPLAY").is_some()
@@ -42,10 +44,8 @@ fn patch_nvidia_wayland() {
     if !wayland || !nvidia {
         return;
     }
-    for (key, value) in [("GDK_BACKEND", "x11"), ("WEBKIT_DISABLE_DMABUF_RENDERER", "1")] {
-        if std::env::var_os(key).is_none() {
-            std::env::set_var(key, value);
-        }
+    if std::env::var_os("__NV_DISABLE_EXPLICIT_SYNC").is_none() {
+        std::env::set_var("__NV_DISABLE_EXPLICIT_SYNC", "1");
     }
 }
 
