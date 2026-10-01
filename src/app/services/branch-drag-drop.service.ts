@@ -29,6 +29,8 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
 import {DialogService} from 'primeng/dynamicdialog';
 import {BranchAheadBehindService} from './branch-ahead-behind.service';
 import {InteractiveRebaseService} from './interactive-rebase.service';
+import {ConflictPredictionService} from './conflict-prediction.service';
+import {withConflictWarning} from '../utils/conflict-prediction.utils';
 import {openBehindRemoteDialog, type BehindRemoteAction} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
 @Injectable({providedIn: 'root'})
@@ -39,6 +41,7 @@ export class BranchDragDropService {
   private dialog = inject(DialogService);
   private aheadBehind = inject(BranchAheadBehindService);
   private interactiveRebaseService = inject(InteractiveRebaseService);
+  private conflictPrediction = inject(ConflictPredictionService);
 
   draggingBranch = signal<Branch | null>(null);
   hoveredBranch = signal<Branch | null>(null);
@@ -70,17 +73,19 @@ export class BranchDragDropService {
     const isLocalTarget = target.type === BranchType.Local;
     const remoteRef = isLocalTarget ? (target.upstream ?? `origin/${target.name}`) : target.name;
     const items: MenuItem[] = [];
+    const conflicts = this.conflictPrediction.conflictsBetween(target.tip.sha, source.tip.sha);
+    const warn = (item: MenuItem) => withConflictWarning(item, conflicts);
 
     if (isLocalSource && isLocalTarget) {
       if (isAncestor(source.tip.sha, target.tip.sha, this.currentRepo.logs())) {
         items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForward});
       }
-      items.push({label: `Merge ${source.name} into ${target.name}`, icon: 'fa fa-compress', command: this.merge});
-      items.push({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase});
-      items.push({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase});
+      items.push(warn({label: `Merge ${source.name} into ${target.name}`, icon: 'fa fa-compress', command: this.merge}));
+      items.push(warn({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase}));
+      items.push(warn({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
     } else if (isLocalSource && !isLocalTarget) {
-      items.push({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase});
-      items.push({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase});
+      items.push(warn({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase}));
+      items.push(warn({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
     } else if (!isLocalSource && isLocalTarget) {
       if (isAncestor(source.tip.sha, target.tip.sha, this.currentRepo.logs())) {
         items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForwardRemote});
@@ -128,6 +133,7 @@ export class BranchDragDropService {
       this.source.set(source);
       this.target.set(target);
       this.activeContextMenu.show(this.menu(), event.event);
+      this.conflictPrediction.predictForMenu(target.tip.sha, source.tip.sha, this.menu);
     }
   };
 
