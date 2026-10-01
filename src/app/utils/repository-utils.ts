@@ -24,6 +24,16 @@ import {Commit} from '../lib/github-desktop/model/commit';
 export const createRepository = (directory: string) =>
   new GitRepository(directory, lastFolderName(directory));
 
+// A few fields of the repository are synced with localStorage to keep the interface identical between gitgud restarts / refreshes
+export type StoredRepository = Pick<GitRepository, 'id' | 'name' | 'selected' | 'selectedCommitsShas' | 'startCommit' | 'editorConfig'>;
+
+export const toStoredRepository = ({id, name, selected, selectedCommitsShas, startCommit, editorConfig}: GitRepository): StoredRepository =>
+  ({id, name, selected, selectedCommitsShas, startCommit, editorConfig});
+
+// Also drops the git data that older versions stored
+export const fromStoredRepository = (stored: StoredRepository): GitRepository =>
+  ({...new GitRepository(stored.id, stored.name), ...toStoredRepository(stored as GitRepository)});
+
 
 /**
  * Stashes Have two parents: [sha1, sha2]:

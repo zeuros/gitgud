@@ -21,6 +21,7 @@ import {GitRepository} from '../models/git-repository';
 import {LocalStorageService} from '../services/local-storage.service';
 import {StorageName} from '../enums/storage-name.enum';
 import {syncToStorage} from '../utils/store.utils';
+import {fromStoredRepository, type StoredRepository, toStoredRepository} from '../utils/repository-utils';
 
 /**
  * Global application store: repository list management.
@@ -31,7 +32,7 @@ export class GitRepositoryStore {
 
   private localStorage = inject(LocalStorageService);
 
-  private _repositories = signal<GitRepository[]>(this.localStorage.get<GitRepository[]>(StorageName.GitRepositories) ?? []);
+  private _repositories = signal<GitRepository[]>((this.localStorage.get<StoredRepository[]>(StorageName.GitRepositories) ?? []).map(fromStoredRepository));
   private _recentIds = signal<string[]>([]);
 
   repositories = this._repositories.asReadonly();
@@ -50,7 +51,7 @@ export class GitRepositoryStore {
   deactivateNewTab = () => this.newTabSelected.set(false);
 
   constructor() {
-    syncToStorage(this._repositories, StorageName.GitRepositories, this.localStorage);
+    syncToStorage(this._repositories, StorageName.GitRepositories, this.localStorage, repos => repos.map(toStoredRepository));
     syncToStorage(this._recentIds, StorageName.RecentRepoIds, this.localStorage);
   }
 
