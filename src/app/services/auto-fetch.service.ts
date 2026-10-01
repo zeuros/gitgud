@@ -80,7 +80,7 @@ export class AutoFetchService {
 
     this.fetching = true;
     this.lastAttemptAt = Date.now();
-    this.gitApi.git(['fetch'])
+    this.gitApi.git(['fetch', '--prune'])
       .pipe(finalize(() => this.fetching = false))
       .subscribe({
         next: () => {
