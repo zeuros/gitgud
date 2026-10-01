@@ -6,7 +6,7 @@ export type MonacoTheme = 'gitgud-dark' | 'gitgud-light';
 
 export interface CanvasColors {
   primary: string;  // node/edge base color (hue-rotated per branch)
-  graphColors: string[];  // 7 pre-computed hue-rotated colors, indexed by indent
+  graphColors: string[];  // 7 pre-computed hue-rotated colors, indexed by lane
   background: string;  // index node fill = app background
   avatarRing: string;  // ring drawn before avatar image
   nodeShadowColor: string;  // shadowColor for node glow + initials text shadow

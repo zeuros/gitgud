@@ -84,7 +84,7 @@
                         <div class="log-chip-drop-zone"
                              [class.checked-out]="commit.isPointedByLocalHead"
                              [style.z-index]="420"
-                             [style.filter]="commitColor(commit.indent!)">
+                             [style.filter]="commitColor(commit.lane!)">
 
                             <div class="draggable-chip">
                                 <i class="fa fa-check mr-2 align-self-center"></i>
@@ -113,7 +113,7 @@
                              [class.checked-out]="commit.isPointedByLocalHead"
                              [style.--offset.px]="(isDetachedHead ? i + 1 : i) * 30"
                              [style.z-index]="420 - (isDetachedHead ? i + 1 : i)"
-                             [style.filter]="commitColor(commit.indent!)"
+                             [style.filter]="commitColor(commit.lane!)"
                              (contextmenu)="openBranchContextMenu((local ?? distant)!, $event)"
                         >
                             <div class="draggable-chip"
@@ -168,7 +168,7 @@
                 }
             </td>
             <td class="graph">
-                <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN.left + xPosition(commit.indent)"></div>
+                <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN.left + xPosition(commit.lane)"></div>
             </td>
             <td class="summary ellipsis" [titleIfOverflow]="commit.summary">{{ commit.summary }}</td>
             <td class="author text-gray ellipsis">{{ commit.author.name }}</td>
