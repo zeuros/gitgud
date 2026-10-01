@@ -77,7 +77,7 @@ Two Angular Signal stores:
 
 ### Linux / WebKitGTK notes
 
-On Wayland with the NVIDIA proprietary driver (`/sys/module/nvidia` present), `patch_nvidia_wayland()` in `lib.rs` sets `__NV_DISABLE_EXPLICIT_SYNC=1` at startup (otherwise WebKitGTK crashes with Wayland "Error 71 (Protocol error)"). Values already set in the environment are left alone. Avoid `WEBKIT_DISABLE_DMABUF_RENDERER=1`: it switches WebKitGTK to CPU rendering (~23 fps vs 60 when scrolling the log); `GDK_BACKEND=x11` with DMA-BUF fails to allocate GBM buffers on NVIDIA. Everyone else gets whatever backend WebKitGTK negotiates.
+On Wayland with the NVIDIA proprietary driver (`/sys/module/nvidia` present), `patch_nvidia_wayland()` in `lib.rs` sets `__NV_DISABLE_EXPLICIT_SYNC=1` at startup (otherwise WebKitGTK crashes with Wayland "Error 71 (Protocol error)"). On that combo the web process leaks GPU sync fences (`anon_inode:sync_file`, ~2 fds per frame drawn), so it also raises the open-files soft limit to the hard limit (GNOME launches apps with 1024, which crashed it with "Too many open files"). Values already set in the environment are left alone. Avoid `WEBKIT_DISABLE_DMABUF_RENDERER=1`: it switches WebKitGTK to CPU rendering (~23 fps vs 60 when scrolling the log); `GDK_BACKEND=x11` with DMA-BUF fails to allocate GBM buffers on NVIDIA. Everyone else gets whatever backend WebKitGTK negotiates.
 
 ## Known issues / active TODOs
 
