@@ -6,10 +6,6 @@
       <script value="start" />
     </scripts>
     <node-interpreter value="project" />
-    <envs>
-      <env name="GDK_BACKEND" value="x11" />
-      <env name="WEBKIT_DISABLE_DMABUF_RENDERER" value="1" />
-    </envs>
     <method v="2" />
   </configuration>
   <configuration default="false" name="start" type="js.build_tools.npm" nameIsGenerated="true">
@@ -19,10 +15,6 @@
       <script value="start" />
     </scripts>
     <node-interpreter value="project" />
-    <envs>
-      <env name="GDK_BACKEND" value="x11" />
-      <env name="WEBKIT_DISABLE_DMABUF_RENDERER" value="1" />
-    </envs>
     <method v="2" />
   </configuration>
 </component>
