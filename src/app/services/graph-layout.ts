@@ -35,7 +35,8 @@ export interface GraphLayout {
  * - The lane then waits for the commit's first parent, so a first-parent chain stays in one column.
  * - Other parents (merges) wait in the lane already waiting for them, or in a new one.
  * - Lane 0 is kept, from the top, for the first-parent chain of mainTip (HEAD / work in progress), which is always
- *   drawn straight on the left even when other branches have newer commits.
+ *   drawn straight on the left even when other branches have newer commits. The topmost branch built on mainTip (its
+ *   first-parent chain leads to it) extends that line upwards instead of being pushed to another column.
  * - A lane freed on a row isn't reused on that same row, so two edges never look connected through it.
  */
 export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayout => {
@@ -45,6 +46,13 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
   const lanes: (string | undefined)[] = [];
   const freedOnRow: number[] = [];
   if (mainTip && inLog(mainTip.sha)) lanes[0] = mainTip.sha;
+  let mainLaneUntouched = lanes[0] != undefined;
+
+  const firstParentChainLeadsTo = (commit: DisplayRef, sha: string) => {
+    let current: DisplayRef | undefined = commit;
+    while (current && current.sha != sha) current = log[rows.get(current.parentSHAs[0])!];
+    return !!current;
+  };
 
   const freeLane = (lane: number, row: number) => {
     lanes[lane] = undefined;
@@ -63,7 +71,9 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
 
   log.forEach((commit, row) => {
     const waiting = lanes.flatMap((awaited, lane) => awaited == commit.sha ? [lane] : []);
-    const column = waiting[0] ?? takeFreeLane(row, commit.sha);
+    const extendsMain = !waiting.length && mainLaneUntouched && firstParentChainLeadsTo(commit, mainTip!.sha);
+    const column = extendsMain ? 0 : waiting[0] ?? takeFreeLane(row, commit.sha);
+    if (column == 0) mainLaneUntouched = false;
     waiting.slice(1).forEach(lane => freeLane(lane, row));
     commit.indent = column;
 
