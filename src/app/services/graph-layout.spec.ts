@@ -29,6 +29,20 @@ describe('layoutGraph', () => {
     expect(edges.find(e => e.childRow == 0)!.laneCol).toBe(1);
   });
 
+  it('extends the main line upwards with the first branch built on HEAD', () => {
+    //  f2      built on HEAD (no work in progress above it): goes on straight
+    //  f1
+    //  | g1    also built on HEAD, but second
+    //  | | x   unrelated tip
+    //  |/  |
+    //  m   |   HEAD
+    //  |  /
+    //  b
+    const commits = log('f2:f1', 'f1:m', 'g1:m', 'x:b', 'm:b', 'b');
+    layoutGraph(commits, commits[4]);
+    expect(columns(commits)).toEqual({f2: 0, f1: 0, g1: 1, x: 2, m: 0, b: 0});
+  });
+
   it('continues the leftmost lane on a branching point', () => {
     const commits = log('x:b', 'y:b', 'b');
     layoutGraph(commits);

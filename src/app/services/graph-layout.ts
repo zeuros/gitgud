@@ -40,6 +40,13 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
   // Lane 0 is kept, from the top, for the first-parent chain of mainTip (HEAD / work in progress), which is always
   // drawn straight on the left even when other branches have newer commits
   if (mainTip && inLog(mainTip.sha)) lanes[0] = mainTip.sha;
+  let mainLaneUntouched = lanes[0] != undefined;
+
+  const firstParentChainLeadsTo = (commit: DisplayRef, sha: string) => {
+    let current: DisplayRef | undefined = commit;
+    while (current && current.sha != sha) current = log[rows.get(current.parentSHAs[0])!];
+    return !!current;
+  };
 
   const freeLane = (lane: number, row: number) => {
     lanes[lane] = undefined;
@@ -59,9 +66,12 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
 
   log.forEach((commit, row) => {
     const lanesWaitingForCommit = lanes.flatMap((awaited, lane) => awaited == commit.sha ? [lane] : []);
+    // The topmost branch built on mainTip (its first-parent chain leads to it) extends the main line upwards instead of being pushed to another lane
+    const extendsMain = !lanesWaitingForCommit.length && mainLaneUntouched && firstParentChainLeadsTo(commit, mainTip!.sha);
     // A commit takes the leftmost lane waiting for it, so the branch already on the left keeps going straight.
     // A commit nobody waits for (branch tip) takes the leftmost free lane
-    const lane = lanesWaitingForCommit[0] ?? takeFreeLane(row, commit.sha);
+    const lane = extendsMain ? 0 : lanesWaitingForCommit[0] ?? takeFreeLane(row, commit.sha);
+    if (lane == 0) mainLaneUntouched = false;
     // The other lanes waiting for it end here (branching point)
     lanesWaitingForCommit.slice(1).forEach(lane => freeLane(lane, row));
     commit.lane = lane;
