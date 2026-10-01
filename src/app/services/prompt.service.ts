@@ -26,8 +26,8 @@ export class PromptService {
 
   private dialog = inject(DialogService);
 
-  open = (label: string, required = true) =>
-    this.dialog.open(PromptDialogComponent, {header: label, width: '400px', data: {label, required}})!
+  open = (label: string, required = true, initialValue = '') =>
+    this.dialog.open(PromptDialogComponent, {header: label, width: '400px', data: {label, required, initialValue}})!
       .onClose.pipe(map((r?: string) => r?.trim().length ? r : null), tap(this.closeAll));
 
   // Clear dialog references to avoid reuse
