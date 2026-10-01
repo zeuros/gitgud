@@ -47,6 +47,22 @@ fn patch_nvidia_wayland() {
     if std::env::var_os("__NV_DISABLE_EXPLICIT_SYNC").is_none() {
         std::env::set_var("__NV_DISABLE_EXPLICIT_SYNC", "1");
     }
+    raise_open_files_limit();
+}
+
+// On that combo the web process leaks GPU sync fences (anon_inode:sync_file, ~2 fds per frame drawn) and dies with
+// "Too many open files" once it reaches the soft limit (1024 for apps launched from GNOME). Raise it to the hard limit
+// (inherited by the web process): frames are only drawn while something moves, so a session doesn't get there.
+#[cfg(target_os = "linux")]
+fn raise_open_files_limit() {
+    let mut limit = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
+    // SAFETY: plain syscalls on a local struct
+    unsafe {
+        if libc::getrlimit(libc::RLIMIT_NOFILE, &mut limit) == 0 && limit.rlim_cur < limit.rlim_max {
+            limit.rlim_cur = limit.rlim_max;
+            libc::setrlimit(libc::RLIMIT_NOFILE, &limit);
+        }
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

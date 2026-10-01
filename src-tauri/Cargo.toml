@@ -24,6 +24,9 @@ tokio = { version = "1", features = ["full"] }
 tauri-plugin-window-state = "2.4.1"
 tauri-plugin-prevent-default = "5"
 
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+
 [profile.release]
 panic = "abort"
 codegen-units = 1
