@@ -33,6 +33,7 @@ import {normalizedBranchName} from '../utils/branch-utils';
 import {BranchService} from './branch.service';
 import {CreateTagService} from './create-tag.service';
 import {BranchAheadBehindService} from './branch-ahead-behind.service';
+import {InteractiveRebaseService} from './interactive-rebase.service';
 import {type BehindRemoteAction, openBehindRemoteDialog} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
 @Injectable({providedIn: 'root'})
@@ -48,6 +49,7 @@ export class BranchContextMenuService {
   private createBranch = inject(CreateBranchService);
   private createTag = inject(CreateTagService);
   private aheadBehind = inject(BranchAheadBehindService);
+  private interactiveRebase = inject(InteractiveRebaseService);
 
   selectedNode = signal<TreeNode<Branch> | undefined>(undefined);
 
@@ -85,7 +87,7 @@ export class BranchContextMenuService {
       // Integration
       {label: `Merge ${name} into ${head}`, icon: 'fa fa-compress', command: this.mergeBranch},
       {label: `Rebase ${head} onto ${name}`, icon: 'fa fa-code-fork', command: this.rebaseBranch},
-      {label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.toast.info('Interactive rebase requires a terminal')},
+      {label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.interactiveRebase.open(name)},
       {separator: true},
       // Checkout
       {label: `Checkout ${name}`, icon: 'fa fa-sign-in', command: () => node.data && this.branch.checkoutBranch(node.data)},

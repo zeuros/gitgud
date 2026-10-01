@@ -30,7 +30,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 // Git invokes GIT_EDITOR as: `$GIT_EDITOR /path/to/msg/file` — we want a no-op that exits 0.
 // On Windows (cmd.exe): "cmd /c exit 0" — ignores extra args. On Unix: "true".
-const noopEditor = () =>
+export const noopEditor = () =>
   window.tauri.process.platform === 'win32' ? 'cmd /c exit 0' : 'true';
 
 // Subcommands that never write the index: they don't need to wait for .git/index.lock,

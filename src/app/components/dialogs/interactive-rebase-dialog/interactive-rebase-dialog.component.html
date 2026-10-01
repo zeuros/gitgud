@@ -1,0 +1,47 @@
+<div class="flex flex-column gap-3 pt-2">
+    <span class="hint">
+        Newest commit first. Drag commits to reorder them. Squash and fixup meld a commit into the one below
+        (fixup discards its message).
+    </span>
+
+    @if (mergesCount) {
+        <span class="warning">
+            <i class="fa fa-exclamation-triangle"></i>
+            {{ mergesCount }} merge commit{{ mergesCount > 1 ? 's are' : ' is' }} left out: the rebased history will be linear.
+        </span>
+    }
+
+    <div class="rebase-entries" cdkDropList (cdkDropListDropped)="drop($event)">
+        @for (entry of entries(); track entry.sha; let i = $index) {
+            <div class="rebase-entry" [class]="entry.action" cdkDrag cdkDragLockAxis="y">
+                <div class="rebase-entry-line">
+                    <i class="fa fa-bars drag-handle" cdkDragHandle></i>
+                    <p-select
+                            class="action"
+                            size="small"
+                            appendTo="body"
+                            [options]="actions"
+                            optionLabel="label"
+                            optionValue="value"
+                            [ngModel]="entry.action"
+                            (ngModelChange)="patch(i, {action: $event})"
+                    />
+                    <span class="sha">{{ short(entry.sha) }}</span>
+                    <span class="summary" [title]="entry.message">{{ summary(entry.message) }}</span>
+                    <span class="author">{{ entry.author }}</span>
+                </div>
+                @if (entry.action == 'reword') {
+                    <textarea pTextarea rows="3" class="message" [ngModel]="entry.message" (ngModelChange)="patch(i, {message: $event})"></textarea>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="flex gap-2 justify-content-end align-items-center">
+        @if (invalidReason(); as reason) {
+            <span class="warning flex-1">{{ reason }}</span>
+        }
+        <p-button label="Cancel" [text]="true" severity="secondary" (click)="cancel()"/>
+        <p-button label="Rebase" class="start-rebase" (click)="confirm()" [disabled]="!!invalidReason()"/>
+    </div>
+</div>
