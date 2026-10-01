@@ -18,7 +18,7 @@
 
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {ConfirmationService, type MenuItem, type TreeNode} from 'primeng/api';
-import {catchError, EMPTY, first} from 'rxjs';
+import {catchError, EMPTY, filter, first} from 'rxjs';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
@@ -165,8 +165,8 @@ export class BranchContextMenuService {
     this.gitWorkflow.doRunAndRefresh(['reset', `--${mode}`, this.name()], `Reset ${mode} to ${this.name()}`, mode === 'hard', false);
 
   private renameBranch = () =>
-    this.prompt.open(`New name for ${this.name()}:`)
-      .pipe(first(notUndefined))
+    this.prompt.open(`New name for ${this.name()}:`, true, this.name())
+      .pipe(first(notUndefined), filter(newName => newName != this.name()))
       .subscribe(newName => this.gitWorkflow.doRunAndRefresh(['branch', '-m', this.name(), newName], `Renamed ${this.name()} to ${newName}`));
 
   private deleteBranch = () => {
