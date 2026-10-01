@@ -59,7 +59,7 @@ export class AutoFetchService {
 
   private autoFetch = () => {
     if (untracked(() => this.gitRepositoryStore.selectedRepository())) {
-      this.gitApi.git(['fetch']).subscribe(() => {
+      this.gitApi.git(['fetch', '--prune']).subscribe(() => {
         this.lastFetchedAt.set(Date.now());
         this.gitRefresh.doUpdateLogsAndBranches();
       });

@@ -131,7 +131,7 @@ export class ToolbarComponent implements OnInit {
 
   protected fetch = () => {
     this.loading.set('fetch');
-    this.gitApi.gitAction(['fetch'])
+    this.gitApi.gitAction(['fetch', '--prune']) // Also forgets the branches deleted on the remote
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => this.autoFetch.lastFetchedAt.set(Date.now()));
   };
