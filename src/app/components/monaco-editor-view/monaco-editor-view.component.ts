@@ -16,14 +16,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, type OnDestroy, signal, ViewChild} from '@angular/core';
-import {FileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
+import {type AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, type OnDestroy, signal, untracked, ViewChild} from '@angular/core';
+import {AppFileStatusKind, CommittedFileChange, FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {editor, Uri} from 'monaco-editor';
 import {diffSides, FileDiffService} from '../../services/file-diff.service';
 import {FormsModule} from '@angular/forms';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
-import {combineLatest, EMPTY, switchMap, tap} from 'rxjs';
+import {catchError, combineLatest, EMPTY, switchMap, tap} from 'rxjs';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {type ViewType} from '../../models/git-repository';
@@ -35,6 +35,12 @@ import IEditorOptions = editor.IEditorOptions;
 import IDiffEditorOptions = editor.IDiffEditorOptions;
 import {fileName} from '../../utils/utils';
 import {Button} from 'primeng/button';
+import {DatePipe} from '@angular/common';
+import {FileHistoryReaderService} from '../../services/electron-cmd-parser-layer/file-history-reader.service';
+import {type Blame, type BlameCommit, type FileHistoryEntry, startsBlameBlock} from '../../utils/file-history.utils';
+import {ToastService} from '../../services/toast.service';
+import {short} from '../../utils/commit-utils';
+import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 
 interface DiffModel {
   code: string;
@@ -60,6 +66,20 @@ type DiffContent =
   | {kind: 'too-large', size: number}
   | {kind: 'image', before: ImageSide, after: ImageSide};
 
+// Path of the file before the change: renames and copies come from another path
+// (committed files carry an undefined oldPath when they weren't renamed)
+const oldPath = (file: FileChange) => ('oldPath' in file.status ? file.status.oldPath : undefined) ?? file.path;
+
+const BLAME_AUTHOR_WIDTH = 14;
+// "abc1234 2026-01-31 Author name   " in front of the line number
+const BLAME_LABEL_WIDTH = 7 + 1 + 10 + 1 + BLAME_AUTHOR_WIDTH + 1;
+
+const blameLabel = ({sha, date, author, committed}: BlameCommit) =>
+  (committed
+    ? `${sha.slice(0, 7)} ${date.toISOString().slice(0, 10)} ${author.slice(0, BLAME_AUTHOR_WIDTH)}`
+    : 'Not committed yet'
+  ).padEnd(BLAME_LABEL_WIDTH);
+
 const formatSize = (bytes: number) =>
   bytes < 1024 ? `${bytes} B`
     : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB`
@@ -68,7 +88,7 @@ const formatSize = (bytes: number) =>
 @Component({
   standalone: true,
   selector: 'gitgud-monaco-editor-view',
-  imports: [FormsModule, SelectButton, Button],
+  imports: [FormsModule, SelectButton, Button, DatePipe],
   templateUrl: './monaco-editor-view.component.html',
   styleUrl: './monaco-editor-view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,6 +100,8 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   private fileDiff = inject(FileDiffService);
   private hunkActions = inject(MonacoDiffRightClickActionsService);
   private theme = inject(ThemeService);
+  private fileHistoryReader = inject(FileHistoryReaderService);
+  private toast = inject(ToastService);
   protected viewOptions = Object.entries({
     hunk:   {label: 'Hunk',   icon: 'fa fa-list'},
     inline: {label: 'Inline', icon: 'fa fa-align-left'},
@@ -88,7 +110,15 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
   fileToDiff = input<FileChange | null>();
   @ViewChild('diffEditor', {static: false}) diffEditorContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('blameEditor', {static: false}) blameEditorContainer?: ElementRef<HTMLDivElement>;
   diffModels = signal<DiffModels | undefined>(undefined);
+  protected history = signal<FileHistoryEntry[] | undefined>(undefined);
+  protected blame = signal<Blame | undefined>(undefined);
+  // Commit of the blamed line under the mouse
+  protected blameHovered = signal<BlameCommit | undefined>(undefined);
+  private blameEditor?: IStandaloneCodeEditor;
+  private blameDecorations?: editor.IEditorDecorationsCollection;
+  protected short = short;
   protected content = signal<DiffContent>({kind: 'text'});
   protected images = computed(() => {
     const content = this.content();
@@ -163,6 +193,31 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       if (diffEditor && file) diffEditor.contextMenuUpdater(file);
     });
 
+    // History of the file shown when the panel is opened: browsing its revisions keeps the list
+    effect((onCleanup) => {
+      if (!this.fileDiffPanel.historyOpen()) return this.history.set(undefined);
+      const file = untracked(this.fileToDiff);
+      if (!file) return;
+
+      const sub = this.fileHistoryReader.history(file.path, isCommittedFileChange(file) ? file.commitish : 'HEAD')
+        .subscribe(history => this.history.set(history));
+      onCleanup(() => sub.unsubscribe());
+    });
+
+    effect((onCleanup) => {
+      const file = this.fileToDiff();
+      if (!this.fileDiffPanel.blameOpen() || !file) return this.blame.set(undefined);
+
+      const sub = this.fileHistoryReader.blame(...this.blameTarget(file)).pipe(
+        catchError(() => {
+          this.toast.warn(`${fileName(file.path)} can't be blamed: git doesn't track it there`);
+          this.fileDiffPanel.blameOpen.set(false);
+          return EMPTY;
+        }),
+      ).subscribe(blame => this.showBlame(file, blame));
+      onCleanup(() => sub.unsubscribe());
+    });
+
     effect(() => {
       const viewType = this.viewType();
       const diffEditor = this.diffEditor();
@@ -197,6 +252,8 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
 
   ngOnDestroy(): void {
+    this.blameEditor?.getModel()?.dispose();
+    this.blameEditor?.dispose();
     this.setContent({kind: 'text'});
     const model = this.diffEditor()?.editor.getModel();
     model?.original.dispose();
@@ -212,7 +269,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   // Monaco only handles text: blobs that aren't valid UTF-8 (images, videos…) must be fetched as raw bytes
   private showTextDiff(file: FileChange) {
     const {before, after} = diffSides(file);
-    return combineLatest([this.fileDiff.getFileText(file.path, before), this.fileDiff.getFileText(file.path, after)]).pipe(tap(([before, after]) => {
+    return combineLatest([this.fileDiff.getFileText(oldPath(file), before), this.fileDiff.getFileText(file.path, after)]).pipe(tap(([before, after]) => {
       if (isBinaryContent(before) || isBinaryContent(after)) {
         this.currentFile.set(undefined);
         this.setContent({kind: 'binary'});
@@ -246,6 +303,77 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       this.currentFile.set(undefined);
       this.setContent({kind: 'image', before: toSide(before), after: toSide(after)});
     }));
+  }
+
+  protected isShown = (entry: FileHistoryEntry) => {
+    const file = this.fileToDiff();
+    return !!file && isCommittedFileChange(file) && file.commitish == entry.sha && !file.baseCommitish;
+  };
+
+  protected showHistoryEntry = ({path, status, sha}: FileHistoryEntry) =>
+    this.fileDiffPanel.showRevision(new CommittedFileChange(path, status, sha));
+
+  protected selectInLog = (sha: string, event?: Event) => {
+    event?.stopPropagation();
+    if (this.currentRepo.logs().some(c => c.sha == sha)) this.currentRepo.update({selectedCommitsShas: [sha]});
+    else this.toast.info(`${short(sha)} isn't in the log shown`);
+  };
+
+  // What to blame: [path, revision]. A deleted file is blamed as it was before; working directory files as they are on disk
+  private blameTarget = (file: FileChange): [string, string | undefined] => {
+    if (!isCommittedFileChange(file)) return [file.path, undefined];
+    return [file.path, file.status.kind == AppFileStatusKind.Deleted ? `${file.commitish}^` : file.commitish];
+  };
+
+  private showBlame(file: FileChange, blame: Blame) {
+    const blameEditor = this.blameEditor ??= this.createBlameEditor();
+    const digits = `${blame.lines.length}`.length;
+
+    const previousModel = blameEditor.getModel();
+    blameEditor.setModel(this.upsertModel(Uri.parse(`blame-${file.path}`), blame.lines.map(l => l.text).join('\n')));
+    if (previousModel && previousModel !== blameEditor.getModel()) previousModel.dispose();
+
+    blameEditor.updateOptions({
+      lineNumbersMinChars: BLAME_LABEL_WIDTH + digits + 1,
+      lineNumbers: lineNumber => {
+        const line = blame.lines[lineNumber - 1];
+        const number = `${lineNumber}`.padStart(digits);
+        return line && startsBlameBlock(blame, lineNumber - 1) ? blameLabel(blame.commits.get(line.sha)!) + number : number;
+      },
+    });
+
+    // Tells the blocks apart: every other one is shaded
+    let shaded = true;
+    const blocks = blame.lines.flatMap((_, index) => {
+      if (!startsBlameBlock(blame, index)) return [];
+      shaded = !shaded;
+      const end = blame.lines.findIndex((_, i) => i > index && startsBlameBlock(blame, i));
+      return shaded ? [{range: {startLineNumber: index + 1, startColumn: 1, endLineNumber: end < 0 ? blame.lines.length : end, endColumn: 1}, options: {isWholeLine: true, className: 'blame-shaded', marginClassName: 'blame-shaded'}}] : [];
+    });
+    this.blameDecorations?.clear();
+    this.blameDecorations = blameEditor.createDecorationsCollection(blocks);
+
+    this.blameHovered.set(undefined);
+    this.blame.set(blame);
+  }
+
+  private createBlameEditor() {
+    const blameEditor = editor.create(this.blameEditorContainer!.nativeElement, {...this.editorOptions, glyphMargin: false, renderLineHighlight: 'all'});
+    const commitAt = (lineNumber?: number) => {
+      const blame = this.blame();
+      return blame?.commits.get(blame.lines[(lineNumber ?? 0) - 1]?.sha);
+    };
+
+    blameEditor.onMouseMove(({target}) => this.blameHovered.set(commitAt(target.position?.lineNumber)));
+    blameEditor.onMouseLeave(() => this.blameHovered.set(undefined));
+    // Clicking a line's annotation opens what its commit changed in the file
+    blameEditor.onMouseDown(({target}) => {
+      const commit = commitAt(target.position?.lineNumber);
+      if (target.type != editor.MouseTargetType.GUTTER_LINE_NUMBERS || !commit?.committed) return;
+      this.fileDiffPanel.blameOpen.set(false);
+      this.fileDiffPanel.showRevision(new CommittedFileChange(commit.path, {kind: AppFileStatusKind.Modified}, commit.sha));
+    });
+    return blameEditor;
   }
 
   // Releases the previous image blobs
