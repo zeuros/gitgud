@@ -79,7 +79,7 @@ Two Angular Signal stores:
 
 ### Linux / WebKitGTK notes
 
-No `GDK_BACKEND` or `WEBKIT_DISABLE_DMABUF_RENDERER` overrides are set — the app runs with whatever backend WebKitGTK negotiates at runtime. If rendering issues appear on specific drivers/compositors, these can be set via environment variable before launch.
+On Wayland with the NVIDIA proprietary driver (`/sys/module/nvidia` present), `patch_nvidia_wayland()` in `lib.rs` sets `__NV_DISABLE_EXPLICIT_SYNC=1` at startup (otherwise WebKitGTK crashes with Wayland "Error 71 (Protocol error)"). Values already set in the environment are left alone. Avoid `WEBKIT_DISABLE_DMABUF_RENDERER=1`: it switches WebKitGTK to CPU rendering (~23 fps vs 60 when scrolling the log); `GDK_BACKEND=x11` with DMA-BUF fails to allocate GBM buffers on NVIDIA. Everyone else gets whatever backend WebKitGTK negotiates.
 
 ## Known issues / active TODOs
 

@@ -31,9 +31,29 @@ fn patch_path() {
     }
 }
 
+// WebKitGTK on Wayland with the NVIDIA proprietary driver dies with "Error 71 (Protocol error) dispatching to
+// Wayland display" because of the driver's explicit sync. Disabling it keeps native Wayland and GPU rendering
+// (XWayland + WEBKIT_DISABLE_DMABUF_RENDERER=1 also avoids the crash, but renders the page on the CPU: ~23 fps instead
+// of 60 when scrolling the log; XWayland with DMA-BUF fails to allocate GBM buffers on NVIDIA).
+// Only on that combo, and never over a value the user set themselves.
+#[cfg(target_os = "linux")]
+fn patch_nvidia_wayland() {
+    let wayland = std::env::var_os("WAYLAND_DISPLAY").is_some()
+        || std::env::var("XDG_SESSION_TYPE").is_ok_and(|t| t == "wayland");
+    let nvidia = std::path::Path::new("/sys/module/nvidia").exists();
+    if !wayland || !nvidia {
+        return;
+    }
+    if std::env::var_os("__NV_DISABLE_EXPLICIT_SYNC").is_none() {
+        std::env::set_var("__NV_DISABLE_EXPLICIT_SYNC", "1");
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     patch_path();
+    #[cfg(target_os = "linux")]
+    patch_nvidia_wayland();
 
     tauri::Builder::default()
         .manage(shell_pool::ShellPoolManager::new())
