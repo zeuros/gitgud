@@ -24,6 +24,9 @@ export class GlobalErrorHandler implements ErrorHandler {
   private toast = inject(ToastService);
 
   handleError(error: unknown): void {
+    // Monaco rejects its pending work this way when an editor is disposed
+    if (error instanceof Error && error.name == 'Canceled') return;
+
     console.error('[GlobalErrorHandler]', error);
 
     let message: string | undefined;
