@@ -25,6 +25,8 @@ import {short} from '../utils/commit-utils';
 import {GitWorkflowService} from './git-workflow.service';
 import {CreateBranchService} from './create-branch.service';
 import {CreateTagService} from './create-tag.service';
+import {InteractiveRebaseService} from './interactive-rebase.service';
+import {isAncestor} from '../utils/log-utils';
 
 @Injectable({
   providedIn: 'root',
@@ -36,6 +38,7 @@ export class CommitContextMenuService {
   private currentRepo = inject(CurrentRepoStore);
   private createBranch = inject(CreateBranchService);
   private createTag = inject(CreateTagService);
+  private interactiveRebase = inject(InteractiveRebaseService);
 
   selectedCommit = signal<DisplayRef | undefined>(undefined);
   private sha = computed(() => this.selectedCommit()!.sha);
@@ -44,6 +47,11 @@ export class CommitContextMenuService {
     const selectedSha = this.sha();
     const stashes = this.currentRepo.stashes().map(s => s.parentSHAs[1]);
     return this.currentRepo.logs().filter(c => !stashes.includes(c.sha)).find(c => c.parentSHAs[0] === selectedSha)?.sha;
+  });
+
+  private isOnHeadHistory = computed(() => {
+    const headSha = this.currentRepo.headSha();
+    return !!headSha && (headSha == this.sha() || isAncestor(this.sha(), headSha, this.currentRepo.logs()));
   });
 
   commitContextMenu = computed<MenuItem[]>(() => [
@@ -82,7 +90,7 @@ export class CommitContextMenuService {
     },
     {label: 'Revert commit', icon: 'fa fa-undo', command: this.revertCommit},
     {separator: true},
-    // {label: 'Interactive Rebase', icon: 'fa fa-list-ol', command: this.interactiveRebase},
+    {label: 'Interactive rebase from this commit', icon: 'fa fa-list-ol', command: () => this.interactiveRebase.open(this.parentSha(), this.parentSha() && short(this.parentSha())), visible: this.isOnHeadHistory()},
     {label: 'Drop commit', icon: 'fa fa-trash', command: this.dropCommit},
     {label: 'Move commit up', icon: 'fa fa-arrow-up', command: () => this.moveCommit('up'), visible: !!this.childCommitSha()},
     {label: 'Move commit down', icon: 'fa fa-arrow-down', command: () => this.moveCommit('down'), visible: !!this.parentSha()},

@@ -1,0 +1,84 @@
+.hint {
+  color: var(--hmmmmmmGray);
+  font-size: 13px;
+}
+
+.warning {
+  color: var(--warning-text-color);
+  font-size: 13px;
+}
+
+.rebase-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.rebase-entry {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--p-zinc-800);
+  font-size: 13px;
+
+  &.cdk-drag-preview {
+    z-index: 100000 !important; // Over the dialog (cdk sets 1000 inline)
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  &.cdk-drag-placeholder {
+    opacity: 0.3;
+  }
+
+  &.drop .summary {
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
+
+  &.squash, &.fixup {
+    margin-left: 20px; // Melded into the commit below
+  }
+
+  .rebase-entry-line {
+    display: grid;
+    grid-template-columns: 16px 110px 60px 1fr 140px;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .drag-handle {
+    cursor: grab;
+    color: var(--hmmmmmmGray);
+  }
+
+  .action {
+    width: 100%;
+  }
+
+  .sha {
+    font-family: 'Courier New', monospace;
+    color: var(--p-primary-color);
+  }
+
+  .summary, .author {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .author {
+    color: var(--hmmmmmmGray);
+    text-align: right;
+  }
+
+  .message {
+    width: 100%;
+    margin-top: 4px;
+    font-size: 13px;
+  }
+}
+
+.cdk-drop-list-dragging .rebase-entry:not(.cdk-drag-placeholder) {
+  transition: transform 150ms ease;
+}

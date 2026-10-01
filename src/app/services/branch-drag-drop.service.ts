@@ -26,9 +26,9 @@ import {isAncestor} from '../utils/log-utils';
 import {ActiveContextMenuService} from './active-context-menu.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {ToastService} from './toast.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {BranchAheadBehindService} from './branch-ahead-behind.service';
+import {InteractiveRebaseService} from './interactive-rebase.service';
 import {openBehindRemoteDialog, type BehindRemoteAction} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
 @Injectable({providedIn: 'root'})
@@ -36,9 +36,9 @@ export class BranchDragDropService {
   private activeContextMenu = inject(ActiveContextMenuService);
   private gitWorkflow = inject(GitWorkflowService);
   private currentRepo = inject(CurrentRepoStore);
-  private toast = inject(ToastService);
   private dialog = inject(DialogService);
   private aheadBehind = inject(BranchAheadBehindService);
+  private interactiveRebaseService = inject(InteractiveRebaseService);
 
   draggingBranch = signal<Branch | null>(null);
   hoveredBranch = signal<Branch | null>(null);
@@ -77,6 +77,7 @@ export class BranchDragDropService {
       }
       items.push({label: `Merge ${source.name} into ${target.name}`, icon: 'fa fa-compress', command: this.merge});
       items.push({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase});
+      items.push({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase});
     } else if (isLocalSource && !isLocalTarget) {
       items.push({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase});
       items.push({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase});
@@ -172,8 +173,12 @@ export class BranchDragDropService {
     this.gitWorkflow.rebaseBranchOnto(src, tgt, `Rebased ${src} onto ${tgt}`);
   };
 
-  private interactiveRebase = () =>
-    this.toast.info('Interactive rebase requires a terminal');
+  private interactiveRebase = () => {
+    const {name: src} = this.source()!;
+    const {name: tgt} = this.target()!;
+    if (this.currentRepo.headBranch()?.name == src) this.interactiveRebaseService.open(tgt);
+    else this.gitWorkflow.runAndRefresh(['checkout', src]).subscribe(() => this.interactiveRebaseService.open(tgt));
+  };
 
   // Remote → Local: push the local target branch to the remote source ref (FF only)
   private fastForwardRemote = () => {

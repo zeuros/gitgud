@@ -18,7 +18,7 @@
 
 import {inject, Injectable} from '@angular/core';
 import {catchError, defer, EMPTY, finalize, first, from, map, Observable, retry, Subject, switchMap, throwError} from 'rxjs';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService, noopEditor} from './electron-cmd-parser-layer/git-api.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 
 @Injectable({
@@ -58,8 +58,9 @@ export class RebaseService {
   // Spawn a git rebase process, it should create a file with all rebase actions and wait for user input
   // Once rebase actions file is created, we next pendingRebase$ finishRebase can change actions and ... finish the rebase
   private spawnRebaseProcess = (sha: string, autosquash: boolean) => {
-    this.gitApi.spawn('git', ['rebase', '-i', ...(autosquash ? ['--autosquash'] : []), sha], {
-      env: {...window.tauri.process.env, GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript()},
+    // --empty=drop: a commit emptied by the rebase would otherwise stop it. GIT_EDITOR: squash keeps both messages as is
+    this.gitApi.spawn('git', ['rebase', '-i', '--empty=drop', ...(autosquash ? ['--autosquash'] : []), sha], {
+      env: {...window.tauri.process.env, GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript(), GIT_EDITOR: noopEditor()},
     }).pipe(
       catchError(e => {
         this.pendingRebase$.error(e);
