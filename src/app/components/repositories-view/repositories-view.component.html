@@ -15,7 +15,7 @@
                         [text]="true"
                         [severity]="i === selectedIndex ? 'primary' : 'secondary'"
                         styleClass="close-tab-btn"
-                        (click)="gitRepositoryStore.removeRepository(i); $event.stopPropagation()"
+                        (click)="gitRepository.closeRepository(i);$event.stopPropagation()"
                 />
             </p-tab>
         }
