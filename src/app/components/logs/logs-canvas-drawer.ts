@@ -55,7 +55,7 @@ export const drawLog = (
   // Draw commit nodes
   displayLog
     .slice(startCommit, endCommit)
-    .forEach((ref, indexForThisSlice) => drawNode(canvas, new Coordinates(indexForThisSlice, ref.indent!), ref, stashImg, avatarImages, colors));
+    .forEach((ref, indexForThisSlice) => drawNode(canvas, new Coordinates(indexForThisSlice, ref.lane!), ref, stashImg, avatarImages, colors));
 
   // Erase the area behind the sticky table header so graph lines don't show through it
   canvas.resetTransform();
@@ -67,8 +67,9 @@ function drawEdges(canvas: CanvasRenderingContext2D, edgesToDisplay: Edge[], col
   canvas.lineWidth = 2;
   canvas.shadowBlur = 0; // No shadow on edges
 
-  const solidEdgesByColor = groupBy(edgesToDisplay.filter(e => e.type !== RefType.INDEX), e => e.type === RefType.MERGE_COMMIT ? e.parentCol : e.childCol);
-  const dashedEdgesByColor = groupBy(edgesToDisplay.filter(e => e.type === RefType.INDEX), e => e.type === RefType.MERGE_COMMIT ? e.parentCol : e.childCol);
+  // Colored by lane: a vertical line keeps the color of its column
+  const solidEdgesByColor = groupBy(edgesToDisplay.filter(e => e.type !== RefType.INDEX), e => e.laneCol);
+  const dashedEdgesByColor = groupBy(edgesToDisplay.filter(e => e.type === RefType.INDEX), e => e.laneCol);
 
   Object.entries(solidEdgesByColor).forEach(([key, group]) => strokeEdges(canvas, group, +key, colors, startCommit, false));
   Object.entries(dashedEdgesByColor).forEach(([key, group]) => strokeEdges(canvas, group, +key, colors, startCommit, true));
@@ -82,46 +83,32 @@ const strokeEdges = (canvas: CanvasRenderingContext2D, group: Edge[], colorKey: 
   canvas.stroke();
 };
 
-/** Add path commands for one edge to the current canvas path (no style, no stroke). */
+/**
+ * Add path commands for one edge to the current canvas path (no style, no stroke).
+ * Child → parent: sideways from the child to the edge's lane (merged parent), down the lane, then sideways into the parent
+ * (lane ending on a branching point). Corners are rounded.
+ */
 const addEdgePath = (canvas: CanvasRenderingContext2D, edge: Edge, startCommit: number) => {
   const topScroll = startCommit * ROW_HEIGHT;
   const [xParent, yParent] = [xPosition(edge.parentCol), yPosition(edge.parentRow) - topScroll];
   const [xChild, yChild] = [xPosition(edge.childCol), yPosition(edge.childRow) - topScroll];
+  const xLane = xPosition(edge.laneCol);
 
-  const isMergeCommit = edge.type === RefType.MERGE_COMMIT;
-  const isChildrenRight = xParent < xChild;
-
-  if (isMergeCommit) {
-    canvas.moveTo(xParent, yParent - NODE_RADIUS);
-    if (xParent == xChild) {
-      canvas.lineTo(xParent, yChild + NODE_RADIUS);
-    } else {
-      canvas.lineTo(xParent, yChild + NODE_RADIUS);
-      if (isChildrenRight) {
-        canvas.quadraticCurveTo(xParent, yChild, xParent + NODE_RADIUS, yChild);
-        canvas.lineTo(xChild - NODE_RADIUS, yChild);
-      } else { // Children left
-        canvas.quadraticCurveTo(xParent, yChild, xParent - NODE_RADIUS, yChild);
-        canvas.lineTo(xChild + NODE_RADIUS, yChild);
-      }
-    }
+  if (xLane == xChild) {
+    canvas.moveTo(xLane, yChild + NODE_RADIUS);
   } else {
-    if (xParent === xChild) {
-      canvas.moveTo(xParent, yParent - NODE_RADIUS);
-      canvas.lineTo(xParent, yChild + NODE_RADIUS);
-    } else {
-      if (isChildrenRight) {
-        canvas.moveTo(xParent + NODE_RADIUS, yParent);
-        canvas.lineTo(xChild - NODE_RADIUS, yParent);
-        canvas.quadraticCurveTo(xChild, yParent, xChild, yParent - NODE_RADIUS);
-        canvas.lineTo(xChild, yChild + NODE_RADIUS);
-      } else {
-        canvas.moveTo(xParent - NODE_RADIUS, yParent);
-        canvas.lineTo(xChild + NODE_RADIUS, yParent);
-        canvas.quadraticCurveTo(xChild, yParent, xChild, yParent - NODE_RADIUS);
-        canvas.lineTo(xChild, yChild + NODE_RADIUS);
-      }
-    }
+    const towardsLane = Math.sign(xLane - xChild);
+    canvas.moveTo(xChild + towardsLane * NODE_RADIUS, yChild);
+    canvas.lineTo(xLane - towardsLane * NODE_RADIUS, yChild);
+    canvas.quadraticCurveTo(xLane, yChild, xLane, yChild + NODE_RADIUS);
+  }
+
+  canvas.lineTo(xLane, yParent - NODE_RADIUS);
+
+  if (xLane != xParent) {
+    const towardsParent = Math.sign(xParent - xLane);
+    canvas.quadraticCurveTo(xLane, yParent, xLane + towardsParent * NODE_RADIUS, yParent);
+    canvas.lineTo(xParent - towardsParent * NODE_RADIUS, yParent);
   }
 };
 
@@ -135,7 +122,7 @@ const drawNode = (
 ) => {
   const [x, y] = [xPosition(commitCoordinates.col), yPosition(commitCoordinates.row)];
 
-  prepareNodeStyle(canvas, ref.indent!, colors);
+  prepareNodeStyle(canvas, ref.lane!, colors);
 
   if (isMergeCommit(ref)) {
     canvas.arc(x, y, NODE_RADIUS / 2.3, 0, 2 * Math.PI, true);
@@ -182,7 +169,7 @@ const drawNode = (
     canvas.drawImage(stashImg, x - NODE_RADIUS, y - NODE_RADIUS, NODE_DIAMETER, NODE_DIAMETER);
     canvas.globalCompositeOperation = 'source-atop';
     canvas.shadowBlur = 0;
-    canvas.fillStyle = colors.graphColors[ref.indent! % colors.graphColors.length];
+    canvas.fillStyle = colors.graphColors[ref.lane! % colors.graphColors.length];
     canvas.fillRect(x - NODE_RADIUS, y - NODE_RADIUS, NODE_DIAMETER, NODE_DIAMETER);
     canvas.restore();
   }
@@ -198,11 +185,11 @@ const prepareForCommitTextDraw = (canvas: CanvasRenderingContext2D, colors: Canv
   canvas.shadowBlur = 3;
 };
 
-const prepareNodeStyle = (canvas: CanvasRenderingContext2D, indent: number, colors: CanvasColors) => {
+const prepareNodeStyle = (canvas: CanvasRenderingContext2D, lane: number, colors: CanvasColors) => {
   canvas.beginPath();
   canvas.lineWidth = 2;
   canvas.setLineDash([]);
-  canvas.fillStyle = canvas.strokeStyle = colors.graphColors[indent % colors.graphColors.length];
+  canvas.fillStyle = canvas.strokeStyle = colors.graphColors[lane % colors.graphColors.length];
   canvas.shadowColor = colors.nodeShadowColor;
   canvas.shadowBlur = colors.nodeShadowBlur;
 };

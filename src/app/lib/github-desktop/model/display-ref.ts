@@ -23,7 +23,7 @@ import {Branch} from "./branch";
 export interface LogObjectDisplayInfo {
   refType: RefType,
   row?: number,
-  indent?: number,
+  lane?: number,
   isPointedByLocalHead: boolean, // If commit is pointed by HEAD, preselect the commit line, and add the 💻 icon
   highlight?: 'not-matched' | 'conflict',
   branchesDetails: Branch[],

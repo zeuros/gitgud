@@ -29,6 +29,7 @@ export class Edge {
     public parentRow: number,
     public parentCol: number,
     public type: RefType,
+    public laneCol: number, // Column the edge runs vertically in
   ) {
     this.low = childRow;
     this.high = parentRow;

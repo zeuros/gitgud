@@ -26,7 +26,6 @@ import {notUndefined} from './utils';
 
 
 export type ChildrenMap = { [parentSha: string]: DisplayRef[] };
-export type ShaMap = { [sha: string]: DisplayRef };
 export type StashMap = { [stashMergeParent: string]: Commit };
 
 
@@ -34,11 +33,10 @@ export const isCommit = (displayRef: DisplayRef) => displayRef.refType == RefTyp
 export const isIndex = (displayRef: DisplayRef) => displayRef.refType == RefType.INDEX;
 export const isStash = (displayRef: DisplayRef) => displayRef.refType == RefType.STASH;
 export const isMergeCommit = (displayRef: DisplayRef) => isCommit(displayRef) && displayRef.parentSHAs.length > 1;
-export const isRootCommit = (displayRef: DisplayRef) => isCommit(displayRef) && displayRef.parentSHAs.length == 0;
 
 export const initials = (author: CommitIdentity) => author.name.split(' ').slice(0, 2).map(e => e[0]).join('').toUpperCase();
 export const hasName = (author: CommitIdentity) => author.name.length > 0;
-export const commitColor = (indent: number) => `hue-rotate(${indent * 360 / 7}deg)`;
+export const commitColor = (lane: number) => `hue-rotate(${lane * 360 / 7}deg)`;
 
 export const short = (sha: string) => sha.substring(0, 6);
 
@@ -63,32 +61,6 @@ export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: Childr
 
   return hasNoBranching(childrenCommits[0], childMap);
 };
-
-// Build the opposite of the Commit.parentShas => Commit.childShas
-export const buildChildrenMap = (commitLog: DisplayRef[]) => {
-  const commitsChildrenShas: ChildrenMap = {};
-
-  for (const commit of commitLog) {
-    for (const sha of commit.parentSHAs) {
-      if (!commitsChildrenShas[sha])
-        commitsChildrenShas[sha] = [];
-      commitsChildrenShas[sha].push(commit);
-    }
-  }
-
-  return commitsChildrenShas;
-};
-
-export const buildShaMap = (logs: DisplayRef[]) => {
-  const commitMap: ShaMap = {};
-
-  for (const commit of logs) {
-    commitMap[commit.sha] = commit;
-  }
-
-  return commitMap;
-};
-
 
 export const buildStashMap = (stashes: Commit[]) => {
   const stashMap: StashMap = {};
