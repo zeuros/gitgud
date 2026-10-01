@@ -18,7 +18,8 @@
 
 import {computed, effect, inject, Injectable, signal, untracked} from '@angular/core';
 import {ConfirmationService, type MenuItem, type TreeNode} from 'primeng/api';
-import {catchError, EMPTY, filter, first} from 'rxjs';
+import {catchError, EMPTY, filter, first, switchMap, throwError} from 'rxjs';
+import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
@@ -29,7 +30,7 @@ import {DialogService} from 'primeng/dynamicdialog';
 import {EditRemoteComponent} from '../components/dialogs/edit-remote/edit-remote.component';
 import {openSetUpstreamDialog} from '../components/dialogs/set-upstream-dialog/set-upstream-dialog.component';
 import {CreateBranchService} from './create-branch.service';
-import {normalizedBranchName} from '../utils/branch-utils';
+import {parseRemote} from '../utils/branch-utils';
 import {BranchService} from './branch.service';
 import {CreateTagService} from './create-tag.service';
 import {BranchAheadBehindService} from './branch-ahead-behind.service';
@@ -42,6 +43,7 @@ import {type BehindRemoteAction, openBehindRemoteDialog} from '../components/dia
 export class BranchContextMenuService {
 
   private currentRepo = inject(CurrentRepoStore);
+  private gitApi = inject(GitApiService);
   private toast = inject(ToastService);
   private confirmation = inject(ConfirmationService);
   private branch = inject(BranchService);
@@ -187,7 +189,16 @@ export class BranchContextMenuService {
     const branch = this.selectedNode()!.data!;
 
     if (branch.type === BranchType.Remote) {
-      this.gitWorkflow.doRunAndRefresh(['push', 'origin', '--delete', normalizedBranchName(branch)], `Deleted remote branch ${branch.name}`, false, false);
+      const {remote, branch: name} = parseRemote(branch.name);
+      this.gitWorkflow.runAndRefresh(['push', remote, '--delete', name], `Deleted remote branch ${branch.name}`, false, false)
+        // Failed because it's already deleted on the remote? Then only our stale copy of it is left to remove
+        .pipe(catchError(e => this.gitApi.git(['ls-remote', '--heads', remote, `refs/heads/${name}`]).pipe(
+          catchError(() => throwError(() => e)),
+          switchMap(found => found.trim()
+            ? throwError(() => e)
+            : this.gitWorkflow.runAndRefresh(['branch', '-d', '-r', branch.name], `Removed ${branch.name}, already deleted on ${remote}`, false, false)),
+        )))
+        .subscribe();
       return;
     }
 
