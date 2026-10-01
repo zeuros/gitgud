@@ -424,4 +424,13 @@ $log-chip-parent-left-margin: 6px;
   top: 50%;
   right: 0;
   transform: translate(115%, -50%);
+  // Bigger, heavy text with a drop shadow, readable on the light badge whatever the chip's color
+  font-size: 13px;
+  font-family: system-ui, sans-serif; // Has real heavy weights (Cantarell, Segoe UI, SF); the bundled Nunito is medium only
+  font-weight: 900;
+  min-width: 26px;
+  height: 20px;
+  line-height: 20px;
+  color: var(--babedouGray); // Text color of highlighted (selected) rows
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
