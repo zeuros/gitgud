@@ -65,7 +65,7 @@ export class RepositoriesViewComponent {
   protected onMiddleClick(event: MouseEvent, index: number): void {
     if (event.button === 1) {
       event.preventDefault();
-      this.gitRepositoryStore.removeRepository(index);
+      this.gitRepository.closeRepository(index);
     }
   }
 

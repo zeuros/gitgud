@@ -79,6 +79,39 @@ export class GitRepositoryService {
     return this.gitRefresh.refreshAll();
   };
 
+  closeRepository = (index: number) => {
+    const wasSelected = index == this.gitRepositoryStore.selectedIndex();
+    this.gitRepositoryStore.removeRepository(index);
+    // The repository selected instead may not have its git data loaded yet
+    if (wasSelected && this.gitRepositoryStore.hasRepositories()) this.gitRefresh.doRefreshAll();
+  };
+
+  reopenClosedRepository = () => {
+    const reopened = this.gitRepositoryStore.reopenClosedRepository();
+    if (!reopened) return;
+    this.gitRepositoryStore.selectRepository(reopened);
+    this.gitRefresh.doRefreshAll();
+  };
+
+  /** Ctrl+T: new tab, Ctrl+W: close the current tab, Ctrl+Shift+T: reopen the last closed one */
+  handleTabShortcut = (event: KeyboardEvent) => {
+    const {ctrlKey, shiftKey, altKey, code} = event;
+    const store = this.gitRepositoryStore;
+    if (!ctrlKey || altKey) return;
+
+    if (code == 'KeyT' && shiftKey) {
+      this.reopenClosedRepository();
+    } else if (code == 'KeyT') {
+      if (store.hasRepositories()) store.openNewTab(); // Without repositories, the welcome screen already is the new tab
+    } else if (code == 'KeyW' && !shiftKey) {
+      if (store.newTabSelected()) store.closeNewTab();
+      else if (store.selectedIndex() >= 0) this.closeRepository(store.selectedIndex());
+    } else {
+      return;
+    }
+    event.preventDefault();
+  };
+
   initRepository = () => {
     from(window.tauri.dialog.showOpenDialog({properties: ['openDirectory']})).pipe(
       switchMap(picked => {
