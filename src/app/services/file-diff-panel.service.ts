@@ -35,6 +35,9 @@ export class FileDiffPanelService {
 
   selectedFile = signal<FileChange | null>(null);
   conflictedFile = signal<WorkingDirectoryFileChange | null>(null);
+  // Tools of the diff view, closed whenever a file is opened from the lists
+  historyOpen = signal(false);
+  blameOpen = signal(false);
 
   // Here we update monaco view for commit files (no live changes) or for working dir changes (live update on file change)
   fileToDiff$ = this.fileToDiffSubject$.pipe(
@@ -61,7 +64,12 @@ export class FileDiffPanelService {
     }),
   );
 
-  showCommittedFileDiffs = (f: CommittedFileChange) => { this.selectedFile.set(f); this.fileToDiffSubject$.next(f); };
+  showCommittedFileDiffs = (f: CommittedFileChange) => { this.closeTools(); this.showRevision(f); };
+
+  // From the file's history or blame: those stay open
+  showRevision = (f: CommittedFileChange) => { this.selectedFile.set(f); this.fileToDiffSubject$.next(f); };
+
+  private closeTools = () => { this.historyOpen.set(false); this.blameOpen.set(false); };
 
   showWorkingDirDiffs = (f: WorkingDirectoryFileChange | null) => {
     if (!f) return;
@@ -72,6 +80,7 @@ export class FileDiffPanelService {
     }
     // Switching to a regular file always closes the merge editor
     this.conflictedFile.set(null);
+    this.closeTools();
     this.selectedFile.set(f);
     this.fileToDiffSubject$.next(f);
   };
@@ -80,7 +89,7 @@ export class FileDiffPanelService {
 
   closeConflictView = () => this.conflictedFile.set(null);
 
-  closeDiffView = () => { this.selectedFile.set(null); this.fileToDiffSubject$.next(null); };
+  closeDiffView = () => { this.closeTools(); this.selectedFile.set(null); this.fileToDiffSubject$.next(null); };
 
   refreshWorkingDirView = () => {
     const file = this.selectedFile();

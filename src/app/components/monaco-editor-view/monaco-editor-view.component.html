@@ -1,17 +1,47 @@
 <div class="editor-header">
     <span class="editor-file-name">
         <i class="fa fa-code-compare mr-2"></i>
-        Viewing {{ fileName(fileToDiff()?.path ?? '') }} diffs
+        @if (blame()) {
+            Blame of {{ fileName(fileToDiff()?.path ?? '') }}
+        } @else {
+            Viewing {{ fileName(fileToDiff()?.path ?? '') }} diffs
+        }
     </span>
+    @if (blameHovered(); as commit) {
+        <span class="blame-hovered ellipsis">
+            @if (commit.committed) {
+                <strong>{{ short(commit.sha) }}</strong> {{ commit.summary }} — {{ commit.author }}, {{ commit.date | date:'mediumDate' }}
+            } @else {
+                Not committed yet
+            }
+        </span>
+    }
     <div class="editor-actions">
 
-        @if (content().kind === 'text') {
+        @if (content().kind === 'text' && !blame()) {
         <p-select-button [allowEmpty]="false" [options]="viewOptions" [ngModel]="viewType()" (ngModelChange)="setViewType($event)" optionValue="value" class="display-modes">
             <ng-template #item let-opt>
                 <i [class]="opt.icon"></i> {{ opt.label }}
             </ng-template>
         </p-select-button>
         }
+
+        @if (content().kind === 'text') {
+            <p-button
+                    class="toggle-blame"
+                    styleClass="p-button-sm p-button-text"
+                    [severity]="fileDiffPanel.blameOpen() ? 'primary' : 'secondary'"
+                    icon="fa fa-user"
+                    label="Blame"
+                    (click)="fileDiffPanel.blameOpen.set(!fileDiffPanel.blameOpen())"/>
+        }
+        <p-button
+                class="toggle-history"
+                styleClass="p-button-sm p-button-text"
+                [severity]="fileDiffPanel.historyOpen() ? 'primary' : 'secondary'"
+                icon="fa fa-history"
+                label="History"
+                (click)="fileDiffPanel.historyOpen.set(!fileDiffPanel.historyOpen())"/>
 
         <p-button
                 styleClass="p-button-sm p-button-text p-button-secondary"
@@ -20,42 +50,68 @@
     </div>
 </div>
 
-<!-- The monaco container stays in the DOM: the editor is created once in ngAfterViewInit -->
-<div #diffEditor class="diff-editor-container" [class.hidden]="content().kind !== 'text'"></div>
-
-@if (content().kind === 'binary') {
-    <div class="binary-placeholder">
-        <i class="fa fa-file mr-2"></i> Binary file
-    </div>
-}
-
-@if (content(); as content) {
-    @if (content.kind === 'too-large') {
-        <div class="binary-placeholder">
-            <i class="fa fa-weight-hanging mr-2"></i> File too large to display ({{ formatSize(content.size) }})
+<div class="editor-body">
+    @if (history(); as history) {
+        <div class="file-history">
+            @for (entry of history; track entry.sha) {
+                <div class="file-history-entry" [class.shown]="isShown(entry)" (click)="showHistoryEntry(entry)">
+                    <span class="summary ellipsis" [title]="entry.summary">{{ entry.summary }}</span>
+                    <span class="details">
+                        <span class="ellipsis">{{ entry.author }}</span>
+                        <span>{{ entry.date | date:'mediumDate' }}</span>
+                        <span class="sha">{{ short(entry.sha) }}</span>
+                        <i class="fa fa-crosshairs select-in-log" title="Select this commit in the log" (click)="selectInLog(entry.sha, $event)"></i>
+                    </span>
+                    @if (entry.status.kind === 'Renamed') {
+                        <span class="details ellipsis" [title]="entry.path">Renamed to {{ fileName(entry.path) }}</span>
+                    }
+                </div>
+            } @empty {
+                <div class="file-history-empty">No commit changed this file</div>
+            }
         </div>
     }
-}
 
-@if (images(); as images) {
-    <div class="image-diff">
-        @for (side of imageSides; track side) {
-            @let image = images[side];
-            <div class="image-side" [class]="side">
-                <div class="image-side-header">
-                    <span class="image-side-title">{{ side === 'before' ? 'Before' : 'After' }}</span>
-                    @if (image.url) {
-                        <span class="image-side-meta">{{ imageMeta(side, image.size) }}</span>
-                    }
+    <div class="editor-content">
+        <!-- The monaco container stays in the DOM: the editor is created once in ngAfterViewInit -->
+        <div #diffEditor class="diff-editor-container" [class.hidden]="content().kind !== 'text' || !!blame()"></div>
+        <div #blameEditor class="diff-editor-container blame-editor" [class.hidden]="content().kind !== 'text' || !blame()"></div>
+
+        @if (content().kind === 'binary') {
+            <div class="binary-placeholder">
+                <i class="fa fa-file mr-2"></i> Binary file
+            </div>
+        }
+
+        @if (content(); as content) {
+            @if (content.kind === 'too-large') {
+                <div class="binary-placeholder">
+                    <i class="fa fa-weight-hanging mr-2"></i> File too large to display ({{ formatSize(content.size) }})
                 </div>
-                <div class="image-frame">
-                    @if (image.url) {
-                        <img [src]="image.url" [alt]="side" (load)="onImageLoad(side, $event)"/>
-                    } @else {
-                        <span class="image-missing">{{ side === 'before' ? 'Added file' : 'Deleted file' }}</span>
-                    }
-                </div>
+            }
+        }
+
+        @if (images(); as images) {
+            <div class="image-diff">
+                @for (side of imageSides; track side) {
+                    @let image = images[side];
+                    <div class="image-side" [class]="side">
+                        <div class="image-side-header">
+                            <span class="image-side-title">{{ side === 'before' ? 'Before' : 'After' }}</span>
+                            @if (image.url) {
+                                <span class="image-side-meta">{{ imageMeta(side, image.size) }}</span>
+                            }
+                        </div>
+                        <div class="image-frame">
+                            @if (image.url) {
+                                <img [src]="image.url" [alt]="side" (load)="onImageLoad(side, $event)"/>
+                            } @else {
+                                <span class="image-missing">{{ side === 'before' ? 'Added file' : 'Deleted file' }}</span>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         }
     </div>
-}
+</div>

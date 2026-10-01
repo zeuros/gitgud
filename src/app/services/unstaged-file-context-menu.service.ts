@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, inject, Injectable, signal} from '@angular/core';
+import {computed, inject, Injectable, signal, type WritableSignal} from '@angular/core';
 import {type MenuItem} from 'primeng/api';
 import {WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
 import {WorkingDirectoryService} from './electron-cmd-parser-layer/working-directory.service';
@@ -51,12 +51,22 @@ export class UnstagedFileContextMenuService {
         : {label: label('Stage'), icon: 'fa fa-plus', command: this.stage},
       {separator: true},
       ...(this.staged() ? [] : [{label: label('Discard changes'), icon: 'fa fa-trash', styleClass: 'danger-menuitem', command: this.discard}]),
+      ...(!multi && files[0]?.status.kind !== AppFileStatusKind.Untracked ? [
+        {label: 'File history', icon: 'fa fa-history', command: () => this.openTool(this.fileDiffPanel.historyOpen)},
+        {label: 'Blame', icon: 'fa fa-user', command: () => this.openTool(this.fileDiffPanel.blameOpen)},
+        {separator: true},
+      ] : []),
       ...(!multi ? [
         {label: 'Copy file path', icon: 'fa fa-copy', command: this.copyPath},
         {label: 'Show in folder', icon: 'fa fa-folder-open', command: this.showInFolder},
       ] : []),
     ];
   });
+
+  private openTool = (tool: WritableSignal<boolean>) => {
+    this.fileDiffPanel.showWorkingDirDiffs(this.selectedFiles()[0]);
+    tool.set(true);
+  };
 
   private stage = () => this.workingDir.stageFiles(this.selectedFiles());
 
