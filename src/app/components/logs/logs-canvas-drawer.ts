@@ -191,7 +191,7 @@ const drawNode = (
 const prepareForCommitTextDraw = (canvas: CanvasRenderingContext2D, colors: CanvasColors) => {
   canvas.beginPath();
   canvas.fillStyle = 'white';
-  canvas.font = `normal 900 13.5px Nunito, Roboto, Cantarell, sans-serif`; // Nunito not working here :/
+  canvas.font = `normal 900 13.5px 'Nunito Variable', Roboto, Cantarell, sans-serif`; // Nunito not working here :/
   canvas.textAlign = 'center';
   canvas.textBaseline = 'middle';
   canvas.shadowColor = colors.nodeShadowColor;

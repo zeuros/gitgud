@@ -1,5 +1,6 @@
 @forward 'font-awesome/css/font-awesome.min';
 @forward 'styles/custom-fonts';
+@use '@fontsource-variable/nunito/wght.css'; // 'Nunito Variable', weights 200-1000
 @forward 'styles/variables';    // design tokens first — palette, grays, scrollbar vars
 @forward 'styles/animations';
 @forward 'styles/drag-drop';
