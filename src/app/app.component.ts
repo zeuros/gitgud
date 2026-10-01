@@ -32,6 +32,7 @@ import {ThemeService} from './services/theme.service'; // bootstraps theme react
 import {ActiveContextMenuService} from './services/active-context-menu.service';
 import {FixupService} from './services/fixup.service';
 import {MessageService} from 'primeng/api';
+import {GitRepositoryService} from './services/git-repository.service';
 
 @Component({
   standalone: true,
@@ -40,6 +41,9 @@ import {MessageService} from 'primeng/api';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
+  host: {
+    '(document:keydown)': 'gitRepository.handleTabShortcut($event)', // Here: the tabs view is gone once the last tab is closed
+  },
 })
 export class AppComponent {
 
@@ -47,6 +51,7 @@ export class AppComponent {
   protected fixup = inject(FixupService);
   protected gitApi = inject(GitApiService);
   protected installInfo = this.getInstallInfo();
+  protected gitRepository = inject(GitRepositoryService);
   private messageService = inject(MessageService);
   private settings = inject(SettingsService);
   private gitRepositoryStore = inject(GitRepositoryStore);

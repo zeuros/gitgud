@@ -35,6 +35,9 @@ export class GitRepositoryStore {
   private _repositories = signal<GitRepository[]>((this.localStorage.get<StoredRepository[]>(StorageName.GitRepositories) ?? []).map(fromStoredRepository));
   private _recentIds = signal<string[]>([]);
 
+  // Allows to ctrl+shift+t to reopen a repo
+  private tabClosedRepositories: {repository: StoredRepository, index: number}[] = [];
+
   repositories = this._repositories.asReadonly();
   selectedRepository = computed(() => this._repositories().find(r => r.selected));
   selectedIndex = computed(() => this._repositories().findIndex(r => r.selected));
@@ -76,6 +79,7 @@ export class GitRepositoryStore {
     this._repositories.update(repos => {
       const repoToRemove = repos.findIndex((r, i) => typeof indexOrId === 'number' ? i == indexOrId : r.id == indexOrId);
       const filtered = repos.filter((_, i) => i !== repoToRemove);
+      if (repos[repoToRemove]) this.tabClosedRepositories.push({repository: toStoredRepository(repos[repoToRemove]), index: repoToRemove});
 
       const repoToSelect = repos[repoToRemove]?.selected && filtered.length > 0
         ? Math.min(repoToRemove, filtered.length - 1)
@@ -86,7 +90,19 @@ export class GitRepositoryStore {
     });
   };
 
-  private touchRecent = (id: string) =>
+  /** Puts the last closed repository back where it was, returns its id (undefined when there is none left) */
+  reopenClosedRepository = () => {
+    let closed = this.tabClosedRepositories.pop();
+    // Skip the ones opened again by hand since
+    while (closed && this._repositories().some(r => r.id == closed!.repository.id)) closed = this.tabClosedRepositories.pop();
+    if (!closed) return undefined;
+
+    const {repository, index} = closed;
+    this._repositories.update(repos => [...repos.slice(0, index), {...fromStoredRepository(repository), selected: false}, ...repos.slice(index)]);
+    return repository.id;
+  };
+
+  private touchRecent =(id: string) =>
     this._recentIds.update(ids => [id, ...ids.filter(i => i !== id)].slice(0, 7));
 
   updateSelectedRepository = (updates: Partial<GitRepository>) =>
