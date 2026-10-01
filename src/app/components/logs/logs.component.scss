@@ -159,8 +159,6 @@ $log-chip-parent-left-margin: 6px;
 
     .commit-row {
       td.log-chip-parent-td {
-        min-width: 70px;
-        max-width: 200px;
         position: relative;
         padding: 0 !important;
         overflow: visible;
@@ -192,7 +190,7 @@ $log-chip-parent-left-margin: 6px;
 
           .log-chip-drop-zone {
             display: flex;
-            max-width: 90%;
+            max-width: calc(100% - 40px); // Column width, minus the left margin and the +N badge drawn on the chip's right
             transform: translateY(0) scale(1);
             z-index: 300; // Display this over commit graph
             position: absolute;
