@@ -19,10 +19,11 @@
 import {type Signal} from '@angular/core';
 import {StorageName} from '../enums/storage-name.enum';
 import {toObservable} from '@angular/core/rxjs-interop';
-import {debounceTime} from 'rxjs';
+import {debounceTime, distinctUntilChanged, map} from 'rxjs';
 import {LocalStorageService} from '../services/local-storage.service';
 
-export const syncToStorage = <T>(signal: Signal<T>, key: StorageName, localStorageService: LocalStorageService) =>
+// toStored picks what is persisted (defaults to the whole value); nothing is written when that part didn't change
+export const syncToStorage = <T>(signal: Signal<T>, key: StorageName, localStorageService: LocalStorageService, toStored: (value: T) => unknown = value => value) =>
   toObservable(signal)
-    .pipe(debounceTime(250))
-    .subscribe(value => localStorageService.store(key, value));
+    .pipe(debounceTime(250), map(value => JSON.stringify(toStored(value))), distinctUntilChanged())
+    .subscribe(json => localStorageService.storeRaw(key, json));

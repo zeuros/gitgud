@@ -24,6 +24,17 @@ import {Commit} from '../lib/github-desktop/model/commit';
 export const createRepository = (directory: string) =>
   new GitRepository(directory, lastFolderName(directory));
 
+// What is kept in localStorage for a repository. The rest (logs, branches, tags, stashes, working dir status…) is read
+// again from git on startup: it made megabytes of JSON, rewritten on every refresh
+export type StoredRepository = Pick<GitRepository, 'id' | 'name' | 'selected' | 'selectedCommitsShas' | 'startCommit' | 'editorConfig'>;
+
+export const toStoredRepository = ({id, name, selected, selectedCommitsShas, startCommit, editorConfig}: GitRepository): StoredRepository =>
+  ({id, name, selected, selectedCommitsShas, startCommit, editorConfig});
+
+// Also drops the git data that older versions stored
+export const fromStoredRepository = (stored: StoredRepository): GitRepository =>
+  ({...new GitRepository(stored.id, stored.name), ...toStoredRepository(stored as GitRepository)});
+
 
 /**
  * Stashes Have two parents: [sha1, sha2]:
