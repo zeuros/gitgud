@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, inject, Injectable, signal} from '@angular/core';
+import {computed, effect, inject, Injectable, signal, untracked} from '@angular/core';
 import {ConfirmationService, type MenuItem, type TreeNode} from 'primeng/api';
 import {catchError, EMPTY, filter, first} from 'rxjs';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
@@ -34,6 +34,8 @@ import {BranchService} from './branch.service';
 import {CreateTagService} from './create-tag.service';
 import {BranchAheadBehindService} from './branch-ahead-behind.service';
 import {InteractiveRebaseService} from './interactive-rebase.service';
+import {ConflictPredictionService} from './conflict-prediction.service';
+import {withConflictWarning} from '../utils/conflict-prediction.utils';
 import {type BehindRemoteAction, openBehindRemoteDialog} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
 @Injectable({providedIn: 'root'})
@@ -50,10 +52,19 @@ export class BranchContextMenuService {
   private createTag = inject(CreateTagService);
   private aheadBehind = inject(BranchAheadBehindService);
   private interactiveRebase = inject(InteractiveRebaseService);
+  private conflictPrediction = inject(ConflictPredictionService);
 
   selectedNode = signal<TreeNode<Branch> | undefined>(undefined);
 
   selectBranch = (branch: Branch) => this.selectedNode.set({data: branch, label: branch.name});
+
+  constructor() {
+    // Would the selected branch conflict with HEAD? The menu is updated once git answered
+    effect(() => {
+      const tip = this.selectedNode()?.data?.tip.sha;
+      untracked(() => this.conflictPrediction.predictForMenu(this.currentRepo.headSha(), tip, this.branchContextMenu));
+    });
+  }
 
   private name = computed(() => this.selectedNode()?.data?.name ?? '…');
   private head = computed(() => this.currentRepo.headBranch()?.name ?? 'HEAD');
@@ -78,6 +89,7 @@ export class BranchContextMenuService {
 
     const name = this.name();
     const head = this.head();
+    const warn = (item: MenuItem) => withConflictWarning(item, this.conflictPrediction.conflictsBetween(this.currentRepo.headSha(), node.data?.tip.sha));
     return [
       // Remote
       {label: 'Pull (fast-forward if possible)', icon: 'fa fa-cloud-download', command: this.pullBranch},
@@ -85,9 +97,9 @@ export class BranchContextMenuService {
       {label: 'Set Upstream', icon: 'fa fa-link', command: this.setUpstream},
       {separator: true},
       // Integration
-      {label: `Merge ${name} into ${head}`, icon: 'fa fa-compress', command: this.mergeBranch},
-      {label: `Rebase ${head} onto ${name}`, icon: 'fa fa-code-fork', command: this.rebaseBranch},
-      {label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.interactiveRebase.open(name)},
+      warn({label: `Merge ${name} into ${head}`, icon: 'fa fa-compress', command: this.mergeBranch}),
+      warn({label: `Rebase ${head} onto ${name}`, icon: 'fa fa-code-fork', command: this.rebaseBranch}),
+      warn({label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.interactiveRebase.open(name)}),
       {separator: true},
       // Checkout
       {label: `Checkout ${name}`, icon: 'fa fa-sign-in', command: () => node.data && this.branch.checkoutBranch(node.data)},

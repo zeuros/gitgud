@@ -139,6 +139,14 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
   gap: 0.5rem;
 }
 
+// Merge / rebase predicted to conflict
+.conflict-menuitem {
+  .p-contextmenu-item-label,
+  .p-contextmenu-item-icon {
+    color: var(--warning-text-color);
+  }
+}
+
 .danger-menuitem {
   .p-contextmenu-item-label,
   .p-contextmenu-item-icon {
