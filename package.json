@@ -42,6 +42,7 @@
     "@angular/platform-browser": "^22.2.0",
     "@angular/platform-browser-dynamic": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "@fontsource-variable/nunito": "^5.3.0",
     "@mismerge/core": "^1.2.1",
     "@ngx-translate/core": "18.0.0",
     "@ngx-translate/http-loader": "18.0.0",
