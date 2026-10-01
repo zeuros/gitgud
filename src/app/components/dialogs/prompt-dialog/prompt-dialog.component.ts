@@ -41,7 +41,7 @@ export class PromptDialogComponent {
   private config = inject(DynamicDialogConfig);
 
   protected required: boolean = this.config.data?.required ?? true;
-  protected textInput = new FormControl('', { nonNullable: true });
+  protected textInput = new FormControl<string>(this.config.data?.initialValue ?? '', { nonNullable: true });
 
   protected confirm = () => this.ref.close(this.textInput.value);
   protected cancel = () => this.ref.close(null);
