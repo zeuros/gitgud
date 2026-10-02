@@ -95,15 +95,16 @@ export class GitRepositoryService {
 
   /** Ctrl+T: new tab, Ctrl+W: close the current tab, Ctrl+Shift+T: reopen the last closed one */
   handleTabShortcut = (event: KeyboardEvent) => {
-    const {ctrlKey, shiftKey, altKey, code} = event;
+    const {ctrlKey, shiftKey, altKey} = event;
+    const key = event.key.toLowerCase(); // The typed letter, not the physical key (code): Ctrl+W is Ctrl+Z's key on AZERTY
     const store = this.gitRepositoryStore;
     if (!ctrlKey || altKey) return;
 
-    if (code == 'KeyT' && shiftKey) {
+    if (key == 't' && shiftKey) {
       this.reopenClosedRepository();
-    } else if (code == 'KeyT') {
+    } else if (key == 't') {
       if (store.hasRepositories()) store.openNewTab(); // Without repositories, the welcome screen already is the new tab
-    } else if (code == 'KeyW' && !shiftKey) {
+    } else if (key == 'w' && !shiftKey) {
       if (store.newTabSelected()) store.closeNewTab();
       else if (store.selectedIndex() >= 0) this.closeRepository(store.selectedIndex());
     } else {
