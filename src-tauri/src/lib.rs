@@ -31,6 +31,35 @@ fn patch_path() {
     }
 }
 
+// Apps launched from the desktop environment don't inherit the PATH a terminal gets from the shell rc files
+// (fnm/nvm/pyenv…), so git hooks calling `npx`, `node`, `python`… fail in GitGud while working in a terminal.
+// Ask the user's login shell for its PATH once, and put it first. Bounded: a slow or broken rc must not block startup.
+#[cfg(unix)]
+fn patch_path_from_login_shell() {
+    const MARK: &str = "__GITGUD_PATH__";
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        let out = std::process::Command::new(shell)
+            .args(["-ilc", &format!("printf '{MARK}%s{MARK}' \"$PATH\"")])
+            .stdin(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .output();
+        let _ = tx.send(out);
+    });
+    let Ok(Ok(out)) = rx.recv_timeout(std::time::Duration::from_secs(3)) else { return };
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    // rc files may print banners around the marked value
+    let Some(login_path) = stdout.split(MARK).nth(1).filter(|p| !p.is_empty()) else { return };
+
+    let current = std::env::var("PATH").unwrap_or_default();
+    let mut merged: Vec<&str> = login_path.split(':').collect();
+    let login_len = merged.len();
+    let extra: Vec<&str> = current.split(':').filter(|p| !merged[..login_len].contains(p)).collect();
+    merged.extend(extra);
+    std::env::set_var("PATH", merged.join(":"));
+}
+
 // WebKitGTK on Wayland with the NVIDIA proprietary driver dies with "Error 71 (Protocol error) dispatching to
 // Wayland display" because of the driver's explicit sync. Disabling it keeps native Wayland and GPU rendering
 // (XWayland + WEBKIT_DISABLE_DMABUF_RENDERER=1 also avoids the crash, but renders the page on the CPU: ~23 fps instead
@@ -67,6 +96,8 @@ fn raise_open_files_limit() {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(unix)]
+    patch_path_from_login_shell();
     patch_path();
     #[cfg(target_os = "linux")]
     patch_nvidia_wayland();
