@@ -1,11 +1,17 @@
 .p-toast {
-  width: auto;
-  min-width: 260px;
-  max-width: 440px;
+  // Messages are absolutely positioned, so the container can't shrink-wrap them: it only bounds their width
+  width: min(880px, calc(100vw - 4rem));
 }
 
 .p-toast-message {
   cursor: pointer;
+  // Each message grows with its text (git errors…) up to the container width, and stays centered
+  width: fit-content;
+  min-width: 260px;
+  max-width: 100%;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
 }
 
 .p-toast-message-content {
@@ -14,10 +20,6 @@
 
 .p-toast-close-button {
   margin: 0;
-}
-
-.p-toast-message-text {
-  max-width: 25vw;
 }
 
 .p-toast-summary {
@@ -30,4 +32,18 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  overflow-wrap: anywhere; // long refs and urls have no break opportunity
+}
+
+// Hovering shows the whole message (the toast's timer is paused while hovered).
+// PrimeNG pins the height it measured on mount, so let the bubble grow with the unclamped text.
+.p-toast-message:hover {
+  height: auto !important;
+}
+
+.p-toast-message:hover .p-toast-detail {
+  display: block;
+  -webkit-line-clamp: unset;
+  max-height: 60vh;
+  overflow-y: auto;
 }
