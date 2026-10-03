@@ -6,8 +6,54 @@
   <base href="/">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // Apply the saved theme classes before first paint so the splash uses the app's --background (mirrors ThemeService)
+    (function () {
+      var mode = localStorage.getItem('theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      if (mode === 'light') return;
+      document.documentElement.classList.add('dark');
+      if (mode !== 'dark') document.documentElement.classList.add(mode);
+    })();
+  </script>
+  <style>
+    .splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1.2vh;
+      background-color: #f5f4f8;
+    }
+    /* styles.css loads async, so the theme backgrounds are duplicated here — keep in sync with styles/variables.scss */
+    html.dark .splash { background-color: #1c1e23; }
+    html.dark.forest .splash { background-color: #1b2520; }
+    html.dark.submarine .splash { background-color: #0e1c2a; }
+    html.dark.darcula .splash { background-color: #2b2b2b; }
+    html.dark.one-rainbow .splash { background-color: #07001a; }
+    .splash img {
+      height: 6.6vh;
+    }
+    .splash-title {
+      font: 700 2.4vh sans-serif;
+      letter-spacing: 0.15em;
+      color: transparent;
+      background: linear-gradient(110deg, #b8742a 40%, #fff3c4 50%, #b8742a 60%) 0 0 / 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: splash-shine 2.4s linear infinite;
+    }
+    @keyframes splash-shine {
+      from { background-position: 100% 0; }
+      to { background-position: 0 0; }
+    }
+  </style>
 </head>
 <body>
-  <app-root>Loading...</app-root>
+  <app-root>
+    <div class="splash"><img src="assets/images/bonfire.webp" alt=""><span class="splash-title">gitgud</span></div>
+  </app-root>
 </body>
 </html>
