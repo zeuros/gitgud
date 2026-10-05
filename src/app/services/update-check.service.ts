@@ -20,13 +20,15 @@ import {inject, Injectable, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {catchError, EMPTY, timer} from 'rxjs';
 
+type GithubAsset = { name: string; browser_download_url: string };
+
 interface GithubRelease {
   tag_name: string;
   html_url: string;
-  assets: { name: string; browser_download_url: string }[];
+  assets: GithubAsset[];
 }
 
-type Release = { version: string; url: string; downloadUrl?: string };
+type Release = { version: string; url: string; assets?: GithubAsset[] };
 
 const VERSION_CHECKED_KEY = 'update-last-checked';
 const RELEASE_KEY = 'update-available-release';
@@ -56,8 +58,11 @@ export class UpdateCheckService {
   }
 
   downloadUpdate = () => {
-    const {url, downloadUrl} = this.availableRelease()!;
-    return window.tauri.openExternal(downloadUrl ?? url);
+    // Resolved on click rather than cached, so a stored release never pins a stale asset choice
+    const {url, assets} = this.availableRelease()!;
+    const assetPattern = this.getAssetPattern();
+    const downloadUrl = assetPattern && assets?.find(({name}) => assetPattern.test(name))?.browser_download_url;
+    return window.tauri.openExternal(downloadUrl || url);
   };
 
   private checkForDailyUpdate = () => {
@@ -70,9 +75,11 @@ export class UpdateCheckService {
       .subscribe(({tag_name, html_url, assets}) => {
         const latest = tag_name.replace(/^v/, '');
         if (this.isNewer(latest, this.currentVersion)) {
-          const assetPattern = this.getAssetPattern();
-          const downloadUrl = assets?.find(({name}) => assetPattern.test(name))?.browser_download_url;
-          const release = {version: latest, url: html_url, downloadUrl};
+          const release = {
+            version: latest,
+            url: html_url,
+            assets: assets?.map(({name, browser_download_url}) => ({name, browser_download_url})),
+          };
           this.availableRelease.set(release);
           localStorage.setItem(RELEASE_KEY, JSON.stringify(release));
         }
@@ -81,18 +88,18 @@ export class UpdateCheckService {
 
   // Matches Tauri bundle names, e.g. GitGud_2.6.0_amd64.deb, GitGud-2.6.0-1.x86_64.rpm, GitGud_2.6.0_x64-setup.exe
   private getAssetPattern = () => {
-    const {platform, arch, execPath, env} = window.tauri.process;
+    const {platform, arch} = window.tauri.process;
     const arm = arch === 'arm64';
 
     if (platform === 'win32') return new RegExp(`_${arm ? 'arm64' : 'x64'}-setup\\.exe$`);
     if (platform === 'darwin') return new RegExp(`_${arm ? 'aarch64' : 'x64'}\\.dmg$`);
 
-    // Linux: use build-time injected format, fall back to env / execPath heuristic
-    const linuxPackageFormat = window.tauri.packageFormat
-      ?? (env?.['APPIMAGE'] ? 'AppImage' : execPath.includes('/rpm/') || execPath.endsWith('.rpm') ? 'rpm' : 'deb');
+    // Linux: format detected by the backend; unknown (dev build, tarball…) falls back to the release page
+    const linuxPackageFormat = window.tauri.packageFormat;
     if (linuxPackageFormat === 'AppImage') return new RegExp(`_${arm ? 'aarch64' : 'amd64'}\\.AppImage$`);
     if (linuxPackageFormat === 'rpm') return new RegExp(`\\.${arm ? 'aarch64' : 'x86_64'}\\.rpm$`);
-    return new RegExp(`_${arm ? 'arm64' : 'amd64'}\\.deb$`);
+    if (linuxPackageFormat === 'deb') return new RegExp(`_${arm ? 'arm64' : 'amd64'}\\.deb$`);
+    return undefined;
   };
 
   private isNewer = (latest: string, current: string) => {

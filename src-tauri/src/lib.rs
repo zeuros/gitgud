@@ -145,6 +145,7 @@ pub fn run() {
             get_platform,
             get_arch,
             get_exec_path,
+            get_package_format,
             show_item_in_folder,
             path_resolve,
             path_dirname,
