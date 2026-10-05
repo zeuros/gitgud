@@ -34,6 +34,39 @@ pub fn get_exec_path() -> String {
         .unwrap_or_default()
 }
 
+/// Returns how the running Linux binary was packaged (AppImage / rpm / deb), or None when unknown
+/// (dev build, tarball, non-Linux). Asks the package managers which one owns the executable, since
+/// an installed .deb and .rpm both live at the same path.
+#[tauri::command]
+pub async fn get_package_format() -> Option<&'static str> {
+    if !cfg!(target_os = "linux") {
+        return None;
+    }
+    if std::env::var_os("APPIMAGE").is_some() {
+        return Some("AppImage");
+    }
+
+    let exe = std::env::current_exe().ok()?;
+    let owns_exe = |cmd: &str, flag: &str| {
+        std::process::Command::new(cmd)
+            .arg(flag)
+            .arg(&exe)
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .is_ok_and(|s| s.success())
+    };
+
+    if owns_exe("rpm", "-qf") {
+        Some("rpm")
+    } else if owns_exe("dpkg", "-S") {
+        Some("deb")
+    } else {
+        None
+    }
+}
+
 /// Returns the OS platform string matching Node.js convention (linux / darwin / win32).
 #[tauri::command]
 pub fn get_platform() -> &'static str {

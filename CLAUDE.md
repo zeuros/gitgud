@@ -36,7 +36,7 @@ On startup `buildBridge()` runs, kills any stale watchers (`close_all_watchers`)
 | `fs.rs` | `fs_readdir`, `fs_is_file`, `fs_write_file`, `fs_read_file`, `fs_exists`, `fs_mtime` |
 | `process.rs` | `exec_file`, `spawn_sync_cmd`, `spawn_cmd` |
 | `watcher.rs` | `watch_paths`, `close_watcher`, `close_all_watchers` |
-| `util.rs` | `crypto_md5`, `get_env`, `get_platform`, `get_arch`, `get_exec_path`, `show_item_in_folder`, `path_resolve`, `path_dirname`, `path_extname` |
+| `util.rs` | `crypto_md5`, `get_env`, `get_platform`, `get_arch`, `get_exec_path`, `get_package_format`, `show_item_in_folder`, `path_resolve`, `path_dirname`, `path_extname` |
 
 ### Git execution layer
 
