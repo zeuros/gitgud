@@ -38,8 +38,9 @@ export type JournalPayload =
   | {t: 'branch-delete'; name: string; sha: string; upstream?: string}
   | {t: 'branch-rename'; from: string; to: string}
   | {t: 'branch-move'; name: string; from: string; to: string}
-  | {t: 'tag-delete'; name: string; sha: string};
-
+  | {t: 'tag-delete'; name: string; sha: string}
+  // `ref` is the full name on the remote: refs/heads/… or refs/tags/…
+  | {t: 'remote-delete'; remote: string; ref: string; sha: string};
 
 interface Action {
   kind: UndoKind;
@@ -179,6 +180,10 @@ const describeJournal = (payload: JournalPayload) => {
       return `move of branch ${payload.name}`;
     case 'tag-delete':
       return `deletion of tag ${payload.name}`;
+    case 'remote-delete':
+      return payload.ref.startsWith('refs/tags/')
+        ? `deletion of tag ${payload.ref.slice('refs/tags/'.length)} on ${payload.remote}`
+        : `deletion of ${payload.remote}/${payload.ref.slice('refs/heads/'.length)}`;
   }
 };
 
@@ -258,6 +263,9 @@ const journalSteps = (payload: JournalPayload, forward: boolean): UndoStep[] => 
       return [{args: ['branch', '-f', payload.name, forward ? payload.to : payload.from]}];
     case 'tag-delete':
       return forward ? [{args: ['tag', '-d', payload.name]}] : [{args: ['update-ref', `refs/tags/${payload.name}`, payload.sha]}];
+    case 'remote-delete':
+      // Pushes the commit (or annotated tag) the ref pointed to: it has to still be in this repository
+      return [{args: forward ? ['push', payload.remote, '--delete', payload.ref] : ['push', payload.remote, `${payload.sha}:${payload.ref}`]}];
   }
 };
 
@@ -371,6 +379,19 @@ export const journalFor = (args: string[]): JournalRecorder | undefined => {
     return {
       before: {sha: ['rev-parse', '-q', '--verify', `refs/tags/${b}`]},
       payload: ({sha}) => sha ? {t: 'tag-delete', name: b, sha} : undefined,
+    };
+
+  // `git push <remote> --delete <name>` drops a branch or a tag of the remote, whichever bears that name
+  if (command == 'push' && isName(a) && b == '--delete' && isName(c) && args.length == 4)
+    return {
+      before: {refs: ['ls-remote', a, `refs/heads/${c}`, `refs/tags/${c}`]},
+      payload: ({refs}) => {
+        // "<sha>\t<ref>" lines; an annotated tag comes with a peeled "<ref>^{}" one
+        const found = (refs ?? '').split('\n').map(line => line.trim().split('\t')).filter(([, ref]) => ref && !ref.endsWith('^{}'));
+        if (found.length != 1) return undefined;
+        const [[sha, ref]] = found;
+        return {t: 'remote-delete', remote: a, ref, sha};
+      },
     };
 
   // `git fetch <remote> <src>:<branch>` fast-forwards a branch without checking it out
