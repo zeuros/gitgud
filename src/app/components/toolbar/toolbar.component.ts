@@ -101,7 +101,6 @@ export class ToolbarComponent implements OnInit {
       finalize(() => this.loading.set(undefined)),
     ).subscribe(() => {
       this.toast.success('Pushed successfully');
-      this.undo.clearRedoStack();
     });
   };
 
@@ -111,8 +110,6 @@ export class ToolbarComponent implements OnInit {
       .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
       .subscribe(() => {
         this.toast.success('Pulled successfully');
-        this.undo.clearRedoStack();
-        this.undo.refreshTooltip();
       });
   };
 
