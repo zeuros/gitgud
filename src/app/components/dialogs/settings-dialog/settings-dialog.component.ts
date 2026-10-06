@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, inject, OnInit, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal} from '@angular/core';
 import {Button} from 'primeng/button';
 import {InputNumber} from 'primeng/inputnumber';
 import {InputText} from 'primeng/inputtext';
@@ -39,7 +39,7 @@ import {THEMES} from '../../../models/theme.model';
   templateUrl: './settings-dialog.component.html',
   styleUrl: './settings-dialog.component.scss',
 })
-export class SettingsDialogComponent implements OnInit {
+export class SettingsDialogComponent implements OnInit, OnDestroy {
 
   private gitApi = inject(GitApiService);
   private currentRepo = inject(CurrentRepoStore);
@@ -55,6 +55,8 @@ export class SettingsDialogComponent implements OnInit {
   protected pendingGitPath = signal('');
   protected gitPathDirty = computed(() => this.pendingGitPath() !== this.settings.gitBin);
   protected gitVersion = signal('');
+  // Last values known to git, so blur / close only write what actually changed
+  private saved = {globalName: '', globalEmail: '', localName: '', localEmail: ''};
 
   ngOnInit() {
     this.pendingGitPath.set(this.settings.gitBin);
@@ -71,7 +73,20 @@ export class SettingsDialogComponent implements OnInit {
       this.globalUserEmail.set(globalEmail.trim());
       this.localUserName.set((localName ?? '').trim());
       this.localUserEmail.set((localEmail ?? '').trim());
+      this.saved = {
+        globalName: this.globalUserName(), globalEmail: this.globalUserEmail(),
+        localName: this.localUserName(), localEmail: this.localUserEmail(),
+      };
     });
+  }
+
+  // Closing the dialog (mask click, Escape) destroys the focused input without firing its blur
+  ngOnDestroy() {
+    this.saveGlobalName();
+    this.saveGlobalEmail();
+    this.saveLocalName();
+    this.saveLocalEmail();
+    if (this.gitPathDirty()) this.validateGitPath();
   }
 
   protected pickGitBinaryPath() {
@@ -92,17 +107,23 @@ export class SettingsDialogComponent implements OnInit {
 
   protected saveGlobalName() {
     const v = this.globalUserName().trim();
+    if (v === this.saved.globalName) return;
+    this.saved.globalName = v;
     if (v) this.gitApi.gitAction(['config', '--global', 'user.name', v]).subscribe();
   }
 
   protected saveGlobalEmail() {
     const v = this.globalUserEmail().trim();
+    if (v === this.saved.globalEmail) return;
+    this.saved.globalEmail = v;
     if (v) this.gitApi.gitAction(['config', '--global', 'user.email', v]).subscribe();
   }
 
   protected saveLocalName() {
     if (!this.hasRepo()) return;
     const v = this.localUserName().trim();
+    if (v === this.saved.localName) return;
+    this.saved.localName = v;
     const args = v ? ['config', '--local', 'user.name', v] : ['config', '--local', '--unset', 'user.name'];
     this.gitApi.gitAction(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
       .subscribe({error: e => this.toast.err(`Failed to set local user name: ${e?.message ?? e}`)});
@@ -111,6 +132,8 @@ export class SettingsDialogComponent implements OnInit {
   protected saveLocalEmail() {
     if (!this.hasRepo()) return;
     const v = this.localUserEmail().trim();
+    if (v === this.saved.localEmail) return;
+    this.saved.localEmail = v;
     const args = v ? ['config', '--local', 'user.email', v] : ['config', '--local', '--unset', 'user.email'];
     this.gitApi.gitAction(args).pipe(catchError(e => e?.code === 5 ? of('') : throwError(() => e)))
       .subscribe({error: e => this.toast.err(`Failed to set local email: ${e?.message ?? e}`)});
