@@ -47,6 +47,7 @@
                     pInputText
                     [ngModel]="pendingGitPath()"
                     (ngModelChange)="pendingGitPath.set($event)"
+                    (blur)="gitPathDirty() && validateGitPath()"
                     placeholder="git"
                     style="flex: 1"
             />
