@@ -21,12 +21,13 @@ import {inject, Injectable, isDevMode, signal} from '@angular/core';
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting JavaScript file will look as if you never imported the module at all.
 // import type {ExecOptions} from 'child_process';
-import {catchError, defer, from, map, Observable, of, retry, switchMap, tap, throwError} from 'rxjs';
+import {catchError, defer, firstValueFrom, from, map, Observable, of, retry, switchMap, tap, throwError} from 'rxjs';
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
 import {type ExecOptions, type SpawnOptionsWithoutStdio} from 'node:child_process';
 import {GitCommandHistoryService} from '../git-command-history.service';
 import {SettingsService} from '../settings.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
+import {type GitRunner} from '../../utils/undo.utils';
 
 // Git invokes GIT_EDITOR as: `$GIT_EDITOR /path/to/msg/file` — we want a no-op that exits 0.
 // On Windows (cmd.exe): "cmd /c exit 0" — ignores extra args. On Unix: "true".
@@ -89,13 +90,31 @@ export class GitApiService {
   gitAction = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
     const cwd = this.currentRepo.cwd();
-    return this.git(args, options).pipe(
+    const action$ = this.git(args, options).pipe(
       tap({
         next: () => this.history.record(filteredArgs, cwd, true),
         error: () => this.history.record(filteredArgs, cwd, false),
       }),
     );
+    return action$;
   };
+
+  // Promise flavour of git(), for the undo journal. Spawns directly when an environment or stdin is needed: the
+  // shell pool keeps one set of shells per distinct environment
+  gitRunner: GitRunner = (args, {reflogAction, input} = {}) =>
+    firstValueFrom(reflogAction === undefined && input === undefined
+      ? this.git(args)
+      : this.waitForLock().pipe(
+        switchMap(() => from(window.tauri.spawnSync(this.settings.gitBin, args, {
+          cwd: this.currentRepo.cwd(),
+          input,
+          ...(reflogAction === undefined ? {} : {env: {GIT_REFLOG_ACTION: reflogAction}}),
+        }))),
+        map(({status, stdout, stderr}) => {
+          if (status !== 0) throw new Error(stderr.trim() || `Git exited ${status}`);
+          return stdout;
+        }),
+      ));
 
   gitWithInput = (args: string[], input: string) =>
     this.waitForLock().pipe(
