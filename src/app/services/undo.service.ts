@@ -51,6 +51,7 @@ export class UndoService {
       this.currentRepo.stashes();
       this.currentRepo.branches();
       this.currentRepo.tags();
+      this.currentRepo.remoteTags();
       untracked(this.refreshTooltip);
     });
   }

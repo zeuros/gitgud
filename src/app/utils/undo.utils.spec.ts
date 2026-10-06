@@ -816,6 +816,66 @@ describe('tags', () => {
   });
 });
 
+describe('remote', () => {
+  const remoteRefs = () => git('ls-remote', 'origin');
+
+  beforeEach(() => {
+    gitIn(root, ['init', '-q', '--bare', 'origin.git']);
+    git('remote', 'add', 'origin', join(root, 'origin.git'));
+    git('push', '-q', 'origin', 'main');
+  });
+
+  it('undo of a remote branch deletion pushes it back where it was', async () => {
+    git('checkout', '-q', '-b', 'feature');
+    const tip = commit('f');
+    git('push', '-q', 'origin', 'feature');
+    git('checkout', '-q', 'main');
+    const before = remoteRefs();
+    await act('push', 'origin', '--delete', 'feature');
+    expect(remoteRefs()).not.toContain('feature');
+
+    expect(await undo()).toBe('Undo deletion of origin/feature');
+    expect(remoteRefs()).toBe(before);
+    expect(git('rev-parse', 'origin/feature')).toBe(tip);
+
+    expect(await redo()).toBe('Redo deletion of origin/feature');
+    expect(remoteRefs()).not.toContain('feature');
+  });
+
+  it('undo of a remote branch deletion works once the local branch is gone too', async () => {
+    git('checkout', '-q', '-b', 'feature');
+    commit('f');
+    git('push', '-q', 'origin', 'feature');
+    git('checkout', '-q', 'main');
+    const before = remoteRefs();
+    await act('push', 'origin', '--delete', 'feature');
+    await act('branch', '-D', 'feature');
+
+    await undo();
+    await undo();
+    expect(remoteRefs()).toBe(before);
+  });
+
+  it.each([['a lightweight', ['tag', 'v1']], ['an annotated', ['tag', '-a', 'v1', '-m', 'first release']]])('undo of the deletion of %s remote tag', async (_, tag) => {
+    git(...tag);
+    git('push', '-q', 'origin', 'v1');
+    const before = remoteRefs();
+    await act('push', 'origin', '--delete', 'v1');
+    expect(remoteRefs()).not.toContain('v1');
+
+    expect(await undo()).toBe('Undo deletion of tag v1 on origin');
+    expect(remoteRefs()).toBe(before);
+
+    await redo();
+    expect(remoteRefs()).not.toContain('v1');
+  });
+
+  it('does not journal a deletion the remote refused', async () => {
+    await expect(act('push', 'origin', '--delete', 'nope')).rejects.toThrow();
+    expect(undoLabel()).toBeUndefined();
+  });
+});
+
 describe('journal', () => {
   it('works on a detached HEAD', async () => {
     git('checkout', '-q', '--detach');
