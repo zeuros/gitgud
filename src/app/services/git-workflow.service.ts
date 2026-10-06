@@ -106,7 +106,7 @@ export class GitWorkflowService {
         '-p', `refs/heads/${source}`,
         '-m', msg,
       ])),
-      switchMap(commitSha => this.gitApi.git(['update-ref', `refs/heads/${target}`, commitSha.trim()])),
+      switchMap(commitSha => this.gitApi.gitAction(['update-ref', `refs/heads/${target}`, commitSha.trim()])),
       // Sync index + working tree to the new merge commit (HEAD followed update-ref but index didn't).
       switchMap(() => isTargetCheckedOut ? this.gitApi.git(['reset', '--hard', 'HEAD']) : of(null)),
     );
@@ -157,7 +157,7 @@ export class GitWorkflowService {
       )),
       switchMap(() => this.gitApi.git(['rev-parse', 'HEAD'], {cwd: tmpPath})),
       map(sha => sha.trim()),
-      switchMap(newSha => this.gitApi.git(['update-ref', `refs/heads/${src}`, newSha])),
+      switchMap(newSha => this.gitApi.gitAction(['update-ref', `refs/heads/${src}`, newSha])),
       switchMap(() => this.gitApi.git(['worktree', 'remove', tmpPath])),
     );
   };

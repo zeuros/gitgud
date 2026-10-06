@@ -27,7 +27,7 @@ import {type ExecOptions, type SpawnOptionsWithoutStdio} from 'node:child_proces
 import {GitCommandHistoryService} from '../git-command-history.service';
 import {SettingsService} from '../settings.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
-import {type GitRunner} from '../../utils/undo.utils';
+import {type GitRunner, journalFor, runJournaled} from '../../utils/undo.utils';
 
 // Git invokes GIT_EDITOR as: `$GIT_EDITOR /path/to/msg/file` — we want a no-op that exits 0.
 // On Windows (cmd.exe): "cmd /c exit 0" — ignores extra args. On Unix: "true".
@@ -96,7 +96,8 @@ export class GitApiService {
         error: () => this.history.record(filteredArgs, cwd, false),
       }),
     );
-    return action$;
+    // Stashes, branches and tags leave no trace in the reflog of HEAD: journaled there to be undoable
+    return journalFor(filteredArgs) ? defer(() => from(runJournaled(filteredArgs, () => firstValueFrom(action$), this.gitRunner))) : action$;
   };
 
   // Promise flavour of git(), for the undo journal. Spawns directly when an environment or stdin is needed: the
