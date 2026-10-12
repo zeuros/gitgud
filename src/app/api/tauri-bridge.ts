@@ -12,7 +12,8 @@ import {getCurrentWindow} from '@tauri-apps/api/window';
 import {getCurrentWebview} from '@tauri-apps/api/webview';
 import {getVersion} from '@tauri-apps/api/app';
 import {open as openDialog} from '@tauri-apps/plugin-dialog';
-import {openUrl} from '@tauri-apps/plugin-opener';
+import {tempDir} from '@tauri-apps/api/path';
+import {openPath, openUrl} from '@tauri-apps/plugin-opener';
 import posixPath from './path-utils';
 
 // ---------------------------------------------------------------------------
@@ -148,6 +149,10 @@ async function buildBridge() {
     showItemInFolder: (fullPath: string) => invoke('show_item_in_folder', {path: fullPath}).catch(console.error),
 
     openExternal: (url: string): Promise<void> => openUrl(url),
+
+    openPath: (fullPath: string): Promise<void> => openPath(fullPath),
+
+    tempDir,
 
     appVersion: version,
     packageFormat: packageFormat ?? undefined,

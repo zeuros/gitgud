@@ -71,6 +71,9 @@ interface TauriApi {
   };
   showItemInFolder: (fullPath: string) => void;
   openExternal: (url: string) => Promise<void>;
+  /** Opens a file with the system's default application. Only paths under the temp dir's gitgud/ folder are allowed */
+  openPath: (fullPath: string) => Promise<void>;
+  tempDir: () => Promise<string>;
   appVersion: string;
   packageFormat?: string;
   onWindowFocus: (cb: () => void) => unknown;
