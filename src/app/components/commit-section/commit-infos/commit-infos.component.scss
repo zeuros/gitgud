@@ -1,0 +1,12 @@
+.reworded-check {
+  animation: reworded-check 1.8s ease forwards;
+}
+
+@keyframes reworded-check {
+  0%, 100% {
+    opacity: 0;
+  }
+  15%, 75% {
+    opacity: 1;
+  }
+}
