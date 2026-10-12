@@ -16,15 +16,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, effect, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, effect, inject, signal} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {directory, fileName} from '../../../utils/utils';
 import {type ChangeSet} from '../../../lib/github-desktop/model/change-set';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {FileDiffService} from '../../../services/file-diff.service';
-import {IdentityCardComponent} from '../identity-card/identity-card.component';
+import {AvatarComponent} from '../commit-infos/avatar/avatar.component';
+import {type CommitIdentity} from '../../../lib/github-desktop/model/commit-identity';
+import {Tooltip} from 'primeng/tooltip';
 import {Divider} from 'primeng/divider';
+import {CommitsTimelineComponent} from '../commits-timeline/commits-timeline.component';
 import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
+
+const MAX_AVATARS = 5;
+const MAX_NAMES = 2;
 
 @Component({
   selector: 'gitgud-commits-file-list-info',
@@ -32,11 +38,14 @@ import {CommitFileListComponent} from '../commit-file-list/commit-file-list';
   imports: [
     ReactiveFormsModule,
     FormsModule,
-    IdentityCardComponent,
+    AvatarComponent,
+    Tooltip,
+    CommitsTimelineComponent,
     Divider,
     CommitFileListComponent,
   ],
   templateUrl: './commits-file-list-info.component.html',
+  styleUrl: './commits-file-list-info.component.scss',
   standalone: true,
   host: {
     class: 'fill-height',
@@ -50,6 +59,25 @@ export class CommitsFileListInfoComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
   private fileDiff = inject(FileDiffService);
+
+  // One entry per author of the selected commits, the most prolific first
+  protected authors = computed(() => {
+    const byEmail = new Map<string, {identity: CommitIdentity, commits: number}>();
+    for (const {author} of this.currentRepo.selectedCommits()) {
+      const known = byEmail.get(author.email);
+      if (known) known.commits++;
+      else byEmail.set(author.email, {identity: author, commits: 1});
+    }
+    return [...byEmail.values()].sort((a, b) => b.commits - a.commits);
+  });
+
+  protected authorNames = computed(() => {
+    const names = this.authors().map(a => a.identity.name);
+    const others = names.length - MAX_NAMES;
+    return names.slice(0, MAX_NAMES).join(', ') + (others > 0 ? ` +${others} other${others > 1 ? 's' : ''}` : '');
+  });
+
+  protected MAX_AVATARS = MAX_AVATARS;
 
   constructor() {
     effect(() => {

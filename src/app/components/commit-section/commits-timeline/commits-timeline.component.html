@@ -1,0 +1,18 @@
+@let t = timeline();
+
+<div class="timeline">
+    @for (tick of t.ticks; track tick.commit.sha) {
+        <span class="tick"
+              [style.left.%]="tick.position"
+              [pTooltip]="tick.commit.summary + ' · ' + (tick.commit.author.date | date: DATE_FORMAT)"
+              tooltipPosition="top"
+              tooltipStyleClass="tooltip-fit-contents"></span>
+    }
+</div>
+<div class="timeline-bounds flex justify-content-between">
+    <span>{{ t.from | date: DATE_FORMAT }}</span>
+    @if (t.duration) {
+        <span>{{ t.duration }}</span>
+        <span>{{ t.to | date: (t.sameDay ? 'HH:mm' : DATE_FORMAT) }}</span>
+    }
+</div>
