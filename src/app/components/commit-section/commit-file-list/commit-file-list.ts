@@ -23,6 +23,7 @@ import {Listbox} from 'primeng/listbox';
 import {AppFileStatusKind, CommittedFileChange, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {ThemeService} from '../../../services/theme.service';
+import {CommittedFileContextMenuService} from '../../../services/committed-file-context-menu.service';
 
 @Component({
   selector: 'gitgud-commit-file-list',
@@ -36,6 +37,7 @@ import {ThemeService} from '../../../services/theme.service';
                (ngModelChange)="fileDiffPanel.showCommittedFileDiffs($event)"
                scrollHeight="auto"
                optionLabel="path"
+               (contextmenu)="openContextMenu($event)"
                class="fill-height">
       <ng-template #item let-f>
         @let file = file$(f);
@@ -62,6 +64,16 @@ export class CommitFileListComponent {
   protected FileStatusesIcons = FileStatusesIcons;
   protected fileDiffPanel = inject(FileDiffPanelService);
   private theme = inject(ThemeService);
+  private contextMenu = inject(CommittedFileContextMenuService);
+
+  // Listened on the listbox rather than in the item template, so the row's padding opens the menu too
+  protected openContextMenu(event: MouseEvent) {
+    const option = (event.target as Element).closest('.p-listbox-option');
+    if (!option) return;
+    const index = Array.from(option.parentElement!.querySelectorAll(':scope > .p-listbox-option')).indexOf(option);
+    const file = this.files()[index];
+    if (file) this.contextMenu.open(file, event);
+  }
 
   protected iconDropShadow(kind: AppFileStatusKind): string {
     const alpha = this.theme.isDark() ? '' : '80';

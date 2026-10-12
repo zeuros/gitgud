@@ -8,6 +8,10 @@
     "core:webview:allow-set-webview-zoom",
     "dialog:allow-open",
     "opener:default",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [{"path": "$TEMP/gitgud/**"}]
+    },
     "os:allow-platform",
     "window-state:allow-restore-state",
     "window-state:allow-save-window-state"
