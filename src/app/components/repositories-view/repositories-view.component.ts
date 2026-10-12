@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, inject} from '@angular/core';
+import {afterNextRender, ChangeDetectionStrategy, Component, computed, inject, Injector, viewChild} from '@angular/core';
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
 import {Button} from 'primeng/button';
 import {RepositoryViewComponent} from '../repository-view/repository-view.component';
@@ -53,6 +53,9 @@ export class RepositoriesViewComponent {
   protected gitRepositoryStore = inject(GitRepositoryStore);
   protected gitRepository = inject(GitRepositoryService);
   protected gitRefresh = inject(GitRefreshService);
+  private injector = inject(Injector);
+
+  private tabList = viewChild(TabList);
 
   protected activeTab = computed<number | string>(() =>
     this.gitRepositoryStore.newTabSelected() ? 'new-tab' : this.gitRepositoryStore.selectedIndex()
@@ -60,6 +63,8 @@ export class RepositoriesViewComponent {
 
   protected drop({previousIndex, currentIndex}: CdkDragDrop<string[]>): void {
     this.gitRepositoryStore.reorderRepositories(previousIndex, currentIndex);
+    // PrimeNG only moves the active bar when the active index changes, not when the tab itself moved
+    afterNextRender(() => this.tabList()?.updateInkBar(), {injector: this.injector});
   }
 
   protected onMiddleClick(event: MouseEvent, index: number): void {
