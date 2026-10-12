@@ -1,0 +1,38 @@
+:host {
+  display: block;
+}
+
+.timeline {
+  position: relative;
+  height: 14px;
+  margin: 4px 0 2px;
+
+  // The axis
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto;
+    height: 1px;
+    background: var(--p-content-border-color);
+  }
+
+  // Translucent, so commits made close together read as a denser burst
+  .tick {
+    position: absolute;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    margin-left: -1.5px;
+    border-radius: 2px;
+    background: var(--p-primary-color);
+    opacity: 0.6;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+.timeline-bounds {
+  font-size: 0.75rem;
+}

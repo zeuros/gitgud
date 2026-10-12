@@ -4,9 +4,23 @@
 
     <p-divider/>
 
-    @for (commit of selectedCommits; track commit.sha) {
-        <gitgud-identity-card [commit]="commit"/>
-    }
+    <div class="commits-card flex align-items-center gap-2">
+        <div class="avatars flex">
+            @for (author of authors().slice(0, MAX_AVATARS); track author.identity.email) {
+                <gitgud-avatar [identity]="author.identity"
+                               [pTooltip]="author.identity.name + ' · ' + author.commits + (author.commits > 1 ? ' commits' : ' commit')"
+                               tooltipPosition="top"
+                               tooltipStyleClass="tooltip-fit-contents"/>
+            }
+            @if (authors().length > MAX_AVATARS) {
+                <span class="more-authors">+{{ authors().length - MAX_AVATARS }}</span>
+            }
+        </div>
+        <div class="flex flex-column flex-1 min-w-0">
+            <span>{{ authorNames() }}</span>
+            <gitgud-commits-timeline [commits]="selectedCommits"/>
+        </div>
+    </div>
 
     <gitgud-commit-file-list class="pt-2" [files]="(editedFiles()?.files ?? [])"/>
 }

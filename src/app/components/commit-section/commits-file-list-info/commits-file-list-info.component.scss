@@ -1,0 +1,36 @@
+.commits-card {
+  background: var(--identity-card-bg);
+  border-radius: var(--p-border-radius-sm, 4px);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  color: var(--huaaaaaGray);
+}
+
+.avatars {
+  flex-shrink: 0;
+
+  // Fanned out: each one overlaps the previous
+  > * + * {
+    margin-left: -14px;
+  }
+
+  gitgud-avatar ::ng-deep img,
+  .more-authors {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--app-chrome-bg);
+    background: var(--app-chrome-bg);
+  }
+
+  gitgud-avatar ::ng-deep img {
+    display: block;
+  }
+
+  .more-authors {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+  }
+}
