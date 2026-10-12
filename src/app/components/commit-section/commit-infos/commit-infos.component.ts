@@ -22,6 +22,7 @@ import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
 import {Button} from 'primeng/button';
 import {isEqual} from 'lodash-es';
+import {finalize} from 'rxjs';
 import {directory, fileName} from '../../../utils/utils';
 import {Tooltip} from 'primeng/tooltip';
 import {type ChangeSet} from '../../../lib/github-desktop/model/change-set';
@@ -98,12 +99,21 @@ export class CommitInfosComponent {
     setTimeout(() => this.shaTooltip()?.show(), 0); // show after deactivate runs (deactivate is triggered when pTooltip gets new value)
   };
 
-  protected rewordCommit = () =>
+  protected rewording = signal(false);
+  // Check mark taking over from the loader, until its animation ends
+  protected reworded = signal(false);
+  protected rewordCommit = () => {
+    if (this.rewording()) return;
+    this.rewording.set(true);
+    this.reworded.set(false);
     this.gitWorkflow.rewordCommit(this.editCommitForm.getRawValue())
+      .pipe(finalize(() => this.rewording.set(false)))
       .subscribe(() => {
         this.initialValue.set(this.editCommitForm.value);
+        this.reworded.set(true);
         this.toast.success('Commit message updated');
       });
+  };
 
   protected commitFormValueChanged = () => !isEqual(this.editCommitForm.value, this.initialValue())
   protected short = short;

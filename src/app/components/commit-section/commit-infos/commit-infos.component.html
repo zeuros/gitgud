@@ -49,9 +49,13 @@
 
             <p-button type="submit"
                       [disabled]="!commitFormValueChanged()"
+                      [loading]="rewording()"
                       class="flex gap-2 mt-2 w-full"
                       styleClass="w-full border-round-xs">
                 Update message
+                @if (reworded()) {
+                    <i class="pi pi-check reworded-check" (animationend)="reworded.set(false)"></i>
+                }
             </p-button>
 
         </form>
