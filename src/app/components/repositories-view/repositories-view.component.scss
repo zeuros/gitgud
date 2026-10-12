@@ -27,6 +27,62 @@
     }
   }
 
+  .p-tab {
+    &.cdk-drag-preview,
+    &.cdk-drag-placeholder {
+      border-radius: 6px 6px 0 0;
+    }
+
+    // The dragged tab: lifted over the tablist instead of bare floating text
+    &.cdk-drag-preview {
+      // cdk's reset layer is declared after primeng's, and wipes the tab's own box
+      padding: var(--p-tabs-tab-padding);
+      border: solid var(--p-tabs-tab-border-color);
+      border-width: var(--p-tabs-tab-border-width);
+      color: var(--p-tabs-tab-color);
+      background: color-mix(in srgb, var(--p-primary-color) 14%, var(--app-chrome-bg));
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+
+      &.p-tab-active {
+        border-color: var(--p-tabs-tab-active-border-color);
+        color: var(--p-tabs-tab-active-color);
+      }
+    }
+
+    // The slot the tab will land in
+    &.cdk-drag-placeholder {
+      border-color: transparent;
+      background: color-mix(in srgb, var(--p-primary-color) 8%, transparent);
+      color: transparent;
+
+      > * {
+        visibility: hidden;
+      }
+    }
+  }
+
+  // Neighbours slide out of the way, and the dropped tab glides into its slot.
+  // While dragging, the preview lives in the list too and must stick to the pointer.
+  .p-tab.cdk-drag-animating,
+  .cdk-drop-list-dragging .p-tab:not(.cdk-drag-placeholder, .cdk-drag-preview) {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  // Tabs sliding under the pointer would flash their hover state
+  .cdk-drop-list-dragging .p-tab {
+    pointer-events: none;
+  }
+
+  // Only repositioned after the drop: stays hidden while it catches up, then fades back in
+  .p-tablist-active-bar {
+    transition: width 250ms cubic-bezier(0.35, 0, 0.25, 1), inset-inline-start 250ms cubic-bezier(0.35, 0, 0.25, 1), opacity 150ms ease 250ms;
+  }
+
+  .cdk-drop-list-dragging .p-tablist-active-bar {
+    opacity: 0;
+    transition: none;
+  }
+
   p-tabs {
     display: flex;
     flex-direction: column;

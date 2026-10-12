@@ -6,7 +6,13 @@
 
     <p-tablist cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
         @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
-            <p-tab [value]="i" cdkDrag cdkDragLockAxis="x" (auxclick)="onMiddleClick($event, i)">
+            <p-tab [value]="i"
+                   cdkDrag
+                   cdkDragLockAxis="x"
+                   cdkDragBoundary=".p-tablist"
+                   cdkDragPreviewContainer="parent"
+                   animate.enter="fade-slide-in"
+                   (auxclick)="onMiddleClick($event, i)">
                 <i class="fa fa-code-fork"></i>
                 {{ repository.name }}
                 <p-button
