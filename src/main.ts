@@ -76,6 +76,11 @@ installTauriBridge()
   .catch(err => console.error('[tauri-bridge] init failed, falling back to stub:', err))
   .then(() => bootstrapApplication(AppComponent, appConfig))
   .then(appRef => {
+    // The splash sits over the app: fading it out fades the app in
+    const splash = document.querySelector('.splash');
+    splash?.addEventListener('animationend', e => e.target === splash && splash.remove());
+    splash?.classList.add('splash-out');
+
     const globalErrorHandler = appRef.injector.get(ErrorHandler);
     config.onUnhandledError = err => globalErrorHandler.handleError(err);
     window.addEventListener('unhandledrejection', (event) => {
