@@ -20,6 +20,7 @@
     .splash {
       position: fixed;
       inset: 0;
+      z-index: 100000;
       display: flex;
       align-items: center;
       flex-direction: column;
@@ -43,7 +44,22 @@
       background: linear-gradient(110deg, #b8742a 40%, #fff3c4 50%, #b8742a 60%) 0 0 / 300% 100%;
       -webkit-background-clip: text;
       background-clip: text;
-      animation: splash-shine 2.4s linear infinite;
+      animation: splash-shine 2.4s linear infinite, splash-in 0.4s ease 0.4s both;
+    }
+    /* The background stays opaque: only the logo and title fade in, and late enough that a quick start skips them instead of blinking them */
+    .splash img {
+      animation: splash-in 0.4s ease 0.4s both;
+    }
+    /* Set once Angular has rendered: the app shows through as the splash fades away */
+    .splash.splash-out {
+      pointer-events: none;
+      animation: splash-out 0.35s ease forwards;
+    }
+    @keyframes splash-in {
+      from { opacity: 0; }
+    }
+    @keyframes splash-out {
+      to { opacity: 0; }
     }
     @keyframes splash-shine {
       from { background-position: 100% 0; }
@@ -52,8 +68,7 @@
   </style>
 </head>
 <body>
-  <app-root>
-    <div class="splash"><img src="assets/images/bonfire.webp" alt=""><span class="splash-title">gitgud</span></div>
-  </app-root>
+  <app-root></app-root>
+  <div class="splash"><img src="assets/images/bonfire.webp" alt=""><span class="splash-title">gitgud</span></div>
 </body>
 </html>
