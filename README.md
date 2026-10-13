@@ -12,7 +12,7 @@
 
 A cross-platform Git GUI that doesn't get in your way.
 
-<video src="docs/show.mp4" autoplay loop muted playsinline width="100%"></video>
+https://github.com/user-attachments/assets/7c56dde9-3404-4b9a-a6d0-fe188927c0f4
 
 ## Download
 
