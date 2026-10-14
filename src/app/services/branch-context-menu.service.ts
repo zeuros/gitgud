@@ -143,8 +143,24 @@ export class BranchContextMenuService {
     ];
   });
 
-  private pullBranch = () =>
-    this.gitWorkflow.doRunAndRefresh(['fetch', 'origin', `${this.name()}:${this.name()}`], `Pulled ${this.name()}`);
+  // Fast-forwards the local branch to its remote, whichever of the two was right-clicked
+  private pullBranch = () => {
+    const branch = this.selectedNode()?.data;
+    if (!branch) return;
+
+    const branches = this.currentRepo.branches();
+    const upstream = branch.type === BranchType.Remote ? branch.name : branch.upstream ?? `origin/${branch.name}`;
+    const {remote, branch: remoteBranch} = parseRemote(upstream);
+    const localName = branch.type === BranchType.Local
+      ? branch.name
+      : branches.find(b => b.type === BranchType.Local && b.upstream === upstream)?.name ?? remoteBranch;
+
+    // git refuses to fetch into the checked out branch, pull it instead
+    if (branches.some(b => b.isHeadPointed && b.name === localName))
+      this.gitWorkflow.doRunAndRefresh(['pull', '--ff-only', remote, remoteBranch], `Pulled ${upstream} into ${localName}`);
+    else
+      this.gitWorkflow.doRunAndRefresh(['fetch', remote, `${remoteBranch}:${localName}`], `Pulled ${upstream} into ${localName}`);
+  };
 
   private pushBranch = () => {
     const name = this.name();
