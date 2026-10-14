@@ -28,15 +28,33 @@
   "bundle": {
     "active": true,
     "targets": ["deb", "rpm"],
+    "publisher": "zeuros",
+    "copyright": "Copyright (C) 2026 zeuros",
+    "license": "GPL-3.0-only",
+    "licenseFile": "../LICENSE",
+    "homepage": "https://github.com/zeuros/gitgud",
+    "category": "DeveloperTool",
+    "shortDescription": "Fast, native Git GUI client",
+    "longDescription": "GitGud is a fast, native Git GUI with a visual branch graph, Monaco-powered diffs, interactive staging and rebase, stash, tag and remote management.",
     "icon": [
+      "icons/32x32.png",
+      "icons/64x64.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
       "icons/icon.png"
     ],
     "linux": {
       "deb": {
-        "depends": []
+        "depends": [],
+        "files": {
+          "/usr/share/metainfo/io.github.zeuros.gitgud.metainfo.xml": "linux/io.github.zeuros.gitgud.metainfo.xml"
+        }
       },
       "rpm": {
-        "depends": []
+        "depends": [],
+        "files": {
+          "/usr/share/metainfo/io.github.zeuros.gitgud.metainfo.xml": "linux/io.github.zeuros.gitgud.metainfo.xml"
+        }
       }
     }
   }
