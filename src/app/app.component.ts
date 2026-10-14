@@ -42,7 +42,7 @@ import {GitRepositoryService} from './services/git-repository.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   host: {
-    '(document:keydown)': 'gitRepository.handleTabShortcut($event)', // Here: the tabs view is gone once the last tab is closed
+    '(document:keydown)': 'gitRepository.handleTabShortcut($event); redoInTextField($event)', // Here: the tabs view is gone once the last tab is closed
   },
 })
 export class AppComponent {
@@ -58,6 +58,16 @@ export class AppComponent {
   private router = inject(Router);
 
   private globalMenu = viewChild.required<ContextMenu>('globalMenu');
+
+  // WebKitGTK undoes text fields with Ctrl+Z but has no redo shortcut: bind Ctrl+Shift+Z and Ctrl+Y. Monaco handles its own
+  protected redoInTextField = (event: KeyboardEvent) => {
+    const key = event.key.toLowerCase();
+    const isRedo = (event.ctrlKey || event.metaKey) && !event.altKey && ((key == 'z' && event.shiftKey) || (key == 'y' && !event.shiftKey));
+    const target = event.target as HTMLElement;
+    if (!isRedo || !target.matches('input, textarea') || target.closest('.monaco-editor')) return;
+    event.preventDefault();
+    document.execCommand('redo');
+  };
 
   protected dismissToastOnClick = (event: Event) => {
     if ((event.target as Element).closest('.p-toast-message')) this.messageService.clear();
