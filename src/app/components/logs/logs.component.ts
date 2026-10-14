@@ -343,13 +343,18 @@ export class LogsComponent {
 
   protected yPosition = yPosition;
 
+  protected searchMatches = signal<number[]>([]); // Indexes in computedDisplayLog of the commits matching the search
+  protected currentMatch = signal(-1); // Index in searchMatches of the match being shown
+
   protected search = (searchString = '') => {
     const computedDisplayLog = this.computedDisplayLog();
 
-    if (searchString == '') // Clear search
-      return computedDisplayLog.forEach(commit => commit.highlight = undefined);
-
     computedDisplayLog.forEach(commit => commit.highlight = undefined);
+    this.searchMatches.set([]);
+    this.currentMatch.set(-1);
+
+    if (searchString == '') // Clear search
+      return;
 
     const searchStringL = searchString.toLowerCase();
     computedDisplayLog
@@ -362,11 +367,24 @@ export class LogsComponent {
       ))
       .forEach(commit => commit.highlight = 'not-matched');
 
-    const firstMatchIdx = computedDisplayLog.findIndex(c => !c.highlight);
-    if (firstMatchIdx > 0) {
-      this.currentRepo.update({startCommit: firstMatchIdx});
-      this.logTableContainer()?.scrollTo({top: firstMatchIdx * ROW_HEIGHT});
+    const matches = computedDisplayLog.flatMap((c, i) => c.highlight ? [] : [i]);
+    this.searchMatches.set(matches);
+    if (matches.length) {
+      this.currentMatch.set(0);
+      this.currentRepo.update({startCommit: matches[0]});
+      this.logTableContainer()?.scrollTo({top: matches[0] * ROW_HEIGHT});
     }
+  };
+
+  // Selects the next (step = 1) or previous (step = -1) match, wrapping around. The first call selects the match scrolled to while typing
+  protected goToMatch = (step: 1 | -1) => {
+    const matches = this.searchMatches();
+    if (!matches.length) return;
+    const shown = this.computedDisplayLog()[matches[this.currentMatch()]]?.sha;
+    const isShownSelected = this.currentRepo.selectedCommitsShas()?.includes(shown);
+    const current = isShownSelected ? (this.currentMatch() + step + matches.length) % matches.length : this.currentMatch();
+    this.currentMatch.set(current);
+    this.currentRepo.update({selectedCommitsShas: [this.computedDisplayLog()[matches[current]].sha]});
   };
 
   private computeDisplayLog = (workingDirHasChanges: boolean, logs: Commit[], stashes: Commit[]) => {

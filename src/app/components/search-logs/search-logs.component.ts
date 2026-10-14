@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, input, output} from '@angular/core';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 
 @Component({
@@ -29,6 +29,18 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
 })
 export class SearchLogsComponent {
 
+  matchCount = input(0);
+  currentMatch = input(-1);
+
   searchChange = output<string>();
+  next = output();
+  previous = output();
+
+  protected onKeydown = (event: KeyboardEvent) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    if (event.shiftKey) this.previous.emit();
+    else this.next.emit();
+  };
 
 }

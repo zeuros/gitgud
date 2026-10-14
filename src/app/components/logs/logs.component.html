@@ -10,7 +10,11 @@
 @let visibleCommitsCnt = visibleCommitsCount();
 
 @if (showSearchBar()) {
-    <gitgud-search-logs (searchChange)="search($event)"/>
+    <gitgud-search-logs (searchChange)="search($event)"
+                        (next)="goToMatch(1)"
+                        (previous)="goToMatch(-1)"
+                        [matchCount]="searchMatches().length"
+                        [currentMatch]="currentMatch()"/>
 }
 @if (graphColCount && visibleCommitsCnt && visibleCommitsCnt > 0) {
     <div class="commit-graph-canvas-container"
