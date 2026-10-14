@@ -19,12 +19,18 @@
 import {inject, Injectable} from '@angular/core';
 import {editor} from 'monaco-editor';
 import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
-import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
 import {idsToHide} from '../../utils/diff-editor.utils';
 import {buildZeroContextPatch} from './monaco-patch-builder';
-import {AppFileStatusKind, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
+import {AppFileStatusKind, type FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {ToastService} from '../../services/toast.service';
+import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
+import {SettingsService} from '../../services/settings.service';
+import {FileDiffPanelService} from '../../services/file-diff-panel.service';
+import {permalink, remoteWebUrl} from '../../utils/permalink.utils';
+import {DEFAULT_EDITOR_COMMAND, editorCommandArgs} from '../../utils/editor-command.utils';
+import {parseRemote} from '../../utils/branch-utils';
+import {firstValueFrom} from 'rxjs';
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import ILineChange = editor.ILineChange;
@@ -34,9 +40,12 @@ export class MonacoDiffRightClickActionsService {
   private workingDir = inject(WorkingDirectoryService);
   private currentRepo = inject(CurrentRepoStore);
   private toast = inject(ToastService);
+  private gitApi = inject(GitApiService);
+  private settings = inject(SettingsService);
+  private fileDiffPanel = inject(FileDiffPanelService);
 
   registerEditorRightClick = (diffEditor: IStandaloneDiffEditor) => {
-    let currentFile: WorkingDirectoryFileChange | undefined;
+    let currentFile: FileChange | undefined;
     let lineChanges: ILineChange[] | null = null;
 
     diffEditor.onDidUpdateDiff(() => lineChanges = diffEditor.getLineChanges());
@@ -79,17 +88,63 @@ export class MonacoDiffRightClickActionsService {
       if (patch) this.workingDir.discardChangesWithPatch(patch);
     };
 
-    // '/repo/src/file.ts:12', or '/repo/src/file.ts:12-18' for several lines. The original side of a rename refers to the old path
-    const copyReference = (ed: IStandaloneCodeEditor) => {
+    // File and lines under the cursor. The original side of a rename is the old path
+    const location = (ed: IStandaloneCodeEditor) => {
       const selection = ed.getSelection();
-      const cwd = this.currentRepo.cwd();
-      if (!currentFile || !selection || !cwd) return;
+      if (!currentFile || !selection) return undefined;
       const {status} = currentFile;
       const renamed = status.kind === AppFileStatusKind.Renamed || status.kind === AppFileStatusKind.Copied;
-      const path = renamed && ed === diffEditor.getOriginalEditor() ? status.oldPath : currentFile.path;
-      const {startLineNumber: start, endLineNumber: end} = selection;
-      const reference = `${window.tauri.path.resolve(cwd, path)}:${start === end ? start : `${start}-${end}`}`;
-      this.copyToClipboard(reference);
+      const isOriginal = ed === diffEditor.getOriginalEditor();
+      const path = renamed && isOriginal ? status.oldPath : currentFile.path;
+      return {file: currentFile, path, isOriginal, start: selection.startLineNumber, end: selection.endLineNumber};
+    };
+    const lines = (start: number, end: number) => start === end ? `${start}` : `${start}-${end}`;
+    const absolutePath = (path: string) => window.tauri.path.resolve(this.currentRepo.cwd()!, path);
+
+    // '/repo/src/file.ts:12', or '/repo/src/file.ts:12-18' for several lines
+    const copyReference = (ed: IStandaloneCodeEditor) => {
+      const at = location(ed);
+      if (at) this.copyToClipboard(`${absolutePath(at.path)}:${lines(at.start, at.end)}`);
+    };
+
+    const copyRelativeReference = (ed: IStandaloneCodeEditor) => {
+      const at = location(ed);
+      if (at) this.copyToClipboard(`${at.path}:${lines(at.start, at.end)}`);
+    };
+
+    // Link to the lines on the remote's website, at the commit shown on that side
+    const copyPermalink = async (ed: IStandaloneCodeEditor) => {
+      const at = location(ed);
+      if (!at || !isCommittedFileChange(at.file)) return;
+      const git = (args: string[]) => firstValueFrom(this.gitApi.git(args)).then(out => out.trim()).catch(() => '');
+
+      const upstream = this.currentRepo.headBranch()?.upstream;
+      const remote = upstream ? parseRemote(upstream).remote : 'origin';
+      const webUrl = remoteWebUrl(await git(['remote', 'get-url', remote]));
+      if (!webUrl) return this.toast.warn(`${remote} has no web page to link to`);
+
+      const sha = await git(['rev-parse', at.isOriginal ? `${at.file.commitish}^` : at.file.commitish]);
+      if (!sha) return this.toast.warn(`Can't find the commit shown on this side`);
+
+      this.copyToClipboard(permalink(webUrl, sha, at.path, at.start, at.end));
+      if (!await git(['branch', '-r', '--contains', sha])) this.toast.warn(`${sha.slice(0, 7)} isn't pushed yet: the link won't work until it is`);
+    };
+
+    const openInEditor = async (ed: IStandaloneCodeEditor) => {
+      const at = location(ed);
+      if (!at) return;
+      const file = absolutePath(at.path);
+      if (!await window.tauri.fs.exists(file)) return this.toast.warn(`${at.path} doesn't exist in the working directory`);
+      const [cmd, ...args] = editorCommandArgs(this.settings.editorCommand.trim() || DEFAULT_EDITOR_COMMAND, file, at.start);
+      window.tauri.spawn(cmd, args, {cwd: this.currentRepo.cwd()})
+        .catch(e => this.toast.err(`Couldn't run the editor command (set it in Settings): ${e}`));
+    };
+
+    const blameLine = (ed: IStandaloneCodeEditor) => {
+      const at = location(ed);
+      if (!at) return;
+      this.fileDiffPanel.blameLine.set(at.start);
+      this.fileDiffPanel.blameOpen.set(true);
     };
 
     for (const ed of [diffEditor.getOriginalEditor(), diffEditor.getModifiedEditor()]) {
@@ -99,17 +154,23 @@ export class MonacoDiffRightClickActionsService {
       ed.addAction({id: 'unstage-lines',  label: 'Unstage lines',     contextMenuGroupId: 'modification', contextMenuOrder: 1,   precondition: 'isWorkingDirFile && isFileStaged && !isSingleLine',  run: stageLines(false)});
       ed.addAction({id: 'discard-line',   label: 'Discard this line', contextMenuGroupId: 'modification', contextMenuOrder: 1.5, precondition: 'isWorkingDirFile && !isFileStaged && isSingleLine',  run: discardLine});
       ed.addAction({id: 'discard-lines',  label: 'Discard lines',     contextMenuGroupId: 'modification', contextMenuOrder: 1.5, precondition: 'isWorkingDirFile && !isFileStaged && !isSingleLine', run: discardLine});
-      ed.addAction({id: 'copy-reference', label: 'Copy Reference',    contextMenuGroupId: '9_cutcopypaste', contextMenuOrder: 5, run: copyReference});
+      ed.addAction({id: 'open-in-editor', label: 'Open in Editor at This Line', contextMenuGroupId: 'navigation', contextMenuOrder: 1, run: openInEditor});
+      ed.addAction({id: 'copy-reference',          label: 'Copy Reference',          contextMenuGroupId: '9_cutcopypaste', contextMenuOrder: 5, run: copyReference});
+      ed.addAction({id: 'copy-relative-reference', label: 'Copy Relative Reference', contextMenuGroupId: '9_cutcopypaste', contextMenuOrder: 6, run: copyRelativeReference});
+      ed.addAction({id: 'copy-permalink',          label: 'Copy Permalink',          contextMenuGroupId: '9_cutcopypaste', contextMenuOrder: 7, precondition: '!isWorkingDirFile', run: copyPermalink});
       this.removeDefaultContextMenuActions(ed);
     }
+    // Blame shows the modified side's version of the file
+    diffEditor.getModifiedEditor().addAction({id: 'blame-line', label: 'Blame This Line', contextMenuGroupId: 'navigation', contextMenuOrder: 2, run: blameLine});
 
     // Returned updater — call whenever the selected file changes
-    return (file: WorkingDirectoryFileChange): void => {
+    return (file: FileChange): void => {
       currentFile = file;
       isWorkingDirOrig.set(isWorkingDirectoryFileChange(file));
       isWorkingDirMod.set(isWorkingDirectoryFileChange(file));
-      isStagedOrig.set(file?.staged ?? false);
-      isStagedMod.set(file?.staged ?? false);
+      const staged = isWorkingDirectoryFileChange(file) && file.staged;
+      isStagedOrig.set(staged);
+      isStagedMod.set(staged);
     };
   };
 

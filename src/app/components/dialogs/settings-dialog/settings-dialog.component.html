@@ -58,6 +58,12 @@
         </div>
     </div>
 
+    <div>
+        <label>Editor command <span class="git-version">— {{ '{file}' }} and {{ '{line}' }} are replaced</span></label>
+        <input type="text" pInputText [ngModel]="settings.editorCommand" (ngModelChange)="settings.editorCommand = $event"
+               [placeholder]="defaultEditorCommand" style="flex: 1"/>
+    </div>
+
     <div class="settings-section-title">Identity</div>
 
     <div>
