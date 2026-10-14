@@ -44,7 +44,7 @@ import {type GitWorktree} from '../../models/git-worktree';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';
-
+import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 
 @Component({
   selector: 'gitgud-left-panel',
@@ -58,6 +58,7 @@ import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/c
     Splitter,
     SplitterPanel,
     CdkDropList,
+    TitleIfOverflowDirective,
   ],
   providers: [TerminalService],
   templateUrl: './left-panel.component.html',
