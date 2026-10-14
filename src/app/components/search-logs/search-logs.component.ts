@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, input, output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, effect, ElementRef, input, output, viewChild} from '@angular/core';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 
 @Component({
@@ -29,12 +29,24 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
 })
 export class SearchLogsComponent {
 
+  focusRequest = input(0); // Focuses the input and selects its text each time it changes
   matchCount = input(0);
   currentMatch = input(-1);
 
   searchChange = output<string>();
   next = output();
   previous = output();
+
+  private searchInput = viewChild.required<ElementRef<HTMLInputElement>>('searchInput');
+
+  constructor() {
+    effect(() => {
+      this.focusRequest();
+      const input = this.searchInput().nativeElement;
+      input.focus();
+      input.select();
+    });
+  }
 
   protected onKeydown = (event: KeyboardEvent) => {
     if (event.key !== 'Enter') return;
