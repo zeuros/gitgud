@@ -9,7 +9,7 @@
   "license": "GPL-3.0-only",
   "private": true,
   "scripts": {
-    "version": "node -e \"const fs=require('fs');['src-tauri/Cargo.toml','src-tauri/tauri.conf.json'].forEach(f=>{const c=fs.readFileSync(f,'utf8');fs.writeFileSync(f,c.replace(/version = \\\"[^\\\"]+\\\"/,'version = \\\"'+process.env.npm_new_version+'\\\"').replace(/\\\"version\\\": \\\"[^\\\"]+\\\"/,'\\\"version\\\": \\\"'+process.env.npm_new_version+'\\\"'))})\" && git add src-tauri/Cargo.toml src-tauri/tauri.conf.json",
+    "version": "node -e \"const fs=require('fs');['src-tauri/Cargo.toml','src-tauri/tauri.conf.json'].forEach(f=>{const c=fs.readFileSync(f,'utf8');fs.writeFileSync(f,c.replace(/version = \\\"[^\\\"]+\\\"/,'version = \\\"'+process.env.npm_new_version+'\\\"').replace(/\\\"version\\\": \\\"[^\\\"]+\\\"/,'\\\"version\\\": \\\"'+process.env.npm_new_version+'\\\"'))})\" && node scripts/add-metainfo-release.mjs && git add src-tauri/Cargo.toml src-tauri/tauri.conf.json src-tauri/linux build/flatpak",
 
     "start": "npm run tauri:dev",
     "ng:serve": "node --max-old-space-size=4096 ./node_modules/@angular/cli/bin/ng serve -c dev --port 4201",

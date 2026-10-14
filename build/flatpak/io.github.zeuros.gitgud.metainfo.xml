@@ -48,6 +48,23 @@
   </provides>
 
   <releases>
+    <release version="2.8.0" date="2026-10-13">
+      <description>
+        <p>What's new in GitGud 2.8.0:</p>
+        <ul>
+          <li>Aggregate the selected commits into one card with a timeline</li>
+          <li>Context menu on a commit's files</li>
+          <li>Animate repository tabs while dragging</li>
+          <li>Show a loader on the update message button while rewording</li>
+          <li>Show days instead of hours when last fetch is over 24h ago</li>
+          <li>Undo the deletion of a remote branch or tag</li>
+          <li>Undo stash, branch and tag actions</li>
+          <li>Derive undo / redo from the reflog instead of toggling the last action</li>
+          <li>Save settings on modal blur (not only fields blur)</li>
+          <li>Download the package matching the installed format on Linux</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.4.0" date="2025-01-01">
       <description>
         <p>Improved draw performance and multi-size desktop icons.</p>
