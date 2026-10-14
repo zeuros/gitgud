@@ -85,6 +85,7 @@
                            [(ngModel)]="createBranch.name"
                            (keydown.enter)="createBranch.confirm()"
                            (keydown.escape)="createBranch.cancel()"
+                           (keydown)="keepKeyInInput($event)"
                            (blur)="onBranchInputBlur()"
                     />
                 }

@@ -343,6 +343,12 @@ export class LogsComponent {
     }
   }
 
+  // The table rows navigate on these keys (Home / End jump to the first / last commit…): leave them to the input typed in
+  protected keepKeyInInput = (event: KeyboardEvent) => {
+    const rowKeys = ['ArrowUp', 'ArrowDown', 'Home', 'End', 'Space', 'Enter'];
+    if (rowKeys.includes(event.code) || (event.code === 'KeyA' && (event.ctrlKey || event.metaKey))) event.stopPropagation();
+  };
+
   protected xPosition = xPosition;
 
   protected yPosition = yPosition;
