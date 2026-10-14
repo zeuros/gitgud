@@ -38,6 +38,7 @@ export class FileDiffPanelService {
   // Tools of the diff view, closed whenever a file is opened from the lists
   historyOpen = signal(false);
   blameOpen = signal(false);
+  blameLine = signal<number | undefined>(undefined); // Line to reveal once the blame is shown
 
   // Here we update monaco view for commit files (no live changes) or for working dir changes (live update on file change)
   fileToDiff$ = this.fileToDiffSubject$.pipe(

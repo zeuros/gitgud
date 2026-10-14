@@ -30,6 +30,7 @@ import {emptyStringOnFail} from '../../../utils/utils';
 import {ToastService} from '../../../services/toast.service';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {THEMES} from '../../../models/theme.model';
+import {DEFAULT_EDITOR_COMMAND} from '../../../utils/editor-command.utils';
 
 @Component({
   selector: 'gitgud-settings-dialog',
@@ -157,5 +158,6 @@ export class SettingsDialogComponent implements OnInit, OnDestroy {
   }
 
   protected themes = THEMES;
+  protected defaultEditorCommand = DEFAULT_EDITOR_COMMAND;
 
 }

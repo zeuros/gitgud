@@ -218,6 +218,15 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
       onCleanup(() => sub.unsubscribe());
     });
 
+    // Reveals the line asked from the diff's context menu once its blame is shown
+    effect(() => {
+      const line = this.fileDiffPanel.blameLine();
+      if (!line || !this.blame() || !this.blameEditor) return;
+      this.blameEditor.revealLineInCenter(line);
+      this.blameEditor.setSelection({startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 1});
+      untracked(() => this.fileDiffPanel.blameLine.set(undefined));
+    });
+
     effect(() => {
       const viewType = this.viewType();
       const diffEditor = this.diffEditor();

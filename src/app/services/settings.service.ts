@@ -19,6 +19,7 @@
 import {Injectable, signal} from '@angular/core';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
 import { ThemeMode } from "../models/theme.model";
+import {DEFAULT_EDITOR_COMMAND} from '../utils/editor-command.utils';
 
 @Injectable({providedIn: 'root'})
 export class SettingsService {
@@ -31,12 +32,14 @@ export class SettingsService {
   );
   readonly themeSignal = this._theme.asReadonly();
   private _gitBin = signal(localStorage.getItem('git-binary-path') ?? 'git');
+  private _editorCommand = signal(localStorage.getItem('editor-command') ?? DEFAULT_EDITOR_COMMAND);
 
   get zoom() { return this._zoom(); }
   get autoFetchInterval() { return this._autoFetchInterval(); }
   get autoFetchIntervalSeconds() { return this._autoFetchInterval() / 1000; }
   get theme() { return this._theme(); }
   get gitBin() { return this._gitBin(); }
+  get editorCommand() { return this._editorCommand(); }
 
   set zoom(factor: number) {
     this._zoom.set(factor);
@@ -58,6 +61,11 @@ export class SettingsService {
   set gitBin(v: string) {
     this._gitBin.set(v);
     localStorage.setItem('git-binary-path', v);
+  }
+
+  set editorCommand(v: string) {
+    this._editorCommand.set(v);
+    localStorage.setItem('editor-command', v);
   }
 
 }
