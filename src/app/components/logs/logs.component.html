@@ -10,7 +10,8 @@
 @let visibleCommitsCnt = visibleCommitsCount();
 
 @if (showSearchBar()) {
-    <gitgud-search-logs (searchChange)="search($event)"
+    <gitgud-search-logs [focusRequest]="searchFocusRequest()"
+                        (searchChange)="search($event)"
                         (next)="goToMatch(1)"
                         (previous)="goToMatch(-1)"
                         [matchCount]="searchMatches().length"

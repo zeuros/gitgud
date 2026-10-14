@@ -1,6 +1,6 @@
 <div class="pink-blur"></div>
 <div class="search-box">
-    <input autofocus type="text" name="search" placeholder="Search.." (input)="searchChange.emit($any($event.target).value)" (keydown)="onKeydown($event)"> <i class="fa fa-search mr-2"></i>
+    <input #searchInput autofocus type="text" name="search" placeholder="Search.." (input)="searchChange.emit($any($event.target).value)" (keydown)="onKeydown($event)"> <i class="fa fa-search mr-2"></i>
 </div>
 <div class="match-nav">
     <span class="match-count">{{ matchCount() ? currentMatch() + 1 : 0 }}/{{ matchCount() }}</span>

@@ -114,6 +114,7 @@ export class LogsComponent {
   });
 
   protected showSearchBar = signal(false);
+  protected searchFocusRequest = signal(0);
   protected graphColumnCount = signal(0);
   protected untrackedStashes = signal<string[]>([]); // Unused (edge case)
   protected computedDisplayLog = signal<DisplayRef[]>([]); // Commits ready for display
@@ -326,9 +327,12 @@ export class LogsComponent {
   }
 
   @HostListener('document:keydown', ['$event'])
-  handleKeyboardEvent({ctrlKey, code}: KeyboardEvent) {
+  handleKeyboardEvent(event: KeyboardEvent) {
+    const {ctrlKey, code} = event;
     if (ctrlKey && code == 'KeyF') {
+      event.preventDefault();
       this.showSearchBar.set(true);
+      this.searchFocusRequest.update(n => n + 1);
     } else if (code == 'Escape') {
       if (this.fixup.selectingFixupTarget()) {
         this.fixup.cancelFixupSelection();
