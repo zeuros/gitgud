@@ -22,7 +22,9 @@ import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/
 import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
 import {idsToHide} from '../../utils/diff-editor.utils';
 import {buildZeroContextPatch} from './monaco-patch-builder';
-import {isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
+import {AppFileStatusKind, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
+import {ToastService} from '../../services/toast.service';
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import ILineChange = editor.ILineChange;
@@ -30,6 +32,8 @@ import ILineChange = editor.ILineChange;
 @Injectable({providedIn: 'root'})
 export class MonacoDiffRightClickActionsService {
   private workingDir = inject(WorkingDirectoryService);
+  private currentRepo = inject(CurrentRepoStore);
+  private toast = inject(ToastService);
 
   registerEditorRightClick = (diffEditor: IStandaloneDiffEditor) => {
     let currentFile: WorkingDirectoryFileChange | undefined;
@@ -75,6 +79,19 @@ export class MonacoDiffRightClickActionsService {
       if (patch) this.workingDir.discardChangesWithPatch(patch);
     };
 
+    // '/repo/src/file.ts:12', or '/repo/src/file.ts:12-18' for several lines. The original side of a rename refers to the old path
+    const copyReference = (ed: IStandaloneCodeEditor) => {
+      const selection = ed.getSelection();
+      const cwd = this.currentRepo.cwd();
+      if (!currentFile || !selection || !cwd) return;
+      const {status} = currentFile;
+      const renamed = status.kind === AppFileStatusKind.Renamed || status.kind === AppFileStatusKind.Copied;
+      const path = renamed && ed === diffEditor.getOriginalEditor() ? status.oldPath : currentFile.path;
+      const {startLineNumber: start, endLineNumber: end} = selection;
+      const reference = `${window.tauri.path.resolve(cwd, path)}:${start === end ? start : `${start}-${end}`}`;
+      this.copyToClipboard(reference);
+    };
+
     for (const ed of [diffEditor.getOriginalEditor(), diffEditor.getModifiedEditor()]) {
       ed.addAction({id: 'stage-line',     label: 'Stage this line',   contextMenuGroupId: 'modification', contextMenuOrder: 0.5, precondition: 'isWorkingDirFile && !isFileStaged && isSingleLine',  run: stageLines(true)});
       ed.addAction({id: 'stage-lines',    label: 'Stage lines',       contextMenuGroupId: 'modification', contextMenuOrder: 1,   precondition: 'isWorkingDirFile && !isFileStaged && !isSingleLine', run: stageLines(true)});
@@ -82,6 +99,7 @@ export class MonacoDiffRightClickActionsService {
       ed.addAction({id: 'unstage-lines',  label: 'Unstage lines',     contextMenuGroupId: 'modification', contextMenuOrder: 1,   precondition: 'isWorkingDirFile && isFileStaged && !isSingleLine',  run: stageLines(false)});
       ed.addAction({id: 'discard-line',   label: 'Discard this line', contextMenuGroupId: 'modification', contextMenuOrder: 1.5, precondition: 'isWorkingDirFile && !isFileStaged && isSingleLine',  run: discardLine});
       ed.addAction({id: 'discard-lines',  label: 'Discard lines',     contextMenuGroupId: 'modification', contextMenuOrder: 1.5, precondition: 'isWorkingDirFile && !isFileStaged && !isSingleLine', run: discardLine});
+      ed.addAction({id: 'copy-reference', label: 'Copy Reference',    contextMenuGroupId: '9_cutcopypaste', contextMenuOrder: 5, run: copyReference});
       this.removeDefaultContextMenuActions(ed);
     }
 
@@ -93,6 +111,18 @@ export class MonacoDiffRightClickActionsService {
       isStagedOrig.set(file?.staged ?? false);
       isStagedMod.set(file?.staged ?? false);
     };
+  };
+
+  // WebKitGTK refuses navigator.clipboard from Monaco's context menu actions, execCommand still works there
+  private copyToClipboard = (text: string) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.append(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    textarea.remove();
+    if (copied) this.toast.success(`Copied ${text}`);
+    else this.toast.err(`Couldn't copy ${text}`);
   };
 
   private removeDefaultContextMenuActions = (ed: IStandaloneCodeEditor) => {
