@@ -39,7 +39,9 @@ export class AutoFetchService {
   private intervalId?: ReturnType<typeof setInterval>;
 
   constructor() {
+    // Restarted when the repo changes too, so each repo gets a full delay from the moment it is opened
     effect(() => {
+      this.currentRepo.cwd();
       clearInterval(this.intervalId);
       this.intervalId = setInterval(this.autoFetch, this.settings.autoFetchInterval);
     });
