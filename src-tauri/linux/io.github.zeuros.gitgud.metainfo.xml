@@ -52,6 +52,23 @@
   </provides>
 
   <releases>
+    <release version="2.9.0" date="2026-10-16">
+      <description>
+        <p>What's new in GitGud 2.9.0:</p>
+        <ul>
+          <li>Copy relative reference and permalink, open in editor and blame from the context menu</li>
+          <li>Copy a path:line reference from the context menu</li>
+          <li>Redo in text fields with ctrl+shift+z and ctrl+y</li>
+          <li>Ctrl+f focuses the search box and selects its text, even when already open</li>
+          <li>Show the full name of truncated branches, tags, stashes and worktrees on hover</li>
+          <li>Navigate between matches with arrows, Enter and Shift+Enter</li>
+          <li>Ship AppStream metainfo, license and icons in deb/rpm packages</li>
+          <li>Restart the fetch timer when the repo changes</li>
+          <li>Keep Home, End and arrow keys in the new branch name input instead of navigating the log</li>
+          <li>Pull a remote branch into its local branch from the context menu</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.8.0" date="2026-10-13">
       <description>
         <p>What's new in GitGud 2.8.0:</p>
