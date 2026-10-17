@@ -52,6 +52,18 @@
   </provides>
 
   <releases>
+    <release version="2.9.1" date="2026-10-17">
+      <description>
+        <p>What's new in GitGud 2.9.1:</p>
+        <ul>
+          <li>Pull and push say how many commits they move, offer rebase or merge when diverged</li>
+          <li>Group drop menu actions under the branch they update</li>
+          <li>Show how many commits each action moves in the drop menu</li>
+          <li>Sync version and download links on npm version, fix outdated text and screenshots</li>
+          <li>Offer fast-forward when dropping onto a remote branch, hide no-op rebase and push</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.9.0" date="2026-10-16">
       <description>
         <p>What's new in GitGud 2.9.0:</p>

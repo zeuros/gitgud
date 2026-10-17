@@ -1,6 +1,6 @@
 {
   "name": "gitgud",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "description": "Get Gud at Git",
   "homepage": "https://github.com/zeuros/gitgud",
   "author": {
@@ -10,22 +10,17 @@
   "private": true,
   "scripts": {
     "version": "bash scripts/version.sh",
-
     "start": "npm run tauri:dev",
     "ng:serve": "node --max-old-space-size=4096 ./node_modules/@angular/cli/bin/ng serve -c dev --port 4201",
-
     "build:angular": "ng build --base-href ./",
-
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "tauri:build:linux-deb": "tauri build --bundles deb",
     "tauri:build:linux-rpm": "tauri build --bundles rpm",
     "tauri:build:win": "tauri build --bundles nsis",
     "tauri:build:mac": "tauri build --bundles dmg",
-
     "test": "vitest run",
     "test:watch": "vitest",
-
     "e2e:setup": "bash e2e/utils/setup-repo.sh",
     "e2e": "npm run e2e:setup && xvfb-maybe -- wdio run wdio.conf.ts",
     "e2e:debug": "npm run e2e:setup && WDIO_DEBUG=1 wdio run wdio.conf.ts --logLevel debug",
