@@ -48,6 +48,15 @@
   </provides>
 
   <releases>
+    <release version="2.9.2" date="2026-10-17">
+      <description>
+        <p>What's new in GitGud 2.9.2:</p>
+        <ul>
+          <li>Show version over little bonfire</li>
+          <li>Show the background glow on load instead of on the first scroll</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.9.1" date="2026-10-17">
       <description>
         <p>What's new in GitGud 2.9.1:</p>
