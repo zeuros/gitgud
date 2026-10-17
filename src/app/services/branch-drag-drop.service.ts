@@ -22,7 +22,7 @@ import {type MenuItem} from 'primeng/api';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {type LocalAndDistantTagWithName} from '../utils/tag-utils';
 import {parseRemote} from '../utils/branch-utils';
-import {isAncestor} from '../utils/log-utils';
+import {commitCount, countCommitsNotIn, isAncestor} from '../utils/log-utils';
 import {ActiveContextMenuService} from './active-context-menu.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -79,22 +79,22 @@ export class BranchDragDropService {
     // source is strictly behind target / strictly ahead of it; neither means diverged
     const behind = isAncestor(source.tip.sha, target.tip.sha, logs);
     const ahead = isAncestor(target.tip.sha, source.tip.sha, logs);
+    const sourceOnly = commitCount(countCommitsNotIn(source.tip.sha, target.tip.sha, logs));
+    const targetOnly = commitCount(countCommitsNotIn(target.tip.sha, source.tip.sha, logs));
 
     if (isLocalSource) {
       // Rebase and merge are no-ops or plain fast-forwards unless the branches diverged
-      if (behind) items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForward});
-      if (ahead && isLocalTarget) items.push({label: `Fast-forward ${target.name} to ${source.name}`, icon: 'fa fa-forward', command: this.fastForwardTarget});
+      if (behind) items.push({label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForward});
+      if (ahead && isLocalTarget) items.push({label: `Fast-forward ${target.name} to ${source.name} (${sourceOnly})`, icon: 'fa fa-forward', command: this.fastForwardTarget});
       if (!behind && !ahead) {
-        if (isLocalTarget) items.push(warn({label: `Merge ${source.name} into ${target.name}`, icon: 'fa fa-compress', command: this.merge}));
-        else items.push(warn({label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeRemoteIntoLocal}));
-        items.push(warn({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase}));
+        if (isLocalTarget) items.push(warn({label: `Merge ${source.name} into ${target.name} (${sourceOnly})`, icon: 'fa fa-compress', command: this.merge}));
+        else items.push(warn({label: `Merge ${target.name} into ${source.name} (${targetOnly})`, icon: 'fa fa-compress', command: this.mergeRemoteIntoLocal}));
+        items.push(warn({label: `Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-code-fork', command: this.rebase}));
       }
       // Still useful when ahead: reword/squash the commits target doesn't have yet
-      if (!behind) items.push(warn({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
+      if (!behind) items.push(warn({label: `Interactive Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
     } else if (isLocalTarget) {
-      if (isAncestor(source.tip.sha, target.tip.sha, this.currentRepo.logs())) {
-        items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForwardRemote});
-      }
+      if (behind) items.push({label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForwardRemote});
       items.push({label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeLocalIntoRemote});
     }
 
@@ -103,7 +103,7 @@ export class BranchDragDropService {
       const remoteTip = this.currentRepo.branches().find(b => b.name === remoteRef)?.tip.sha;
       if (remoteTip && remoteTip !== source.tip.sha && !isAncestor(source.tip.sha, remoteTip, logs)) {
         items.push({separator: true});
-        items.push({label: `Push ${source.name} to ${remoteRef}`, icon: 'fa fa-cloud-upload', command: this.push});
+        items.push({label: `Push ${source.name} to ${remoteRef} (${commitCount(countCommitsNotIn(source.tip.sha, remoteTip, logs))})`, icon: 'fa fa-cloud-upload', command: this.push});
       }
     }
 
