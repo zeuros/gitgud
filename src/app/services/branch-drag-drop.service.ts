@@ -72,7 +72,9 @@ export class BranchDragDropService {
     const isLocalSource = source.type === BranchType.Local;
     const isLocalTarget = target.type === BranchType.Local;
     const remoteRef = isLocalTarget ? (target.upstream ?? `origin/${target.name}`) : target.name;
-    const items: MenuItem[] = [];
+    // Items grouped by the branch they move, so the menu tells which side changes
+    const groups = new Map<string, MenuItem[]>([[source.name, []]]);
+    const add = (moved: string, item: MenuItem) => groups.set(moved, [...groups.get(moved) ?? [], item]);
     const conflicts = this.conflictPrediction.conflictsBetween(target.tip.sha, source.tip.sha);
     const warn = (item: MenuItem) => withConflictWarning(item, conflicts);
     const logs = this.currentRepo.logs();
@@ -84,30 +86,33 @@ export class BranchDragDropService {
 
     if (isLocalSource) {
       // Rebase and merge are no-ops or plain fast-forwards unless the branches diverged
-      if (behind) items.push({label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForward});
-      if (ahead && isLocalTarget) items.push({label: `Fast-forward ${target.name} to ${source.name} (${sourceOnly})`, icon: 'fa fa-forward', command: this.fastForwardTarget});
+      if (behind) add(source.name, {label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForward});
+      if (ahead && isLocalTarget) add(target.name, {label: `Fast-forward ${target.name} to ${source.name} (${sourceOnly})`, icon: 'fa fa-forward', command: this.fastForwardTarget});
       if (!behind && !ahead) {
-        if (isLocalTarget) items.push(warn({label: `Merge ${source.name} into ${target.name} (${sourceOnly})`, icon: 'fa fa-compress', command: this.merge}));
-        else items.push(warn({label: `Merge ${target.name} into ${source.name} (${targetOnly})`, icon: 'fa fa-compress', command: this.mergeRemoteIntoLocal}));
-        items.push(warn({label: `Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-code-fork', command: this.rebase}));
+        if (isLocalTarget) add(target.name, warn({label: `Merge ${source.name} into ${target.name} (${sourceOnly})`, icon: 'fa fa-compress', command: this.merge}));
+        else add(source.name, warn({label: `Merge ${target.name} into ${source.name} (${targetOnly})`, icon: 'fa fa-compress', command: this.mergeRemoteIntoLocal}));
+        add(source.name, warn({label: `Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-code-fork', command: this.rebase}));
       }
       // Still useful when ahead: reword/squash the commits target doesn't have yet
-      if (!behind) items.push(warn({label: `Interactive Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
+      if (!behind) add(source.name, warn({label: `Interactive Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
     } else if (isLocalTarget) {
-      if (behind) items.push({label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForwardRemote});
-      items.push({label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeLocalIntoRemote});
+      if (behind) add(source.name, {label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForwardRemote});
+      add(source.name, {label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeLocalIntoRemote});
     }
 
     // Pushing a branch that's only behind its upstream has nothing to send
     if (isLocalSource && remoteRef && source.upstream === remoteRef) {
       const remoteTip = this.currentRepo.branches().find(b => b.name === remoteRef)?.tip.sha;
       if (remoteTip && remoteTip !== source.tip.sha && !isAncestor(source.tip.sha, remoteTip, logs)) {
-        items.push({separator: true});
-        items.push({label: `Push ${source.name} to ${remoteRef} (${commitCount(countCommitsNotIn(source.tip.sha, remoteTip, logs))})`, icon: 'fa fa-cloud-upload', command: this.push});
+        add(remoteRef, {label: `Push ${source.name} to ${remoteRef} (${commitCount(countCommitsNotIn(source.tip.sha, remoteTip, logs))})`, icon: 'fa fa-cloud-upload', command: this.push});
       }
     }
 
-    return items;
+    return [...groups].filter(([, items]) => items.length).flatMap(([moved, items], i) => [
+      ...(i ? [{separator: true}] : []),
+      {label: `Updates ${moved}`, disabled: true, styleClass: 'menu-group-header'},
+      ...items,
+    ]);
   });
 
   private tagMenu = computed<MenuItem[]>(() => {
