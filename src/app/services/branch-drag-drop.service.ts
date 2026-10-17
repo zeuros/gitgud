@@ -75,27 +75,33 @@ export class BranchDragDropService {
     const items: MenuItem[] = [];
     const conflicts = this.conflictPrediction.conflictsBetween(target.tip.sha, source.tip.sha);
     const warn = (item: MenuItem) => withConflictWarning(item, conflicts);
+    const logs = this.currentRepo.logs();
+    // source is strictly behind target / strictly ahead of it; neither means diverged
+    const behind = isAncestor(source.tip.sha, target.tip.sha, logs);
+    const ahead = isAncestor(target.tip.sha, source.tip.sha, logs);
 
-    if (isLocalSource && isLocalTarget) {
-      if (isAncestor(source.tip.sha, target.tip.sha, this.currentRepo.logs())) {
-        items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForward});
+    if (isLocalSource) {
+      // Rebase and merge are no-ops or plain fast-forwards unless the branches diverged
+      if (behind) items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForward});
+      if (ahead && isLocalTarget) items.push({label: `Fast-forward ${target.name} to ${source.name}`, icon: 'fa fa-forward', command: this.fastForwardTarget});
+      if (!behind && !ahead) {
+        if (isLocalTarget) items.push(warn({label: `Merge ${source.name} into ${target.name}`, icon: 'fa fa-compress', command: this.merge}));
+        else items.push(warn({label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeRemoteIntoLocal}));
+        items.push(warn({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase}));
       }
-      items.push(warn({label: `Merge ${source.name} into ${target.name}`, icon: 'fa fa-compress', command: this.merge}));
-      items.push(warn({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase}));
-      items.push(warn({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
-    } else if (isLocalSource && !isLocalTarget) {
-      items.push(warn({label: `Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-code-fork', command: this.rebase}));
-      items.push(warn({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
-    } else if (!isLocalSource && isLocalTarget) {
+      // Still useful when ahead: reword/squash the commits target doesn't have yet
+      if (!behind) items.push(warn({label: `Interactive Rebase ${source.name} onto ${target.name}`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
+    } else if (isLocalTarget) {
       if (isAncestor(source.tip.sha, target.tip.sha, this.currentRepo.logs())) {
         items.push({label: `Fast-forward ${source.name} to ${target.name}`, icon: 'fa fa-forward', command: this.fastForwardRemote});
       }
       items.push({label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeLocalIntoRemote});
     }
 
+    // Pushing a branch that's only behind its upstream has nothing to send
     if (isLocalSource && remoteRef && source.upstream === remoteRef) {
       const remoteTip = this.currentRepo.branches().find(b => b.name === remoteRef)?.tip.sha;
-      if (remoteTip && remoteTip !== source.tip.sha) {
+      if (remoteTip && remoteTip !== source.tip.sha && !isAncestor(source.tip.sha, remoteTip, logs)) {
         items.push({separator: true});
         items.push({label: `Push ${source.name} to ${remoteRef}`, icon: 'fa fa-cloud-upload', command: this.push});
       }
@@ -161,10 +167,23 @@ export class BranchDragDropService {
       : target.name;
   };
 
-  private fastForward = () => {
+  private fastForward = () => this.fastForwardRef(this.source()!.name, this.target()!.name);
+
+  private fastForwardTarget = () => this.fastForwardRef(this.target()!.name, this.source()!.name);
+
+  // Moves local branch `branch` up to `to` without checking it out; `fetch .` refuses non-FF updates.
+  // git won't fetch into the checked out branch, so that one is merged with --ff-only instead.
+  private fastForwardRef = (branch: string, to: string) => {
+    const args = this.currentRepo.headBranch()?.name === branch
+      ? ['merge', '--ff-only', to]
+      : ['fetch', '.', `${to}:${branch}`];
+    this.gitWorkflow.doRunAndRefresh(args, `Fast-forwarded ${branch} to ${to}`);
+  };
+
+  private mergeRemoteIntoLocal = () => {
     const {name: src} = this.source()!;
     const {name: tgt} = this.target()!;
-    this.gitWorkflow.checkoutThenRun(src, ['merge', '--ff-only', tgt], `Fast-forwarded ${src} to ${tgt}`);
+    this.gitWorkflow.checkoutThenRun(src, ['merge', tgt], `Merged ${tgt} into ${src}`);
   };
 
   private merge = () => {
