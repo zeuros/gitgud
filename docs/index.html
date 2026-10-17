@@ -958,27 +958,33 @@
       return 'rgba(0,0,0,0)';
     }
 
+    function update() {
+      const vh   = window.innerHeight;
+      const sy   = window.scrollY;
+      const maxY = document.documentElement.scrollHeight - vh;
+
+      // Fade out scene-bg as user scrolls past the first viewport
+      const bgOpacity = Math.max(0, 1 - sy / vh);
+      sceneBg.style.opacity       = bgOpacity;
+      sceneBg.style.transform     = `scale(${1.04 + sy * 0.00008})`;
+      if (vignette) vignette.style.opacity = bgOpacity;
+
+      // Aurora: show only while bg is visible, shifts colour
+      const scrollFrac = maxY > 0 ? sy / maxY : 0;
+      const colour     = interpolateColour(scrollFrac);
+      aurora.style.background = `radial-gradient(ellipse 120% 80% at 50% 40%, ${colour}, transparent 70%)`;
+      aurora.style.opacity    = bgOpacity.toFixed(3);
+    }
+
+    // Paint once on load too, or the glow only shows up on the first scroll
+    update();
+
     let ticking = false;
     window.addEventListener('scroll', () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        const vh   = window.innerHeight;
-        const sy   = window.scrollY;
-        const maxY = document.documentElement.scrollHeight - vh;
-
-        // Fade out scene-bg as user scrolls past the first viewport
-        const bgOpacity = Math.max(0, 1 - sy / vh);
-        sceneBg.style.opacity       = bgOpacity;
-        sceneBg.style.transform     = `scale(${1.04 + sy * 0.00008})`;
-        if (vignette) vignette.style.opacity = bgOpacity;
-
-        // Aurora: show only while bg is visible, shifts colour
-        const scrollFrac = maxY > 0 ? sy / maxY : 0;
-        const colour     = interpolateColour(scrollFrac);
-        aurora.style.background = `radial-gradient(ellipse 120% 80% at 50% 40%, ${colour}, transparent 70%)`;
-        aurora.style.opacity    = bgOpacity.toFixed(3);
-
+        update();
         ticking = false;
       });
     }, { passive: true });
