@@ -39,6 +39,26 @@ export const isAncestor = (ancestorSha: string, descendantSha: string, logs: Com
   return false;
 };
 
+/** Number of commits reachable from `sha` but not from `exceptSha` (like `git rev-list --count exceptSha..sha`), within the loaded logs. */
+export const countCommitsNotIn = (sha: string, exceptSha: string, logs: Commit[]): number => {
+  const parentMap = new Map(logs.map(c => [c.sha, c.parentSHAs]));
+  const reachable = (from: string) => {
+    const visited = new Set<string>();
+    const queue = [from];
+    while (queue.length) {
+      const s = queue.shift()!;
+      if (visited.has(s) || !parentMap.has(s)) continue;
+      visited.add(s);
+      queue.push(...parentMap.get(s)!);
+    }
+    return visited;
+  };
+  const excluded = reachable(exceptSha);
+  return [...reachable(sha)].filter(s => !excluded.has(s)).length;
+};
+
+export const commitCount = (n: number) => n === 1 ? '1 commit' : `${n} commits`;
+
 export const bySha = (sha: string) => (c: DisplayRef) => c.sha === sha;
 
 export const createIndexCommit = (parentCommit: DisplayRef) => ({
