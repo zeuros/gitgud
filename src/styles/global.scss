@@ -140,6 +140,18 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
 }
 
 // Merge / rebase predicted to conflict
+.menu-group-header {
+  .p-contextmenu-item-content {
+    cursor: default;
+  }
+
+  .p-contextmenu-item-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
 .conflict-menuitem {
   .p-contextmenu-item-label,
   .p-contextmenu-item-icon {
