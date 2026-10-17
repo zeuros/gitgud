@@ -31,6 +31,7 @@ import {EditRemoteComponent} from '../components/dialogs/edit-remote/edit-remote
 import {openSetUpstreamDialog} from '../components/dialogs/set-upstream-dialog/set-upstream-dialog.component';
 import {CreateBranchService} from './create-branch.service';
 import {parseRemote} from '../utils/branch-utils';
+import {commitCount} from '../utils/log-utils';
 import {BranchService} from './branch.service';
 import {CreateTagService} from './create-tag.service';
 import {BranchAheadBehindService} from './branch-ahead-behind.service';
@@ -94,8 +95,7 @@ export class BranchContextMenuService {
     const warn = (item: MenuItem) => withConflictWarning(item, this.conflictPrediction.conflictsBetween(this.currentRepo.headSha(), node.data?.tip.sha));
     return [
       // Remote
-      {label: 'Pull (fast-forward if possible)', icon: 'fa fa-cloud-download', command: this.pullBranch},
-      {label: 'Push', icon: 'fa fa-cloud-upload', command: this.pushBranch},
+      ...this.remoteItems(node.data),
       {label: 'Set Upstream', icon: 'fa fa-link', command: this.setUpstream},
       {separator: true},
       // Integration
@@ -143,20 +143,49 @@ export class BranchContextMenuService {
     ];
   });
 
+  // The local branch and its upstream, whichever of the two is given
+  private trackingPair = (branch: Branch) => {
+    const upstream = branch.type === BranchType.Remote ? branch.name : branch.upstream ?? `origin/${branch.name}`;
+    const {remote, branch: remoteBranch} = parseRemote(upstream);
+    const localName = branch.type === BranchType.Local
+      ? branch.name
+      : this.currentRepo.branches().find(b => b.type === BranchType.Local && b.upstream === upstream)?.name ?? remoteBranch;
+    return {upstream, remote, remoteBranch, localName};
+  };
+
+  // Pull / Push items saying how many commits they move, disabled when there's nothing to move.
+  // Without a tracked upstream the counts are unknown, so the items stay generic.
+  private remoteItems = (branch: Branch | undefined): MenuItem[] => {
+    const pull: MenuItem = {label: 'Pull (fast-forward if possible)', icon: 'fa fa-cloud-download', command: this.pullBranch};
+    const push: MenuItem = {label: 'Push', icon: 'fa fa-cloud-upload', command: this.pushBranch};
+    const {upstream, localName} = branch ? this.trackingPair(branch) : {upstream: '', localName: ''};
+    const ab = this.aheadBehind.aheadBehindMap()[localName];
+    if (!ab) return [pull, push];
+
+    const pushItem = {...push, label: ab.ahead ? `Push ${commitCount(ab.ahead)} to ${upstream}` : `Push (${upstream} up to date)`, disabled: !ab.ahead};
+    if (!ab.behind) return [{...pull, label: `Pull (${localName} up to date)`, disabled: true}, pushItem];
+    if (!ab.ahead) return [{...pull, label: `Pull ${commitCount(ab.behind)} from ${upstream}`}, pushItem];
+
+    // Diverged: a fast-forward is impossible, offer the two ways to integrate instead
+    return [{
+      label: `Pull ${commitCount(ab.behind)} from ${upstream} (diverged)`,
+      icon: 'fa fa-cloud-download',
+      items: [
+        {label: `Rebase ${commitCount(ab.ahead)} of ${localName} onto ${upstream}`, icon: 'fa fa-code-fork', command: () => this.gitWorkflow.rebaseBranchOnto(localName, upstream, `Rebased ${localName} onto ${upstream}`)},
+        {label: `Merge ${upstream} into ${localName}`, icon: 'fa fa-compress', command: () => this.gitWorkflow.checkoutThenRun(localName, ['merge', upstream], `Merged ${upstream} into ${localName}`)},
+      ],
+    }, pushItem];
+  };
+
   // Fast-forwards the local branch to its remote, whichever of the two was right-clicked
   private pullBranch = () => {
     const branch = this.selectedNode()?.data;
     if (!branch) return;
 
-    const branches = this.currentRepo.branches();
-    const upstream = branch.type === BranchType.Remote ? branch.name : branch.upstream ?? `origin/${branch.name}`;
-    const {remote, branch: remoteBranch} = parseRemote(upstream);
-    const localName = branch.type === BranchType.Local
-      ? branch.name
-      : branches.find(b => b.type === BranchType.Local && b.upstream === upstream)?.name ?? remoteBranch;
+    const {upstream, remote, remoteBranch, localName} = this.trackingPair(branch);
 
     // git refuses to fetch into the checked out branch, pull it instead
-    if (branches.some(b => b.isHeadPointed && b.name === localName))
+    if (this.currentRepo.branches().some(b => b.isHeadPointed && b.name === localName))
       this.gitWorkflow.doRunAndRefresh(['pull', '--ff-only', remote, remoteBranch], `Pulled ${upstream} into ${localName}`);
     else
       this.gitWorkflow.doRunAndRefresh(['fetch', remote, `${remoteBranch}:${localName}`], `Pulled ${upstream} into ${localName}`);
