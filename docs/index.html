@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GitGud — A fast, native Git GUI</title>
-  <meta name="description" content="GitGud is a fast, native Git GUI client built with Electron and Angular. Branch graphs, diff viewer, interactive rebase, and more." />
+  <meta name="description" content="GitGud is a fast, native Git GUI client built with Tauri and Rust. Branch graph, Monaco diffs, interactive rebase, undo, worktrees and more." />
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/zeuros/gitgud/main/build/icons/32x32.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -682,13 +682,13 @@
   <div class="hero-text">
     <div class="hero-badge">
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.5"/><circle cx="5" cy="5" r="1.5" fill="currentColor"/></svg>
-      v2.4.1 · Free &amp; open source
+      v2.9.0 · Free &amp; open source
     </div>
 
     <h1>Get Gud<br/><em>at Git.</em></h1>
 
     <p class="hero-sub">
-      A fast, native Git GUI for developers who care about their workflow. Built with Electron.
+      A fast, native Git GUI for developers who care about their workflow. Built with Tauri and Rust.
     </p>
 
     <div class="hero-cta">
@@ -756,7 +756,7 @@
 <!-- ── Features ─────────────────────────────────────────────────────── -->
 <section id="features">
   <p class="section-label">Features</p>
-  <h2>Built for how developers</h2>
+  <h2>Built for how developers work.</h2>
   <p class="section-sub">No subscription, no telemetry, no fluff. Just a solid Git GUI that covers your daily workflow.</p>
 
   <div class="features-grid">
@@ -783,12 +783,12 @@
     <div class="feature-card">
       <div class="feature-icon fi-blue">✨</div>
       <h3>Clean history</h3>
-      <p>Fixup and squash commits with one click. Reword messages, reorder, drop — keep your history clean before it hits the remote.</p>
+      <p>Fixup a commit in one click, reword, reorder, squash or drop in the interactive rebase, and undo any git action — keep your history clean before it hits the remote.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon fi-pink">🏷️</div>
       <h3>Tags, remotes &amp; more</h3>
-      <p>Push, pull, fetch, create and delete branches, manage remote refs, and tag releases — everything in one place.</p>
+      <p>Push, pull and fetch, drag a branch onto another to merge or rebase, worktrees, tags, and several repositories open in tabs.</p>
     </div>
   </div>
 </section>
@@ -800,7 +800,7 @@
   <div class="split-text">
     <p class="section-label">Branch graph</p>
     <h2>Your history,<br/>at a glance.</h2>
-    <p class="section-sub">Multi-lane branch visualization with color-coded lanes, author avatars, and instant filtering.</p>
+    <p class="section-sub">Multi-lane branch graph with author avatars, branch and tag labels, and search by message or branch.</p>
   </div>
   <div class="log-wrap">
     <img src="img/log.png" alt="GitGud branch graph view" loading="lazy" />
@@ -828,10 +828,10 @@
         </div>
       </div>
       <ul class="dl-list">
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-amd64.deb" download>.deb <span class="dl-badge">Ubuntu / Debian</span></a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-x86_64.rpm" download>.rpm <span class="dl-badge">Fedora / RHEL</span></a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-x86_64.AppImage" download>.AppImage</a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/GitGud-2.4.1-Linux-x64.flatpak" download>.flatpak</a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud_2.9.0_amd64.deb" download>.deb <span class="dl-badge">Ubuntu / Debian</span></a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud-2.9.0-1.x86_64.rpm" download>.rpm <span class="dl-badge">Fedora / RHEL</span></a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud_2.9.0_amd64.AppImage" download>.AppImage</a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud-2.9.0-Linux-x64.flatpak" download>.flatpak</a></li>
       </ul>
     </div>
 
@@ -845,9 +845,9 @@
         </div>
       </div>
       <ul class="dl-list">
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-arm64.deb" download>.deb</a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-aarch64.rpm" download>.rpm</a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Linux-arm64.AppImage" download>.AppImage</a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud_2.9.0_arm64.deb" download>.deb</a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud-2.9.0-1.aarch64.rpm" download>.rpm</a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud_2.9.0_aarch64.AppImage" download>.AppImage</a></li>
       </ul>
     </div>
 
@@ -861,8 +861,8 @@
         </div>
       </div>
       <ul class="dl-list">
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Mac-arm64.dmg" download>.dmg  <span class="dl-badge">Apple Silicon</span></a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-2.4.1-Mac-x64.dmg" download>.dmg  <span class="dl-badge">Intel</span></a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud_2.9.0_aarch64.dmg" download>.dmg  <span class="dl-badge">Apple Silicon</span></a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud_2.9.0_x64.dmg" download>.dmg  <span class="dl-badge">Intel</span></a></li>
       </ul>
     </div>
 
@@ -872,11 +872,12 @@
         <div class="platform-icon">🪟</div>
         <div>
           <div class="platform-name">Windows</div>
-          <div class="platform-arch">x64</div>
+          <div class="platform-arch">x64 &amp; arm64</div>
         </div>
       </div>
       <ul class="dl-list">
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.4.1/gitgud-Setup-2.4.1.exe" download>.exe installer</a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud_2.9.0_x64-setup.exe" download>.exe installer <span class="dl-badge">x64</span></a></li>
+        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.9.0/GitGud_2.9.0_arm64-setup.exe" download>.exe installer <span class="dl-badge">arm64</span></a></li>
       </ul>
     </div>
 
