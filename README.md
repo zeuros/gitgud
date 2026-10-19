@@ -10,11 +10,15 @@
 
 > **Get gud at git.**
 
-A cross-platform Git GUI that doesn't get in your way.
+Every boss fight in git, made beatable. Rebase without fear, undo without shame: a native Git GUI for Linux, Windows and macOS, built with Tauri and Rust.
+
+[<img src="src/assets/images/bonfire.webp" height="20" alt=""> Visit the bonfire](https://git-gud.mooo.com/)
 
 https://github.com/user-attachments/assets/7c56dde9-3404-4b9a-a6d0-fe188927c0f4
 
-## Download
+## Loot
+
+Every platform, no account, no price. Just git gud.
 
 | Platform | Package | Architecture |
 |----------|---------|--------------|
@@ -22,19 +26,22 @@ https://github.com/user-attachments/assets/7c56dde9-3404-4b9a-a6d0-fe188927c0f4
 | 🪟 Windows | [installer](https://github.com/zeuros/gitgud/releases/latest) · [portable](https://github.com/zeuros/gitgud/releases/latest) | x64 · ARM64 |
 | 🍎 macOS | [.dmg (Apple Silicon)](https://github.com/zeuros/gitgud/releases/latest) · [.dmg (Intel)](https://github.com/zeuros/gitgud/releases/latest) | M1–M4 · x64 |
 
-## Features
+## Spells & miracles
 
-- 🌿 **Visual commit graph** — branches, merges, stashes and tags at a glance
-- 🔍 **Monaco diff editor** — the same editor as VS Code, with hunk-level staging by right-click
-- 🏷️ **Full tag support** — create, annotate, push and delete tags
-- 📦 **Stash management** — apply, pop or drop stashes from the sidebar
-- ⌨️ **Keyboard friendly** — search commits, navigate fast
+Every spell a git user needs. No mana cost, no subscription, no telemetry.
+
+- 🌿 **Branch map** — branches, merges, stashes and tags at a glance, with author avatars and search
+- ⚡ **Truth seeker** — the Monaco diff editor from VS Code: split, inline and image diffs
+- 🎯 **Hunk parry** — stage, unstage or discard a hunk, a line or a selection by right-click
+- 🔄 **Rebase & stash** — interactive rebase, drag a branch onto another to merge, rebase or fast-forward, conflict prediction and a three-way merge editor
+- ✨ **Second chance** — undo and redo any git action, fixup, reword, reorder or drop commits
+- 🎒 **Inventory** — push, pull and fetch, tags, worktrees, and several repositories open in tabs
 
 ---
 
 ## Next steps
 
-- Find edge cases, list bugs, make it more reliable / practical
+- Find edge cases, list bugs, make it more reliable / practical. Found one? [Leave a message](https://github.com/zeuros/gitgud/issues).
 
 ---
 
