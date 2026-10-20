@@ -18,18 +18,20 @@
 
 import '@mismerge/core/web';
 
-import {ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, HostListener, inject, signal, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, HostListener, inject, signal, viewChild, type WritableSignal} from '@angular/core';
+import {NgTemplateOutlet} from '@angular/common';
 import {Button} from 'primeng/button';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
-import {catchError, combineLatest, finalize, of} from 'rxjs';
+import {catchError, combineLatest, finalize, firstValueFrom, of, switchMap} from 'rxjs';
 import {fileName} from '../../utils/utils';
 import {detectLang} from '../../utils/language-detection';
 import {createHighlighter, type Highlighter} from 'shiki';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {ThemeService} from '../../services/theme.service';
 import {short} from '../../utils/commit-utils';
+import {isBinaryContent} from '../monaco-editor-view/monaco-utils';
 
 const GitGudDarkColors = {
   added:            'rgba(155, 185, 85,  0.20)',
@@ -53,18 +55,28 @@ const GitGudLightColors = {
 
 type HighlightFn = (text: string) => string | Promise<string>;
 
+// One column of the editor: where its version comes from
+type ConflictSide = {
+  name: string;
+  role: string;
+  ref?: string; // Commit the version comes from, shown as sha + summary
+};
+
+// left is git's stage 2 (HEAD, `--ours`), right is stage 3 (`--theirs`), whatever the operation
 type ConflictCtx = {
   operation: 'merge' | 'rebase' | 'cherry-pick' | 'stash' | 'unknown';
-  oursLabel: string;
-  theirsLabel: string;
+  left: ConflictSide;
+  right: ConflictSide;
 };
+
+const UNKNOWN_CTX: ConflictCtx = {operation: 'unknown', left: {name: 'Ours', role: 'HEAD'}, right: {name: 'Theirs', role: 'incoming'}};
 
 @Component({
   selector: 'gitgud-merge-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [Button],
+  imports: [Button, NgTemplateOutlet],
   templateUrl: './merge-editor.component.html',
   styleUrl: './merge-editor.component.scss',
 })
@@ -85,8 +97,14 @@ export class MergeEditorComponent {
   protected ctr = signal('');
   protected rhs = signal('');
   protected saving = signal(false);
+  protected columns = ['left', 'right'] as const;
+  // Binary files can't be merged line by line, one side is kept whole
+  protected binary = signal(false);
   protected highlightFn = signal<HighlightFn | undefined>(undefined);
-  protected conflictCtx = signal<ConflictCtx>({operation: 'unknown', oursLabel: 'Ours', theirsLabel: 'Theirs'});
+  protected conflictCtx = signal<ConflictCtx>(UNKNOWN_CTX);
+  // "sha summary" of the commit each column comes from
+  protected leftCommit = signal('');
+  protected rightCommit = signal('');
 
   protected file = computed(() => this.fileDiffPanel.conflictedFile());
 
@@ -102,10 +120,18 @@ export class MergeEditorComponent {
       const ours$ = this.gitApi.git(['show', `:2:${path}`]).pipe(catchError(() => of('')));
       const theirs$ = this.gitApi.git(['show', `:3:${path}`]).pipe(catchError(() => of('')));
 
-      this.detectConflictContext().then(ctx => this.conflictCtx.set(ctx));
-      this.refineMergeLabel();
+      this.detectConflictContext().then(ctx => {
+        this.conflictCtx.set(ctx);
+        this.describeCommit(ctx.left.ref, this.leftCommit);
+        this.describeCommit(ctx.right.ref, this.rightCommit);
+      });
 
+      this.binary.set(false);
       const sub = combineLatest([ours$, base$, theirs$]).subscribe(([ours, base, theirs]) => {
+        if ([ours, base, theirs].some(isBinaryContent)) {
+          this.binary.set(true);
+          return;
+        }
         this.lhs.set(ours);
         this.ctr.set(base);
         this.rhs.set(theirs);
@@ -150,16 +176,31 @@ export class MergeEditorComponent {
     );
   }
 
-  protected async acceptAll(side: 'ours' | 'theirs'): Promise<void> {
+  // Keeps one column's version whole: left is git's --ours (stage 2), right its --theirs (stage 3)
+  protected keepSide(column: 'left' | 'right') {
+    const file = this.file();
+    if (!file) return;
+    this.saving.set(true);
+
+    this.gitApi.gitAction(['checkout', column === 'left' ? '--ours' : '--theirs', '--', file.path])
+      .pipe(
+        switchMap(() => this.gitApi.gitAction(['add', '--', file.path])),
+        finalize(() => {
+          this.saving.set(false);
+          this.fileDiffPanel.closeViews();
+          this.gitRefresh.doUpdateWorkingDirChanges();
+        }),
+      )
+      .subscribe();
+  }
+
+  protected async acceptAll(column: 'left' | 'right'): Promise<void> {
     const mismerge = this.mergeEl()?.nativeElement;
     if (!mismerge) return;
-    // During rebase: lhs (:2:) = upstream (theirs), rhs (:3:) = our patch (ours)
-    const isRebase = this.conflictCtx().operation === 'rebase';
-    const physicalSide = side === 'ours'
-      ? (isRebase ? 'left' : 'right')
-      : (isRebase ? 'right' : 'left');
+    // mismerge puts the lhs merge buttons in its "right" side panel and the rhs ones in its "left" one
+    const panel = column === 'left' ? 'right' : 'left';
 
-    const buttons = Array.from(mismerge.querySelectorAll<HTMLElement>(`.msm__side-panel.msm__${physicalSide} button`));
+    const buttons = Array.from(mismerge.querySelectorAll<HTMLElement>(`.msm__side-panel.msm__${panel} button`));
     for (let i = buttons.length - 1; i >= 0; i--) {
       buttons[i].click();
       await new Promise<void>(r => setTimeout(r)); // Waits for mismerge macrotask to update
@@ -168,53 +209,59 @@ export class MergeEditorComponent {
 
   private async detectConflictContext(): Promise<ConflictCtx> {
     const cwd = this.currentRepo.cwd();
-    if (!cwd) return {operation: 'unknown', oursLabel: 'Ours', theirsLabel: 'Theirs'};
+    if (!cwd) return UNKNOWN_CTX;
 
     const git = `${cwd}/.git`;
     const read = async (p: string) => { try { return (await window.tauri.fs.readFile(p)).trim(); } catch { return ''; } };
     const exists = (p: string) => window.tauri.fs.exists(p);
+    const head = this.currentRepo.headBranch()?.name ?? 'HEAD';
 
+    // Rebase replays our commits on top of the upstream: HEAD (left) is the upstream, the commit being replayed is on the right
     if (this.currentRepo.isRebasing()) {
-      const branch = (await read(`${git}/rebase-merge/head-name`)).replace('refs/heads/', '') || 'our branch';
-      const onto = (await read(`${git}/rebase-merge/onto`)).slice(0, 7) || 'upstream';
-      return {operation: 'rebase', oursLabel: `${branch} (ours)`, theirsLabel: `onto ${onto}`};
+      const branch = (await read(`${git}/rebase-merge/head-name`)).replace('refs/heads/', '') || 'your branch';
+      const onto = short(await read(`${git}/rebase-merge/onto`)) || 'upstream';
+      return {
+        operation: 'rebase',
+        left: {name: `Upstream (onto ${onto})`, role: 'rebased onto, with the commits already replayed', ref: 'HEAD'},
+        right: {name: `${branch}`, role: 'your commit being replayed', ref: 'REBASE_HEAD'},
+      };
     }
 
     if (await exists(`${git}/CHERRY_PICK_HEAD`)) {
-      const sha = (await read(`${git}/CHERRY_PICK_HEAD`)).slice(0, 7);
-      return {operation: 'cherry-pick', oursLabel: 'HEAD (ours)', theirsLabel: `cherry-pick ${sha}`};
+      const sha = short(await read(`${git}/CHERRY_PICK_HEAD`));
+      return {
+        operation: 'cherry-pick',
+        left: {name: head, role: 'current branch', ref: 'HEAD'},
+        right: {name: `Cherry-picked ${sha}`, role: 'commit being picked', ref: 'CHERRY_PICK_HEAD'},
+      };
     }
 
     if (await exists(`${git}/MERGE_HEAD`)) {
       const mergeHead = await read(`${git}/MERGE_HEAD`);
       const stashRef = await read(`${git}/refs/stash`);
       if (stashRef && mergeHead === stashRef) {
-        return {operation: 'stash', oursLabel: 'HEAD (ours)', theirsLabel: 'stash'};
+        return {operation: 'stash', left: {name: head, role: 'current branch', ref: 'HEAD'}, right: {name: 'Stash', role: 'stashed changes', ref: 'MERGE_HEAD'}};
       }
-      return {operation: 'merge', oursLabel: 'HEAD (ours)', theirsLabel: `merging ${short(mergeHead)}`};
+      return {
+        operation: 'merge',
+        left: {name: head, role: 'current branch', ref: 'HEAD'},
+        right: {name: await this.mergedName(mergeHead), role: 'branch being merged in', ref: 'MERGE_HEAD'},
+      };
     }
 
-    return {operation: 'unknown', oursLabel: 'Ours', theirsLabel: 'Theirs'};
+    return UNKNOWN_CTX;
   }
 
-  private async refineMergeLabel(): Promise<void> {
-    const cwd = this.currentRepo.cwd();
-    if (!cwd) return;
-    const git = `${cwd}/.git`;
-    const read = async (p: string) => { try { return (await window.tauri.fs.readFile(p)).trim(); } catch { return ''; } };
-    const exists = (p: string) => window.tauri.fs.exists(p);
+  // Branch name of the merged commit when it has one, its sha otherwise
+  private mergedName = (mergeHead: string) =>
+    firstValueFrom(this.gitApi.git(['name-rev', '--name-only', mergeHead]).pipe(catchError(() => of(''))))
+      .then(name => name.trim().replace(/[~^]\d*$/g, ''))
+      .then(name => name && !name.includes('undefined') ? name : short(mergeHead));
 
-    if (!(await exists(`${git}/MERGE_HEAD`)) || this.currentRepo.isRebasing() || await exists(`${git}/CHERRY_PICK_HEAD`)) return;
-    const mergeHead = await read(`${git}/MERGE_HEAD`);
-    const stashRef = await read(`${git}/refs/stash`);
-    if (stashRef && mergeHead === stashRef) return;
-
-    this.gitApi.git(['name-rev', '--name-only', mergeHead]).subscribe(name => {
-      const clean = name?.trim().replace(/[~^]\d*$/g, '');
-      if (clean && !clean.includes('undefined')) {
-        this.conflictCtx.update(ctx => ({...ctx, theirsLabel: `merging ${clean}`}));
-      }
-    });
+  private describeCommit(ref: string | undefined, target: WritableSignal<string>) {
+    target.set('');
+    if (!ref) return;
+    this.gitApi.git(['log', '-1', '--format=%h %s', ref]).pipe(catchError(() => of(''))).subscribe(line => target.set(line.trim()));
   }
 
   private async initHighlight(path: string) {

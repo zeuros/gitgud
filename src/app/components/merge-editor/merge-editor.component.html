@@ -6,45 +6,71 @@
                 Resolve conflict: {{ fileName(f.path) }}
             </span>
             @if (conflictCtx().operation !== 'unknown') {
-                <span class="operation-badge op-{{ conflictCtx().operation }}"
-                      [title]="conflictCtx().operation === 'rebase' ? 'Rebase: Ours/Theirs are swapped at the git index level vs a regular merge' : ''">
-                    {{ conflictCtx().operation }}
-                    @if (conflictCtx().operation === 'rebase') {<i class="fa fa-exclamation-triangle ml-1"></i>}
-                </span>
+                <span class="operation-badge op-{{ conflictCtx().operation }}">{{ conflictCtx().operation }}</span>
             }
             <div class="editor-actions">
-                <p-button
-                        label="Save & Mark Resolved"
-                        styleClass="p-button-sm p-button-primary"
-                        icon="fa fa-check"
-                        [loading]="saving()"
-                        (click)="saveAndMarkResolved()"/>
+                @if (!binary()) {
+                    <p-button
+                            label="Save & Mark Resolved"
+                            styleClass="p-button-sm p-button-primary"
+                            icon="fa fa-check"
+                            [loading]="saving()"
+                            (click)="saveAndMarkResolved()"/>
+                }
                 <p-button
                         styleClass="p-button-sm p-button-text p-button-secondary"
                         icon="fa fa-times"
                         (click)="close()"/>
             </div>
         </div>
-        <div class="merge-editor-labels">
-            <span class="side-label">
-                <button class="accept-all-btn" (click)="acceptAll('ours')" title="Accept all ours">↑ Accept All</button>
-                {{ conflictCtx().oursLabel }}
+        <ng-template #sideInfo let-side let-commit="commit">
+            <span class="side-info">
+                <span class="side-name">{{ side.name }}</span>
+                <span class="side-role">{{ side.role }}</span>
+                @if (commit) {
+                    <span class="side-commit" [title]="commit">{{ commit }}</span>
+                }
             </span>
-            <span>Base (common ancestor)</span>
-            <span class="side-label">
-                {{ conflictCtx().theirsLabel }}
-                <button class="accept-all-btn" (click)="acceptAll('theirs')" title="Accept all theirs">↑ Accept All</button>
-            </span>
-        </div>
-        <mis-merge3
-                #mergeEl
-                class="merge-component"
-                [lhs]="lhs()"
-                [ctr]="ctr()"
-                [rhs]="rhs()"
-                [colors]="gitgudColors()"
-                [highlight]="highlightFn()"
-                [wrapLines]="false"
-        ></mis-merge3>
+        </ng-template>
+        @if (binary()) {
+            <div class="binary-conflict">
+                <span>Binary file: it can't be merged line by line, keep one version whole.</span>
+                <div class="flex gap-4">
+                    @for (column of columns; track column) {
+                        <div class="flex flex-column align-items-center gap-2">
+                            <ng-container *ngTemplateOutlet="sideInfo; context: {$implicit: conflictCtx()[column], commit: column === 'left' ? leftCommit() : rightCommit()}"/>
+                            <p-button [label]="'Keep ' + conflictCtx()[column].name" icon="fa fa-check" [loading]="saving()" (click)="keepSide(column)"/>
+                        </div>
+                    }
+                </div>
+            </div>
+        } @else {
+            <div class="merge-editor-labels">
+                <span class="side-label">
+                    <button class="accept-all-btn" (click)="acceptAll('left')" title="Accept all changes from this side">↑ Accept All</button>
+                    <ng-container *ngTemplateOutlet="sideInfo; context: {$implicit: conflictCtx().left, commit: leftCommit()}"/>
+                </span>
+                <span class="side-label">
+                    <span class="side-info">
+                        <span class="side-name">Base</span>
+                        <span class="side-role">common ancestor, the result goes here</span>
+                    </span>
+                </span>
+                <span class="side-label">
+                    <ng-container *ngTemplateOutlet="sideInfo; context: {$implicit: conflictCtx().right, commit: rightCommit()}"/>
+                    <button class="accept-all-btn" (click)="acceptAll('right')" title="Accept all changes from this side">↑ Accept All</button>
+                </span>
+            </div>
+            <mis-merge3
+                    #mergeEl
+                    class="merge-component"
+                    [lhs]="lhs()"
+                    [ctr]="ctr()"
+                    [rhs]="rhs()"
+                    [colors]="gitgudColors()"
+                    [highlight]="highlightFn()"
+                    [wrapLines]="false"
+            ></mis-merge3>
+        }
     </div>
 }

@@ -34,13 +34,23 @@
   }
 }
 
+.binary-conflict {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--hmmmmmmGray);
+}
+
 .merge-editor-labels {
   display: flex;
   flex-shrink: 0;
   padding: 0.2rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 
-  span {
+  > span {
     flex: 1;
     display: flex;
     align-items: center;
@@ -51,6 +61,33 @@
     color: var(--hmmmmmmGray);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+}
+
+.side-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  text-transform: none;
+  letter-spacing: 0;
+
+  .side-name {
+    color: var(--p-text-color);
+    font-weight: 600;
+  }
+
+  .side-role {
+    font-size: 0.7rem;
+  }
+
+  .side-commit {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
