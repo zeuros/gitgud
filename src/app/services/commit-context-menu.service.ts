@@ -27,6 +27,8 @@ import {CreateBranchService} from './create-branch.service';
 import {CreateTagService} from './create-tag.service';
 import {InteractiveRebaseService} from './interactive-rebase.service';
 import {isAncestor} from '../utils/log-utils';
+import {squashableChain} from '../utils/rebase.utils';
+import {SquashService} from './squash.service';
 
 @Injectable({
   providedIn: 'root',
@@ -39,6 +41,7 @@ export class CommitContextMenuService {
   private createBranch = inject(CreateBranchService);
   private createTag = inject(CreateTagService);
   private interactiveRebase = inject(InteractiveRebaseService);
+  private squashService = inject(SquashService);
 
   selectedCommit = signal<DisplayRef | undefined>(undefined);
   private sha = computed(() => this.selectedCommit()!.sha);
@@ -49,9 +52,18 @@ export class CommitContextMenuService {
     return this.currentRepo.logs().filter(c => !stashes.includes(c.sha)).find(c => c.parentSHAs[0] === selectedSha)?.sha;
   });
 
-  private isOnHeadHistory = computed(() => {
-    const headSha = this.currentRepo.headSha();
-    return !!headSha && (headSha == this.sha() || isAncestor(this.sha(), headSha, this.currentRepo.logs()));
+  private isOnHeadHistory = computed(() => this.onHeadHistory(this.sha()));
+
+  // Right-clicking inside a multi-selection squashes the selection, otherwise the commit into its parent
+  private squashesSelection = computed(() => {
+    const selection = this.currentRepo.selectedCommitsShas() ?? [];
+    return selection.length > 1 && selection.includes(this.sha());
+  });
+
+  private squashChain = computed(() => {
+    const shas = this.squashesSelection() ? this.currentRepo.selectedCommitsShas()! : [this.sha(), this.parentSha()];
+    const chain = squashableChain(shas.filter(Boolean), this.currentRepo.logs());
+    return chain && this.onHeadHistory(chain[0].sha) ? chain : undefined;
   });
 
   commitContextMenu = computed<MenuItem[]>(() => [
@@ -91,6 +103,12 @@ export class CommitContextMenuService {
     {label: 'Revert commit', icon: 'fa fa-undo', command: this.revertCommit},
     {separator: true},
     {label: 'Interactive rebase from this commit', icon: 'fa fa-list-ol', command: () => this.interactiveRebase.open(this.parentSha(), this.parentSha() && short(this.parentSha())), visible: this.isOnHeadHistory()},
+    {
+      label: this.squashesSelection() ? `Squash ${this.squashChain()?.length} commits` : 'Squash into previous commit',
+      icon: 'fa fa-compress',
+      command: () => this.squashService.squash(this.squashChain()!),
+      visible: !!this.squashChain(),
+    },
     {label: 'Drop commit', icon: 'fa fa-trash', command: this.dropCommit},
     {label: 'Move commit up', icon: 'fa fa-arrow-up', command: () => this.moveCommit('up'), visible: !!this.childCommitSha()},
     {label: 'Move commit down', icon: 'fa fa-arrow-down', command: () => this.moveCommit('down'), visible: !!this.parentSha()},
@@ -146,6 +164,11 @@ export class CommitContextMenuService {
 
     return actions;
   }
+
+  private onHeadHistory = (sha: string) => {
+    const headSha = this.currentRepo.headSha();
+    return !!headSha && (headSha == sha || isAncestor(sha, headSha, this.currentRepo.logs()));
+  };
 
   private copyCommitSha = () => navigator.clipboard.writeText(this.sha()).then(() => this.toast.success('SHA copied to clipboard'));
 

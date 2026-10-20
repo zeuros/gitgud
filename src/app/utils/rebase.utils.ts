@@ -17,18 +17,66 @@
  */
 
 import {short} from './commit-utils';
+import {type Commit} from '../lib/github-desktop/model/commit';
+
+const MESSAGE_FILE = '.git/COMMIT_EDIT_MSG';
+
+// Writes `message` to a file (fire-and-forget; git waits for the .done signal, not this file), returns the rebase line amending the current commit with it
+const amendWithMessage = (cwd: string, message: string) => {
+  window.tauri.fs.writeFile(`${cwd}/${MESSAGE_FILE}`, message).catch(console.error);
+  return `exec git commit --amend -F ${MESSAGE_FILE} && rm ${MESSAGE_FILE}`;
+};
 
 // Rework git rebase actions to edit a specified commit summary and description (newMessage)
 export const rewordCommitAction = (cwd: string, selectedCommitSha: string, newMessage: string) => {
-    const msgFile = '.git/COMMIT_EDIT_MSG';
-
-    // Write message file (fire-and-forget; git waits for the .done signal, not this file)
-    window.tauri.fs.writeFile(`${cwd}/${msgFile}`, newMessage).catch(console.error);
+    const amend = amendWithMessage(cwd, newMessage);
 
     return (actions: string[]) =>
       actions.flatMap(action =>
         action.includes(short(selectedCommitSha))
-          ? [action, `exec git commit --amend -F ${msgFile} && rm ${msgFile}`]
+          ? [action, amend]
           : [action],
       );
   };
+
+/**
+ * The commits of `shas` newest first, when they form one unbroken line of history that a rebase can squash:
+ * each one's parent is the next one, none is a merge, and the oldest has a parent to rebase from. Otherwise undefined.
+ */
+export const squashableChain = (shas: string[], logs: Commit[]): Commit[] | undefined => {
+  if (shas.length < 2) return undefined;
+  const commits = new Map(logs.filter(c => shas.includes(c.sha)).map(c => [c.sha, c]));
+  if (commits.size !== shas.length || [...commits.values()].some(c => c.parentSHAs.length !== 1)) return undefined;
+
+  // The newest is the one that is no other selected commit's parent
+  const parents = new Set([...commits.values()].map(c => c.parentSHAs[0]));
+  const newest = [...commits.values()].filter(c => !parents.has(c.sha));
+  if (newest.length !== 1) return undefined;
+
+  const chain = [newest[0]];
+  while (chain.length < commits.size) {
+    const parent = commits.get(chain.at(-1)!.parentSHAs[0]);
+    if (!parent) return undefined;
+    chain.push(parent);
+  }
+  return chain;
+};
+
+// Whether a rebase todo line picks `sha` (todo lines hold abbreviated shas)
+const actsOn = (action: string, sha: string) => {
+  const actionSha = action.split(' ')[1];
+  return !!actionSha && sha.startsWith(actionSha);
+};
+
+// Rework git rebase actions to meld `chain` (newest first) into its oldest commit, then give it `message`
+export const squashActions = (cwd: string, chain: string[], message: string) => {
+  const amend = amendWithMessage(cwd, message);
+  const melded = chain.slice(0, -1);
+
+  return (actions: string[]) =>
+    actions.flatMap(action => {
+      if (!melded.some(sha => actsOn(action, sha))) return [action];
+      const fixup = action.replace(/^pick /, 'fixup ');
+      return actsOn(action, chain[0]) ? [fixup, amend] : [fixup];
+    });
+};
