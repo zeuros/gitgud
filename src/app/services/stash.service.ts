@@ -17,9 +17,10 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {map, Observable, of, switchMap} from 'rxjs';
+import {map, Observable, of, switchMap, throwError} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {workingDirHasChanges} from '../utils/utils';
+import {short} from '../utils/commit-utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 
 @Injectable({
@@ -37,12 +38,14 @@ export class StashService {
     if (!workingDirHasChanges(this.currentRepo.workDirStatus())) return operation$;
 
     return this.topStashSha$.pipe(
-      switchMap(prevSha =>
-        this.gitApi.git(['stash', '-u']).pipe(
-          switchMap(() => operation$), // do action
-          switchMap(r => thenUnstash ? this.popIfNewStash(prevSha).pipe(map(() => r)) : of(r)), // unstash
-        ),
-      ),
+      switchMap(prevSha => this.gitApi.git(['stash', '-u']).pipe(
+        switchMap(() => this.topStashSha$),
+        // `git stash -u` makes no stash when there turned out to be nothing to save
+        map(newSha => newSha !== prevSha ? newSha : undefined),
+      )),
+      switchMap(ownSha => operation$.pipe( // do action
+        switchMap(r => thenUnstash && ownSha ? this.popStashBySha(ownSha).pipe(map(() => r)) : of(r)), // unstash
+      )),
     );
   };
 
@@ -54,8 +57,12 @@ export class StashService {
 
   drop = (stashRef = 'stash@{0}') => this.gitApi.gitAction(['stash', 'drop', stashRef]);
 
-  private popIfNewStash = (prevSha: string) =>
-    this.topStashSha$.pipe(
-      switchMap(newSha => newSha !== prevSha ? this.gitApi.git(['stash', 'pop']) : of(null)),
+  // Pops the stash stashAndRun created, by its sha: other stashes may have been pushed or dropped since
+  private popStashBySha = (sha: string) =>
+    this.gitApi.git(['stash', 'list', '--format=%H']).pipe(
+      map(list => list.trim().split('\n').indexOf(sha)),
+      switchMap(index => index == -1
+        ? throwError(() => new Error(`The stash ${short(sha)} holding your changes is gone, no other stash was popped`))
+        : this.gitApi.git(['stash', 'pop', `stash@{${index}}`])),
     );
 }
