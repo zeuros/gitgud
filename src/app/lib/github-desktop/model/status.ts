@@ -50,7 +50,7 @@ export enum AppFileStatusKind {
 
 export type Icon = {icon: string; color: string};
 
-export const Icons: {[key: string]: Icon} = {
+export const Icons = {
   New: {icon: 'fa-plus', color: '#20e88e'},
   Modified: {icon: 'fa-pencil', color: '#26beec'},
   Deleted: {icon: 'fa-trash', color: '#e8206d'},
@@ -61,7 +61,7 @@ export const Icons: {[key: string]: Icon} = {
   Untracked: {icon: 'fa-user-secret', color: '#aaaaaa'},
   Ignored: {icon: 'fa-ban', color: '#666666'},
   UpdatedButUnmerged: {icon: 'fa-code-branch', color: '#f39c12'},
-};
+} satisfies Record<string, Icon>;
 
 export const FileStatusesIcons: Record<AppFileStatusKind, Icon> = {
   [AppFileStatusKind.New]: Icons.New,
