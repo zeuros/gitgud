@@ -24,7 +24,7 @@ import {editor} from 'monaco-editor';
 import {config} from 'rxjs';
 import {installTauriBridge} from './app/api/tauri-bridge';
 
-(window as any).MonacoEnvironment = {
+window.MonacoEnvironment = {
   getWorker(_: string, label: string): Worker {
     if (label === 'json') {
       return new Worker(new URL('./monaco-workers/json.worker', import.meta.url), {type: 'module'});

@@ -5,6 +5,6 @@
     "moduleResolution": "node",
     "types": ["node", "mocha", "@wdio/globals/types"]
   },
-  "include": ["./**/*.ts", "../wdio.conf.ts"],
+  "include": ["./**/*.ts", "../wdio.conf.ts", "../src/typings.d.ts"],
   "exclude": ["./videos/**"]
 }

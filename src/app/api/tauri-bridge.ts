@@ -15,6 +15,7 @@ import {open as openDialog} from '@tauri-apps/plugin-dialog';
 import {tempDir} from '@tauri-apps/api/path';
 import {openPath, openUrl} from '@tauri-apps/plugin-opener';
 import posixPath from './path-utils';
+import type {WatchOptions} from '../../typings';
 
 // ---------------------------------------------------------------------------
 // Watcher registry — maps caller IDs to Tauri event unlisten functions
@@ -56,13 +57,13 @@ async function buildBridge() {
     },
 
     chokidar: {
-      watch: (id: string, paths: string | string[], options?: Record<string, any>) => {
+      watch: (id: string, paths: string | string[], options?: WatchOptions) => {
         const pathList = Array.isArray(paths) ? paths : [paths];
         // Rust handles its own base ignore list (.git, node_modules, etc.).
         // Only forward plain directory name strings — globs and regexes are not
         // understood by the Rust path-component filter.
         const ignoredDirs = Array.isArray(options?.ignored)
-          ? (options.ignored as unknown[]).filter(
+          ? options.ignored.filter(
             (x): x is string => typeof x === 'string' && !x.includes('*') && !x.includes('/'),
           )
           : undefined;

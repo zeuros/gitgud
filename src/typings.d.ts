@@ -5,8 +5,7 @@
  * Window interface for the Tauri bridge (see src/app/api/tauri-bridge.ts).
  */
 
-// A module, so that `declare global` below augments Window
-export {};
+import type {editor} from 'monaco-editor';
 
 interface FsApi {
   readdir: (path: string) => Promise<string[]>;
@@ -24,9 +23,13 @@ interface PathApi {
   dirname: (path: string) => string;
 }
 
+export interface WatchOptions {
+  recursive?: boolean;
+  ignored?: unknown[];
+}
+
 interface ChokidarApi {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  watch: (id: string, paths: string | string[], options?: Record<string, any>) => void;
+  watch: (id: string, paths: string | string[], options?: WatchOptions) => void;
   on: (id: string, event: string, cb: (...args: unknown[]) => void) => void;
   close: (id: string) => void;
 }
@@ -92,5 +95,7 @@ interface TauriApi {
 declare global {
   interface Window {
     tauri: TauriApi;
+    /** The diff editor, exposed for e2e tests (window.monaco is not available in the main thread) */
+    __e2eDiffEditor?: editor.IStandaloneDiffEditor;
   }
 }

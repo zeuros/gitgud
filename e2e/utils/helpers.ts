@@ -125,7 +125,7 @@ export async function initRepo(template: string): Promise<void> {
   await $('gitgud-welcome-screen p-button[label="Open"] button').waitForDisplayed({ timeout: 15_000 });
 
   await browser.execute((dir: string) => {
-    (window as any).tauri.dialog.showOpenDialog = async () => [dir];
+    window.tauri.dialog.showOpenDialog = async () => [dir];
   }, repoDir);
 
   await jsClick(await $('gitgud-welcome-screen p-button[label="Open"] button'));
@@ -140,7 +140,7 @@ export async function initRepo(template: string): Promise<void> {
 export async function addRepoViaUI(template: string): Promise<void> {
   const repoDir = copyRepo(template);
   await browser.execute((dir: string) => {
-    (window as any).tauri.dialog.showOpenDialog = async () => [dir];
+    window.tauri.dialog.showOpenDialog = async () => [dir];
   }, repoDir);
   await jsClick(await $('//p-button[@icon="pi pi-plus"]//button'));
   // Wait for the new tab to appear (more tabs than before)
@@ -209,7 +209,7 @@ export async function initRepoWithWorktrees(
   execSync(`git -C "${repoDir}" worktree add "${worktreeDir}" feature/dark-mode`);
 
   await browser.execute((dir: string) => {
-    (window as any).tauri.dialog.showOpenDialog = async () => [dir];
+    window.tauri.dialog.showOpenDialog = async () => [dir];
   }, repoDir);
 
   await jsClick(await $('gitgud-welcome-screen p-button[label="Open"] button'));

@@ -31,7 +31,7 @@ describe('diff viewer — view modes, staging & commit', () => {
     // We use __e2eDiffEditor (set in ngAfterViewInit) to position the cursor and trigger
     // the 'stage-line' action directly — semantically identical to clicking the context menu.
     await browser.execute(() => {
-      const diffEd = (window as any).__e2eDiffEditor;
+      const diffEd = window.__e2eDiffEditor;
       const modEd = diffEd?.getModifiedEditor();
       if (!modEd) return;
       modEd.focus();

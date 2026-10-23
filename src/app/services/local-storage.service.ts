@@ -24,7 +24,7 @@ import { StorageName } from "../enums/storage-name.enum";
 })
 export class LocalStorageService {
 
-    store = (where: StorageName, item: any) => this.storeRaw(where, JSON.stringify(item));
+    store = (where: StorageName, item: unknown) => this.storeRaw(where, JSON.stringify(item));
 
     storeRaw = (where: StorageName, json: string) => localStorage.setItem(where, json);
 

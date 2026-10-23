@@ -43,14 +43,14 @@ export const omitUndefined = <T extends object>(o: T | undefined) => omitBy<T>(o
 export const removeDuplicates = <T>(item: T, index: number, array: T[]): boolean => array.indexOf(item) === index;
 export const notUndefined = <T>(v: T | undefined | null): v is T => !!v;
 // ts's instanceof doesn't work for some reason (not across module boundaries?)
-export const instanceOf = <T extends new (...args: any[]) => any>(o: any, theClassType: T): o is InstanceType<T> =>
-  o?.constructor?.name === theClassType.name;
+export const instanceOf = <T extends abstract new (...args: never[]) => unknown>(o: unknown, theClassType: T): o is InstanceType<T> =>
+  (o as object | null | undefined)?.constructor?.name === theClassType.name;
 
 
 export const directory = (path: string) => path.split('/').slice(0, -1).join('/');
 export const fileName = (path: string) => path.split('/').pop();
 
-export const showPerf = (cmd: string, args: string[] = [], out?: any) => {
+export const showPerf = (cmd: string, args: string[] = [], out?: unknown) => {
   const start = performance.now();
   return () => console.debug(`${cmd} ${args.join(' ')} (${performance.now() - start}ms)`, out);
 };

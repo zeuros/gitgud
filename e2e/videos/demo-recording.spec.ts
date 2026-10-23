@@ -55,11 +55,11 @@ async function annotateAt(
 ): Promise<void> {
   if (!pt) return;
   await browser.execute(
-    (t: string, x: number, y: number, s: string) => (window as any).__annDraw?.(t, x, y, s),
+    (t: string, x: number, y: number, s: string) => window.__annDraw?.(t, x, y, s),
     text, pt.x, pt.y, side,
   );
   await browser.pause(ms);
-  await browser.execute(() => (window as any).__annClear?.());
+  await browser.execute(() => window.__annClear?.());
 }
 
 /** Centre of the first element matching `selector`, or null if it's absent / not laid out. */
@@ -121,7 +121,7 @@ describe('demo recording', () => {
     await browser.pause(3000);
 
     await browser.execute((dir: string) => {
-      (window as any).tauri.dialog.showOpenDialog = async () => [dir];
+      window.tauri.dialog.showOpenDialog = async () => [dir];
     }, repoDir);
     await jsClick(await $('gitgud-welcome-screen p-button[label="Open"] button'));
 
@@ -195,10 +195,10 @@ describe('demo recording', () => {
 
       // Put the cursor on the first real change (green line) and open the staging menu there
       const changedLine = await browser.execute(() => {
-        const diffEd = (window as any).__e2eDiffEditor;
+        const diffEd = window.__e2eDiffEditor;
         const modEd = diffEd?.getModifiedEditor();
         const changes = diffEd?.getLineChanges?.() ?? [];
-        const change = changes.find((c: any) => c.modifiedEndLineNumber > 0) ?? changes[0];
+        const change = changes.find(c => c.modifiedEndLineNumber > 0) ?? changes[0];
         if (!modEd || !change) return null;
         const line = change.modifiedStartLineNumber || change.modifiedEndLineNumber;
         modEd.focus();
@@ -209,7 +209,7 @@ describe('demo recording', () => {
       await beat(700);
       // Show Monaco's context menu at the cursor (keyboard-anchored — works in WebKit)
       await browser.execute(() =>
-        (window as any).__e2eDiffEditor?.getModifiedEditor()?.trigger('e2e', 'editor.action.showContextMenu', null),
+        window.__e2eDiffEditor?.getModifiedEditor()?.trigger('e2e', 'editor.action.showContextMenu', null),
       );
       await beat(700);
       // Point at the actual context menu, located by its "Stage this line" entry
@@ -225,17 +225,17 @@ describe('demo recording', () => {
       });
       if (menuPt) {
         await browser.execute(
-          (t: string, x: number, y: number, s: string) => (window as any).__annDraw?.(t, x, y, s),
+          (t: string, x: number, y: number, s: string) => window.__annDraw?.(t, x, y, s),
           'Stage line by line\nRight-click inside the diff', menuPt.x, menuPt.y, 'right',
         );
         await browser.pause(3500);
-        await browser.execute(() => (window as any).__annClear?.());
+        await browser.execute(() => window.__annClear?.());
       }
 
       // Stage that single line. Running the action also dismisses the context menu.
       // (Avoid dispatching Escape here — the editor closes the whole diff on Escape.)
       await browser.execute((line: number | null) => {
-        const modEd = (window as any).__e2eDiffEditor?.getModifiedEditor();
+        const modEd = window.__e2eDiffEditor?.getModifiedEditor();
         if (!modEd || !line) return;
         modEd.focus();
         modEd.setPosition({ lineNumber: line, column: 1 });

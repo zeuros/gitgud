@@ -35,6 +35,11 @@ import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 import ILineChange = editor.ILineChange;
 
+// Monaco's internal context menu contribution: not part of its public API
+interface ContextMenuController extends editor.IEditorContribution {
+  _getMenuActions: (...args: unknown[]) => { id: string }[];
+}
+
 @Injectable({providedIn: 'root'})
 export class MonacoDiffRightClickActionsService {
   private workingDir = inject(WorkingDirectoryService);
@@ -188,9 +193,9 @@ export class MonacoDiffRightClickActionsService {
 
   private removeDefaultContextMenuActions = (ed: IStandaloneCodeEditor) => {
     // Re-bind context menu actions getter
-    const contextmenu = ed.getContribution<any>('editor.contrib.contextmenu');
+    const contextmenu = ed.getContribution<ContextMenuController>('editor.contrib.contextmenu')!;
     const realMethod = contextmenu._getMenuActions.bind(contextmenu);
-    contextmenu._getMenuActions = (...args: unknown[]) => realMethod(...args).filter((item: { id: string }) => !idsToHide.has(item.id));
+    contextmenu._getMenuActions = (...args) => realMethod(...args).filter(item => !idsToHide.has(item.id));
   };
 
   private attachGutterSelectionHighlight(modified: IStandaloneCodeEditor, original: IStandaloneCodeEditor): void {
