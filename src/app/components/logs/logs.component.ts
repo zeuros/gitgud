@@ -27,7 +27,7 @@ import {commitColor, findCurrentHeadCommit, hasName, isCommit, isIndex, isStash}
 import {IntervalTree} from 'node-interval-tree';
 import type {Edge} from '../../models/edge';
 import {DragDropModule} from '@angular/cdk/drag-drop';
-import {afterNextRender, ChangeDetectionStrategy, Component, computed, effect, type ElementRef, HostListener, inject, signal, untracked, viewChild} from '@angular/core';
+import {afterNextRender, ChangeDetectionStrategy, Component, computed, effect, type ElementRef, HostListener, inject, Injector, signal, untracked, viewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
 import {DatePipe} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
@@ -103,6 +103,7 @@ export class LogsComponent {
   private branch = inject(BranchService);
   private conflict = inject(ConflictService);
   private avatar = inject(AvatarService);
+  private injector = inject(Injector);
 
   protected checkoutBranch = (branch: Branch | null, event: MouseEvent) => {
     event.stopPropagation();
@@ -245,6 +246,28 @@ export class LogsComponent {
       };
       logTable.addEventListener('scroll', onScroll, {passive: true});
       onCleanup(() => logTable.removeEventListener('scroll', onScroll));
+    });
+
+    // Ctrl+Home / Ctrl+End jump to the first / last commit of the whole log. Captured before p-table's row handler, which
+    // only knows the rendered rows (renderWindow), so it would stop one page away
+    effect((onCleanup) => {
+      const logTable = this.logTableContainer();
+      if (!logTable) return;
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (!event.ctrlKey || event.shiftKey || (event.code !== 'Home' && event.code !== 'End')) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const toEnd = event.code === 'End';
+        const row = toEnd ? Math.max(this.computedDisplayLog().length - this.visibleCommitsCount()!, 0) : 0;
+        this.currentRepo.update({startCommit: row});
+        logTable.scrollTo({top: row * ROW_HEIGHT});
+        afterNextRender(() => {
+          const rows = logTable.querySelectorAll<HTMLElement>('[data-p-selectable-row="true"]');
+          rows[toEnd ? rows.length - 1 : 0]?.focus();
+        }, {injector: this.injector});
+      };
+      logTable.addEventListener('keydown', onKeyDown, {capture: true});
+      onCleanup(() => logTable.removeEventListener('keydown', onKeyDown, {capture: true}));
     });
 
     afterNextRender(() => this._layoutReady.set(true));
