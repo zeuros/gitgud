@@ -22,7 +22,6 @@ import {editor, Uri} from 'monaco-editor';
 import {diffSides, FileDiffService} from '../../services/file-diff.service';
 import {FormsModule} from '@angular/forms';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
-import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
 import {catchError, combineLatest, EMPTY, switchMap, tap} from 'rxjs';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
@@ -129,8 +128,8 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
   protected viewType = computed(() => this.currentRepo.editorConfig()!.viewType);
 
-  private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: WorkingDirectoryFileChange) => void } | undefined>(undefined);
-  private currentFile = signal<WorkingDirectoryFileChange | undefined>(undefined);
+  private diffEditor = signal<{ editor: IStandaloneDiffEditor, contextMenuUpdater: (f: FileChange) => void } | undefined>(undefined);
+  private currentFile = signal<FileChange | undefined>(undefined);
   private editorOptions: IDiffEditorOptions = {
     readOnly: true,
     automaticLayout: true,        // polls container size every ~100 ms; acceptable for a single editor
@@ -285,7 +284,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
         return;
       }
 
-      this.currentFile.set(isWorkingDirectoryFileChange(file) ? file : undefined);
+      this.currentFile.set(file);
       this.setContent({kind: 'text'});
       this.diffModels.set({
         before: {code: renderWindowsShitEol(before), fileName: file.path},
@@ -407,7 +406,8 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
 
   private clearEditorWhenNoChangesToDisplay = (diffEditorEditor: IStandaloneDiffEditor) => () => {
     const changes = diffEditorEditor.getLineChanges();
-    if (this.currentFile() && changes !== null && changes.length === 0) {
+    const file = this.currentFile();
+    if (file && isWorkingDirectoryFileChange(file) && changes !== null && changes.length === 0) {
       const oldModel = diffEditorEditor.getModel();
       diffEditorEditor.setModel(null);
       oldModel?.original.dispose();
