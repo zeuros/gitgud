@@ -26,6 +26,12 @@ pub fn get_arch() -> &'static str {
     }
 }
 
+/// Short commit this binary was built from, for builds that aren't a tagged release (see build.rs)
+#[tauri::command]
+pub fn get_build_commit() -> Option<&'static str> {
+    option_env!("GITGUD_BUILD_COMMIT")
+}
+
 /// Returns the path of the current executable.
 #[tauri::command]
 pub fn get_exec_path() -> String {

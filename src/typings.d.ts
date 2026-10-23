@@ -75,6 +75,8 @@ interface TauriApi {
   openPath: (fullPath: string) => Promise<void>;
   tempDir: () => Promise<string>;
   appVersion: string;
+  /** Short commit of a local / dev build, undefined for a tagged release */
+  buildCommit?: string;
   packageFormat?: string;
   onWindowFocus: (cb: () => void) => unknown;
   offWindowFocus: (cb: () => void) => unknown;
