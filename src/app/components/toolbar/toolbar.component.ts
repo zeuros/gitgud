@@ -18,7 +18,7 @@
 
 import {ChangeDetectionStrategy, Component, computed, inject, type OnInit, signal} from '@angular/core';
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
-import {catchError, EMPTY, finalize, interval, map, of, switchMap} from 'rxjs';
+import {catchError, EMPTY, finalize, interval, map, type Observable, of, switchMap} from 'rxjs';
 import {Button} from 'primeng/button';
 import {Divider} from 'primeng/divider';
 import {Tooltip} from 'primeng/tooltip';
@@ -45,6 +45,8 @@ import {UpdateCheckService} from '../../services/update-check.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 
+type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-continue' | 'rebase-skip' | 'rebase-abort';
+
 @Component({
   selector: 'gitgud-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,7 +65,7 @@ export class ToolbarComponent implements OnInit {
   protected gitRefresh = inject(GitRefreshService);
   protected updateCheck = inject(UpdateCheckService);
   protected rebase = inject(RebaseService);
-  protected loading = signal<'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-continue' | 'rebase-skip' | 'rebase-abort' | undefined>(undefined);
+  protected loading = signal<ToolbarAction | undefined>(undefined);
   protected bonfireHovered = signal(false);
   protected appVersion = window.tauri.appVersion + (window.tauri.buildCommit ? ` (${window.tauri.buildCommit})` : '');
   protected bonfirePlaying = computed(() => this.bonfireHovered() || this.gitRefresh.isRefreshing());
@@ -95,66 +97,33 @@ export class ToolbarComponent implements OnInit {
     this.undo.refreshTooltip();
   }
 
-  protected push = () => {
-    this.loading.set('push');
-    this.upstreamMatchesLocal().pipe(
-      switchMap(ok => ok ? this.checkBehindThenPush() : this.openSetUpstreamDialog()),
-      switchMap(this.gitRefresh.refreshAll),
-      finalize(() => this.loading.set(undefined)),
-    ).subscribe(() => {
-      this.toast.success('Pushed successfully');
-    });
-  };
+  protected push = () => this.runAction('push', this.upstreamMatchesLocal().pipe(
+    switchMap(ok => ok ? this.checkBehindThenPush() : this.openSetUpstreamDialog()),
+  ), () => this.toast.success('Pushed successfully'));
 
-  protected pull = () => {
-    this.loading.set('pull');
-    this.gitApi.gitAction(['pull'])
-      .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => {
-        this.toast.success('Pulled successfully');
-      });
-  };
+  protected pull = () => this.runAction('pull', this.gitApi.gitAction(['pull']), () => this.toast.success('Pulled successfully'));
 
-  protected stash = () => {
-    this.loading.set('stash');
-    this.gitApi.gitAction(['stash', '-u'])
-      .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => this.toast.success('Stashed successfully'));
-  };
+  protected stash = () => this.runAction('stash', this.gitApi.gitAction(['stash', '-u']), () => this.toast.success('Stashed successfully'));
 
-  protected pop = () => {
-    this.loading.set('pop');
-    this.gitApi.gitAction(['stash', 'pop'])
-      .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => this.toast.success('Stash popped successfully'));
-  };
+  protected pop = () => this.runAction('pop', this.gitApi.gitAction(['stash', 'pop']), () => this.toast.success('Stash popped successfully'));
 
-  protected fetch = () => {
-    this.loading.set('fetch');
-    this.gitApi.gitAction(['fetch', '--prune']) // Also forgets the branches deleted on the remote
-      .pipe(switchMap(this.gitRefresh.refreshAll), finalize(() => this.loading.set(undefined)))
-      .subscribe(() => this.autoFetch.lastFetchedAt.set(Date.now()));
-  };
+  // --prune also forgets the branches deleted on the remote
+  protected fetch = () => this.runAction('fetch', this.gitApi.gitAction(['fetch', '--prune']), () => this.autoFetch.lastFetchedAt.set(Date.now()));
 
-  protected continueRebase = () => {
-    this.loading.set('rebase-continue');
-    this.gitApi.gitAction(['rebase', '--continue'])
-      .pipe(finalize(() => { this.loading.set(undefined); this.gitRefresh.doRefreshAll(); }))
-      .subscribe(() => this.toast.success('Rebase continued'));
-  };
+  protected continueRebase = () => this.runAction('rebase-continue', this.gitApi.gitAction(['rebase', '--continue']), () => this.toast.success('Rebase continued'));
 
-  protected skipRebase = () => {
-    this.loading.set('rebase-skip');
-    this.gitApi.gitAction(['rebase', '--skip'])
-      .pipe(finalize(() => { this.loading.set(undefined); this.gitRefresh.doRefreshAll(); }))
-      .subscribe(() => this.toast.success('Commit skipped'));
-  };
+  protected skipRebase = () => this.runAction('rebase-skip', this.gitApi.gitAction(['rebase', '--skip']), () => this.toast.success('Commit skipped'));
 
-  protected abortRebase = () => {
-    this.loading.set('rebase-abort');
-    this.rebase.abortRebase()
-      .pipe(finalize(() => { this.loading.set(undefined); this.gitRefresh.doRefreshAll(); }))
-      .subscribe(() => this.toast.success('Rebase aborted'));
+  protected abortRebase = () => this.runAction('rebase-abort', this.rebase.abortRebase(), () => this.toast.success('Rebase aborted'));
+
+  // Shows `key`'s button as loading while `action$` runs, then refreshes, even after a failure: a conflict (pull, pop,
+  // rebase) leaves changes to show
+  private runAction = (key: ToolbarAction, action$: Observable<unknown>, onSuccess: () => void) => {
+    this.loading.set(key);
+    action$.pipe(finalize(() => {
+      this.loading.set(undefined);
+      this.gitRefresh.doRefreshAll();
+    })).subscribe(onSuccess);
   };
 
   // Returns false when there is no upstream or the upstream branch name differs from the local branch name.
