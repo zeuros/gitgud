@@ -29,11 +29,10 @@ async function buildBridge() {
   // Must run before any listen() calls so stale callback IDs stop receiving events.
   await invoke('close_all_watchers');
 
-  const [version, platform, arch, execPath, env, packageFormat, buildCommit] = await Promise.all([
+  const [version, platform, arch, env, packageFormat, buildCommit] = await Promise.all([
     getVersion(),
     invoke<string>('get_platform'),
     invoke<string>('get_arch'),
-    invoke<string>('get_exec_path'),
     invoke<Record<string, string>>('get_env'),
     invoke<string | null>('get_package_format'),
     invoke<string | null>('get_build_commit'),
@@ -54,7 +53,6 @@ async function buildBridge() {
     path: {
       resolve: posixPath.resolve,
       dirname: posixPath.dirname,
-      extname: posixPath.extname,
     },
 
     chokidar: {
@@ -181,7 +179,6 @@ async function buildBridge() {
     process: {
       platform,
       arch,
-      execPath,
       env,
       versions: {},
       argv: [],

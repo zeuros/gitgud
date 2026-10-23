@@ -32,14 +32,6 @@ pub fn get_build_commit() -> Option<&'static str> {
     option_env!("GITGUD_BUILD_COMMIT")
 }
 
-/// Returns the path of the current executable.
-#[tauri::command]
-pub fn get_exec_path() -> String {
-    std::env::current_exe()
-        .map(|p| p.to_string_lossy().into_owned())
-        .unwrap_or_default()
-}
-
 /// Returns how the running Linux binary was packaged (AppImage / rpm / deb), or None when unknown
 /// (dev build, tarball, non-Linux). Asks the package managers which one owns the executable, since
 /// an installed .deb and .rpm both live at the same path.
@@ -115,32 +107,4 @@ pub fn show_item_in_folder(path: String) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
     }
     Ok(())
-}
-
-/// Resolves a path the same way Node's path.resolve does for the common 1-2 arg case.
-#[tauri::command]
-pub fn path_resolve(base: String, relative: Option<String>) -> String {
-    let p = std::path::Path::new(&base);
-    match relative {
-        Some(rel) => p.join(&rel).to_string_lossy().into_owned(),
-        None => p.to_string_lossy().into_owned(),
-    }
-}
-
-/// Returns the directory part of a path — mirrors Node's path.dirname.
-#[tauri::command]
-pub fn path_dirname(path: String) -> String {
-    std::path::Path::new(&path)
-        .parent()
-        .map(|p| p.to_string_lossy().into_owned())
-        .unwrap_or_default()
-}
-
-/// Returns the file extension including the dot — mirrors Node's path.extname.
-#[tauri::command]
-pub fn path_extname(path: String) -> String {
-    std::path::Path::new(&path)
-        .extension()
-        .map(|e| format!(".{}", e.to_string_lossy()))
-        .unwrap_or_default()
 }

@@ -159,7 +159,7 @@ export const parseWorkingDirChanges = (workingDirectoryChanges: string): WorkDir
 
       // Push to staged/unstaged arrays if the status is non-empty
       if (['A', 'M', 'D', 'R', 'C'].includes(stagedStatus))
-        staged.push(new WorkingDirectoryFileChange(path, appStatus, undefined, true));
+        staged.push(new WorkingDirectoryFileChange(path, appStatus, true));
       if (['M', '?'].includes(unstagedStatus))
         unstaged.push(new WorkingDirectoryFileChange(path, appStatus));
     });

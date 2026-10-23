@@ -16,10 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type {ChokidarOptions} from 'chokidar';
-
-export function createWatcher(id: string, paths: string | string[], options?: ChokidarOptions) {
-  window.tauri.chokidar.watch(id, paths, options);
+export function createWatcher(id: string, paths: string | string[]) {
+  window.tauri.chokidar.watch(id, paths);
 
   const watcher = {
     on: (event: string, cb: (...args: unknown[]) => void) => {

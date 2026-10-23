@@ -21,7 +21,6 @@ interface FsApi {
 interface PathApi {
   resolve: (...parts: string[]) => string;
   dirname: (path: string) => string;
-  extname: (path: string) => string;
 }
 
 interface ChokidarApi {
@@ -83,7 +82,6 @@ interface TauriApi {
   process: {
     platform: string;
     arch: string;
-    execPath: string;
     env: Record<string, string>;
     versions?: Record<string, string>;
     argv?: string[];

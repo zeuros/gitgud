@@ -144,13 +144,9 @@ pub fn run() {
             get_env,
             get_platform,
             get_arch,
-            get_exec_path,
             get_package_format,
             get_build_commit,
             show_item_in_folder,
-            path_resolve,
-            path_dirname,
-            path_extname,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

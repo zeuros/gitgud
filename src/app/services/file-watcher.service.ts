@@ -43,29 +43,8 @@ export class FileWatcherService {
   };
 
   private makeWatcher = (projectPath: string) =>
-    createWatcher(projectPath, projectPath, {
-      ignored: [
-        // Regex-based ignore (more reliable than globs (for Winsh**).
-        // Ignores common tool/IDE directories and temp files:
-        //   - .git (e.g. .git/FETCH_HEAD)
-        //   - .idea/workspace.xml
-        //   - node_modules, dist, build, tmp
-        //   - editor/temp files: *.swp, *.swo, *~
-        // Matches full path segments and supports both / and \ separators.
-        /(^|[\/\\])(\.git|\.idea\/workspace\.xml|node_modules|dist|build|cache|tmp)([\/\\]|$)|\.swp$|\.swo$|~$/,
-        '**/~*', // Ignore temporary files (e.g., ~ files from editors)
-        '**/.DS_Store', // Ignore macOS system files
-      ],
-      followSymlinks: false,
-      persistent: true,
-      ignoreInitial: true, // Skip the initial "add" event for all files
-      depth: 99, // Watch all subdirectories
-      ignorePermissionErrors: true,
-      awaitWriteFinish: {
-        stabilityThreshold: 100, // Wait 100ms for file stability
-        pollInterval: 100,
-      },
-    })
+    // Ignored dirs and debouncing are handled in Rust (watcher.rs)
+    createWatcher(projectPath, projectPath)
       .on('add', f => this.fileChangeSubject$.next(String(f)))
       .on('change', f => this.fileChangeSubject$.next(String(f)))
       .on('unlink', f => this.fileChangeSubject$.next(String(f)))

@@ -16,7 +16,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {DiffSelectionType} from './diff/diff-selection';
 import {WorkingDirectoryFileChange} from './workdir';
 
 
@@ -125,27 +124,6 @@ export type ManualConflict = {
 /** Union of potential conflict scenarios the application should handle */
 export type ConflictedFileStatus = ConflictsWithMarkers | ManualConflict
 
-/** Custom typeguard to differentiate Conflict files from other types */
-export function isConflictedFileStatus(
-  appFileStatus: AppFileStatus,
-): appFileStatus is ConflictedFileStatus {
-  return appFileStatus.kind === AppFileStatusKind.Conflicted;
-}
-
-/** Custom typeguard to differentiate ConflictsWithMarkers from other Conflict types */
-export function isConflictWithMarkers(
-  conflictedFileStatus: ConflictedFileStatus,
-): conflictedFileStatus is ConflictsWithMarkers {
-  return conflictedFileStatus.hasOwnProperty('conflictMarkerCount');
-}
-
-/** Custom typeguard to differentiate ManualConflict from other Conflict types */
-export function isManualConflict(
-  conflictedFileStatus: ConflictedFileStatus,
-): conflictedFileStatus is ManualConflict {
-  return !conflictedFileStatus.hasOwnProperty('conflictMarkerCount');
-}
-
 /** Denotes an untracked file in the working directory) */
 export type UntrackedFileStatus = {
   kind: AppFileStatusKind.Untracked
@@ -173,30 +151,6 @@ export type SubmoduleStatus = {
    * committed yet
    */
   readonly untrackedChanges: boolean
-}
-
-/** The porcelain status for an ordinary changed entry */
-type OrdinaryEntry = {
-  readonly kind: 'ordinary'
-  /** how we should represent the file in the application */
-  readonly type: 'added' | 'modified' | 'deleted'
-  /** the status of the index for this entry (if known) */
-  readonly index?: GitStatusEntry
-  /** the status of the working tree for this entry (if known) */
-  readonly workingTree?: GitStatusEntry
-  /** the submodule status for this entry */
-  readonly submoduleStatus?: SubmoduleStatus
-}
-
-/** The porcelain status for a renamed or copied entry */
-type RenamedOrCopiedEntry = {
-  readonly kind: 'renamed' | 'copied'
-  /** the status of the index for this entry (if known) */
-  readonly index?: GitStatusEntry
-  /** the status of the working tree for this entry (if known) */
-  readonly workingTree?: GitStatusEntry
-  /** the submodule status for this entry */
-  readonly submoduleStatus?: SubmoduleStatus
 }
 
 export enum UnmergedEntrySummary {
@@ -282,23 +236,6 @@ type ManualConflictEntry = {
   readonly submoduleStatus?: SubmoduleStatus
 } & ManualConflictDetails
 
-/** The porcelain status for an unmerged entry */
-export type UnmergedEntry = TextConflictEntry | ManualConflictEntry
-
-/** The porcelain status for an unmerged entry */
-type UntrackedEntry = {
-  readonly kind: 'untracked'
-  /** the submodule status for this entry */
-  readonly submoduleStatus?: SubmoduleStatus
-}
-
-/** The union of possible entries from the git status */
-export type FileEntry =
-  | OrdinaryEntry
-  | RenamedOrCopiedEntry
-  | UnmergedEntry
-  | UntrackedEntry
-
 /** encapsulate changes to a file associated with a commit */
 export class FileChange {
   /** An ID for the file change. */
@@ -340,78 +277,5 @@ export class CommittedFileChange extends FileChange {
     this.commitish = commitish;
   }
 }
-
-/** the state of the working directory for a repository */
-export class WorkingDirectoryStatus {
-  /** Create a new status with the given files. */
-  public static fromFiles(
-    files: WorkingDirectoryFileChange[],
-  ): WorkingDirectoryStatus {
-    return new WorkingDirectoryStatus(files, getIncludeAllState(files));
-  }
-
-  private readonly fileIxById = new Map<string, number>();
-
-  /**
-   * @param files The list of changes in the repository's working directory.
-   * @param includeAll Update the include checkbox state of the form.
-   *                   NOTE: we need to track this separately to the file list selection
-   *                         and perform two-way binding manually when this changes.
-   */
-  private constructor(
-    public readonly files: WorkingDirectoryFileChange[],
-    public readonly includeAll: boolean | null = true,
-  ) {
-    files.forEach((f, ix) => this.fileIxById.set(f.id, ix));
-  }
-
-  /**
-   * Update the include state of all files in the working directory
-   */
-  public withIncludeAllFiles(includeAll: boolean): WorkingDirectoryStatus {
-    const newFiles = this.files.map(f => f.withIncludeAll(includeAll));
-    return new WorkingDirectoryStatus(newFiles, includeAll);
-  }
-
-  /** Find the file with the given ID. */
-  public findFileWithID(id: string): WorkingDirectoryFileChange | null {
-    const ix = this.fileIxById.get(id);
-    return ix !== undefined ? this.files[ix] || null : null;
-  }
-
-  /** Find the index of the file with the given ID. Returns -1 if not found */
-  public findFileIndexByID(id: string): number {
-    const ix = this.fileIxById.get(id);
-    return ix !== undefined ? ix : -1;
-  }
-}
-
-function getIncludeAllState(
-  files: WorkingDirectoryFileChange[],
-): boolean | null {
-  if (!files.length) {
-    return true;
-  }
-
-  const allSelected = files.every(
-    f => f.selection?.getSelectionType() === DiffSelectionType.All,
-  );
-  const noneSelected = files.every(
-    f => f.selection?.getSelectionType() === DiffSelectionType.None,
-  );
-
-  let includeAll: boolean | null = null;
-  if (allSelected) {
-    includeAll = true;
-  } else if (noneSelected) {
-    includeAll = false;
-  }
-
-  return includeAll;
-}
-
-// List of known conflicted index entries for a file, extracted from mapStatus
-// inside `app/src/lib/status-parser.ts` for convenience
-export const conflictStatusCodes = ['DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU'];
 
 export const isConflictedStatusCode = (xy: string) => xy[0] === 'U' || xy[1] === 'U' || xy === 'AA' || xy === 'DD';

@@ -25,10 +25,4 @@ function dirname(p: string): string {
   return norm.slice(0, idx);
 }
 
-function extname(p: string): string {
-  const base = normalize(p).split(SEP).pop() ?? '';
-  const dot = base.lastIndexOf('.');
-  return dot > 0 ? base.slice(dot) : '';
-}
-
-export default {resolve, dirname, extname};
+export default {resolve, dirname};

@@ -18,7 +18,7 @@
 
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {FormControl, FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {ButtonDirective, ButtonLabel} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
 import {DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
@@ -34,7 +34,7 @@ const fullMessage = ({summary, body}: Commit) => `${summary}\n\n${body}`.trim();
 @Component({
   selector: 'gitgud-squash-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, InputText, Textarea, FormsModule, ButtonDirective, ButtonLabel],
+  imports: [ReactiveFormsModule, InputText, Textarea, FormsModule, ButtonDirective],
   styleUrl: './squash-dialog.component.scss',
   template: `
     <form class="flex flex-column pt-2" (ngSubmit)="confirm()" (keydown.control.enter)="confirm()">

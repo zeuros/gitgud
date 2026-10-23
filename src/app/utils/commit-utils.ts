@@ -25,8 +25,7 @@ import {Branch} from '../lib/github-desktop/model/branch';
 import {notUndefined} from './utils';
 
 
-export type ChildrenMap = { [parentSha: string]: DisplayRef[] };
-export type StashMap = { [stashMergeParent: string]: Commit };
+type StashMap = { [stashMergeParent: string]: Commit };
 
 
 export const isCommit = (displayRef: DisplayRef) => displayRef.refType == RefType.COMMIT;
@@ -45,21 +44,6 @@ export const edgeType = (childCommit: DisplayRef) => {
   if (childCommit.refType == RefType.INDEX) return RefType.INDEX;
   else if (isMergeCommit(childCommit)) return RefType.MERGE_COMMIT;
   else return RefType.COMMIT;
-};
-
-/**
- *                                                                                       (c)
- * True if the commit children have not splitted edges like (c) - (c) and not like (c) <
- *                                                                                       (c)
- */
-export const hasNoBranching = (displayRef: DisplayRef | Commit, childMap: ChildrenMap): boolean => {
-  const childrenCommits = childMap[displayRef.sha] ?? [];
-
-  if (childrenCommits.length > 1) return false; // Found a branching (commit with 2+ children)
-
-  if (childrenCommits.length == 0) return true; // We followed the commits till last one without finding branching
-
-  return hasNoBranching(childrenCommits[0], childMap);
 };
 
 export const buildStashMap = (stashes: Commit[]) => {

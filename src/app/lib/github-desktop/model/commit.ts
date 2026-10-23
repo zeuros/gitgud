@@ -82,17 +82,3 @@ export class Commit implements LogObject {
       this.author.email === this.committer.email;
   }
 }
-
-/**
- * A minimal shape of data to represent a commit, for situations where the
- * application does not require the full commit metadata.
- *
- * Equivalent to the output where Git command support the
- * `--oneline --no-abbrev-commit` arguments to format a commit.
- */
-export type CommitOneLine = {
-  /** The full commit id associated with the commit */
-  readonly sha: string
-  /** The first line of the commit message */
-  readonly summary: string
-}
