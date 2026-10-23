@@ -21,7 +21,7 @@ import type {IntervalTree} from 'node-interval-tree';
 import type {Edge} from '../../models/edge';
 import type {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {RefType} from '../../enums/ref-type.enum';
-import {hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
+import {hasName, initials, isCommit, isIndex, isMergeCommit, isRootCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
 import {DRAWING_PAD_LEFT, DRAWING_SHIFT_TOP, NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import type {CanvasColors} from '../../models/theme.model';
@@ -55,7 +55,10 @@ export const drawLog = (
   // Draw commit nodes
   displayLog
     .slice(startCommit, endCommit)
-    .forEach((ref, indexForThisSlice) => drawNode(canvas, new Coordinates(indexForThisSlice, ref.lane!), ref, stashImg, avatarImages, colors));
+    .forEach((ref, indexForThisSlice) => {
+      drawNode(canvas, new Coordinates(indexForThisSlice, ref.lane!), ref, stashImg, avatarImages, colors);
+      if (isRootCommit(ref)) drawRootCap(canvas, new Coordinates(indexForThisSlice, ref.lane!), colors);
+    });
 
   // Erase the area behind the sticky table header so graph lines don't show through it
   canvas.resetTransform();
@@ -175,7 +178,25 @@ const drawNode = (
   }
 };
 
-const prepareForCommitTextDraw = (canvas: CanvasRenderingContext2D, colors: CanvasColors) => {
+// Ground symbol (⏚) under a root commit: its history ends here, a commit drawn below in the same column belongs to another tree
+const drawRootCap = (canvas: CanvasRenderingContext2D, commitCoordinates: Coordinates, colors: CanvasColors) => {
+  const [x, y] = [xPosition(commitCoordinates.col), yPosition(commitCoordinates.row) + NODE_RADIUS];
+
+  canvas.beginPath();
+  canvas.lineWidth = 2;
+  canvas.setLineDash([]);
+  canvas.shadowBlur = 0;
+  canvas.strokeStyle = colors.graphColors[commitCoordinates.col % colors.graphColors.length];
+  canvas.moveTo(x, y);
+  canvas.lineTo(x, y + 3);
+  canvas.moveTo(x - 7, y + 3);
+  canvas.lineTo(x + 7, y + 3);
+  canvas.moveTo(x - 3.5, y + 6);
+  canvas.lineTo(x + 3.5, y + 6);
+  canvas.stroke();
+};
+
+const prepareForCommitTextDraw =(canvas: CanvasRenderingContext2D, colors: CanvasColors) => {
   canvas.beginPath();
   canvas.fillStyle = 'white';
   canvas.font = `normal 900 13.5px 'Nunito Variable', Roboto, Cantarell, sans-serif`; // Nunito not working here :/
