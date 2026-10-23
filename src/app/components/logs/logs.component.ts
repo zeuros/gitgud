@@ -58,13 +58,11 @@ import {LogBranchChip} from './chips/log-branch-chip/log-branch-chip.component';
 import {LogTagChip} from './chips/log-tag-chip/log-tag-chip.component';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
-import {fitColumnWidths} from './fit-column-widths';
+import {LogColumnsDirective} from './log-columns.directive';
+import {LogSearch} from './log-search';
 
 // Rows rendered beyond the viewport, and granularity of render window moves
 const RENDER_CHUNK = 20;
-// Default log column widths, relative to each other (Branch / Tag, Graph, Commit message, Author, Commit date / time).
-// Commit date / time is fixed at its min-width, which fits its content
-const LOG_COLUMN_SHARES = [3, 2, 5, 1.5, 0];
 
 @Component({
   selector: 'gitgud-logs',
@@ -83,6 +81,7 @@ const LOG_COLUMN_SHARES = [3, 2, 5, 1.5, 0];
     AutofocusDirective,
     TitleIfOverflowDirective,
     SearchLogsComponent,
+    LogColumnsDirective,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -218,26 +217,6 @@ export class LogsComponent {
       }
     });
 
-    // PrimeNG cancels a column resize that goes below a column's min-width (see Table.onColumnResizeEnd).
-    // Clamp the resize helper line while dragging instead, so the resize stops at the resized/next column's min-width.
-    effect(() => {
-      const table = this.logTable() as any; // PrimeNG internals: resizeColumnElement, lastResizerHelperX, resizeHelperViewChild
-      if (!table) return;
-      const onColumnResize = table.onColumnResize.bind(table);
-      table.onColumnResize = (event: MouseEvent) => {
-        onColumnResize(event);
-        const th: HTMLElement | undefined = table.resizeColumnElement;
-        const next = th?.nextElementSibling as HTMLElement | null;
-        const helper: HTMLElement | undefined = table.resizeHelperViewChild()?.nativeElement;
-        if (!th || !next || !helper) return;
-        const minWidth = (el: HTMLElement) => parseFloat(el.style.minWidth) || 16; // PrimeNG requires > 15px
-        const startX = table.lastResizerHelperX;
-        const min = startX - (th.offsetWidth - minWidth(th));
-        const max = startX + (next.offsetWidth - minWidth(next));
-        helper.style.left = `${Math.min(max, Math.max(min, parseFloat(helper.style.left)))}px`;
-      };
-    });
-
     // Position the canvas over the p-table GRAPH column
     effect((onCleanup) => {
       const table = this.logTableRef()?.querySelector('table');
@@ -252,43 +231,6 @@ export class LogsComponent {
       });
       [branchTh, graphTh].forEach(th => ro.observe(th));
       onCleanup(() => ro.disconnect());
-    });
-
-    // Fit the columns to the panel width, keeping each column's share of it (from the saved / user-resized widths).
-    // Fixed table layout ignores cell min-width, so columns are sized here: a column that reaches its min-width stays
-    // there and the others keep shrinking. The table only overflows (horizontal scroll) once every column is at its min.
-    effect((onCleanup) => {
-      const logTable = this.logTable() as any; // PrimeNG internals: columnWidthsState, styleElement
-      const container = this.logTableContainer();
-      const table = container?.querySelector('table');
-      const ths = [...table?.querySelectorAll('th') ?? []];
-      if (!logTable || !container || !table || ths.length !== LOG_COLUMN_SHARES.length) return;
-
-      // Share 0 = fixed column, always at its min-width
-      const withFixedColumns = (shares: number[]) => shares.map((share, i) => LOG_COLUMN_SHARES[i] ? share : 0);
-      const minWidths = ths.map(th => parseFloat(th.style.minWidth) || 16);
-      const savedWidths = (logTable.columnWidthsState as string | undefined)?.split(',').map(Number);
-      let shares = withFixedColumns(savedWidths?.length === ths.length ? savedWidths : LOG_COLUMN_SHARES);
-
-      const layout = () => {
-        // PrimeNG applies restored / resized widths with a `width: …px !important` stylesheet, which would win over ours
-        if (logTable.styleElement) logTable.styleElement.innerHTML = '';
-        const widths = fitColumnWidths(container.clientWidth, shares, minWidths);
-        ths.forEach((th, i) => th.style.width = `${widths[i]}px`);
-        table.style.width = `${widths.reduce((sum, w) => sum + w, 0)}px`;
-        table.style.minWidth = '';
-      };
-
-      const ro = new ResizeObserver(layout);
-      ro.observe(container);
-      const sub = logTable.onColResize.subscribe(() => {
-        shares = withFixedColumns(ths.map(th => th.offsetWidth)); // widths PrimeNG just applied for the resize
-        layout();
-      });
-      onCleanup(() => {
-        ro.disconnect();
-        sub.unsubscribe();
-      });
     });
 
     effect((onCleanup) => {
@@ -338,7 +280,7 @@ export class LogsComponent {
         this.fixup.cancelFixupSelection();
       } else {
         this.showSearchBar.set(false);
-        this.search('');
+        this.logSearch.search('');
       }
     }
   }
@@ -353,49 +295,10 @@ export class LogsComponent {
 
   protected yPosition = yPosition;
 
-  protected searchMatches = signal<number[]>([]); // Indexes in computedDisplayLog of the commits matching the search
-  protected currentMatch = signal(-1); // Index in searchMatches of the match being shown
-
-  protected search = (searchString = '') => {
-    const computedDisplayLog = this.computedDisplayLog();
-
-    computedDisplayLog.forEach(commit => commit.highlight = undefined);
-    this.searchMatches.set([]);
-    this.currentMatch.set(-1);
-
-    if (searchString == '') // Clear search
-      return;
-
-    const searchStringL = searchString.toLowerCase();
-    computedDisplayLog
-      .filter(({sha, summary, author, committer, branchesDetails}) => !(
-        sha.includes(searchStringL)
-        || summary.toLowerCase().includes(searchStringL)
-        || author?.name?.toLowerCase().includes(searchStringL)
-        || committer?.name?.toLowerCase().includes(searchStringL)
-        || branchesDetails?.some(branch => branch.name.toLowerCase().includes(searchStringL))
-      ))
-      .forEach(commit => commit.highlight = 'not-matched');
-
-    const matches = computedDisplayLog.flatMap((c, i) => c.highlight ? [] : [i]);
-    this.searchMatches.set(matches);
-    if (matches.length) {
-      this.currentMatch.set(0);
-      this.currentRepo.update({startCommit: matches[0]});
-      this.logTableContainer()?.scrollTo({top: matches[0] * ROW_HEIGHT});
-    }
-  };
-
-  // Selects the next (step = 1) or previous (step = -1) match, wrapping around. The first call selects the match scrolled to while typing
-  protected goToMatch = (step: 1 | -1) => {
-    const matches = this.searchMatches();
-    if (!matches.length) return;
-    const shown = this.computedDisplayLog()[matches[this.currentMatch()]]?.sha;
-    const isShownSelected = this.currentRepo.selectedCommitsShas()?.includes(shown);
-    const current = isShownSelected ? (this.currentMatch() + step + matches.length) % matches.length : this.currentMatch();
-    this.currentMatch.set(current);
-    this.currentRepo.update({selectedCommitsShas: [this.computedDisplayLog()[matches[current]].sha]});
-  };
+  protected logSearch = new LogSearch(this.computedDisplayLog, row => {
+    this.currentRepo.update({startCommit: row});
+    this.logTableContainer()?.scrollTo({top: row * ROW_HEIGHT});
+  });
 
   private computeDisplayLog = (workingDirHasChanges: boolean, logs: Commit[], stashes: Commit[]) => {
     const headCommit = workingDirHasChanges
