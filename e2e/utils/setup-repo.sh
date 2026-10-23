@@ -276,6 +276,31 @@ const clear = () => localStorage.removeItem(STORAGE_KEY);
 EOF
 commit "experiment: add clear storage function"
 
+# ── prototype/canvas-ui: unrelated history (own root), older than main ───────
+# Dated before the main tree so the log lists it right under main's root commit
+g checkout --orphan prototype/canvas-ui
+g rm -rf -q .
+export GIT_AUTHOR_DATE="2025-12-01T10:00:00" GIT_COMMITTER_DATE="2025-12-01T10:00:00"
+
+cat > "$BASE/prototype.html" << 'EOF'
+<!DOCTYPE html>
+<canvas id="board" width="480" height="640"></canvas>
+<script src="canvas.js"></script>
+EOF
+commit "prototype: canvas board"
+
+export GIT_AUTHOR_DATE="2025-12-02T10:00:00" GIT_COMMITTER_DATE="2025-12-02T10:00:00"
+cat > "$BASE/canvas.js" << 'EOF'
+const ctx = document.getElementById('board').getContext('2d');
+const drawTodo = (text, row) => ctx.fillText(text, 16, 32 + row * 24);
+EOF
+commit "prototype: draw todos on the canvas"
+
+export GIT_AUTHOR_DATE="2025-12-03T10:00:00" GIT_COMMITTER_DATE="2025-12-03T10:00:00"
+echo "drawTodo('Try the DOM instead', 0);" >> "$BASE/canvas.js"
+commit "prototype: abandon, the DOM is simpler"
+unset GIT_AUTHOR_DATE GIT_COMMITTER_DATE
+
 # ── unstaged working-dir changes (for staging demo) ──────────────────────────
 g checkout main
 cat >> "$BASE/app.js" << 'EOF'

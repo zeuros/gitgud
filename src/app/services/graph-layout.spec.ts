@@ -76,6 +76,27 @@ describe('layoutGraph', () => {
     expect(columns(commits)).toEqual({x: 1, m: 0, b: 0, z: 2, a: 0});
   });
 
+  it('shifts the tip of another tree drawn right below a root', () => {
+    //  c       HEAD
+    //  b       root
+    //    y     other tree: not in b's column, or it would look like b's parent
+    //    x
+    const commits = log('c:b', 'b', 'y:x', 'x');
+    layoutGraph(commits, commits[0]);
+    expect(columns(commits)).toEqual({c: 0, b: 0, y: 1, x: 1});
+  });
+
+  it("reuses a root's lane further down", () => {
+    //  c       HEAD
+    //  b       root
+    //    y
+    //  z |     tip of a third tree, two rows below the root
+    //    x
+    const commits = log('c:b', 'b', 'y:x', 'z', 'x');
+    layoutGraph(commits, commits[0]);
+    expect(columns(commits)).toEqual({c: 0, b: 0, y: 1, z: 0, x: 1});
+  });
+
   it('ignores parents missing from the log (truncated history)', () => {
     const commits = log('c:b', 'b:missing');
     const {edges} = layoutGraph(commits, commits[0]);

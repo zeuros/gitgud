@@ -81,9 +81,12 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
     if (firstParent && firstParent == commit.parentSHAs[0]) {
       lanes[lane] = firstParent;
       edgeLanes.set(`${commit.sha} ${firstParent}`, lane);
-    } else {
+    } else if (firstParent) {
       freeLane(lane, row);
-      if (firstParent) otherParents.unshift(firstParent); // First parent is out of the log: every parent is a merged one
+      otherParents.unshift(firstParent); // First parent is out of the log: every parent is a merged one
+    } else {
+      // A root's lane isn't reused on the next row, so the tip of another tree drawn right below doesn't look like it continues it
+      freeLane(lane, row + 1);
     }
 
     // Other parents (merges) wait in the lane already waiting for them, or in a new one
