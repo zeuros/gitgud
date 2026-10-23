@@ -33,46 +33,33 @@
     </div>
 }
 
-<p-table
-        #logTable
-        gitgudLogColumns
-        stateStorage="local"
-        [stateKey]="'logs-table-' + currentRepo.id()"
-        [value]="displayLog"
-        [selection]="commitsSelection()"
-        (selectionChange)="onCommitsSelection($event)"
-        dataKey="sha"
-        [rowTrackBy]="trackBySha"
-        [paginator]="true"
-        [first]="renderWindow().from"
-        [rows]="renderWindow().to - renderWindow().from"
-        [rowHover]="true"
-        [scrollable]="true"
-        [resizableColumns]="true"
-        columnResizeMode="fit"
-        scrollHeight="flex"
-        selectionMode="multiple" [metaKeySelection]="true"
-        class="pointer borderless p-datatable-sm"
->
-    <ng-template #header>
+@let rendered = renderWindow();
+@let selectedShas = selectedShaSet();
+<!-- Only the rows of renderWindow are rendered: the table's margins stand in for the rows above / below -->
+<div #scroller class="log-scroller" tabindex="0" (keydown)="onLogKeydown($event)">
+    <table class="log-table"
+           [gitgudLogColumns]="currentRepo.id()"
+           [style.margin-top.px]="rendered.from * ROW_HEIGHT"
+           [style.margin-bottom.px]="rowsBelowWindow() * ROW_HEIGHT">
+        <thead>
         <tr class="uppercase text-gray">
-            <th pResizableColumn [style.min-width.px]="150">Branch / Tag</th>
-            <th pResizableColumn [style.min-width.px]="80">Graph</th>
-            <th pResizableColumn [style.min-width.px]="150">Commit message</th>
+            <th [style.min-width.px]="150">Branch / Tag<span class="column-resizer"></span></th>
+            <th [style.min-width.px]="80">Graph<span class="column-resizer"></span></th>
+            <th [style.min-width.px]="150">Commit message<span class="column-resizer"></span></th>
             <th [style.min-width.px]="110">Author</th>
             <th [style.min-width.px]="170">Commit date / time</th>
         </tr>
-    </ng-template>
-    <ng-template #body let-rowIndex="rowIndex" let-displayRef>
-        @let commit = $displayRef(displayRef);
+        </thead>
+        <tbody>
+        @for (commit of displayLog.slice(rendered.from, rendered.to); track commit.sha; let i = $index) {
         @let isDetachedHead = currentRepo.detachedHeadSha() === commit.sha;
+        @let selected = selectedShas.has(commit.sha);
         <tr class="commit-row {{ commit.highlight }}"
-            [pSelectableRow]="commit"
-            [pSelectableRowIndex]="rowIndex"
+            [class.selected]="selected"
+            [attr.aria-selected]="selected"
             [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2"
+            (click)="onRowClick(rendered.from + i, $event)"
             (contextmenu)="openCommitContextMenu(commit, $event)"
-            [pContextMenuRow]="commit"
-            [pContextMenuRowDisabled]="isIndex(commit)"
         >
             @let branchesGrouped = currentRepo.mergedBranchesByTip()[commit.sha] ?? [];
             @let tagPairs = currentRepo.allTagsByShaAndName().get(commit.sha);
@@ -188,5 +175,7 @@
             <td class="author text-gray ellipsis">{{ commit.author.name }}</td>
             <td class="date text-gray">{{ commit.author.date | date: DATE_FORMAT }}</td>
         </tr>
-    </ng-template>
-</p-table>
+        }
+        </tbody>
+    </table>
+</div>

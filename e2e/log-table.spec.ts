@@ -29,7 +29,7 @@ const selectedShas = () => browser.execute(() => {
 });
 const selectedSummaries = () => browser.execute(() =>
   [...document.querySelectorAll('tr.commit-row')]
-    .filter(tr => tr.classList.contains('p-datatable-row-selected') || tr.getAttribute('aria-selected') === 'true')
+    .filter(tr => tr.getAttribute('aria-selected') === 'true')
     .map(tr => tr.querySelector('td.summary')?.textContent?.trim() ?? ''));
 
 const clickRow = async (summary: string, modifiers: { ctrl?: boolean; shift?: boolean } = {}) => {
@@ -43,13 +43,13 @@ const clickRow = async (summary: string, modifiers: { ctrl?: boolean; shift?: bo
 };
 
 const scrollLog = (top: number) => browser.execute((t: number) => {
-  const scroller = document.querySelector('gitgud-logs .log-scroller, gitgud-logs .p-datatable-table-container') as HTMLElement;
+  const scroller = document.querySelector('gitgud-logs .log-scroller') as HTMLElement;
   scroller.scrollTop = t === -1 ? scroller.scrollHeight : t;
   scroller.dispatchEvent(new Event('scroll'));
 }, top);
 
 const columns = () => browser.execute(() => {
-  const scroller = document.querySelector('gitgud-logs .log-scroller, gitgud-logs .p-datatable-table-container') as HTMLElement;
+  const scroller = document.querySelector('gitgud-logs .log-scroller') as HTMLElement;
   const ths = [...document.querySelectorAll('gitgud-logs thead th')] as HTMLElement[];
   return {
     container: scroller.clientWidth,
@@ -61,7 +61,7 @@ const columns = () => browser.execute(() => {
 // Drags the resizer at the right edge of column `index` by dx pixels
 const dragResizer = (index: number, dx: number) => browser.execute((i: number, d: number) => {
   const th = document.querySelectorAll('gitgud-logs thead th')[i];
-  const resizer = th.querySelector('.column-resizer, .p-datatable-column-resizer') as HTMLElement;
+  const resizer = th.querySelector('.column-resizer') as HTMLElement;
   const r = resizer.getBoundingClientRect();
   const x = r.left + r.width / 2, y = r.top + r.height / 2;
   const init = (cx: number): MouseEventInit => ({ bubbles: true, cancelable: true, clientX: cx, clientY: y, button: 0, buttons: 1 });
@@ -105,6 +105,21 @@ describe('Log table', () => {
         tds: [...(plainRow?.querySelectorAll('td') ?? [])].map(td => pick(td, box)),
         selectedTds: [...(selectedRow?.querySelectorAll('td') ?? [])].map(td => pick(td, ['background-color', 'color'])),
         rowTops: rowsEls.slice(0, 6).map(tr => Math.round(tr.getBoundingClientRect().top)),
+        layout: (() => {
+          const rect = (el: Element | null) => {
+            const r = el?.getBoundingClientRect();
+            return r ? { left: Math.round(r.left), width: Math.round(r.width) } : null;
+          };
+          const scroller = document.querySelector('gitgud-logs .log-scroller');
+          return {
+            logs: rect(document.querySelector('gitgud-logs')),
+            scroller: rect(scroller),
+            scrollerClientWidth: (scroller as HTMLElement | null)?.clientWidth,
+            columns: [...document.querySelectorAll('gitgud-logs thead th')].map(th => Math.round(th.getBoundingClientRect().width)),
+            leftPanel: rect(document.querySelector('gitgud-left-panel')),
+            window: { inner: window.innerWidth, screen: screen.width },
+          };
+        })(),
         canvas: (() => {
           const c = document.querySelector('.commit-graph-canvas-container') as HTMLElement | null;
           const r = c?.getBoundingClientRect();
@@ -122,7 +137,7 @@ describe('Log table', () => {
     expect(rendered).toBeLessThan(COMMITS / 2);
 
     const scrollHeight = await browser.execute(() =>
-      (document.querySelector('gitgud-logs .log-scroller, gitgud-logs .p-datatable-table-container') as HTMLElement).scrollHeight);
+      (document.querySelector('gitgud-logs .log-scroller') as HTMLElement).scrollHeight);
     const rowHeight = await browser.execute(() => (document.querySelector('tr.commit-row') as HTMLElement).getBoundingClientRect().height);
     expect(scrollHeight).toBeGreaterThan(rowHeight * (COMMITS - 5));
   });
@@ -168,6 +183,37 @@ describe('Log table', () => {
     await clickRow('commit 1', { shift: true });
     expect((await selectedSummaries()).sort()).toEqual(['commit 1', 'commit 2', 'commit 3']);
     await scrollLog(0);
+  });
+
+  it('moves the selection with the arrow keys, extending it with shift', async () => {
+    await clickRow('commit 299');
+    await browser.execute(() => (document.querySelector('gitgud-logs .log-scroller') as HTMLElement).focus());
+    await pressKey('ArrowDown');
+    await browser.pause(200);
+    expect(await selectedSummaries()).toEqual(['commit 298']);
+    await pressKey('ArrowDown', { shift: true });
+    await pressKey('ArrowDown', { shift: true });
+    await browser.pause(200);
+    expect((await selectedSummaries()).sort()).toEqual(['commit 296', 'commit 297', 'commit 298']);
+    await pressKey('ArrowUp');
+    await browser.pause(200);
+    expect(await selectedSummaries()).toEqual(['commit 297']);
+  });
+
+  it('jumps to the last commit with End, scrolling to it, and back with Home', async () => {
+    await pressKey('End');
+    await row('commit 1').waitForExist({ timeout: 5_000 });
+    await browser.waitUntil(async () => (await selectedSummaries()).includes('commit 1'), { timeout: 5_000, timeoutMsg: 'End never selected the last commit' });
+    await pressKey('Home');
+    await row(`commit ${COMMITS}`).waitForExist({ timeout: 5_000 });
+    await browser.waitUntil(async () => (await selectedSummaries()).includes(`commit ${COMMITS}`), { timeout: 5_000, timeoutMsg: 'Home never selected the first commit' });
+  });
+
+  it('selects every commit with ctrl+A', async () => {
+    await pressKey('a', { ctrl: true });
+    await browser.pause(300);
+    expect(await selectedShas()).toHaveLength(COMMITS);
+    await clickRow(`commit ${COMMITS}`);
   });
 
   it('search jumps to and selects the matching commit', async () => {

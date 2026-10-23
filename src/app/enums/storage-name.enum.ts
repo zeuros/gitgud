@@ -20,4 +20,8 @@ export enum StorageName {
     GitRepositories = 'GitRepositories',
     RecentRepoIds   = 'RecentRepoIds',
     MissingAvatars  = 'MissingAvatars',
+    LogColumns      = 'logs-table',
 }
+
+// A StorageName on its own, or followed by what it's kept per (e.g. the repository)
+export type StorageKey = StorageName | `${StorageName}-${string}`;

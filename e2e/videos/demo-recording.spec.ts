@@ -168,7 +168,7 @@ describe('demo recording', () => {
     );
     await beat(600);
     await browser.execute(() => {
-      const scroller = document.querySelector('.p-datatable-table-container');
+      const scroller = document.querySelector('gitgud-logs .log-scroller');
       if (scroller) scroller.scrollTop = 0;
     });
     await beat(500);

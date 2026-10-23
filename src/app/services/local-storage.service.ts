@@ -17,17 +17,24 @@
  */
 
 import { Injectable } from '@angular/core';
-import type { StorageName } from "../enums/storage-name.enum";
+import type { StorageKey } from "../enums/storage-name.enum";
 
 @Injectable({
     providedIn: 'root'
 })
 export class LocalStorageService {
 
-    store = (where: StorageName, item: unknown) => this.storeRaw(where, JSON.stringify(item));
+    store = (where: StorageKey, item: unknown) => this.storeRaw(where, JSON.stringify(item));
 
-    storeRaw = (where: StorageName, json: string) => localStorage.setItem(where, json);
+    storeRaw = (where: StorageKey, json: string) => localStorage.setItem(where, json);
 
-    get = <T>(where: StorageName): T | undefined => JSON.parse(localStorage.getItem(where)!);
+    // Undefined when nothing is stored, or what is stored isn't JSON
+    get = <T>(where: StorageKey): T | undefined => {
+        try {
+            return JSON.parse(localStorage.getItem(where)!) ?? undefined;
+        } catch {
+            return undefined;
+        }
+    };
 
 }

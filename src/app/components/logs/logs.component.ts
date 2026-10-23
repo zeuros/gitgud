@@ -16,14 +16,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type Table, TableModule} from 'primeng/table';
 import {RefType} from '../../enums/ref-type.enum';
 import {workingDirHasChanges} from '../../utils/utils';
 import {bySha} from '../../utils/log-utils';
 import type {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import type {Commit} from '../../lib/github-desktop/model/commit';
 import {once} from 'lodash-es';
-import {commitColor, findCurrentHeadCommit, hasName, isCommit, isIndex, isStash} from '../../utils/commit-utils';
+import {commitColor, findCurrentHeadCommit, hasName, isCommit, isStash} from '../../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
 import type {Edge} from '../../models/edge';
 import {DragDropModule} from '@angular/cdk/drag-drop';
@@ -59,6 +58,7 @@ import {LogTagChip} from './chips/log-tag-chip/log-tag-chip.component';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 import {LogColumnsDirective} from './log-columns.directive';
+import {moveSelection, type RowSelection, selectAll, selectRow} from './row-selection';
 import {LogSearch} from './log-search';
 import {onResize} from '../../utils/resize.utils';
 
@@ -71,7 +71,6 @@ const RENDER_CHUNK = 20;
   standalone: true,
   host: {'[class.fixup-selection-mode]': 'fixup.selectingFixupTarget()'},
   imports: [
-    TableModule,
     DragDropModule,
     DatePipe,
     Badge,
@@ -109,10 +108,9 @@ export class LogsComponent {
     event.stopPropagation();
     if (branch) this.branch.checkoutBranch(branch);
   };
-  protected commitsSelection = computed(() => {
-    const selectedCommitsShas = this.currentRepo.selectedCommitsShas();
-    return selectedCommitsShas ? this.computedDisplayLog()?.filter(l => selectedCommitsShas.includes(l.sha)) : [];
-  });
+  protected selectedShaSet = computed(() => new Set(this.currentRepo.selectedCommitsShas() ?? []));
+  // Where shift+click / shift+arrow ranges start from (row indexes), the selected shas being in the store
+  private selectionAnchor: Omit<RowSelection, 'keys'> = {};
 
   protected showSearchBar = signal(false);
   protected searchFocusRequest = signal(0);
@@ -133,22 +131,22 @@ export class LogsComponent {
   protected _tableScrollLeft = signal(0);
   protected dpr = signal(CANVAS_DPR_MULTIPLIER * (window.devicePixelRatio || 1));
   protected visibleCommitsCount = computed(() => this.countVisibleCommits(this._tableHeight(), this.computedDisplayLog()));
-  // Only rows near the viewport are rendered: p-table gets the whole log (selection, shift-click ranges and row indexes stay
-  // absolute) but renders the [first, first + rows) page of its hidden paginator; the rows above/below are table margins.
+  // Only rows near the viewport are rendered, [from, to) of the log; the table's margins stand in for the rows above / below,
+  // so the scroll height and row positions are the same as with all rows rendered.
   // The window moves by RENDER_CHUNK rows, so scrolling only re-renders rows when crossing a chunk boundary
   protected renderWindow = computed(() => {
     const chunkStart = Math.floor(this.currentRepo.startCommit() / RENDER_CHUNK) * RENDER_CHUNK;
     return {from: Math.max(0, chunkStart - RENDER_CHUNK), to: chunkStart + (this.visibleCommitsCount() ?? 0) + 2 * RENDER_CHUNK};
   }, {equal: (a, b) => a.from === b.from && a.to === b.to});
+  protected rowsBelowWindow = computed(() => Math.max(0, this.computedDisplayLog().length - this.renderWindow().to));
   private _layoutReady = signal(false);
   private _tableHeight = signal(0);
   private _tableHeaderHeight = signal(0);
   private _avatarImages = signal<Map<string, HTMLImageElement> | undefined>(undefined);
   private canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   private canvasContext = computed(() => this.canvas()?.nativeElement?.getContext('2d'));
-  private logTable = viewChild<Table<DisplayRef>>('logTable');
-  private logTableRef = computed(() => this._layoutReady() ? this.logTable()?.el?.nativeElement as HTMLElement : undefined);
-  private logTableContainer = computed(() => this.logTableRef()?.querySelector<HTMLElement>('.p-datatable-table-container'));
+  private scroller = viewChild<ElementRef<HTMLElement>>('scroller');
+  private logTableContainer = computed(() => this._layoutReady() ? this.scroller()?.nativeElement : undefined);
 
   constructor() {
 
@@ -182,23 +180,6 @@ export class LogsComponent {
       this.avatar.loadAvatarImages(commitMails).subscribe(images => this._avatarImages.set(images));
     });
 
-    // Stand in for the non-rendered rows, so scroll height and row positions are the same as with all rows rendered.
-    // Declared before the canvas effect: restoreLastScrollPosition needs the full scroll height
-    effect(() => {
-      const table = this.logTableRef()?.querySelector('table');
-      const {from, to} = this.renderWindow();
-      const logLength = this.computedDisplayLog().length;
-      if (!table) return;
-      table.style.marginTop = `${from * ROW_HEIGHT}px`;
-      table.style.marginBottom = `${Math.max(0, logLength - to) * ROW_HEIGHT}px`;
-      // stateStorage restores a saved first/rows (it's saved along column widths): keep the table on our window
-      const logTable = untracked(this.logTable);
-      if (logTable && (logTable.first() !== from || logTable.rows() !== to - from)) {
-        logTable.first.set(from);
-        logTable.rows.set(to - from);
-      }
-    });
-
     // Reactively draw canvas when dependencies change
     effect(() => {
       const displayLog = this.computedDisplayLog();
@@ -219,9 +200,9 @@ export class LogsComponent {
       }
     });
 
-    // Position the canvas over the p-table GRAPH column
+    // Position the canvas over the GRAPH column
     onResize(() => {
-      const [branchTh, graphTh] = this.logTableRef()?.querySelector('table')?.querySelectorAll('th') ?? [];
+      const [branchTh, graphTh] = this.logTableContainer()?.querySelectorAll('th') ?? [];
       return branchTh && graphTh ? [branchTh, graphTh] as HTMLElement[] : undefined;
     }, ([branchTh, graphTh]) => {
       this._branchColumnWidth.set(branchTh.clientWidth);
@@ -248,28 +229,6 @@ export class LogsComponent {
       onCleanup(() => logTable.removeEventListener('scroll', onScroll));
     });
 
-    // Ctrl+Home / Ctrl+End jump to the first / last commit of the whole log. Captured before p-table's row handler, which
-    // only knows the rendered rows (renderWindow), so it would stop one page away
-    effect((onCleanup) => {
-      const logTable = this.logTableContainer();
-      if (!logTable) return;
-      const onKeyDown = (event: KeyboardEvent) => {
-        if (!event.ctrlKey || event.shiftKey || (event.code !== 'Home' && event.code !== 'End')) return;
-        event.preventDefault();
-        event.stopPropagation();
-        const toEnd = event.code === 'End';
-        const row = toEnd ? Math.max(this.computedDisplayLog().length - this.visibleCommitsCount()!, 0) : 0;
-        this.currentRepo.update({startCommit: row});
-        logTable.scrollTo({top: row * ROW_HEIGHT});
-        afterNextRender(() => {
-          const rows = logTable.querySelectorAll<HTMLElement>('[data-p-selectable-row="true"]');
-          rows[toEnd ? rows.length - 1 : 0]?.focus();
-        }, {injector: this.injector});
-      };
-      logTable.addEventListener('keydown', onKeyDown, {capture: true});
-      onCleanup(() => logTable.removeEventListener('keydown', onKeyDown, {capture: true}));
-    });
-
     afterNextRender(() => this._layoutReady.set(true));
     this.watchDpr();
   }
@@ -291,9 +250,9 @@ export class LogsComponent {
     }
   }
 
-  // The table rows navigate on these keys (Home / End jump to the first / last commit…): leave them to the input typed in
+  // The log moves the selection on these keys (see onLogKeydown): leave them to the input typed in
   protected keepKeyInInput = (event: KeyboardEvent) => {
-    const rowKeys = ['ArrowUp', 'ArrowDown', 'Home', 'End', 'Space', 'Enter'];
+    const rowKeys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'];
     if (rowKeys.includes(event.code) || (event.code === 'KeyA' && (event.ctrlKey || event.metaKey))) event.stopPropagation();
   };
 
@@ -331,8 +290,11 @@ export class LogsComponent {
     }
   };
 
-  // Called after canvas is available (runs once) — restores last scroll position
-  private restoreLastScrollPosition = once(() => this.logTableContainer()?.scrollTo({top: this.currentRepo.startCommit() * ROW_HEIGHT}));
+  // Called after canvas is available (runs once) — restores last scroll position, once the table's margins give the full scroll height
+  private restoreLastScrollPosition = once(() => afterNextRender(
+    () => this.logTableContainer()?.scrollTo({top: this.currentRepo.startCommit() * ROW_HEIGHT}),
+    {injector: this.injector},
+  ));
 
   // Scroll view to display the selected commit
   private scrollToCommit = (sha: string, startCommit: number, endCommit: number) => {
@@ -345,13 +307,55 @@ export class LogsComponent {
     }
   };
 
-  protected onCommitsSelection = (selection: DisplayRef[]) => {
+  // Click selects the row, ctrl+click toggles it, shift+click selects from the anchor (see row-selection)
+  protected onRowClick = (index: number, event: MouseEvent) => {
+    if ((event.target as Element).closest('input, button, a, textarea')) return;
+
     if (this.fixup.selectingFixupTarget()) {
-      const commit = selection[0];
+      const commit = this.computedDisplayLog()[index];
       if (commit && isCommit(commit)) this.fixup.onCommitSelectedForFixup(commit);
       return;
     }
-    this.currentRepo.update({selectedCommitsShas: selection.map(s => s.sha)});
+
+    if (event.shiftKey) window.getSelection()?.removeAllRanges(); // shift+click also extends the text selection
+    this.setSelection(selectRow(this.rowKeys(), this.rowSelection(), index, {ctrl: event.ctrlKey || event.metaKey, shift: event.shiftKey}));
+  };
+
+  // Up / down move the selection, page up / down by a screen of rows (extending it with shift), Home / End jump to the
+  // first / last commit (with or without ctrl), ctrl+A selects all
+  protected onLogKeydown = (event: KeyboardEvent) => {
+    const rowKeys = this.rowKeys();
+    const page = Math.max(1, (this.visibleCommitsCount() ?? 3) - 3); // the rows fully shown, see scrollRowIntoView
+    const delta = {ArrowUp: -1, ArrowDown: 1, PageUp: -page, PageDown: page, Home: -Infinity, End: Infinity}[event.code];
+    if (delta !== undefined) {
+      const selection = moveSelection(rowKeys, this.rowSelection(), delta, {shift: event.shiftKey});
+      this.setSelection(selection);
+      this.scrollRowIntoView(selection.rangeEnd ?? 0);
+    } else if (event.code === 'KeyA' && (event.ctrlKey || event.metaKey)) {
+      this.setSelection(selectAll(rowKeys));
+    } else {
+      return;
+    }
+    event.preventDefault();
+  };
+
+  private rowKeys = () => this.computedDisplayLog().map(c => c.sha);
+
+  private rowSelection = (): RowSelection => ({keys: this.currentRepo.selectedCommitsShas() ?? [], ...this.selectionAnchor});
+
+  private setSelection = ({keys, ...anchor}: RowSelection) => {
+    this.selectionAnchor = anchor;
+    this.currentRepo.update({selectedCommitsShas: keys});
+  };
+
+  private scrollRowIntoView = (index: number) => {
+    const scroller = this.logTableContainer();
+    const visible = this.visibleCommitsCount();
+    if (!scroller || !visible) return;
+    const first = Math.floor(scroller.scrollTop / ROW_HEIGHT);
+    const last = first + visible - 3; // the last rows are behind the header height / partially hidden
+    if (index < first) scroller.scrollTo({top: index * ROW_HEIGHT});
+    else if (index > last) scroller.scrollTo({top: (index - visible + 3) * ROW_HEIGHT});
   };
 
   private isOnView = (commitIndex: number, startCommit: number, endCommit: number) =>
@@ -399,16 +403,12 @@ export class LogsComponent {
   protected remote = remote;
   protected local = local;
   protected commitColor = commitColor;
-  protected isIndex = isIndex;
   protected DATE_FORMAT = DATE_FORMAT;
   protected NODE_RADIUS = NODE_RADIUS;
   protected CANVAS_MARGIN = CANVAS_MARGIN;
   protected NODES_VERTICAL_SPACING = NODES_VERTICAL_SPACING;
   protected DRAWING_PAD_LEFT = DRAWING_PAD_LEFT;
   protected ROW_HEIGHT = ROW_HEIGHT;
-  protected $displayRef = (c: DisplayRef) => c;
-  // Display refs are rebuilt on every refresh: track by sha so p-table reuses row DOM instead of re-rendering all rows
-  protected trackBySha = (_: number, c: DisplayRef) => c.sha;
 
   // Blur also fires when the window loses focus (alt+tab): keep the input open in that case
   protected onBranchInputBlur = () => document.hasFocus() && this.createBranch.cancel();

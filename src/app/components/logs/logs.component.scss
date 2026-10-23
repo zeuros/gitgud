@@ -3,7 +3,7 @@
   z-index: 601;
   background-color: var(--background); // block mask bleed-through on transparent host
 
-  ::ng-deep .p-datatable-tbody tr {
+  .commit-row {
     cursor: crosshair;
   }
 }
@@ -72,185 +72,180 @@ $log-chip-parent-left-margin: 6px;
     }
   }
 
-  ::ng-deep {
-    .p-datatable {
+  .log-scroller {
+    height: 100%;
+    overflow: auto;
+    cursor: pointer;
+  }
 
-      table {
-        border-collapse: collapse;
-        // Fixed layout so columns never grow past the panel (no horizontal scroll)
-        table-layout: fixed;
-        width: 100%;
-      }
+  .log-table {
+    border-collapse: collapse;
+    // Fixed layout: columns take the widths LogColumnsDirective gives them, never their content's
+    table-layout: fixed;
+    font-size: 14px;
 
-      // Paginator mode only serves to render the visible rows window (see LogsComponent.renderWindow)
-      .p-paginator {
-        display: none;
-      }
-
-      .p-datatable-tbody > tr {
-        background-color: transparent;
-        height: $row-height;
-        border-top: calc($row-spacing / 2) solid var(--p-content-background);
-        border-bottom: calc($row-spacing / 2) solid var(--p-content-background);
-
-        & > td {
-          &.summary {
-            padding-left: 10px;
-          }
-        }
-
-        &:hover {
-          td.summary, td.author, td.date, .commit-highlight-background {
-            background: var(--row-hover-bg);
-          }
-        }
-
-        // row selected
-        &.p-datatable-row-selected, &.p-highlight:hover {
-          td.summary, td.author, td.date, .commit-highlight-background {
-            background: var(--row-selected-background-color);
-            color: var(--babedouGray);
-          }
-        }
-
-        // Conflicted working dir
-        &.conflict {
-          td.summary, td.author, td.date, .commit-highlight-background {
-            background: var(--row-warning-background-color);
-          }
-
-          td.summary {
-            color: var(--warning-text-color);
-            font-style: italic;
-          }
-
-          &.p-datatable-row-selected, &.p-highlight:hover {
-            td.summary, td.author, td.date, .commit-highlight-background {
-              background: var(--row-warning-selected-background-color);
-            }
-          }
-        }
-      }
-
-      .p-datatable-thead {
-
-        z-index: 200;
-
-        & > tr > th {
-          font-size: 14px;
-          font-weight: bold;
-          color: var(--hmmmmmmGray);
-
-          .p-datatable-column-resizer {
-            width: 8px;
-            opacity: 0;
-            transition: opacity 0.15s ease;
-
-            &::after {
-              content: '';
-              position: absolute;
-              top: 20%;
-              bottom: 20%;
-              right: 3px;
-              width: 2px;
-              border-radius: 1px;
-              background: var(--chip-border-color);
-            }
-          }
-        }
-
-        &:hover {
-          .p-datatable-column-resizer {
-            opacity: 1;
-          }
-        }
-      }
+    th, td {
+      padding: 2px 6px;
+      text-align: start;
+      vertical-align: middle;
     }
 
-    .commit-row {
-      td.log-chip-parent-td {
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+
+      th {
         position: relative;
-        padding: 0 !important;
-        overflow: visible;
-        display: flex;
-        align-items: center;
-
-        // Other branches will appear below on hovering the branch <td>, or dragging a chip over it (no :hover then)
-        &:hover, &.deployed {
-          z-index: 500; // hovered pack of chips over others
-
-          .log-chip-parent {
-            opacity: 1;
-
-            .log-chip-drop-zone {
-              transform: translate(3px, var(--offset)) scale(1.05);
-              max-width: 1000px; // Full branch name; a length (not none) so it animates
-              transition: transform 0.12s ease, max-width 0.12s ease-in; // ease-in: the visible part (start) takes longer
-            }
-          }
-        }
-
-        .log-chip-parent {
-          transition: all 0.12s ease;
-          opacity: 0;
-          margin-left: $log-chip-parent-left-margin;
-
-          &:first-child {
-            opacity: 1;
-          }
-
-          .log-chip-drop-zone {
-            display: flex;
-            width: max-content; // absolute boxes otherwise shrink to the td width
-            max-width: calc(100% - 40px); // Column width, minus the left margin and the +N badge drawn on the chip's right
-            transform: translateY(0) scale(1);
-            transform-origin: left center; // grow rightwards, the panel edge would clip the left side
-            transition: transform 0.2s ease, max-width 0.4s ease-out; // ease-out: skip quickly past the unused part of the 1000px
-            z-index: 300; // Display this over commit graph
-            position: absolute;
-            left: $log-chip-parent-left-margin;
-            top: 0;
-            padding: 0;
-            border-radius: 3px;
-            height: 28px; // Avoid space between chips, hovering in between them would reach out of td
-          }
-        }
+        background: var(--p-content-background);
+        font-size: 14px;
+        font-weight: bold;
+        color: var(--hmmmmmmGray);
+        overflow: hidden;
+        white-space: nowrap;
       }
 
-      td.summary, td.author, td.date {
-        color: var(--huaaaaaGray);
-      }
+      // Drag handle on the column's right edge (see LogColumnsDirective)
+      .column-resizer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 8px;
+        cursor: col-resize;
+        opacity: 0;
+        transition: opacity 0.15s ease;
 
-      td.graph {
-        position: relative;
-        overflow: visible;
-
-        .commit-highlight-background {
-          top: 0;
-          bottom: 0;
-          right: 0;
+        &::after {
+          content: '';
           position: absolute;
+          top: 20%;
+          bottom: 20%;
+          right: 3px;
+          width: 2px;
+          border-radius: 1px;
+          background: var(--chip-border-color);
         }
       }
 
-      &.not-matched {
-        td.summary, td.author, td.date {
-          color: var(--row-dimmed-color);
-        }
+      &:hover .column-resizer {
+        opacity: 1;
       }
-
     }
   }
-}
 
-.fixed-row-height {
-  .p-datatable-tbody > tr {
-    height: 34px !important;
-    max-height: 34px !important;
+  // Base cell styles first: the hover / selected / conflict states below override them
+  .commit-row {
+    height: $row-height;
+    border-top: calc($row-spacing / 2) solid var(--p-content-background);
+    border-bottom: calc($row-spacing / 2) solid var(--p-content-background);
 
-    & > td {
-      height: 34px !important;
-      max-height: 34px !important;
+    td.summary {
+      padding-left: 10px;
+    }
+
+    td.summary, td.author, td.date {
+      color: var(--huaaaaaGray);
+    }
+
+    &.not-matched {
+      td.summary, td.author, td.date {
+        color: var(--row-dimmed-color);
+      }
+    }
+
+    td.log-chip-parent-td {
+      position: relative;
+      padding: 0;
+      overflow: visible;
+      display: flex;
+      align-items: center;
+
+      // Other branches will appear below on hovering the branch <td>, or dragging a chip over it (no :hover then)
+      &:hover, &.deployed {
+        z-index: 500; // hovered pack of chips over others
+
+        .log-chip-parent {
+          opacity: 1;
+
+          .log-chip-drop-zone {
+            transform: translate(3px, var(--offset)) scale(1.05);
+            max-width: 1000px; // Full branch name; a length (not none) so it animates
+            transition: transform 0.12s ease, max-width 0.12s ease-in; // ease-in: the visible part (start) takes longer
+          }
+        }
+      }
+
+      .log-chip-parent {
+        transition: all 0.12s ease;
+        opacity: 0;
+        margin-left: $log-chip-parent-left-margin;
+
+        &:first-child {
+          opacity: 1;
+        }
+
+        .log-chip-drop-zone {
+          display: flex;
+          width: max-content; // absolute boxes otherwise shrink to the td width
+          max-width: calc(100% - 40px); // Column width, minus the left margin and the +N badge drawn on the chip's right
+          transform: translateY(0) scale(1);
+          transform-origin: left center; // grow rightwards, the panel edge would clip the left side
+          transition: transform 0.2s ease, max-width 0.4s ease-out; // ease-out: skip quickly past the unused part of the 1000px
+          z-index: 300; // Display this over commit graph
+          position: absolute;
+          left: $log-chip-parent-left-margin;
+          top: 0;
+          padding: 0;
+          border-radius: 3px;
+          height: 28px; // Avoid space between chips, hovering in between them would reach out of td
+        }
+      }
+    }
+
+    td.graph {
+      position: relative;
+      overflow: visible;
+
+      .commit-highlight-background {
+        top: 0;
+        bottom: 0;
+        right: 0;
+        position: absolute;
+      }
+    }
+
+    &:hover {
+      td.summary, td.author, td.date, .commit-highlight-background {
+        background: var(--row-hover-bg);
+      }
+    }
+
+    &.selected {
+      color: var(--p-highlight-color);
+
+      td.summary, td.author, td.date, .commit-highlight-background {
+        background: var(--row-selected-background-color);
+        color: var(--babedouGray);
+      }
+    }
+
+    // Conflicted working dir
+    &.conflict {
+      td.summary, td.author, td.date, .commit-highlight-background {
+        background: var(--row-warning-background-color);
+      }
+
+      td.summary {
+        color: var(--warning-text-color);
+        font-style: italic;
+      }
+
+      &.selected {
+        td.summary, td.author, td.date, .commit-highlight-background {
+          background: var(--row-warning-selected-background-color);
+        }
+      }
     }
   }
 }
