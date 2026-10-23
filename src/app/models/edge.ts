@@ -30,6 +30,7 @@ export class Edge {
     public parentCol: number,
     public type: RefType,
     public laneCol: number, // Column the edge runs vertically in
+    public otherTree = false, // Edge of a tree other than HEAD's, drawn faded
   ) {
     this.low = childRow;
     this.high = parentRow;

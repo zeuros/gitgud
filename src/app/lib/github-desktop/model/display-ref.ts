@@ -24,6 +24,7 @@ export interface LogObjectDisplayInfo {
   refType: RefType,
   row?: number,
   lane?: number,
+  otherTree?: boolean, // Not in the tree of HEAD (an unrelated history): drawn faded
   isPointedByLocalHead: boolean, // If commit is pointed by HEAD, preselect the commit line, and add the 💻 icon
   highlight?: 'not-matched' | 'conflict',
   branchesDetails: Branch[],

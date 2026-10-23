@@ -23,7 +23,7 @@ import type {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {RefType} from '../../enums/ref-type.enum';
 import {hasName, initials, isCommit, isIndex, isMergeCommit, isRootCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
-import {DRAWING_PAD_LEFT, DRAWING_SHIFT_TOP, NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
+import {DRAWING_PAD_LEFT, DRAWING_SHIFT_TOP, NODE_DIAMETER, NODE_RADIUS, OTHER_TREE_ALPHA, ROW_HEIGHT} from './log-canvas-drawer-settings';
 import type {CanvasColors} from '../../models/theme.model';
 
 /**
@@ -56,9 +56,11 @@ export const drawLog = (
   displayLog
     .slice(startCommit, endCommit)
     .forEach((ref, indexForThisSlice) => {
+      canvas.globalAlpha = ref.otherTree ? OTHER_TREE_ALPHA : 1;
       drawNode(canvas, new Coordinates(indexForThisSlice, ref.lane!), ref, stashImg, avatarImages, colors);
       if (isRootCommit(ref)) drawRootCap(canvas, new Coordinates(indexForThisSlice, ref.lane!), colors);
     });
+  canvas.globalAlpha = 1;
 
   // Erase the area behind the sticky table header so graph lines don't show through it
   canvas.resetTransform();
@@ -70,17 +72,21 @@ function drawEdges(canvas: CanvasRenderingContext2D, edgesToDisplay: Edge[], col
   canvas.lineWidth = 2;
   canvas.shadowBlur = 0; // No shadow on edges
 
-  // Colored by lane: a vertical line keeps the color of its column
-  const solidEdgesByColor = groupBy(edgesToDisplay.filter(e => e.type !== RefType.INDEX), e => e.laneCol);
-  const dashedEdgesByColor = groupBy(edgesToDisplay.filter(e => e.type === RefType.INDEX), e => e.laneCol);
+  // Colored by lane: a vertical line keeps the color of its column. Edges of other trees than HEAD's are faded
+  const style = (e: Edge) => `${e.laneCol} ${e.otherTree}`;
+  const solidEdgesByStyle = groupBy(edgesToDisplay.filter(e => e.type !== RefType.INDEX), style);
+  const dashedEdgesByStyle = groupBy(edgesToDisplay.filter(e => e.type === RefType.INDEX), style);
 
-  Object.entries(solidEdgesByColor).forEach(([key, group]) => strokeEdges(canvas, group, +key, colors, startCommit, false));
-  Object.entries(dashedEdgesByColor).forEach(([key, group]) => strokeEdges(canvas, group, +key, colors, startCommit, true));
+  Object.values(solidEdgesByStyle).forEach(group => strokeEdges(canvas, group, colors, startCommit, false));
+  Object.values(dashedEdgesByStyle).forEach(group => strokeEdges(canvas, group, colors, startCommit, true));
+  canvas.globalAlpha = 1;
 }
 
-const strokeEdges = (canvas: CanvasRenderingContext2D, group: Edge[], colorKey: number, colors: CanvasColors, startCommit: number, dashed: boolean) => {
+const strokeEdges = (canvas: CanvasRenderingContext2D, group: Edge[], colors: CanvasColors, startCommit: number, dashed: boolean) => {
+  const {laneCol, otherTree} = group[0];
   canvas.beginPath();
-  canvas.strokeStyle = colors.graphColors[colorKey % colors.graphColors.length];
+  canvas.strokeStyle = colors.graphColors[laneCol % colors.graphColors.length];
+  canvas.globalAlpha = otherTree ? OTHER_TREE_ALPHA : 1;
   canvas.setLineDash(dashed ? [3] : []);
   group.forEach(edge => addEdgePath(canvas, edge, startCommit));
   canvas.stroke();

@@ -97,6 +97,19 @@ describe('layoutGraph', () => {
     expect(columns(commits)).toEqual({c: 0, b: 0, y: 1, z: 0, x: 1});
   });
 
+  it("marks the commits and edges outside HEAD's tree", () => {
+    //  y       other tree, newer
+    //  | c     HEAD
+    //  | | f   branch forked from HEAD's tree: same tree
+    //  | |/
+    //  | b
+    //  x
+    const commits = log('y:x', 'c:b', 'f:b', 'b', 'x');
+    const {edges} = layoutGraph(commits, commits[1]);
+    expect(Object.fromEntries(commits.map(c => [c.sha, c.otherTree]))).toEqual({y: true, c: false, f: false, b: false, x: true});
+    expect(edges.filter(e => e.otherTree).map(e => [e.childRow, e.parentRow])).toEqual([[0, 4]]);
+  });
+
   it('ignores parents missing from the log (truncated history)', () => {
     const commits = log('c:b', 'b:missing');
     const {edges} = layoutGraph(commits, commits[0]);

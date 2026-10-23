@@ -96,10 +96,33 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
     });
   });
 
+  // Commits outside mainTip's tree belong to unrelated histories, drawn faded
+  const mainTree = mainTip && inLog(mainTip.sha) ? treeOf(mainTip, log, inLog) : undefined;
+  log.forEach(commit => commit.otherTree = !!mainTree && !mainTree.has(commit.sha));
+
   const edges = log.flatMap(child => child.parentSHAs.filter(inLog).map(parentSha => {
     const parent = log[rows.get(parentSha)!];
-    return new Edge(child.row!, child.lane!, parent.row!, parent.lane!, edgeType(child), edgeLanes.get(`${child.sha} ${parentSha}`)!);
+    return new Edge(child.row!, child.lane!, parent.row!, parent.lane!, edgeType(child), edgeLanes.get(`${child.sha} ${parentSha}`)!, child.otherTree);
   }));
 
   return {edges, columnCount: Math.max(lanes.length, ...log.map(c => c.lane! + 1), 1)};
+};
+
+// Shas of the commits linked to `commit` through parents and children: its tree
+const treeOf = (commit: DisplayRef, log: DisplayRef[], inLog: (sha: string) => boolean) => {
+  const linked = new Map<string, string[]>(log.map(c => [c.sha, []]));
+  log.forEach(child => child.parentSHAs.filter(inLog).forEach(parent => {
+    linked.get(child.sha)!.push(parent);
+    linked.get(parent)!.push(child.sha);
+  }));
+
+  const tree = new Set([commit.sha]);
+  const toVisit = [commit.sha];
+  while (toVisit.length) linked.get(toVisit.pop()!)!.forEach(sha => {
+    if (!tree.has(sha)) {
+      tree.add(sha);
+      toVisit.push(sha);
+    }
+  });
+  return tree;
 };
