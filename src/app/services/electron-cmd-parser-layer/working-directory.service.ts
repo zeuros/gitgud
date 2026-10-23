@@ -19,7 +19,7 @@
 import {inject, Injectable} from '@angular/core';
 import {GitApiService} from './git-api.service';
 import {GitRefreshService} from '../git-refresh.service';
-import {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
+import type {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
 
 @Injectable({
   providedIn: 'root',

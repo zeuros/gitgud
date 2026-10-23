@@ -19,7 +19,7 @@
 import {ChangeDetectionStrategy, Component, computed, input} from '@angular/core';
 import {DatePipe} from '@angular/common';
 import {Tooltip} from 'primeng/tooltip';
-import {type Commit} from '../../../lib/github-desktop/model/commit';
+import type {Commit} from '../../../lib/github-desktop/model/commit';
 import {DATE_FORMAT, MINUTE_MS} from '../../../utils/constants';
 
 const duration = (ms: number) => {

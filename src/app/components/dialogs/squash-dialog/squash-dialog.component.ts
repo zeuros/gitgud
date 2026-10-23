@@ -21,9 +21,9 @@ import {FormControl, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
-import {DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
-import {type Observable} from 'rxjs';
-import {type Commit} from '../../../lib/github-desktop/model/commit';
+import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
+import type {Observable} from 'rxjs';
+import type {Commit} from '../../../lib/github-desktop/model/commit';
 
 // Asks for the message of the commit `chain` (newest first) is squashed into, null when cancelled
 export const openSquashDialog = (dialog: DialogService, chain: Commit[]): Observable<string | null> =>

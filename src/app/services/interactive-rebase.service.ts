@@ -23,7 +23,7 @@ import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {ToastService} from './toast.service';
 import {notUndefined} from '../utils/utils';
-import {type GitDirs} from '../utils/git-path.utils';
+import type {GitDirs} from '../utils/git-path.utils';
 import {buildRebaseTodo, parseRebaseLog, REBASE_LOG_FORMAT, type RebaseEntry, rewordMessageFile} from '../utils/interactive-rebase.utils';
 import {openInteractiveRebaseDialog} from '../components/dialogs/interactive-rebase-dialog/interactive-rebase-dialog.component';
 

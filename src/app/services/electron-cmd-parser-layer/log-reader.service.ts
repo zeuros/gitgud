@@ -19,7 +19,7 @@
 import {inject, Injectable} from '@angular/core';
 import {Commit, parseRawUnfoldedTrailers} from '../../lib/github-desktop/model/commit';
 import {createLogParser} from '../parser.service';
-import {map, Observable} from 'rxjs';
+import {map, type Observable} from 'rxjs';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {GitApiService} from './git-api.service';
 import {short} from '../../utils/commit-utils';

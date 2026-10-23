@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, input} from '@angular/core';
-import {GitTag} from '../../../../models/git-tag';
+import type {GitTag} from '../../../../models/git-tag';
 
 @Component({
   selector: 'gitgud-log-tag-chip',

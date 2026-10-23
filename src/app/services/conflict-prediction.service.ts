@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable, signal} from '@angular/core';
-import {type MenuItem} from 'primeng/api';
+import type {MenuItem} from 'primeng/api';
 import {catchError, from, map, of} from 'rxjs';
 import {SettingsService} from './settings.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';

@@ -17,9 +17,9 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {type CdkDragEnd} from '@angular/cdk/drag-drop';
-import {Branch} from '../lib/github-desktop/model/branch';
-import {type LocalAndDistantTagWithName} from '../utils/tag-utils';
+import type {CdkDragEnd} from '@angular/cdk/drag-drop';
+import type {Branch} from '../lib/github-desktop/model/branch';
+import type {LocalAndDistantTagWithName} from '../utils/tag-utils';
 import {BranchDragDropService} from './branch-drag-drop.service';
 import {TagDragDropService} from './tag-drag-drop.service';
 

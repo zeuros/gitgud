@@ -16,8 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type ChangeSet} from '../model/change-set';
-import {AppFileStatusKind, CommittedFileChange} from '../model/status';
+import type {ChangeSet} from '../model/change-set';
+import {AppFileStatusKind, type CommittedFileChange} from '../model/status';
 
 
 export const mergeChangeSets = (changeSets: ChangeSet[]): ChangeSet => {

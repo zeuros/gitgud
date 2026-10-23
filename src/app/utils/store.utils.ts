@@ -16,11 +16,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type Signal} from '@angular/core';
-import {StorageName} from '../enums/storage-name.enum';
+import type {Signal} from '@angular/core';
+import type {StorageName} from '../enums/storage-name.enum';
 import {toObservable} from '@angular/core/rxjs-interop';
 import {debounceTime, distinctUntilChanged, map} from 'rxjs';
-import {LocalStorageService} from '../services/local-storage.service';
+import type {LocalStorageService} from '../services/local-storage.service';
 
 // toStored picks what is persisted (defaults to the whole value); nothing is written when that part didn't change
 export const syncToStorage = <T>(signal: Signal<T>, key: StorageName, localStorageService: LocalStorageService, toStored: (value: T) => unknown = value => value) =>

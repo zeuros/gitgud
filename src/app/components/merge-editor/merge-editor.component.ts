@@ -18,7 +18,7 @@
 
 import '@mismerge/core/web';
 
-import {ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, HostListener, inject, signal, viewChild, type WritableSignal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, type ElementRef, HostListener, inject, signal, viewChild, type WritableSignal} from '@angular/core';
 import {NgTemplateOutlet} from '@angular/common';
 import {Button} from 'primeng/button';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';

@@ -16,9 +16,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {CommitIdentity} from './commit-identity';
-import {type Trailer} from '../../../models/interpret-trailers';
-import {type LogObject} from '../../../models/log-object';
+import type {CommitIdentity} from './commit-identity';
+import type {Trailer} from '../../../models/interpret-trailers';
+import type {LogObject} from '../../../models/log-object';
 import {notUndefined} from '../../../utils/utils';
 
 export const parseRawUnfoldedTrailers = (trailers: string, separators: string): Trailer[] =>

@@ -17,8 +17,8 @@
  */
 
 import {groupBy, orderBy, values} from 'lodash-es';
-import {Branch, BranchType} from '../lib/github-desktop/model/branch';
-import {type TreeNode} from 'primeng/api';
+import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
+import type {TreeNode} from 'primeng/api';
 
 export const local = (branch: Branch) => branch.type == BranchType.Local;
 export const remote = (branch: Branch) => branch.type == BranchType.Remote;

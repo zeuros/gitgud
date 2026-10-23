@@ -19,7 +19,7 @@
 import {inject, Injectable} from '@angular/core';
 import {map} from 'rxjs';
 import {GitApiService} from './git-api.service';
-import {type GitWorktree} from '../../models/git-worktree';
+import type {GitWorktree} from '../../models/git-worktree';
 
 @Injectable({providedIn: 'root'})
 export class WorktreeReaderService {

@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, type OnDestroy, type OnInit, signal} from '@angular/core';
 import {Button} from 'primeng/button';
 import {InputNumber} from 'primeng/inputnumber';
 import {InputText} from 'primeng/inputtext';

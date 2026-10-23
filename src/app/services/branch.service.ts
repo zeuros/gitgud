@@ -1,5 +1,5 @@
 import {inject, Injectable} from '@angular/core';
-import {Branch, BranchType} from '../lib/github-desktop/model/branch';
+import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {catchError, EMPTY, finalize, switchMap} from 'rxjs';
 import {normalizedBranchName} from '../utils/branch-utils';
 import {StashService} from './stash.service';

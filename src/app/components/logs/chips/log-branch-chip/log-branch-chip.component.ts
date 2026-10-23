@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, input} from '@angular/core';
-import {Branch} from '../../../../lib/github-desktop/model/branch';
+import type {Branch} from '../../../../lib/github-desktop/model/branch';
 import {normalizedBranchName} from '../../../../utils/branch-utils';
 
 @Component({

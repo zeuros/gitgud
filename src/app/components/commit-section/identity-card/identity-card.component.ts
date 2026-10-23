@@ -18,7 +18,7 @@
 
 import {ChangeDetectionStrategy, Component, input, signal, viewChild} from '@angular/core';
 import {DATE_FORMAT} from '../../../utils/constants';
-import {Commit} from '../../../lib/github-desktop/model/commit';
+import type {Commit} from '../../../lib/github-desktop/model/commit';
 import {Tooltip} from 'primeng/tooltip';
 import {AvatarComponent} from '../commit-infos/avatar/avatar.component';
 import {Button} from 'primeng/button';

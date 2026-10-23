@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {catchError, defer, EMPTY, finalize, first, from, map, Observable, retry, Subject, switchMap, throwError} from 'rxjs';
+import {catchError, defer, EMPTY, finalize, first, from, map, type Observable, retry, Subject, switchMap, throwError} from 'rxjs';
 import {GitApiService, noopEditor} from './electron-cmd-parser-layer/git-api.service';
 
 @Injectable({

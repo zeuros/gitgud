@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {RefType} from "../enums/ref-type.enum";
+import type {RefType} from "../enums/ref-type.enum";
 
 export class Edge {
 

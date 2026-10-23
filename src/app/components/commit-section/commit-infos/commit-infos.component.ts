@@ -25,7 +25,7 @@ import {isEqual} from 'lodash-es';
 import {finalize} from 'rxjs';
 import {directory, fileName} from '../../../utils/utils';
 import {Tooltip} from 'primeng/tooltip';
-import {type ChangeSet} from '../../../lib/github-desktop/model/change-set';
+import type {ChangeSet} from '../../../lib/github-desktop/model/change-set';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
 import {ToastService} from '../../../services/toast.service';

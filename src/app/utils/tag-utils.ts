@@ -1,6 +1,6 @@
-import {type GitTag} from '../models/git-tag';
+import type {GitTag} from '../models/git-tag';
 import {groupBy} from 'lodash-es';
-import {type TreeNode} from 'primeng/api';
+import type {TreeNode} from 'primeng/api';
 
 export type LocalAndDistantTagWithName = { local: GitTag | null, distant: GitTag | null, name: string, sha: string };
 

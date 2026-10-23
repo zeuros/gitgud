@@ -21,9 +21,9 @@ import {FormControl, ReactiveFormsModule} from '@angular/forms';
 import {Button} from 'primeng/button';
 import {Select} from 'primeng/select';
 import {InputText} from 'primeng/inputtext';
-import {DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
+import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
-import {Observable} from 'rxjs';
+import type {Observable} from 'rxjs';
 
 export interface SetUpstreamResult {
   remote: string;

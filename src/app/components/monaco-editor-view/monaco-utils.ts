@@ -18,7 +18,7 @@
 
 import {css, editor, html, json, typescript} from 'monaco-editor';
 import {once} from 'lodash-es';
-import ITextModel = editor.ITextModel;
+type ITextModel = editor.ITextModel;
 
 export const registerMonacoEditorThemes = once(() => {
 

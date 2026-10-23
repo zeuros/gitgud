@@ -16,9 +16,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type LogObject} from "../../../models/log-object";
-import {RefType} from "../../../enums/ref-type.enum";
-import {Branch} from "./branch";
+import type {LogObject} from "../../../models/log-object";
+import type {RefType} from "../../../enums/ref-type.enum";
+import type {Branch} from "./branch";
 
 export interface LogObjectDisplayInfo {
   refType: RefType,

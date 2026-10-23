@@ -17,10 +17,10 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {type MenuItem} from 'primeng/api';
+import type {MenuItem} from 'primeng/api';
 import {ToastService} from './toast.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
+import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {short} from '../utils/commit-utils';
 import {GitWorkflowService} from './git-workflow.service';
 import {CreateBranchService} from './create-branch.service';

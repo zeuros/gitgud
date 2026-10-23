@@ -16,31 +16,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, effect, inject, signal, WritableSignal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, effect, inject, signal, type WritableSignal} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
 import {Tree} from 'primeng/tree';
 import {CdkDropList} from '@angular/cdk/drag-drop';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
-import {type TreeNode} from 'primeng/api';
-import {Branch} from '../../lib/github-desktop/model/branch';
+import type {TreeNode} from 'primeng/api';
+import type {Branch} from '../../lib/github-desktop/model/branch';
 import {local, remote, toBranchTree} from '../../utils/branch-utils';
 import {findNode, toggleNode} from '../../utils/tree-utils';
-import {Commit} from '../../lib/github-desktop/model/commit';
+import type {Commit} from '../../lib/github-desktop/model/commit';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {TableModule} from 'primeng/table';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
 import {Splitter, SplitterPanel} from 'primeng/splitter';
-import {LocalAndDistantTagWithName, toTagTree} from '../../utils/tag-utils';
+import {type LocalAndDistantTagWithName, toTagTree} from '../../utils/tag-utils';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
-import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
+import type {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
 import {BranchDragDropService} from '../../services/branch-drag-drop.service';
 import {BranchService} from '../../services/branch.service';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {WorktreeContextMenuService} from '../../services/worktree-context-menu.service';
-import {type GitWorktree} from '../../models/git-worktree';
+import type {GitWorktree} from '../../models/git-worktree';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';

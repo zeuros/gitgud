@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable, signal} from '@angular/core';
-import {WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
+import type {WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
 import {FileDiffPanelService} from './file-diff-panel.service';
 import {UnstagedFileContextMenuService} from './unstaged-file-context-menu.service';
 import {ActiveContextMenuService} from './active-context-menu.service';

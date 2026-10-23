@@ -18,7 +18,7 @@
 
 import {inject, Injectable, type WritableSignal} from '@angular/core';
 import {ConfirmationService, type MenuItem} from 'primeng/api';
-import {AppFileStatusKind, CommittedFileChange} from '../lib/github-desktop/model/status';
+import {AppFileStatusKind, type CommittedFileChange} from '../lib/github-desktop/model/status';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {ToastService} from './toast.service';
 import {ActiveContextMenuService} from './active-context-menu.service';

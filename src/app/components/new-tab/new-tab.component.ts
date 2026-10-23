@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, inject, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, type OnInit} from '@angular/core';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {lastFolderName} from '../../utils/utils';

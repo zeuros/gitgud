@@ -16,11 +16,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Commit} from '../lib/github-desktop/model/commit';
-import {Branch} from '../lib/github-desktop/model/branch';
-import {type WorkDirStatus} from '../lib/github-desktop/model/workdir';
-import {type GitTag} from './git-tag';
-import {type GitWorktree} from './git-worktree';
+import type {Commit} from '../lib/github-desktop/model/commit';
+import type {Branch} from '../lib/github-desktop/model/branch';
+import type {WorkDirStatus} from '../lib/github-desktop/model/workdir';
+import type {GitTag} from './git-tag';
+import type {GitWorktree} from './git-worktree';
 
 export type ViewType = 'hunk' | 'inline' | 'split';
 

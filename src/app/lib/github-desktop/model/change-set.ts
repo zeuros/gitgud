@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type AppFileStatus, AppFileStatusKind, CommittedFileChange} from './status';
+import {type AppFileStatus, AppFileStatusKind, type CommittedFileChange} from './status';
 
 export interface ChangeSet {
   /** Files changed in the changeset. */

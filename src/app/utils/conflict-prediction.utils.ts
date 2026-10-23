@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type MenuItem} from 'primeng/api';
+import type {MenuItem} from 'primeng/api';
 
 // Parses `git merge-tree --write-tree --name-only --no-messages`: the merged tree's id, then the conflicted paths.
 // Exits with 1 when the merge has conflicts, 0 when it is clean (anything else: git couldn't tell)

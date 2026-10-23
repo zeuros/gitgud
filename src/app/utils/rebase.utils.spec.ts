@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {type Commit} from '../lib/github-desktop/model/commit';
+import type {Commit} from '../lib/github-desktop/model/commit';
 import {squashableChain, squashActions, writeCommitMessage} from './rebase.utils';
 
 const commit = (sha: string, ...parentSHAs: string[]) => ({sha, parentSHAs} as unknown as Commit);

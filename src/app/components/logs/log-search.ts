@@ -17,7 +17,7 @@
  */
 
 import {inject, type Signal, signal} from '@angular/core';
-import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
+import type {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 /**

@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {WorkingDirectoryFileChange} from './workdir';
+import type {WorkingDirectoryFileChange} from './workdir';
 
 
 /**

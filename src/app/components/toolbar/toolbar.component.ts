@@ -25,7 +25,7 @@ import {Tooltip} from 'primeng/tooltip';
 import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import {Menu} from 'primeng/menu';
-import {type MenuItem} from 'primeng/api';
+import type {MenuItem} from 'primeng/api';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {ToastService} from '../../services/toast.service';
@@ -116,8 +116,7 @@ export class ToolbarComponent implements OnInit {
 
   protected abortRebase = () => this.runAction('rebase-abort', this.rebase.abortRebase(), () => this.toast.success('Rebase aborted'));
 
-  // Shows `key`'s button as loading while `action$` runs, then refreshes, even after a failure: a conflict (pull, pop,
-  // rebase) leaves changes to show
+  // Shows a loader while running action
   private runAction = (key: ToolbarAction, action$: Observable<unknown>, onSuccess: () => void) => {
     this.loading.set(key);
     action$.pipe(finalize(() => {

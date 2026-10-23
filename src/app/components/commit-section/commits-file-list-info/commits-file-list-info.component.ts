@@ -19,11 +19,11 @@
 import {ChangeDetectionStrategy, Component, computed, effect, inject, signal} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {directory, fileName} from '../../../utils/utils';
-import {type ChangeSet} from '../../../lib/github-desktop/model/change-set';
+import type {ChangeSet} from '../../../lib/github-desktop/model/change-set';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {FileDiffService} from '../../../services/file-diff.service';
 import {AvatarComponent} from '../commit-infos/avatar/avatar.component';
-import {type CommitIdentity} from '../../../lib/github-desktop/model/commit-identity';
+import type {CommitIdentity} from '../../../lib/github-desktop/model/commit-identity';
 import {Tooltip} from 'primeng/tooltip';
 import {Divider} from 'primeng/divider';
 import {CommitsTimelineComponent} from '../commits-timeline/commits-timeline.component';

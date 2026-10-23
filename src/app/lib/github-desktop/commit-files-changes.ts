@@ -45,7 +45,7 @@
  *    file_two_new_path
  */
 
-import {type ChangeSet} from './model/change-set';
+import type {ChangeSet} from './model/change-set';
 import {type AppFileStatus, AppFileStatusKind, CommittedFileChange, isConflictedStatusCode} from './model/status';
 import {forceUnwrap} from './throw-ex';
 import {isCopyOrRename, mapPorcelainStatus, mapStatus} from './log';

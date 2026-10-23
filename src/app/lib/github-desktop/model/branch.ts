@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {CommitIdentity} from './commit-identity'
+import type {CommitIdentity} from './commit-identity'
 
 // NOTE: The values here matter as they are used to sort
 // local and remote branches, Local should come before Remote

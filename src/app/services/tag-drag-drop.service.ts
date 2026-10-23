@@ -17,14 +17,14 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {type CdkDragEnd} from '@angular/cdk/drag-drop';
-import {type MenuItem} from 'primeng/api';
-import {Branch, BranchType} from '../lib/github-desktop/model/branch';
+import type {CdkDragEnd} from '@angular/cdk/drag-drop';
+import type {MenuItem} from 'primeng/api';
+import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {isAncestor} from '../utils/log-utils';
 import {ActiveContextMenuService} from './active-context-menu.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {type LocalAndDistantTagWithName} from '../utils/tag-utils';
+import type {LocalAndDistantTagWithName} from '../utils/tag-utils';
 
 @Injectable({providedIn: 'root'})
 export class TagDragDropService {

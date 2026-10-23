@@ -16,8 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {CommitIdentity} from "../lib/github-desktop/model/commit-identity";
-import {type Trailer} from "./interpret-trailers";
+import type {CommitIdentity} from "../lib/github-desktop/model/commit-identity";
+import type {Trailer} from "./interpret-trailers";
 
 export interface LogObject {
   sha: string

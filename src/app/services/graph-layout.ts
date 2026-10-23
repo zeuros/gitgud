@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
+import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {Edge} from '../models/edge';
 import {edgeType} from '../utils/commit-utils';
 

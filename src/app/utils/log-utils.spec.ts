@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {Commit} from '../lib/github-desktop/model/commit';
+import type {Commit} from '../lib/github-desktop/model/commit';
 import {commitCount, countCommitsNotIn} from './log-utils';
 
 const commit = (sha: string, ...parentSHAs: string[]) => ({sha, parentSHAs} as unknown as Commit);

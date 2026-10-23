@@ -17,10 +17,10 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {type CdkDragEnd} from '@angular/cdk/drag-drop';
-import {type MenuItem} from 'primeng/api';
-import {Branch, BranchType} from '../lib/github-desktop/model/branch';
-import {type LocalAndDistantTagWithName} from '../utils/tag-utils';
+import type {CdkDragEnd} from '@angular/cdk/drag-drop';
+import type {MenuItem} from 'primeng/api';
+import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
+import type {LocalAndDistantTagWithName} from '../utils/tag-utils';
 import {parseRemote} from '../utils/branch-utils';
 import {commitCount, countCommitsNotIn, isAncestor} from '../utils/log-utils';
 import {ActiveContextMenuService} from './active-context-menu.service';

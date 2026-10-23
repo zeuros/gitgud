@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {map, Observable, of, switchMap, throwError} from 'rxjs';
+import {map, type Observable, of, switchMap, throwError} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {workingDirHasChanges} from '../utils/utils';
 import {short} from '../utils/commit-utils';

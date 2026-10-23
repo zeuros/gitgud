@@ -18,7 +18,7 @@
 
 import {Injectable, signal} from '@angular/core';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
-import { ThemeMode } from "../models/theme.model";
+import type { ThemeMode } from "../models/theme.model";
 import {DEFAULT_EDITOR_COMMAND} from '../utils/editor-command.utils';
 
 @Injectable({providedIn: 'root'})

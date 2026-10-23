@@ -17,7 +17,7 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {GitRepository} from '../models/git-repository';
+import type {GitRepository} from '../models/git-repository';
 import {LocalStorageService} from '../services/local-storage.service';
 import {StorageName} from '../enums/storage-name.enum';
 import {syncToStorage} from '../utils/store.utils';

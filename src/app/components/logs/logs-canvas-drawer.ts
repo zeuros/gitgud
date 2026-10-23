@@ -17,14 +17,14 @@
  */
 
 import {groupBy} from 'lodash-es';
-import {IntervalTree} from 'node-interval-tree';
-import {Edge} from '../../models/edge';
-import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
+import type {IntervalTree} from 'node-interval-tree';
+import type {Edge} from '../../models/edge';
+import type {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {RefType} from '../../enums/ref-type.enum';
 import {hasName, initials, isCommit, isIndex, isMergeCommit} from '../../utils/commit-utils';
 import {Coordinates} from '../../models/coordinates';
 import {DRAWING_PAD_LEFT, DRAWING_SHIFT_TOP, NODE_DIAMETER, NODE_RADIUS, ROW_HEIGHT} from './log-canvas-drawer-settings';
-import {type CanvasColors} from '../../models/theme.model';
+import type {CanvasColors} from '../../models/theme.model';
 
 /**
  * Draw each commit / stash and their connections.

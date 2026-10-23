@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, effect, ElementRef, input, output, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, effect, type ElementRef, input, output, viewChild} from '@angular/core';
 import {AutofocusDirective} from '../../directives/autofocus.directive';
 
 @Component({

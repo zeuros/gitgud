@@ -17,7 +17,7 @@
  */
 
 import {short} from './commit-utils';
-import {type Commit} from '../lib/github-desktop/model/commit';
+import type {Commit} from '../lib/github-desktop/model/commit';
 import {amendFromFile} from './git-path.utils';
 
 const messageFile = (gitDir: string) => `${gitDir}/COMMIT_EDIT_MSG`;

@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable, signal} from '@angular/core';
-import {AppFileStatusKind, CommittedFileChange, FileChange} from '../lib/github-desktop/model/status';
+import {AppFileStatusKind, CommittedFileChange, type FileChange} from '../lib/github-desktop/model/status';
 import {EMPTY, map, of, Subject, switchMap, tap} from 'rxjs';
 import {instanceOf} from '../utils/utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';

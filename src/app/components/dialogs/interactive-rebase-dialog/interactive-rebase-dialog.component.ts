@@ -22,8 +22,8 @@ import {CdkDrag, type CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray} 
 import {Button} from 'primeng/button';
 import {Select} from 'primeng/select';
 import {Textarea} from 'primeng/textarea';
-import {DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
-import {type Observable} from 'rxjs';
+import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
+import type {Observable} from 'rxjs';
 import {invalidRebaseReason, type RebaseAction, type RebaseEntry, summary} from '../../../utils/interactive-rebase.utils';
 import {short} from '../../../utils/commit-utils';
 

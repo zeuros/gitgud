@@ -17,7 +17,7 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {editor} from 'monaco-editor';
+import type {editor} from 'monaco-editor';
 import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
 import {idsToHide} from '../../utils/diff-editor.utils';
 import {buildZeroContextPatch} from './monaco-patch-builder';
@@ -31,9 +31,14 @@ import {permalink, remoteWebUrl} from '../../utils/permalink.utils';
 import {DEFAULT_EDITOR_COMMAND, editorCommandArgs} from '../../utils/editor-command.utils';
 import {parseRemote} from '../../utils/branch-utils';
 import {firstValueFrom} from 'rxjs';
-import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
-import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
-import ILineChange = editor.ILineChange;
+type IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
+type IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
+type ILineChange = editor.ILineChange;
+
+// Monaco's internal context menu contribution: not part of its public API
+interface ContextMenuController extends editor.IEditorContribution {
+  _getMenuActions: (...args: unknown[]) => { id: string }[];
+}
 
 // Monaco's internal context menu contribution: not part of its public API
 interface ContextMenuController extends editor.IEditorContribution {

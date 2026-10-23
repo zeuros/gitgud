@@ -1,5 +1,5 @@
-import {type TreeNode} from 'primeng/api';
-import {WritableSignal} from '@angular/core';
+import type {TreeNode} from 'primeng/api';
+import type {WritableSignal} from '@angular/core';
 
 export const toggleNode = <T>(nodes: WritableSignal<TreeNode<T>[]>, target: TreeNode<T>) =>
     nodes.set(toggle(nodes(), target));

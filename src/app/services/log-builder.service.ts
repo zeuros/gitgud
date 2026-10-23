@@ -17,15 +17,15 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
-import {Commit} from '../lib/github-desktop/model/commit';
-import {Branch, BranchType} from '../lib/github-desktop/model/branch';
+import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import type {Commit} from '../lib/github-desktop/model/commit';
+import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {RefType} from '../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../utils/utils';
 import {byName, createIndexCommit} from '../utils/log-utils';
 import {buildStashMap, findCurrentHeadCommit, stashUntrackedChildren} from '../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
-import {Edge} from '../models/edge';
+import type {Edge} from '../models/edge';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {layoutGraph} from './graph-layout';
 

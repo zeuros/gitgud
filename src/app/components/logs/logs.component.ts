@@ -16,18 +16,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Table, TableModule} from 'primeng/table';
+import {type Table, TableModule} from 'primeng/table';
 import {RefType} from '../../enums/ref-type.enum';
 import {workingDirHasChanges} from '../../utils/utils';
 import {bySha} from '../../utils/log-utils';
-import {type DisplayRef} from '../../lib/github-desktop/model/display-ref';
-import {Commit} from '../../lib/github-desktop/model/commit';
+import type {DisplayRef} from '../../lib/github-desktop/model/display-ref';
+import type {Commit} from '../../lib/github-desktop/model/commit';
 import {once} from 'lodash-es';
 import {commitColor, findCurrentHeadCommit, hasName, isCommit, isIndex, isStash} from '../../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
-import {Edge} from '../../models/edge';
+import type {Edge} from '../../models/edge';
 import {DragDropModule} from '@angular/cdk/drag-drop';
-import {afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild} from '@angular/core';
+import {afterNextRender, ChangeDetectionStrategy, Component, computed, effect, type ElementRef, HostListener, inject, signal, untracked, viewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
 import {DatePipe} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
@@ -43,8 +43,8 @@ import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import {LogDragDropService} from '../../services/log-drag-drop.service';
-import {type LocalAndDistantTagWithName} from '../../utils/tag-utils';
-import {Branch} from '../../lib/github-desktop/model/branch';
+import type {LocalAndDistantTagWithName} from '../../utils/tag-utils';
+import type {Branch} from '../../lib/github-desktop/model/branch';
 import {Badge} from 'primeng/badge';
 import {CreateBranchService} from '../../services/create-branch.service';
 import {ConflictService} from '../../services/conflict.service';

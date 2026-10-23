@@ -17,9 +17,9 @@
  */
 
 import {isUndefined, omitBy} from 'lodash-es';
-import {Commit} from '../lib/github-desktop/model/commit';
+import type {Commit} from '../lib/github-desktop/model/commit';
 
-import {type WorkDirStatus} from '../lib/github-desktop/model/workdir';
+import type {WorkDirStatus} from '../lib/github-desktop/model/workdir';
 import {catchError, of, type OperatorFunction} from 'rxjs';
 
 export const lastFolderName = (f: string) => f.replace(/.*[/\\]([^\\]+)[/\\]/, '');

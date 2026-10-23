@@ -23,7 +23,7 @@ import {inject, Injectable, isDevMode, signal} from '@angular/core';
 // import type {ExecOptions} from 'child_process';
 import {catchError, defer, firstValueFrom, from, map, Observable, of, retry, switchMap, tap, throwError} from 'rxjs';
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
-import {type ExecOptions, type SpawnOptionsWithoutStdio} from 'node:child_process';
+import type {ExecOptions, SpawnOptionsWithoutStdio} from 'node:child_process';
 import {GitCommandHistoryService} from '../git-command-history.service';
 import {SettingsService} from '../settings.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';

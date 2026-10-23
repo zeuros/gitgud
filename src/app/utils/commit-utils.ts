@@ -16,12 +16,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Commit} from '../lib/github-desktop/model/commit';
-import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
+import type {Commit} from '../lib/github-desktop/model/commit';
+import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {RefType} from '../enums/ref-type.enum';
-import {CommitIdentity} from '../lib/github-desktop/model/commit-identity';
+import type {CommitIdentity} from '../lib/github-desktop/model/commit-identity';
 import Identicon from 'identicon.js';
-import {Branch} from '../lib/github-desktop/model/branch';
+import type {Branch} from '../lib/github-desktop/model/branch';
 import {notUndefined} from './utils';
 
 

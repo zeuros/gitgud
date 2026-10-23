@@ -18,7 +18,7 @@
 
 import {GitRepository} from '../models/git-repository';
 import {lastFolderName} from './utils';
-import {Commit} from '../lib/github-desktop/model/commit';
+import type {Commit} from '../lib/github-desktop/model/commit';
 
 // TODO: gather all repo infos to create the GitRepository object
 export const createRepository = (directory: string) =>

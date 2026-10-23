@@ -17,7 +17,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { StorageName } from "../enums/storage-name.enum";
+import type { StorageName } from "../enums/storage-name.enum";
 
 @Injectable({
     providedIn: 'root'

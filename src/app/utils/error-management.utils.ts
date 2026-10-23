@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ErrorHandler, inject} from '@angular/core';
+import {type ErrorHandler, inject} from '@angular/core';
 import {ToastService} from '../services/toast.service';
 
 export class GlobalErrorHandler implements ErrorHandler {

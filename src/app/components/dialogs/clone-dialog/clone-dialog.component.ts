@@ -26,7 +26,7 @@ import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api
 import {GitRepositoryService} from '../../../services/git-repository.service';
 import {ToastService} from '../../../services/toast.service';
 import {finalize, switchMap} from 'rxjs';
-import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
+import {type DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 
 export const openCloneDialog = (dialog: DialogService) => dialog.open(CloneDialogComponent, {header: 'Clone Repository', width: '480px'});
 

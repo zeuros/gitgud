@@ -20,7 +20,7 @@ import {inject, Injectable} from '@angular/core';
 import {createForEachRefParser} from '../parser.service';
 import {CommitIdentity} from '../../lib/github-desktop/model/commit-identity';
 import {Branch, BranchType, type IBranchTip} from '../../lib/github-desktop/model/branch';
-import {catchError, map, Observable} from 'rxjs';
+import {catchError, map, type Observable} from 'rxjs';
 import {PREFIXES} from '../../utils/constants';
 import {GitApiService} from './git-api.service';
 

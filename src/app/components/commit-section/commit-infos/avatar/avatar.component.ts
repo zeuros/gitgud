@@ -17,7 +17,7 @@
  */
 
 import {ChangeDetectionStrategy, Component, computed, inject, input} from '@angular/core';
-import {CommitIdentity} from '../../../../lib/github-desktop/model/commit-identity';
+import type {CommitIdentity} from '../../../../lib/github-desktop/model/commit-identity';
 import {IdenticonPipe} from '../../../../services/identicon-pipe.service';
 import {AvatarService} from './avatar.service';
 import {AsyncPipe} from '@angular/common';

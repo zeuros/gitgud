@@ -17,13 +17,13 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import {type MenuItem} from 'primeng/api';
+import type {MenuItem} from 'primeng/api';
 import {switchMap} from 'rxjs';
 import {GitWorkflowService} from './git-workflow.service';
 import {GitRepositoryService} from './git-repository.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {createRepository} from '../utils/repository-utils';
-import {type GitWorktree} from '../models/git-worktree';
+import type {GitWorktree} from '../models/git-worktree';
 
 @Injectable({providedIn: 'root'})
 export class WorktreeContextMenuService {

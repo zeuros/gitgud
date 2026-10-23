@@ -23,7 +23,7 @@ import {GitWorkflowService} from './git-workflow.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {ToastService} from './toast.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {type Commit} from '../lib/github-desktop/model/commit';
+import type {Commit} from '../lib/github-desktop/model/commit';
 import {openSquashDialog} from '../components/dialogs/squash-dialog/squash-dialog.component';
 import {squashActions, writeCommitMessage} from '../utils/rebase.utils';
 

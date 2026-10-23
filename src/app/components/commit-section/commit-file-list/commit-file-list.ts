@@ -20,7 +20,7 @@ import {ChangeDetectionStrategy, Component, inject, input} from '@angular/core';
 import {directory, fileName} from '../../../utils/utils';
 import {FormsModule} from '@angular/forms';
 import {Listbox} from 'primeng/listbox';
-import {AppFileStatusKind, CommittedFileChange, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
+import {type AppFileStatusKind, type CommittedFileChange, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {ThemeService} from '../../../services/theme.service';
 import {CommittedFileContextMenuService} from '../../../services/committed-file-context-menu.service';

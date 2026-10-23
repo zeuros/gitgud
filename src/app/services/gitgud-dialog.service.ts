@@ -1,4 +1,4 @@
-import {Injectable, Type} from '@angular/core';
+import {Injectable, type Type} from '@angular/core';
 import {DialogService, type DynamicDialogConfig} from 'primeng/dynamicdialog';
 
 const DIALOG_DEFAULTS: DynamicDialogConfig = {

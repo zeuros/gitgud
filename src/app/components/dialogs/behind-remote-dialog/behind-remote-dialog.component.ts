@@ -18,8 +18,8 @@
 
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {Button} from 'primeng/button';
-import {DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
-import {type Observable} from 'rxjs';
+import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
+import type {Observable} from 'rxjs';
 
 export type BehindRemoteAction = 'pull' | 'merge' | 'rebase' | 'force-push' | null;
 

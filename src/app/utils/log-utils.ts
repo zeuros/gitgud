@@ -16,10 +16,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Branch} from '../lib/github-desktop/model/branch';
-import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
+import type {Branch} from '../lib/github-desktop/model/branch';
+import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {RefType} from '../enums/ref-type.enum';
-import {Commit} from '../lib/github-desktop/model/commit';
+import type {Commit} from '../lib/github-desktop/model/commit';
 
 export const byName = (branchName: string) => (branch: Branch) => branch.name == branchName;
 

@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {layoutGraph} from './graph-layout';
 import {RefType} from '../enums/ref-type.enum';
-import {type DisplayRef} from '../lib/github-desktop/model/display-ref';
+import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
 
 // Log from 'sha:parent1,parent2' entries, children first (git log --date-order)
 const log = (...entries: string[]) => entries.map((entry, row) => {

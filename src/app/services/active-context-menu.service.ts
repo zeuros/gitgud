@@ -17,8 +17,8 @@
  */
 
 import {Injectable, signal} from '@angular/core';
-import {ContextMenu} from 'primeng/contextmenu';
-import {type MenuItem} from 'primeng/api';
+import type {ContextMenu} from 'primeng/contextmenu';
+import type {MenuItem} from 'primeng/api';
 
 @Injectable({providedIn: 'root'})
 export class ActiveContextMenuService {

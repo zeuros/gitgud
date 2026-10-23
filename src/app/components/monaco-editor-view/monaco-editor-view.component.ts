@@ -16,8 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, type OnDestroy, signal, untracked, ViewChild} from '@angular/core';
-import {AppFileStatusKind, CommittedFileChange, FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
+import {type AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, type ElementRef, HostListener, inject, input, type OnDestroy, signal, untracked, ViewChild} from '@angular/core';
+import {AppFileStatusKind, CommittedFileChange, type FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {editor, Uri} from 'monaco-editor';
 import {diffSides, FileDiffService} from '../../services/file-diff.service';
 import {FormsModule} from '@angular/forms';
@@ -25,13 +25,13 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {catchError, combineLatest, EMPTY, switchMap, tap} from 'rxjs';
 import {MonacoDiffRightClickActionsService} from './monaco-diff-right-click-actions.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
-import {type ViewType} from '../../models/git-repository';
+import type {ViewType} from '../../models/git-repository';
 import {disableMonacoLanguageServices, imageMimeType, isBinaryContent, maxDisplaySize, registerMonacoEditorThemes, renderWindowsShitEol} from './monaco-utils';
 import {ThemeService} from '../../services/theme.service';
 import {SelectButton} from 'primeng/selectbutton';
-import IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
-import IEditorOptions = editor.IEditorOptions;
-import IDiffEditorOptions = editor.IDiffEditorOptions;
+type IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
+type IEditorOptions = editor.IEditorOptions;
+type IDiffEditorOptions = editor.IDiffEditorOptions;
 import {fileName} from '../../utils/utils';
 import {Button} from 'primeng/button';
 import {DatePipe} from '@angular/common';
@@ -39,7 +39,7 @@ import {FileHistoryReaderService} from '../../services/electron-cmd-parser-layer
 import {type Blame, type BlameCommit, type FileHistoryEntry, startsBlameBlock} from '../../utils/file-history.utils';
 import {ToastService} from '../../services/toast.service';
 import {short} from '../../utils/commit-utils';
-import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
+type IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 
 interface DiffModel {
   code: string;

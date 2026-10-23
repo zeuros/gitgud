@@ -24,7 +24,7 @@ import {Button} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
 import {TableModule} from 'primeng/table';
-import {AppFileStatusKind, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
+import {type AppFileStatusKind, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {ThemeService} from '../../../services/theme.service';
 import {directory, fileName} from '../../../utils/utils';
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
@@ -33,7 +33,7 @@ import {CommitService} from '../../../services/commit.service';
 import {FixupService} from '../../../services/fixup.service';
 import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
-import {type WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
+import type {WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
 import {Splitter, SplitterPanel} from 'primeng/splitter';
 import {WorkingDirFileSelectionService} from '../../../services/working-dir-file-selection.service';
 

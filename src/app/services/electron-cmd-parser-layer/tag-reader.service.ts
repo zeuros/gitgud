@@ -19,7 +19,7 @@
 import {inject, Injectable} from '@angular/core';
 import {catchError, map, of} from 'rxjs';
 import {GitApiService} from './git-api.service';
-import {type GitTag} from '../../models/git-tag';
+import type {GitTag} from '../../models/git-tag';
 import {createForEachRefParser} from '../parser.service';
 
 @Injectable({providedIn: 'root'})
