@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
   unit-tests:
@@ -23,7 +24,7 @@ jobs:
         run: npm test
 
       - name: Notify on failure
-        if: failure()
+        if: failure() && github.event_name == 'push'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
