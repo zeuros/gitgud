@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, effect, ElementRef, inject, signal, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, ElementRef, inject, signal, viewChild} from '@angular/core';
 import {LeftPanelComponent} from '../left-panel/left-panel.component';
 import {Splitter, SplitterPanel} from 'primeng/splitter';
 import {CommitSectionComponent} from '../commit-section/commit-section.component';
@@ -26,6 +26,7 @@ import {AsyncPipe} from '@angular/common';
 import {MonacoEditorViewComponent} from '../monaco-editor-view/monaco-editor-view.component';
 import {MergeEditorComponent} from '../merge-editor/merge-editor.component';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
+import {onResize} from '../../utils/resize.utils';
 
 @Component({
   selector: 'gitgud-repository-view',
@@ -47,12 +48,6 @@ export class RepositoryViewComponent {
   private commitPanel = viewChild('commitPanel', {read: ElementRef});
 
   constructor() {
-    effect((onCleanup) => {
-      const el: HTMLElement | undefined = this.commitPanel()?.nativeElement;
-      if (!el) return;
-      const ro = new ResizeObserver(() => this.editorRightPx.set(el.offsetWidth));
-      ro.observe(el);
-      onCleanup(() => ro.disconnect());
-    });
+    onResize(() => this.commitPanel()?.nativeElement as HTMLElement | undefined, panel => this.editorRightPx.set(panel.offsetWidth));
   }
 }

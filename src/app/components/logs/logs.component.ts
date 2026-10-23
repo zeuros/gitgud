@@ -60,6 +60,7 @@ import {AutofocusDirective} from '../../directives/autofocus.directive';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 import {LogColumnsDirective} from './log-columns.directive';
 import {LogSearch} from './log-search';
+import {onResize} from '../../utils/resize.utils';
 
 // Rows rendered beyond the viewport, and granularity of render window moves
 const RENDER_CHUNK = 20;
@@ -218,36 +219,18 @@ export class LogsComponent {
     });
 
     // Position the canvas over the p-table GRAPH column
-    effect((onCleanup) => {
-      const table = this.logTableRef()?.querySelector('table');
-      const logTableHeaders = [...table?.querySelectorAll('th') ?? []];
-      const [branchTh, graphTh] = logTableHeaders;
-      if (!table || !branchTh || !graphTh) return;
-
-      const ro = new ResizeObserver(() => {
-        this._branchColumnWidth.set(branchTh.clientWidth);
-        this._tableHeaderHeight.set(branchTh.clientHeight);
-        this._graphColumnWidth.set(graphTh.clientWidth);
-      });
-      [branchTh, graphTh].forEach(th => ro.observe(th));
-      onCleanup(() => ro.disconnect());
+    onResize(() => {
+      const [branchTh, graphTh] = this.logTableRef()?.querySelector('table')?.querySelectorAll('th') ?? [];
+      return branchTh && graphTh ? [branchTh, graphTh] as HTMLElement[] : undefined;
+    }, ([branchTh, graphTh]) => {
+      this._branchColumnWidth.set(branchTh.clientWidth);
+      this._tableHeaderHeight.set(branchTh.clientHeight);
+      this._graphColumnWidth.set(graphTh.clientWidth);
     });
 
-    effect((onCleanup) => {
-      const logTableContainer = this.logTableContainer();
-      if (!logTableContainer) return;
-      const ro = new ResizeObserver(() => this._tableHeight.set(logTableContainer.clientHeight));
-      ro.observe(logTableContainer);
-      onCleanup(() => ro.disconnect());
-    });
+    onResize(this.logTableContainer, container => this._tableHeight.set(container.clientHeight));
 
-    effect((onCleanup) => {
-      const canvas = this.canvas()?.nativeElement;
-      if (!canvas) return;
-      const ro = new ResizeObserver(() => this._canvasResized.set({}));
-      ro.observe(canvas);
-      onCleanup(() => ro.disconnect());
-    });
+    onResize(() => this.canvas()?.nativeElement, () => this._canvasResized.set({}));
 
     // Native scroll listener — replaces virtualScrollOptions.onScroll
     effect((onCleanup) => {
