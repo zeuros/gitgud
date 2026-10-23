@@ -25,7 +25,7 @@ import {ToastService} from './toast.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {type Commit} from '../lib/github-desktop/model/commit';
 import {openSquashDialog} from '../components/dialogs/squash-dialog/squash-dialog.component';
-import {squashActions} from '../utils/rebase.utils';
+import {squashActions, writeCommitMessage} from '../utils/rebase.utils';
 
 @Injectable({providedIn: 'root'})
 export class SquashService {
@@ -39,9 +39,9 @@ export class SquashService {
   squash = (chain: Commit[]) =>
     openSquashDialog(this.dialog, chain).pipe(
       filter(message => message != null),
-      switchMap(message => from(this.gitApi.gitDirs()).pipe(
-        switchMap(({gitDir}) => this.gitWorkflow.rebaseAndEditActions(`${chain.at(-1)!.sha}^`, squashActions(gitDir, chain.map(c => c.sha), message))),
-      )),
+      // The message is written first: a failure stops here, with its own error, rather than in the middle of the rebase
+      switchMap(message => from(this.gitApi.gitDirs().then(({gitDir}) => writeCommitMessage(gitDir, message).then(() => gitDir)))),
+      switchMap(gitDir => this.gitWorkflow.rebaseAndEditActions(`${chain.at(-1)!.sha}^`, squashActions(gitDir, chain.map(c => c.sha)))),
     ).subscribe(() => {
       this.currentRepo.update({selectedCommitsShas: []});
       this.toast.success(`Squashed ${chain.length} commits`);

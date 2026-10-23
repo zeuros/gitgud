@@ -20,16 +20,14 @@ import {short} from './commit-utils';
 import {type Commit} from '../lib/github-desktop/model/commit';
 import {amendFromFile} from './git-path.utils';
 
-// Writes `message` in the git dir (fire-and-forget; git waits for the .done signal, not this file), returns the rebase line amending the current commit with it
-const amendWithMessage = (gitDir: string, message: string) => {
-  const messageFile = `${gitDir}/COMMIT_EDIT_MSG`;
-  window.tauri.fs.writeFile(messageFile, message).catch(console.error);
-  return amendFromFile(messageFile);
-};
+const messageFile = (gitDir: string) => `${gitDir}/COMMIT_EDIT_MSG`;
 
-// Rework git rebase actions to edit a specified commit summary and description (newMessage)
-export const rewordCommitAction = (gitDir: string, selectedCommitSha: string, newMessage: string) => {
-    const amend = amendWithMessage(gitDir, newMessage);
+/** Writes the message the rebase lines of rewordCommitAction / squashActions amend with: to do before the rebase starts */
+export const writeCommitMessage = (gitDir: string, message: string) => window.tauri.fs.writeFile(messageFile(gitDir), message);
+
+// Rework git rebase actions to give a specified commit the message written by writeCommitMessage
+export const rewordCommitAction = (gitDir: string, selectedCommitSha: string) => {
+    const amend = amendFromFile(messageFile(gitDir));
 
     return (actions: string[]) =>
       actions.flatMap(action =>
@@ -68,9 +66,9 @@ const actsOn = (action: string, sha: string) => {
   return !!actionSha && sha.startsWith(actionSha);
 };
 
-// Rework git rebase actions to meld `chain` (newest first) into its oldest commit, then give it `message`
-export const squashActions = (gitDir: string, chain: string[], message: string) => {
-  const amend = amendWithMessage(gitDir, message);
+// Rework git rebase actions to meld `chain` (newest first) into its oldest commit, then give it the message written by writeCommitMessage
+export const squashActions = (gitDir: string, chain: string[]) => {
+  const amend = amendFromFile(messageFile(gitDir));
   const melded = chain.slice(0, -1);
 
   return (actions: string[]) =>

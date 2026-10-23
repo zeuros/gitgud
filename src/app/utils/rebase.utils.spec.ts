@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {type Commit} from '../lib/github-desktop/model/commit';
-import {squashableChain, squashActions} from './rebase.utils';
+import {squashableChain, squashActions, writeCommitMessage} from './rebase.utils';
 
 const commit = (sha: string, ...parentSHAs: string[]) => ({sha, parentSHAs} as unknown as Commit);
 
@@ -34,7 +34,7 @@ describe('squashActions', () => {
   });
 
   it('melds the chain into its oldest commit, then amends it with the message, matching abbreviated shas', () =>
-    expect(squashActions('/repo/.git', ['ddddddd1', 'ccccccc1', 'bbbbbbb1'], 'Squashed')([
+    expect(squashActions('/repo/.git', ['ddddddd1', 'ccccccc1', 'bbbbbbb1'])([
       'pick bbbbbbb Oldest',
       'pick ccccccc Middle',
       'pick ddddddd Newest',
@@ -47,11 +47,11 @@ describe('squashActions', () => {
       'pick eeeeeee After',
     ]));
 
-  it('writes the message to the file the amend reads', () => {
-    squashActions('/repo/.git', ['ccccccc1', 'bbbbbbb1'], 'Squashed\n\nBody');
+  it('writes the message to the file the amend reads', async () => {
+    await writeCommitMessage('/repo/.git', 'Squashed\n\nBody');
     expect(writeFile).toHaveBeenCalledWith('/repo/.git/COMMIT_EDIT_MSG', 'Squashed\n\nBody');
   });
 
   it('ignores a commit whose message mentions a squashed sha', () =>
-    expect(squashActions('/repo/.git', ['ddddddd1', 'ccccccc1'], 'Squashed')(['pick ccccccc Old', 'pick eeeeeee revert ddddddd'])).toEqual(['pick ccccccc Old', 'pick eeeeeee revert ddddddd']));
+    expect(squashActions('/repo/.git', ['ddddddd1', 'ccccccc1'])(['pick ccccccc Old', 'pick eeeeeee revert ddddddd'])).toEqual(['pick ccccccc Old', 'pick eeeeeee revert ddddddd']));
 });

@@ -24,7 +24,7 @@ import {StashService} from './stash.service';
 import {RebaseService} from './rebase.service';
 import {GitRefreshService} from './git-refresh.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {rewordCommitAction} from '../utils/rebase.utils';
+import {rewordCommitAction, writeCommitMessage} from '../utils/rebase.utils';
 
 // High-level workflows combining services
 @Injectable({
@@ -168,8 +168,9 @@ export class GitWorkflowService {
     const commitIndex = this.currentRepo.selectedCommitIndex();
 
     // Use interactive rebase to reword a past commit
-    return from(this.gitApi.gitDirs()).pipe(
-      switchMap(({gitDir}) => this.rebaseAndEditActions(`${selectedCommitSha}~1`, rewordCommitAction(gitDir, selectedCommitSha, newMessage))),
+    // The message is written first: a failure stops here, with its own error, rather than in the middle of the rebase
+    return from(this.gitApi.gitDirs().then(({gitDir}) => writeCommitMessage(gitDir, newMessage).then(() => gitDir))).pipe(
+      switchMap(gitDir => this.rebaseAndEditActions(`${selectedCommitSha}~1`, rewordCommitAction(gitDir, selectedCommitSha))),
       // After refreshing logs, selects the edited commit
       tap(() => this.currentRepo.update({selectedCommitsShas: [this.currentRepo.logs()[commitIndex]?.sha]})),
     );
