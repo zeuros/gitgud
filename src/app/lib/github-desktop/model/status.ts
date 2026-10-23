@@ -266,7 +266,7 @@ export const isWorkingDirectoryFileChange = (file: FileChange): file is WorkingD
 
 export class CommittedFileChange extends FileChange {
   public constructor(
-    public readonly path: string,
+    path: string,
     status: AppFileStatus,
     public readonly commitish: string,
     /** Revision to diff against, instead of the commit's parent: the older commit of a 2-commit range */

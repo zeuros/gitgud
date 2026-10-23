@@ -41,15 +41,15 @@ As of Oct 2026 these specs fail on steps unrelated to recent changes (out of dat
 
 ## Stack
 
-Tauri 2 + Angular 21 + Monaco Editor. The Electron code (`app/main.ts`, `app/preload.ts`) is the old implementation — **do not touch it**. All active development is in `src-tauri/` (Rust backend) and `src/app/api/tauri-bridge.ts` (JS bridge). UI uses PrimeNG components and Angular Signals throughout.
+Tauri 2 + Angular 22 + Monaco Editor. GitGud started on Electron; that code is gone (`e704f5d0`), and `app/` only keeps the logo. All development is in `src-tauri/` (Rust backend) and `src/app/api/tauri-bridge.ts` (JS bridge). UI uses PrimeNG components and Angular Signals throughout.
 
 ## Architecture
 
 ### The Tauri IPC bridge (`src/app/api/tauri-bridge.ts` → `src/typings.d.ts`)
 
-`tauri-bridge.ts` implements `window.electron` using Tauri IPC (`@tauri-apps/api/core` `invoke` + `listen`). It keeps API parity with the old Electron preload so all consumer services work unchanged. The TypeScript interface is declared in `src/typings.d.ts` as `ElectronApi`.
+`tauri-bridge.ts` implements `window.tauri` using Tauri IPC (`@tauri-apps/api/core` `invoke` + `listen`). Its shape comes from the old Electron preload (e.g. `chokidar.watch/on/close`), so the services built on it didn't change. The TypeScript interface is declared in `src/typings.d.ts` as `TauriApi`.
 
-On startup `buildBridge()` runs, kills any stale watchers (`close_all_watchers`), reads platform/arch/env via parallel IPC calls, and installs the bridge at `window.electron`.
+On startup `installTauriBridge()` calls `buildBridge()`, which kills any stale watchers (`close_all_watchers`) and reads version/platform/arch/env via parallel IPC calls, then installs the bridge at `window.tauri`.
 
 **Rust commands** live in `src-tauri/src/commands/` and are registered in `src-tauri/src/lib.rs`:
 
@@ -62,7 +62,7 @@ On startup `buildBridge()` runs, kills any stale watchers (`close_all_watchers`)
 
 ### Git execution layer
 
-`GitApiService` (`src/app/services/electron-cmd-parser-layer/git-api.service.ts`) is the sole entry point for running git. It calls `window.electron.execFile`, which routes to the Rust `exec_file` command backed by `ShellPoolManager` (`src-tauri/src/shell_pool.rs`) — a pool of 6 persistent bash processes per repo path. This eliminates per-call `fork()+execve()` overhead (~30ms each).
+`GitApiService` (`src/app/services/electron-cmd-parser-layer/git-api.service.ts`) is the sole entry point for running git. It calls `window.tauri.execFile`, which routes to the Rust `exec_file` command backed by `ShellPoolManager` (`src-tauri/src/shell_pool.rs`) — a pool of 6 persistent bash processes per repo path. This eliminates per-call `fork()+execve()` overhead (~30ms each).
 
 - `git()` — read operations, used by reader services
 - `gitAction()` — user-triggered mutations (commit, rebase, push…), also records to history
@@ -76,7 +76,7 @@ Reader services (`electron-cmd-parser-layer/`) each wrap one git command and par
 
 On Linux, recursive watches are not delegated to inotify: `watch_tree` walks the repo and adds a non-recursive watch per directory, skipping ignored dirs and symlinks, so no watches are registered inside `node_modules`/`target`. Directories created later are watched by the flush thread. Other platforms use a single recursive watch.
 
-`FileWatcherService` (`src/app/services/file-watcher.service.ts`) wraps `window.electron.chokidar.watch/on/close` and exposes `onWorkingDirFileChange$` via `auditTime(300)`. Git-refresh subscribes with `switchMap(() => updateWorkingDirChanges())` so a new file event cancels the previous in-flight `git status`.
+`FileWatcherService` (`src/app/services/file-watcher.service.ts`) wraps `window.tauri.chokidar.watch/on/close` and exposes `onWorkingDirFileChange$` via `auditTime(300)`. Git-refresh subscribes with `switchMap(() => updateWorkingDirChanges())` so a new file event cancels the previous in-flight `git status`.
 
 ### Refresh pipeline
 
