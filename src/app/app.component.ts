@@ -37,7 +37,7 @@ import {GitRepositoryService} from './services/git-repository.service';
 @Component({
   standalone: true,
   imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, Button],
-  selector: 'app-root',
+  selector: 'gitgud-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

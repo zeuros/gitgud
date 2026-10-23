@@ -5,7 +5,8 @@
  * Window interface for the Tauri bridge (see src/app/api/tauri-bridge.ts).
  */
 
-import type {SpawnSyncReturns} from 'node:child_process';
+// A module, so that `declare global` below augments Window
+export {};
 
 interface FsApi {
   readdir: (path: string) => Promise<string[]>;

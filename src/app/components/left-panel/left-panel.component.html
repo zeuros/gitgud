@@ -32,7 +32,7 @@
                                       (pointerleave)="branchDragDrop.onMouseLeave()"
                                       [class.drop-target-active]="branchDragDrop.isValidDropTarget(node.data)"
                                       [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
-                                    <span class="ellipsis flex-1 gap-1" [titleIfOverflow]="node.data.name">{{ node.label }}</span>
+                                    <span class="ellipsis flex-1 gap-1" [gitgudTitleIfOverflow]="node.data.name">{{ node.label }}</span>
                                     @let ab = aheadBehind.aheadBehindMap()[node.data.name];
                                     @if (ab?.ahead) {
                                         <span class="ahead-behind"><i class="fa fa-arrow-up"></i>{{ ab.ahead }}</span>
@@ -42,7 +42,7 @@
                                     }
                                 </span>
                             } @else {
-                                <span class="ellipsis flex-1" [titleIfOverflow]="node.label">{{ node.label }}</span>
+                                <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.label">{{ node.label }}</span>
                             }
                         </ng-template>
                     </p-tree>
@@ -77,10 +77,10 @@
                                       (pointerleave)="branchDragDrop.onMouseLeave()"
                                       [class.drop-target-active]="branchDragDrop.isValidDropTarget(node.data)"
                                       [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
-                                    <span class="ellipsis flex-1" [titleIfOverflow]="node.data.name">{{ node.label }}</span>
+                                    <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.data.name">{{ node.label }}</span>
                                 </span>
                             } @else {
-                                <span class="ellipsis flex-1" [titleIfOverflow]="node.label">{{ node.label }}</span>
+                                <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.label">{{ node.label }}</span>
                             }
                         </ng-template>
                     </p-tree>
@@ -106,7 +106,7 @@
                         @let stash = $stash(s);
                         <div class="flex align-items-center gap-2 ellipsis" (contextmenu)="openStashContextMenu(stash, $event)">
                             <span class="stash-chest-icon"></span>
-                            <span class="ellipsis text-gray" [titleIfOverflow]="stash.summary">{{ stash.summary }}</span>
+                            <span class="ellipsis text-gray" [gitgudTitleIfOverflow]="stash.summary">{{ stash.summary }}</span>
                         </div>
                     </ng-template>
                 </p-listbox>
@@ -133,7 +133,7 @@
                             @if (node.data) {
                                 @let tag = $localAndDistantTagWithName(node.data);
                                 <span class="flex align-items-center flex-1 gap-1">
-                                    <span class="ellipsis flex-1" [titleIfOverflow]="node.key">{{ node.label }}</span>
+                                    <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.key">{{ node.label }}</span>
                                     <span class="tag-presence-icons text-gray small-icon">
                                         @if (tag.local) {
                                             <i class="fa fa-laptop"></i>
@@ -144,7 +144,7 @@
                                     </span>
                                 </span>
                             } @else {
-                                <span class="ellipsis flex-1" [titleIfOverflow]="node.label">{{ node.label }}</span>
+                                <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.label">{{ node.label }}</span>
                             }
                         </ng-template>
                     </p-tree>
@@ -173,7 +173,7 @@
                              (dblclick)="openWorktreeInNewTab(worktree)"
                              (contextmenu)="openWorktreeContextMenu(worktree, $event)">
                             <i [class]="worktree.isMain ? 'fa fa-home' : (worktree.isDetached ? 'fa fa-scissors' : 'fa fa-code-fork')" class="text-gray worktree-icon small-icon"></i>
-                            <span class="ellipsis flex-1" [class.text-gray]="!isCurrent" [titleIfOverflow]="worktree.branch ?? 'HEAD'">
+                            <span class="ellipsis flex-1" [class.text-gray]="!isCurrent" [gitgudTitleIfOverflow]="worktree.branch ?? 'HEAD'">
                                 {{ worktree.branch ?? 'HEAD' }}
                             </span>
                             @let ab = aheadBehind.aheadBehindMap()[worktree.branch ?? ''];

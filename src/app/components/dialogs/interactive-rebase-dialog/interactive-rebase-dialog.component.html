@@ -30,7 +30,7 @@
                     <span class="summary" [title]="entry.message">{{ summary(entry.message) }}</span>
                     <span class="author">{{ entry.author }}</span>
                 </div>
-                @if (entry.action == 'reword') {
+                @if (entry.action === 'reword') {
                     <textarea pTextarea rows="3" class="message" [ngModel]="entry.message" (ngModelChange)="patch(i, {message: $event})"></textarea>
                 }
             </div>

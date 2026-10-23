@@ -22,7 +22,7 @@ import {Commit} from '../lib/github-desktop/model/commit';
 import {type WorkDirStatus} from '../lib/github-desktop/model/workdir';
 import {catchError, of, type OperatorFunction} from 'rxjs';
 
-export const lastFolderName = (f: string) => f.replace(/.*[\/\\]([^\\]+)[\/\\]/, '');
+export const lastFolderName = (f: string) => f.replace(/.*[/\\]([^\\]+)[/\\]/, '');
 
 export const isRootDirectory = (path: string) => ['C:\\', '/'].includes(path);
 

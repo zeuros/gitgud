@@ -1,4 +1,4 @@
-import { allByText, beat, byText, DEMO_BASE, initRepo, jsClick, jsClickAt, pressKey, rightClickAt, typeInto, waitForDiff } from './utils/helpers.js';
+import { allByText, beat, byText, DEMO_BASE, initRepo, jsClick, pressKey, typeInto, waitForDiff } from './utils/helpers.js';
 
 describe('diff viewer — view modes, staging & commit', () => {
   before(async () => {

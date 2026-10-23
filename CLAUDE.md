@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm start                       # dev: Angular dev server + Tauri shell (tauri dev)
 npm test                        # run unit tests (vitest, node environment)
+npm run lint                    # ESLint (typescript-eslint + angular-eslint, see eslint.config.mjs)
 npm run tauri:build             # production build + native installer (current platform)
 npm run tauri:build:linux-deb   # .deb package
 npm run tauri:build:linux-rpm   # .rpm package

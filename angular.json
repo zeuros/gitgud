@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "cli": {
     "schematicCollections": [
-      "@angular-eslint/schematics"
+      "angular-eslint"
     ],
     "analytics": false
   },
@@ -124,10 +124,10 @@
     }
   },
   "schematics": {
-    "@angular-eslint/schematics:application": {
+    "angular-eslint:application": {
       "setParserOptionsProject": true
     },
-    "@angular-eslint/schematics:library": {
+    "angular-eslint:library": {
       "setParserOptionsProject": true
     }
   }

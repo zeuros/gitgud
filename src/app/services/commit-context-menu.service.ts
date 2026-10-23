@@ -156,8 +156,8 @@ export class CommitContextMenuService {
   };
 
   private swapActions(actions: string[], shaActionA: string, shaActionB: string) {
-    let lineA = actions.findIndex(a => a.includes(short(shaActionA)));
-    let lineB = actions.findIndex(a => a.includes(short(shaActionB)));
+    const lineA = actions.findIndex(a => a.includes(short(shaActionA)));
+    const lineB = actions.findIndex(a => a.includes(short(shaActionB)));
 
     // Swap two commits in actions list (they're in reverse chronological order)
     [actions[lineA], actions[lineB]] = [actions[lineB], actions[lineA]];
