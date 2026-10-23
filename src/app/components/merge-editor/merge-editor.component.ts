@@ -32,6 +32,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {ThemeService} from '../../services/theme.service';
 import {short} from '../../utils/commit-utils';
 import {isBinaryContent} from '../monaco-editor-view/monaco-utils';
+import {gitPath} from '../../utils/git-path.utils';
 
 const GitGudDarkColors = {
   added:            'rgba(155, 185, 85,  0.20)',
@@ -211,15 +212,16 @@ export class MergeEditorComponent {
     const cwd = this.currentRepo.cwd();
     if (!cwd) return UNKNOWN_CTX;
 
-    const git = `${cwd}/.git`;
-    const read = async (p: string) => { try { return (await window.tauri.fs.readFile(p)).trim(); } catch { return ''; } };
-    const exists = (p: string) => window.tauri.fs.exists(p);
+    const dirs = await this.gitApi.gitDirs(cwd).catch(() => undefined);
+    if (!dirs) return UNKNOWN_CTX;
+    const read = async (name: string) => { try { return (await window.tauri.fs.readFile(gitPath(dirs, name))).trim(); } catch { return ''; } };
+    const exists = (name: string) => window.tauri.fs.exists(gitPath(dirs, name));
     const head = this.currentRepo.headBranch()?.name ?? 'HEAD';
 
     // Rebase replays our commits on top of the upstream: HEAD (left) is the upstream, the commit being replayed is on the right
     if (this.currentRepo.isRebasing()) {
-      const branch = (await read(`${git}/rebase-merge/head-name`)).replace('refs/heads/', '') || 'your branch';
-      const onto = short(await read(`${git}/rebase-merge/onto`)) || 'upstream';
+      const branch = (await read('rebase-merge/head-name')).replace('refs/heads/', '') || 'your branch';
+      const onto = short(await read('rebase-merge/onto')) || 'upstream';
       return {
         operation: 'rebase',
         left: {name: `Upstream (onto ${onto})`, role: 'rebased onto, with the commits already replayed', ref: 'HEAD'},
@@ -227,8 +229,8 @@ export class MergeEditorComponent {
       };
     }
 
-    if (await exists(`${git}/CHERRY_PICK_HEAD`)) {
-      const sha = short(await read(`${git}/CHERRY_PICK_HEAD`));
+    if (await exists('CHERRY_PICK_HEAD')) {
+      const sha = short(await read('CHERRY_PICK_HEAD'));
       return {
         operation: 'cherry-pick',
         left: {name: head, role: 'current branch', ref: 'HEAD'},
@@ -236,9 +238,9 @@ export class MergeEditorComponent {
       };
     }
 
-    if (await exists(`${git}/MERGE_HEAD`)) {
-      const mergeHead = await read(`${git}/MERGE_HEAD`);
-      const stashRef = await read(`${git}/refs/stash`);
+    if (await exists('MERGE_HEAD')) {
+      const mergeHead = await read('MERGE_HEAD');
+      const stashRef = await read('refs/stash');
       if (stashRef && mergeHead === stashRef) {
         return {operation: 'stash', left: {name: head, role: 'current branch', ref: 'HEAD'}, right: {name: 'Stash', role: 'stashed changes', ref: 'MERGE_HEAD'}};
       }

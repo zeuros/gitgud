@@ -19,7 +19,6 @@
 import {inject, Injectable} from '@angular/core';
 import {catchError, defer, EMPTY, finalize, first, from, map, Observable, retry, Subject, switchMap, throwError} from 'rxjs';
 import {GitApiService, noopEditor} from './electron-cmd-parser-layer/git-api.service';
-import {CurrentRepoStore} from '../stores/current-repo.store';
 
 @Injectable({
   providedIn: 'root',
@@ -27,7 +26,6 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
 export class RebaseService {
 
   private gitApi = inject(GitApiService);
-  private currentRepo = inject(CurrentRepoStore);
   private pendingRebase$ = new Subject<void>();
 
   /**
@@ -71,7 +69,7 @@ export class RebaseService {
   };
 
   private readRebaseActionsFile = (): Observable<string[]> =>
-    defer(() => from(window.tauri.fs.readFile(this.rebaseActionsFilePath())).pipe(
+    defer(() => from(this.rebaseActionsFilePath().then(window.tauri.fs.readFile)).pipe(
       map(contents => this.parseInteractiveRebaseOutput(contents)),
     )).pipe(
       retry({count: 10, delay: 150}),
@@ -82,14 +80,16 @@ export class RebaseService {
   //  git could keep a lock file, we have to write the .done and git lock file on error so that git rebase can finish and state be ok
   finishRebase = (contents: string) => {
     // Fire-and-forget writes; the pending rebase observable waits for the .done signal
-    window.tauri.fs.writeFile(this.rebaseActionsFilePath(), contents).catch(console.error);
-    this.cleanWaitFile();
+    // The todo is written before .done appears: git reads it as soon as the editor script exits
+    this.rebaseActionsFilePath()
+      .then(path => window.tauri.fs.writeFile(path, contents))
+      .then(this.cleanWaitFile, console.error);
     return this.pendingRebase$.pipe(first());
   };
 
   // terminates the waitForFileSaveScript (process waiting for .done file) script and finishes the 'git rebase ...' spawned observable
   private cleanWaitFile = () => {
-    window.tauri.fs.writeFile(this.rebaseActionsFilePath() + '.done', '').catch(e => console.warn(e));
+    this.rebaseActionsFilePath().then(path => window.tauri.fs.writeFile(path + '.done', '')).catch(e => console.warn(e));
   };
 
   // TODO: make it portable, test on other platforms (e.g: windaube without git bash)
@@ -98,9 +98,9 @@ export class RebaseService {
       ? 'sh -c "while [ ! -f \\"$0.done\\" ]; do sleep 0.3; done && rm \\"$0.done\\""' // Fixme: double check it's $0 and not $1 on git bash
       : 'sh -c \'while [ ! -f "$0.done" ]; do sleep 0.3; done && rm "$0.done"\'';
 
-  hasRebaseFile = () => window.tauri.fs.exists(`${this.currentRepo.cwd()}/.git/rebase-merge`);
+  hasRebaseFile = () => this.gitApi.gitPath('rebase-merge').then(window.tauri.fs.exists);
 
-  private rebaseActionsFilePath = () => `${this.currentRepo.cwd()}/.git/rebase-merge/git-rebase-todo`;
+  private rebaseActionsFilePath = () => this.gitApi.gitPath('rebase-merge/git-rebase-todo');
 
   abortRebase = () =>
     this.gitApi.gitAction(['rebase', '--abort']).pipe(

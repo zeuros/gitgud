@@ -46,16 +46,15 @@ export class AutoFetchService {
       this.intervalId = setInterval(this.autoFetch, this.settings.autoFetchInterval);
     });
 
-    // Initialize last-fetched time from .git/FETCH_HEAD mtime when repo changes
+    // Initialize last-fetched time from FETCH_HEAD mtime when repo changes
     effect(() => {
       const cwd = this.currentRepo.cwd();
       if (!cwd) return;
-      const fetchHead = `${cwd}/.git/FETCH_HEAD`;
-      window.tauri.fs.exists(fetchHead).then(exists =>
+      this.gitApi.gitPath('FETCH_HEAD', cwd).then(fetchHead => window.tauri.fs.exists(fetchHead).then(exists =>
         exists
           ? window.tauri.fs.mtime(fetchHead).then(ms => untracked(() => this.lastFetchedAt.set(ms)))
           : untracked(() => this.lastFetchedAt.set(undefined)),
-      );
+      )).catch(console.warn);
     });
   }
 

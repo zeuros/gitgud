@@ -22,8 +22,8 @@ import {EMPTY, filter, forkJoin, from, switchMap} from 'rxjs';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {ToastService} from './toast.service';
-import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
+import {type GitDirs} from '../utils/git-path.utils';
 import {buildRebaseTodo, parseRebaseLog, REBASE_LOG_FORMAT, type RebaseEntry, rewordMessageFile} from '../utils/interactive-rebase.utils';
 import {openInteractiveRebaseDialog} from '../components/dialogs/interactive-rebase-dialog/interactive-rebase-dialog.component';
 
@@ -32,7 +32,6 @@ export class InteractiveRebaseService {
 
   private gitApi = inject(GitApiService);
   private gitWorkflow = inject(GitWorkflowService);
-  private currentRepo = inject(CurrentRepoStore);
   private dialog = inject(DialogService);
   private toast = inject(ToastService);
 
@@ -61,14 +60,14 @@ export class InteractiveRebaseService {
   };
 
   private rebase = (base: string | undefined, entries: RebaseEntry[]) => {
-    const cwd = this.currentRepo.cwd();
-    const rewordMessages = entries
+    const writeRewordMessages = ({gitDir}: GitDirs) => Promise.all(entries
       .filter(e => e.action == 'reword')
-      .map(e => window.tauri.fs.writeFile(`${cwd}/${rewordMessageFile(e.sha)}`, e.message));
+      .map(e => window.tauri.fs.writeFile(rewordMessageFile(gitDir, e.sha), e.message)))
+      .then(() => gitDir);
 
     // git's own todo list is replaced by ours
-    return from(Promise.all(rewordMessages)).pipe(
-      switchMap(() => this.gitWorkflow.rebaseAndEditActions(base ?? '--root', () => buildRebaseTodo(entries))),
+    return from(this.gitApi.gitDirs().then(writeRewordMessages)).pipe(
+      switchMap(gitDir => this.gitWorkflow.rebaseAndEditActions(base ?? '--root', () => buildRebaseTodo(entries, gitDir))),
     );
   };
 }

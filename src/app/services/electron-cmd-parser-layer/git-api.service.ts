@@ -28,6 +28,7 @@ import {GitCommandHistoryService} from '../git-command-history.service';
 import {SettingsService} from '../settings.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {type GitRunner, journalFor, runJournaled} from '../../utils/undo.utils';
+import {type GitDirs, gitPath} from '../../utils/git-path.utils';
 
 // Git invokes GIT_EDITOR as: `$GIT_EDITOR /path/to/msg/file` — we want a no-op that exits 0.
 // On Windows (cmd.exe): "cmd /c exit 0" — ignores extra args. On Unix: "true".
@@ -63,6 +64,8 @@ export class GitApiService {
 
   gitFound = signal(true);
 
+  private gitDirsByCwd = new Map<string, Promise<GitDirs>>();
+
   constructor() {
     // Must supply a cwd so exec_file routes through the shell pool (bash) which has
     // a full PATH — without it exec_file_direct runs with the bare launch environment
@@ -81,6 +84,25 @@ export class GitApiService {
     const run = () => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {GIT_EDITOR: noopEditor()}, ...options});
     return needsLock(filteredArgs) ? this.waitForLock().pipe(switchMap(run)) : defer(run);
   };
+
+  // Where git keeps this repository's state, which isn't `<cwd>/.git` in a linked worktree. Asked once per repository
+  gitDirs = (cwd = this.currentRepo.cwd()!): Promise<GitDirs> => {
+    let dirs = this.gitDirsByCwd.get(cwd);
+    if (!dirs) {
+      dirs = firstValueFrom(this.git(['rev-parse', '--path-format=absolute', '--absolute-git-dir', '--git-common-dir'], {cwd}))
+        .then(out => {
+          const [gitDir, commonDir] = out.trim().split('\n');
+          return {gitDir, commonDir};
+        });
+      // Not a repository (yet): ask again next time
+      dirs.catch(() => this.gitDirsByCwd.delete(cwd));
+      this.gitDirsByCwd.set(cwd, dirs);
+    }
+    return dirs;
+  };
+
+  /** Absolute path of `name` (e.g. 'rebase-merge', 'refs/stash') in the current repository's git directory */
+  gitPath = (name: string, cwd = this.currentRepo.cwd()!) => this.gitDirs(cwd).then(dirs => gitPath(dirs, name));
 
   // Raw stdout bytes, for binary content (git show of an image blob…)
   gitBytes = (args: string[]) =>
@@ -165,11 +187,14 @@ export class GitApiService {
    * 2. 700ms may time out prematurely for longer external operations
    */
   waitForLock = (maxWaitMs = 700, intervalMs = 100): Observable<void> => {
-    const lockFile = `${this.currentRepo.cwd()}/.git/index.lock`;
     const start = Date.now();
+    // No repository yet (clone, init…): nothing can hold its lock
+    const lockExists = () => this.currentRepo.cwd()
+      ? this.gitPath('index.lock').then(window.tauri.fs.exists).catch(() => false)
+      : Promise.resolve(false);
 
     return defer(() =>
-      from(window.tauri.fs.exists(lockFile)).pipe(
+      from(lockExists()).pipe(
         switchMap(exists => {
           if (!exists) return of(undefined as void);
           if (Date.now() - start > maxWaitMs) return throwError(() => new Error('Git lock timeout'));

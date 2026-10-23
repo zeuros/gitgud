@@ -18,8 +18,9 @@
 
 import {inject, Injectable} from '@angular/core';
 import {DialogService} from 'primeng/dynamicdialog';
-import {filter, switchMap} from 'rxjs';
+import {filter, from, switchMap} from 'rxjs';
 import {GitWorkflowService} from './git-workflow.service';
+import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {ToastService} from './toast.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {type Commit} from '../lib/github-desktop/model/commit';
@@ -29,6 +30,7 @@ import {squashActions} from '../utils/rebase.utils';
 @Injectable({providedIn: 'root'})
 export class SquashService {
   private dialog = inject(DialogService);
+  private gitApi = inject(GitApiService);
   private gitWorkflow = inject(GitWorkflowService);
   private currentRepo = inject(CurrentRepoStore);
   private toast = inject(ToastService);
@@ -37,7 +39,9 @@ export class SquashService {
   squash = (chain: Commit[]) =>
     openSquashDialog(this.dialog, chain).pipe(
       filter(message => message != null),
-      switchMap(message => this.gitWorkflow.rebaseAndEditActions(`${chain.at(-1)!.sha}^`, squashActions(this.currentRepo.cwd()!, chain.map(c => c.sha), message))),
+      switchMap(message => from(this.gitApi.gitDirs()).pipe(
+        switchMap(({gitDir}) => this.gitWorkflow.rebaseAndEditActions(`${chain.at(-1)!.sha}^`, squashActions(gitDir, chain.map(c => c.sha), message))),
+      )),
     ).subscribe(() => {
       this.currentRepo.update({selectedCommitsShas: []});
       this.toast.success(`Squashed ${chain.length} commits`);

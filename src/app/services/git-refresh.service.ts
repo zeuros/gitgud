@@ -25,6 +25,7 @@ import {TagReaderService} from './electron-cmd-parser-layer/tag-reader.service';
 import {WorktreeReaderService} from './electron-cmd-parser-layer/worktree-reader.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {filterOutStashes} from '../utils/repository-utils';
+import {gitPath} from '../utils/git-path.utils';
 import {GitRepository} from '../models/git-repository';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -83,11 +84,13 @@ export class GitRefreshService {
 
   private lastGitStateSignature?: string;
 
-  // Stats a few .git entries; a changed signature means refs/HEAD/index moved since last check.
-  // All-missing (e.g. worktree where .git is a file) yields undefined → caller must assume changed.
+  // Stats a few git-dir entries; a changed signature means refs/HEAD/index moved since last check.
+  // All-missing (or no git dir found) yields undefined → caller must assume changed.
   private gitStateSignature = async () => {
     const cwd = this.currentRepo.cwd();
-    const mtimes = await Promise.all(GIT_STATE_FILES.map(f => window.tauri.fs.mtime(`${cwd}/.git/${f}`).catch(() => 0)));
+    const dirs = await this.gitApi.gitDirs(cwd).catch(() => undefined);
+    if (!dirs) return undefined;
+    const mtimes = await Promise.all(GIT_STATE_FILES.map(f => window.tauri.fs.mtime(gitPath(dirs, f)).catch(() => 0)));
     return mtimes.some(Boolean) ? `${cwd}|${mtimes.join(',')}` : undefined;
   };
 
@@ -131,7 +134,7 @@ export class GitRefreshService {
 
 
   updateRebaseStatus = () =>
-    from(window.tauri.fs.exists(`${this.currentRepo.cwd()}/.git/rebase-merge`))
+    from(this.gitApi.gitPath('rebase-merge').then(window.tauri.fs.exists))
       .pipe(tap(isRebasing => this.currentRepo.update({isRebasing})));
 
   doUpdateRebaseStatus = () => this.updateRebaseStatus().subscribe();

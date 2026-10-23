@@ -13,14 +13,14 @@ describe('interactive rebase', () => {
   });
 
   it('writes the todo oldest first', () => {
-    expect(buildRebaseTodo([entry('c', 'fixup'), entry('b', 'drop'), entry('a')])).toEqual(['pick a', 'drop b', 'fixup c']);
+    expect(buildRebaseTodo([entry('c', 'fixup'), entry('b', 'drop'), entry('a')], '/repo/.git')).toEqual(['pick a', 'drop b', 'fixup c']);
   });
 
   it('rewords by amending from a message file', () => {
-    expect(buildRebaseTodo([entry('b', 'reword'), entry('a')])).toEqual([
+    expect(buildRebaseTodo([entry('b', 'reword'), entry('a')], '/repo/.git')).toEqual([
       'pick a',
       'pick b',
-      'exec git commit --amend -F .git/gitgud-reword-b && rm .git/gitgud-reword-b',
+      "exec git commit --amend -F '/repo/.git/gitgud-reword-b' && rm '/repo/.git/gitgud-reword-b'",
     ]);
   });
 

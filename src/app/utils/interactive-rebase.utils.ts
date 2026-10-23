@@ -16,6 +16,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {amendFromFile} from './git-path.utils';
+
 export type RebaseAction = 'pick' | 'reword' | 'squash' | 'fixup' | 'drop';
 
 export interface RebaseEntry {
@@ -52,13 +54,13 @@ export const invalidRebaseReason = (entries: RebaseEntry[]) => {
   return undefined;
 };
 
-export const rewordMessageFile = (sha: string) => `.git/gitgud-reword-${sha}`;
+export const rewordMessageFile = (gitDir: string, sha: string) => `${gitDir}/gitgud-reword-${sha}`;
 
 /** git-rebase-todo lines (oldest first) for these entries (newest first) */
-export const buildRebaseTodo = (entries: RebaseEntry[]) =>
+export const buildRebaseTodo = (entries: RebaseEntry[], gitDir: string) =>
   [...entries].reverse().flatMap(({sha, action}) =>
     action == 'reword'
       // git's own reword opens an editor: amend from a message file instead
-      ? [`pick ${sha}`, `exec git commit --amend -F ${rewordMessageFile(sha)} && rm ${rewordMessageFile(sha)}`]
+      ? [`pick ${sha}`, amendFromFile(rewordMessageFile(gitDir, sha))]
       : [`${action} ${sha}`],
   );

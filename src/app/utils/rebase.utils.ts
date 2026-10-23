@@ -18,18 +18,18 @@
 
 import {short} from './commit-utils';
 import {type Commit} from '../lib/github-desktop/model/commit';
+import {amendFromFile} from './git-path.utils';
 
-const MESSAGE_FILE = '.git/COMMIT_EDIT_MSG';
-
-// Writes `message` to a file (fire-and-forget; git waits for the .done signal, not this file), returns the rebase line amending the current commit with it
-const amendWithMessage = (cwd: string, message: string) => {
-  window.tauri.fs.writeFile(`${cwd}/${MESSAGE_FILE}`, message).catch(console.error);
-  return `exec git commit --amend -F ${MESSAGE_FILE} && rm ${MESSAGE_FILE}`;
+// Writes `message` in the git dir (fire-and-forget; git waits for the .done signal, not this file), returns the rebase line amending the current commit with it
+const amendWithMessage = (gitDir: string, message: string) => {
+  const messageFile = `${gitDir}/COMMIT_EDIT_MSG`;
+  window.tauri.fs.writeFile(messageFile, message).catch(console.error);
+  return amendFromFile(messageFile);
 };
 
 // Rework git rebase actions to edit a specified commit summary and description (newMessage)
-export const rewordCommitAction = (cwd: string, selectedCommitSha: string, newMessage: string) => {
-    const amend = amendWithMessage(cwd, newMessage);
+export const rewordCommitAction = (gitDir: string, selectedCommitSha: string, newMessage: string) => {
+    const amend = amendWithMessage(gitDir, newMessage);
 
     return (actions: string[]) =>
       actions.flatMap(action =>
@@ -69,8 +69,8 @@ const actsOn = (action: string, sha: string) => {
 };
 
 // Rework git rebase actions to meld `chain` (newest first) into its oldest commit, then give it `message`
-export const squashActions = (cwd: string, chain: string[], message: string) => {
-  const amend = amendWithMessage(cwd, message);
+export const squashActions = (gitDir: string, chain: string[], message: string) => {
+  const amend = amendWithMessage(gitDir, message);
   const melded = chain.slice(0, -1);
 
   return (actions: string[]) =>

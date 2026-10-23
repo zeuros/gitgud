@@ -24,7 +24,7 @@ describe('squashableChain', () => {
 
 describe('squashActions', () => {
   const writeFile = vi.fn(() => Promise.resolve());
-  const amend = 'exec git commit --amend -F .git/COMMIT_EDIT_MSG && rm .git/COMMIT_EDIT_MSG';
+  const amend = "exec git commit --amend -F '/repo/.git/COMMIT_EDIT_MSG' && rm '/repo/.git/COMMIT_EDIT_MSG'";
 
   afterEach(() => vi.unstubAllGlobals());
 
@@ -34,7 +34,7 @@ describe('squashActions', () => {
   });
 
   it('melds the chain into its oldest commit, then amends it with the message, matching abbreviated shas', () =>
-    expect(squashActions('/repo', ['ddddddd1', 'ccccccc1', 'bbbbbbb1'], 'Squashed')([
+    expect(squashActions('/repo/.git', ['ddddddd1', 'ccccccc1', 'bbbbbbb1'], 'Squashed')([
       'pick bbbbbbb Oldest',
       'pick ccccccc Middle',
       'pick ddddddd Newest',
@@ -48,10 +48,10 @@ describe('squashActions', () => {
     ]));
 
   it('writes the message to the file the amend reads', () => {
-    squashActions('/repo', ['ccccccc1', 'bbbbbbb1'], 'Squashed\n\nBody');
+    squashActions('/repo/.git', ['ccccccc1', 'bbbbbbb1'], 'Squashed\n\nBody');
     expect(writeFile).toHaveBeenCalledWith('/repo/.git/COMMIT_EDIT_MSG', 'Squashed\n\nBody');
   });
 
   it('ignores a commit whose message mentions a squashed sha', () =>
-    expect(squashActions('/repo', ['ddddddd1', 'ccccccc1'], 'Squashed')(['pick ccccccc Old', 'pick eeeeeee revert ddddddd'])).toEqual(['pick ccccccc Old', 'pick eeeeeee revert ddddddd']));
+    expect(squashActions('/repo/.git', ['ddddddd1', 'ccccccc1'], 'Squashed')(['pick ccccccc Old', 'pick eeeeeee revert ddddddd'])).toEqual(['pick ccccccc Old', 'pick eeeeeee revert ddddddd']));
 });
