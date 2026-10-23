@@ -10,12 +10,33 @@ npm test                        # run unit tests (vitest, node environment)
 npm run tauri:build             # production build + native installer (current platform)
 npm run tauri:build:linux-deb   # .deb package
 npm run tauri:build:linux-rpm   # .rpm package
-npm run e2e                     # playwright e2e (needs xvfb on headless)
+npm run e2e                     # WebdriverIO e2e through tauri-driver (needs a display, see below)
 ```
 
 Single test file: `npx vitest run src/path/to/file.spec.ts`
 
 Cargo (from `src-tauri/`): `cargo check`, `cargo clippy`, `cargo build`
+
+### Running e2e / driving the app headless
+
+The e2e specs drive the **release** binary `src-tauri/target/release/gitgud`: rebuild it after changes with `npx tauri build --no-bundle`. `npm run e2e:setup` recreates the demo repos in `/tmp/gitgud-demo-*`.
+
+On a GNOME (Wayland) desktop, `npm run e2e` uses `xvfb-maybe`, which sees `DISPLAY=:0` (Xwayland) and runs the app **on the real desktop**. To run in the background instead, use a private Xvfb and hide Wayland:
+
+```bash
+npm run e2e:setup && env -u WAYLAND_DISPLAY LIBGL_ALWAYS_SOFTWARE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 \
+  xvfb-run -a -s "-screen 0 1600x900x24 -ac +extension GLX +render" npx wdio run wdio.conf.ts --spec e2e/<name>.spec.ts
+```
+
+The software-rendering variables come from the demo recording setup; that command works with them, it wasn't checked without. Keep this kind of setup in the environment: no app code is specific to this machine (NVIDIA + Wayland, see Linux / WebKitGTK notes).
+
+Driving it from a spec (WebdriverIO, helpers in `e2e/utils/helpers.ts`):
+- No screenshots: `browser.saveScreenshot` hangs, and grabbing the Xvfb display (`ffmpeg -f x11grab`) shows an empty screen, as the WebDriver-driven window isn't mapped there. Check results through the DOM and the repo's git state instead.
+- Toasts: wait with `waitForExist`; `waitForDisplayed` times out while they animate.
+- The log only renders rows near the viewport (`renderWindow`): find a commit through the search (Ctrl+F, type, Enter selects the match) rather than by its row.
+- A second repo: the `+` tab button opens a "New tab" page; stub `window.tauri.dialog.showOpenDialog` then click its `Open` button.
+
+As of Oct 2026 these specs fail on steps unrelated to recent changes (out of date selectors or flows): `search-merge` (no `.conflicted-section` after opening the conflict repo, also failing on 617e0c92), `git-ops` (left panel tree selector), `diff-staging` (`p-select.settings-select`).
 
 ## Stack
 
