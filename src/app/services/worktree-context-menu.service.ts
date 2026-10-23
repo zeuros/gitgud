@@ -17,8 +17,8 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import type {MenuItem} from 'primeng/api';
-import {switchMap} from 'rxjs';
+import {ConfirmationService, type MenuItem} from 'primeng/api';
+import {catchError, Observable, switchMap} from 'rxjs';
 import {GitWorkflowService} from './git-workflow.service';
 import {GitRepositoryService} from './git-repository.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
@@ -31,6 +31,7 @@ export class WorktreeContextMenuService {
   private gitWorkflow = inject(GitWorkflowService);
   private gitRepository = inject(GitRepositoryService);
   private gitRepositoryStore = inject(GitRepositoryStore);
+  private confirmation = inject(ConfirmationService);
 
   selectedWorktree = signal<GitWorktree | undefined>(undefined);
 
@@ -54,10 +55,7 @@ export class WorktreeContextMenuService {
       label: 'Remove this worktree',
       icon: 'fa fa-trash',
       visible: !this.isMain(),
-      command: () => this.gitWorkflow.doRunAndRefresh(
-        ['worktree', 'remove', this.path()],
-        `Removed worktree at ${this.path()}`,
-      ),
+      command: () => this.removeOrForce(['worktree', 'remove', this.path()], `Removed worktree at ${this.path()}`).subscribe(),
     },
     {
       label: 'Remove worktree and delete branch',
@@ -93,14 +91,25 @@ export class WorktreeContextMenuService {
   }
 
   private removeAndDeleteBranch() {
-    this.gitWorkflow.runAndRefresh(
-      ['worktree', 'remove', this.path()],
-      undefined,
-    ).pipe(
-      switchMap(() => this.gitWorkflow.runAndRefresh(
-        ['branch', '-d', this.branch()],
-        `Removed worktree and deleted branch ${this.branch()}`,
-      )),
+    const branch = this.branch();
+    this.removeOrForce(['worktree', 'remove', this.path()]).pipe(
+      switchMap(() => this.removeOrForce(['branch', '-d', branch], `Removed worktree and deleted branch ${branch}`)),
     ).subscribe();
   }
+
+  // When git refuses (changes in the worktree, unmerged branch…), shows its reason and asks before running args again with -f
+  private removeOrForce = (args: (string | undefined)[], successMsg?: string) =>
+    this.gitWorkflow.runAndRefresh(args, successMsg).pipe(
+      catchError((error: Error) => new Observable<unknown>(subscriber => {
+        this.confirmation.confirm({
+          header: 'Force it ?',
+          message: error.message,
+          acceptLabel: 'Force',
+          rejectLabel: 'Cancel',
+          acceptButtonStyleClass: 'p-button-danger',
+          accept: () => this.gitWorkflow.runAndRefresh([...args, '-f'], successMsg).subscribe(subscriber),
+          reject: () => subscriber.complete(),
+        });
+      })),
+    );
 }
