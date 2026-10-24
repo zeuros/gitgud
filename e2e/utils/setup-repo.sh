@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Creates two demo git repos used by the e2e video tests.
-#   /tmp/gitgud-demo-base      — clean repo with branches + unstaged changes
+#   /tmp/gitgud-demo-base      — clean repo with branches, a linked worktree + unstaged changes
 #   /tmp/gitgud-demo-conflict  — same repo left in a merge conflict state
 
 set -euo pipefail
@@ -316,6 +316,11 @@ EOF
 echo "" >> "$BASE/styles.css"
 echo "/* WIP: filter bar */" >> "$BASE/styles.css"
 echo ".filter-bar { display: none; }" >> "$BASE/styles.css"
+
+# ── linked worktree on experiment/local-storage ──────────────────────────────
+# Inside the repo with relative paths, so copies of the repo (conflict repo, specs) keep a working worktree
+echo ".worktrees/" >> "$BASE/.git/info/exclude"
+g worktree add -q --relative-paths .worktrees/local-storage experiment/local-storage
 
 echo "✔ base repo created at $BASE"
 
