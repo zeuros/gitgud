@@ -32,6 +32,7 @@ import {ToastService} from '../../services/toast.service';
 import {AutoFetchService} from '../../services/auto-fetch.service';
 import {SettingsService} from '../../services/settings.service';
 import {short} from '../../utils/commit-utils';
+import {WorktreeBadgeComponent} from '../worktree-badge/worktree-badge.component';
 import {workingDirHasChanges} from '../../utils/utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {UndoService} from '../../services/undo.service';
@@ -51,7 +52,7 @@ type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-conti
   selector: 'gitgud-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, Divider, Tooltip, Select, FormsModule, Menu],
+  imports: [Button, Divider, Tooltip, Select, FormsModule, Menu, WorktreeBadgeComponent],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
 })

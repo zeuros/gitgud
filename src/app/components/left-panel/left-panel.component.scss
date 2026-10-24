@@ -143,7 +143,8 @@
 }
 
 
-::ng-deep .worktree-current > .p-tree-node-content {
+::ng-deep .worktree-current > .p-tree-node-content,
+::ng-deep .p-listbox-option:has(.worktree-current) {
   background: var(--branch-current-bg);
   color: var(--branch-current-color);
 }

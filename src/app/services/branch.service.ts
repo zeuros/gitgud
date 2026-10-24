@@ -6,6 +6,8 @@ import {StashService} from './stash.service';
 import {GitRefreshService} from './git-refresh.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {BranchAheadBehindService} from './branch-ahead-behind.service';
+import {CurrentRepoStore} from '../stores/current-repo.store';
+import {GitRepositoryService} from './git-repository.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {type DivergedBranchAction, DivergedBranchDialogComponent} from '../components/dialogs/diverged-branch-dialog/diverged-branch-dialog.component';
 
@@ -19,9 +21,18 @@ export class BranchService {
   private gitRefresh = inject(GitRefreshService);
   private gitApi = inject(GitApiService);
   private aheadBehind = inject(BranchAheadBehindService);
+  private currentRepo = inject(CurrentRepoStore);
+  private gitRepository = inject(GitRepositoryService);
 
   checkoutBranch = (branch: Branch) => {
     const branchName = normalizedBranchName(branch);
+
+    // Checked out in another worktree (git refuses to check it out twice): work there instead
+    const worktree = this.currentRepo.otherWorktreeOf(branchName);
+    if (worktree) {
+      this.gitRepository.switchWorktree(worktree).subscribe();
+      return;
+    }
 
     // If local branch diverged from remote, let user choose reset, merge or cancel
     const aheadBehind = this.aheadBehind.aheadBehindMap()[normalizedBranchName(branch)!];

@@ -1,4 +1,4 @@
-@if (currentRepo.cwd(); as repoId) {
+@if (currentRepo.id(); as repoId) {
     <p-splitter stateStorage="local" [stateKey]="'splitter-main-view-' + repoId" class="h-full">
         <p-splitter-panel [size]="14" [minSize]="8">
             <gitgud-left-panel/>

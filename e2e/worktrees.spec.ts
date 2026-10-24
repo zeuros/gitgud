@@ -4,7 +4,6 @@ import {
   DEMO_BASE,
   initRepoWithWorktrees,
   jsClick,
-  jsClickAt,
   rightClickAt,
   see,
   typeInto,
@@ -93,26 +92,37 @@ describe('Worktrees — list, create, remove', () => {
     );
   });
 
-  it('opens a linked worktree in a new tab on double-click', async () => {
+  it('switches to a linked worktree in the same tab on double-click, and back by checking out its branch', async () => {
     const tabsBefore = (await $$('p-tab')).length;
+    const branchBadge = () => browser.execute(() => document.querySelector('gitgud-toolbar .branch-badge')?.textContent?.trim());
 
-    // Double-click the first linked worktree entry (index 1 = feature/dark-mode)
-    await browser.execute((sel: string, i: number) => {
-      const el = document.querySelectorAll(sel)[i] as HTMLElement;
-      el?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
-    }, '.worktree-entry', 1);
+    // Double-click the feature/dark-mode worktree (entries are sorted by path, the one created above may come first)
+    await browser.execute(() => Array.from(document.querySelectorAll('.worktree-entry'))
+      .find(el => el.textContent?.trim() === 'feature/dark-mode')
+      ?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true })));
 
-    await browser.waitUntil(
-      async () => (await $$('p-tab')).length > tabsBefore,
-      { timeout: 15_000, timeoutMsg: 'new tab never appeared after worktree double-click' },
-    );
+    await $('gitgud-toolbar .worktree-badge').waitForExist({ timeout: 15_000, timeoutMsg: 'no worktree badge after switching to the worktree' });
+    await expect($('p-tab .worktree-badge')).toExist();
+    await browser.waitUntil(async () => await branchBadge() === 'feature/dark-mode',
+      { timeout: 10_000, timeoutMsg: 'the toolbar does not show the worktree\'s branch' });
+    expect((await $$('p-tab')).length).toBe(tabsBefore);
+    expect(await browser.execute(() => document.querySelector('.worktree-entry.worktree-current')?.textContent?.trim())).toBe('feature/dark-mode');
 
-    // Switch back to the first tab so subsequent tests operate on the main repo
-    await jsClickAt('p-tab', 0);
-    await browser.waitUntil(
-      async () => (await $$('tr.commit-row')).length > 0,
-      { timeout: 10_000, timeoutMsg: 'commit rows never appeared after switching back to main tab' },
-    );
+    // main is checked out in the main worktree: flagged, its menu offers the switch, and double-clicking it goes back
+    const mainNode = await $('//p-tree//span[contains(@class,"branch-drop-target")][span[normalize-space()="main"]]');
+    await mainNode.waitForExist({ timeout: 10_000 });
+    await expect(mainNode.$('i.fa-tree')).toExist();
+    await browser.execute((el: Element) => el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 })), mainNode);
+    await waitForMenuItem('Switch to worktree');
+    const del = await $('//li[contains(@class,"p-contextmenu-item")][contains(.,"Delete main (checked out in")]');
+    expect(await del.getAttribute('class')).toContain('p-disabled');
+    await browser.execute(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true })));
+    await beat();
+
+    await browser.execute((el: Element) => el.closest('.p-tree-node-content')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true })), mainNode);
+    await browser.waitUntil(async () => !(await $('gitgud-toolbar .worktree-badge').isExisting()) && await branchBadge() === 'main',
+      { timeout: 15_000, timeoutMsg: 'checking out main did not switch back to the main worktree' });
+    expect((await $$('p-tab')).length).toBe(tabsBefore);
   });
 
   it('removes a worktree via context menu', async () => {

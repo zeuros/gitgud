@@ -45,6 +45,7 @@ import {GitRepositoryService} from '../../services/git-repository.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
+import {otherWorktreeTooltip} from '../../utils/worktree-utils';
 
 @Component({
   selector: 'gitgud-left-panel',
@@ -86,8 +87,7 @@ export class LeftPanelComponent {
   protected branchDragDrop = inject(BranchDragDropService);
   protected activeContextMenu = inject(ActiveContextMenuService);
   protected aheadBehind = inject(BranchAheadBehindService);
-  protected worktreeContextMenu = inject(WorktreeContextMenuService);
-  private branch = inject(BranchService);
+  protected worktreeContextMenu = inject(WorktreeContextMenuService);  private branch = inject(BranchService);
   private dialog = inject(DialogService);
   private gitRepositoryService = inject(GitRepositoryService);
 
@@ -144,11 +144,13 @@ export class LeftPanelComponent {
 
   protected addWorktree = () => this.dialog.open(CreateWorktreeDialogComponent, {header: 'Create Worktree', width: '520px'});
 
-  protected openWorktreeInNewTab = (wt: GitWorktree) => {
-    if (!wt.isMain) this.gitRepositoryService.openRepository(wt.path).subscribe();
+  protected switchToWorktree = (wt: GitWorktree) => {
+    if (!this.isCurrentWorktree(wt)) this.gitRepositoryService.switchWorktree(wt.path).subscribe();
   };
 
-  protected isCurrentWorktree = ({path}: GitWorktree) => path === this.currentRepo.cwd();
+  protected isCurrentWorktree = ({path}: GitWorktree) => this.currentRepo.isCurrentWorktree(path);
+
+  protected otherWorktreeTooltip = otherWorktreeTooltip;
 
   protected $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
   protected $tagNode = (node: TreeNode<LocalAndDistantTagWithName>) => node;

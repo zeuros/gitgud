@@ -74,8 +74,8 @@ export class CreateWorktreeDialogComponent {
   }
 
   private refreshWorkDir(branchName: string) {
-    const cwd = this.currentRepo.cwd() ?? '';
-    this.workDir.set(`${cwd}.worktrees/${branchName}`);
+    const mainWorktreePath = this.currentRepo.id() ?? '';
+    this.workDir.set(`${mainWorktreePath}.worktrees/${branchName}`);
   }
 
   protected browse() {

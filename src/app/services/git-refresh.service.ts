@@ -74,11 +74,19 @@ export class GitRefreshService {
     ).subscribe();
   }
 
-  refreshAll = () => this.track(forkJoin({
+  refreshAll = () => this.track(this.leaveRemovedWorktree().pipe(switchMap(() => forkJoin({
     workDirStatus: this.updateWorkingDirChanges(),
     logsAndBranches: this.updateLogsAndBranches(), // refresh log and wait for it so that selected commit sha can be updated
     isRebasing: this.updateRebaseStatus(),
-  }));
+  }))));
+
+  // Back to the main worktree when the active worktree's folder no longer exists
+  private leaveRemovedWorktree = () => {
+    const worktree = this.currentRepo.activeWorktree();
+    return worktree
+      ? from(window.tauri.fs.exists(worktree)).pipe(tap(exists => exists || this.currentRepo.update({activeWorktree: undefined})))
+      : of(true);
+  };
 
   doRefreshAll = () => this.refreshAll().subscribe();
 

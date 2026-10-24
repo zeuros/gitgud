@@ -37,7 +37,7 @@
         #logTable
         gitgudLogColumns
         stateStorage="local"
-        [stateKey]="'logs-table-' + currentRepo.cwd()"
+        [stateKey]="'logs-table-' + currentRepo.id()"
         [value]="displayLog"
         [selection]="commitsSelection()"
         (selectionChange)="onCommitsSelection($event)"

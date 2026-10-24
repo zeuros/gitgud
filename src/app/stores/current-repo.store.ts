@@ -23,6 +23,7 @@ import {groupBy, isEqual, mapValues} from 'lodash-es';
 import {logsComparison, shallowArrayEqual} from '../utils/utils';
 import {type LocalAndDistant, toLocalAndDistantPairs} from '../utils/branch-utils';
 import {groupTagsByShaAndName, localAndDistantTagPairsByName} from '../utils/tag-utils';
+import {branchesCheckedOutElsewhere} from '../utils/worktree-utils';
 
 /**
  * Exposes reactive state for the currently selected repository.
@@ -33,7 +34,14 @@ export class CurrentRepoStore {
 
   private reposStore = inject(GitRepositoryStore);
 
-  cwd = computed(() => this.reposStore.selectedRepository()?.id);
+  // The repository (its main worktree): identifies the gitgud tab
+  id = computed(() => this.reposStore.selectedRepository()?.id);
+  // Where git runs, changes with worktree switches; per-repository things use id()
+  cwd = computed(() => {
+    const repo = this.reposStore.selectedRepository();
+    return repo && (repo.activeWorktree ?? repo.id);
+  });
+  activeWorktree = computed(() => this.reposStore.selectedRepository()?.activeWorktree);
   logs = computed(() => this.reposStore.selectedRepository()?.logs ?? [], {equal: logsComparison});
   stashes = computed(() => this.reposStore.selectedRepository()?.stashes ?? [], {equal: logsComparison});
   tags = computed(() => this.reposStore.selectedRepository()?.tags ?? [], {equal: isEqual});
@@ -74,6 +82,10 @@ export class CurrentRepoStore {
     return this.tags().find(s => s.sha == sha);
   });
   worktrees = computed(() => this.reposStore.selectedRepository()?.worktrees ?? [], {equal: isEqual});
+  isCurrentWorktree = (path: string | undefined) => !!path && path === this.cwd();
+  private branchesInOtherWorktrees = computed(() => branchesCheckedOutElsewhere(this.worktrees(), this.cwd()), {equal: isEqual});
+  // Path of the other worktree a local branch is checked out in: checking it out switches there
+  otherWorktreeOf = (localBranchName?: string) => localBranchName ? this.branchesInOtherWorktrees().get(localBranchName) : undefined;
   isRebasing = computed(() => this.reposStore.selectedRepository()?.isRebasing ?? false);
   headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
 

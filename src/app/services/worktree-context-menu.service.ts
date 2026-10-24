@@ -18,11 +18,10 @@
 
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {ConfirmationService, type MenuItem} from 'primeng/api';
-import {catchError, Observable, switchMap} from 'rxjs';
+import {catchError, Observable, of, switchMap} from 'rxjs';
 import {GitWorkflowService} from './git-workflow.service';
 import {GitRepositoryService} from './git-repository.service';
-import {GitRepositoryStore} from '../stores/git-repos.store';
-import {createRepository} from '../utils/repository-utils';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 import type {GitWorktree} from '../models/git-worktree';
 
 @Injectable({providedIn: 'root'})
@@ -30,7 +29,7 @@ export class WorktreeContextMenuService {
 
   private gitWorkflow = inject(GitWorkflowService);
   private gitRepository = inject(GitRepositoryService);
-  private gitRepositoryStore = inject(GitRepositoryStore);
+  private currentRepo = inject(CurrentRepoStore);
   private confirmation = inject(ConfirmationService);
 
   selectedWorktree = signal<GitWorktree | undefined>(undefined);
@@ -39,23 +38,21 @@ export class WorktreeContextMenuService {
   private branch = computed(() => this.selectedWorktree()?.branch);
   private isLocked = computed(() => this.selectedWorktree()?.isLocked ?? false);
   private isMain = computed(() => this.selectedWorktree()?.isMain ?? false);
-  private alreadyOpen = computed(() =>
-    this.gitRepositoryStore.repositories().some(r => r.id === this.path())
-  );
+  private isCurrent = computed(() => this.currentRepo.isCurrentWorktree(this.path()));
 
   worktreeContextMenu = computed<MenuItem[]>(() => [
     {
-      label: 'Open worktree in new tab',
-      icon: 'fa fa-plus-square',
-      visible: !this.isMain() && !this.alreadyOpen(),
-      command: () => this.openInNewTab(),
+      label: 'Switch to this worktree',
+      icon: 'fa fa-sign-in',
+      visible: !this.isCurrent(),
+      command: () => this.gitRepository.switchWorktree(this.path()!).subscribe(),
     },
     {separator: true, visible: !this.isMain()},
     {
       label: 'Remove this worktree',
       icon: 'fa fa-trash',
       visible: !this.isMain(),
-      command: () => this.removeOrForce(['worktree', 'remove', this.path()], `Removed worktree at ${this.path()}`).subscribe(),
+      command: () => this.leaveAndRemove(`Removed worktree at ${this.path()}`).subscribe(),
     },
     {
       label: 'Remove worktree and delete branch',
@@ -81,18 +78,18 @@ export class WorktreeContextMenuService {
     },
   ]);
 
-  private openInNewTab() {
+  // Removing the active worktree switches back to the main worktree first, so git doesn't run from the folder being removed
+  private leaveAndRemove = (successMsg?: string) => {
     const path = this.path()!;
-    if (!this.gitRepositoryStore.repositories().some(r => r.id === path)) {
-      this.gitRepositoryStore.addRepository(createRepository(path));
-    }
-    // Switch to the new tab
-    this.gitRepository.openRepository(path).subscribe();
-  }
+    const leave: Observable<unknown> = this.isCurrent() ? this.gitRepository.switchWorktree(this.currentRepo.id()!) : of(undefined);
+    return leave.pipe(
+      switchMap(() => this.removeOrForce(['worktree', 'remove', path], successMsg)),
+    );
+  };
 
   private removeAndDeleteBranch() {
     const branch = this.branch();
-    this.removeOrForce(['worktree', 'remove', this.path()]).pipe(
+    this.leaveAndRemove().pipe(
       switchMap(() => this.removeOrForce(['branch', '-d', branch], `Removed worktree and deleted branch ${branch}`)),
     ).subscribe();
   }

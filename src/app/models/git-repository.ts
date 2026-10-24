@@ -43,6 +43,8 @@ export class GitRepository {
     public workDirStatus: WorkDirStatus = {unstaged: [], staged: [], conflicted: []},
     public isRebasing = false,
     public worktrees: GitWorktree[] = [],
+    // The linked worktree this tab works in (git runs there), undefined for the main worktree (`id`)
+    public activeWorktree?: string,
   ) {
   }
 }

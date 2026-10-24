@@ -20,6 +20,7 @@ import {inject, Injectable} from '@angular/core';
 import {map} from 'rxjs';
 import {GitApiService} from './git-api.service';
 import type {GitWorktree} from '../../models/git-worktree';
+import {withoutTrailingSlash} from '../../utils/worktree-utils';
 
 @Injectable({providedIn: 'root'})
 export class WorktreeReaderService {
@@ -34,7 +35,7 @@ export class WorktreeReaderService {
           .filter(block => block.trim())
           .map((block, idx): GitWorktree => {
             const lines = block.split('\n');
-            const path = lines.find(l => l.startsWith('worktree '))?.slice('worktree '.length) ?? '';
+            const path = withoutTrailingSlash(lines.find(l => l.startsWith('worktree '))?.slice('worktree '.length) ?? '');
             const sha = lines.find(l => l.startsWith('HEAD '))?.slice('HEAD '.length) ?? '';
             const branchLine = lines.find(l => l.startsWith('branch '));
             const isDetached = lines.some(l => l === 'detached');

@@ -115,6 +115,14 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
   color: var(--huaaaaaGray);
 }
 
+// Worktree icons: drawn as an outline in the icon's color (FA 4 has no outline variant), shrunk and raised to line up with the other icons
+.fa-tree {
+  font-size: 0.75em;
+  vertical-align: 0.13em;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 1px currentColor;
+}
+
 .editor-header {
   display: flex;
   align-items: center;

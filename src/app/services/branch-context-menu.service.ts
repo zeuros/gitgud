@@ -39,6 +39,7 @@ import {InteractiveRebaseService} from './interactive-rebase.service';
 import {ConflictPredictionService} from './conflict-prediction.service';
 import {withConflictWarning} from '../utils/conflict-prediction.utils';
 import {type BehindRemoteAction, openBehindRemoteDialog} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
+import {lockedByWorktree, worktreeName} from '../utils/worktree-utils';
 
 @Injectable({providedIn: 'root'})
 export class BranchContextMenuService {
@@ -93,9 +94,16 @@ export class BranchContextMenuService {
     const name = this.name();
     const head = this.head();
     const warn = (item: MenuItem) => withConflictWarning(item, this.conflictPrediction.conflictsBetween(this.currentRepo.headSha(), node.data?.tip.sha));
+    // Checked out in another worktree: checking it out switches there, and git refuses to pull into it or delete it from here
+    const isLocal = node.data?.type === BranchType.Local;
+    const otherWorktree = node.data && this.currentRepo.otherWorktreeOf(this.trackingPair(node.data).localName);
+    const lock = (item: MenuItem) => otherWorktree ? lockedByWorktree(item, otherWorktree) : item;
+    const [pull, push] = this.remoteItems(node.data);
+    const deleteItem: MenuItem = {label: `Delete ${name}`, icon: 'fa fa-trash', command: this.deleteBranch};
     return [
       // Remote
-      ...this.remoteItems(node.data),
+      lock(pull),
+      push,
       {label: 'Set Upstream', icon: 'fa fa-link', command: this.setUpstream},
       {separator: true},
       // Integration
@@ -104,7 +112,10 @@ export class BranchContextMenuService {
       warn({label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.interactiveRebase.open(name)}),
       {separator: true},
       // Checkout
-      {label: `Checkout ${name}`, icon: 'fa fa-sign-in', command: () => node.data && this.branch.checkoutBranch(node.data)},
+      {
+        ...otherWorktree ? {label: `Switch to worktree ${worktreeName(otherWorktree)}`, icon: 'fa fa-tree'} : {label: `Checkout ${name}`, icon: 'fa fa-sign-in'},
+        command: () => node.data && this.branch.checkoutBranch(node.data),
+      },
       {separator: true},
       // Commit ops
       {label: 'Create branch here', icon: 'fa fa-plus', command: this.createBranchHere},
@@ -132,7 +143,7 @@ export class BranchContextMenuService {
       {separator: true},
       // Branch management
       {label: `Rename ${name}`, icon: 'fa fa-pencil', command: this.renameBranch},
-      {label: `Delete ${name}`, icon: 'fa fa-trash', command: this.deleteBranch},
+      isLocal ? lock(deleteItem) : deleteItem,
       {separator: true},
       // Copy
       {label: 'Copy branch name', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(name)},

@@ -3,6 +3,9 @@
 }
 <span class="ellipsis branch-name">{{ normalizedBranchName(local() ?? distant()) }}</span>
 <span class="float-icons">
+    @if (otherWorktreeTooltip(); as title) {
+        <i class="fa fa-tree" [title]="title"></i>
+    }
     @if (local()) {
         <i class="fa fa-laptop"></i>
     }

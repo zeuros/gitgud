@@ -13,6 +13,9 @@
             </span>
         </div>
     </div>
+    @if (currentRepo.activeWorktree(); as worktree) {
+        <gitgud-worktree-badge [repoId]="currentRepo.id()!" [path]="worktree"/>
+    }
     <span class="branch-badge">{{ currentRepo.headBranch()?.name ?? short(currentRepo.detachedHeadSha() ?? '') + ' (detached HEAD)' }}</span>
 </div>
 

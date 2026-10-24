@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, effect, inject, Injectable} from '@angular/core';
+import {effect, inject, Injectable} from '@angular/core';
 import {EMPTY, from, switchMap} from 'rxjs';
 import {isRootDirectory, throwEx} from '../utils/utils';
 import {createRepository} from '../utils/repository-utils';
@@ -24,6 +24,8 @@ import {FileWatcherService} from './file-watcher.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {GitRefreshService} from './git-refresh.service';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {mainWorktreeOf, withoutTrailingSlash} from '../utils/worktree-utils';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 
 @Injectable({
   providedIn: 'root',
@@ -34,17 +36,24 @@ export class GitRepositoryService {
   private gitRepositoryStore = inject(GitRepositoryStore);
   private gitRefresh = inject(GitRefreshService);
   private gitApi = inject(GitApiService);
-
-  // Memoized on string equality — only changes when the actual repo path switches,
-  // not on every workDirStatus / selectedCommitsShas update.
-  private selectedRepoId = computed(() => this.gitRepositoryStore.selectedRepository()?.id);
+  private currentRepo = inject(CurrentRepoStore);
 
   constructor() {
     effect(() => {
-      const id = this.selectedRepoId();
-      if (id) this.fileWatcher.setWatcher(id);
+      const cwd = this.currentRepo.cwd();
+      if (cwd) this.fileWatcher.setWatcher(cwd);
     });
   }
+
+  // The main worktree when `path` is a linked worktree, undefined otherwise (or when it isn't a repository)
+  private findMainWorktree = (path: string) =>
+    this.gitApi.gitDirs(path).then(dirs => mainWorktreeOf(dirs, path), () => undefined);
+
+  /** Makes the current tab work in the worktree at `path` (the main worktree or a linked one): git runs there from now on */
+  switchWorktree = (path: string) => {
+    this.gitRepositoryStore.updateSelectedRepository({activeWorktree: path === this.currentRepo.id() ? undefined : path});
+    return this.gitRefresh.refreshAll();
+  };
 
   pickFolderAndOpenRepository = () => {
     from(this.pickGitFolder()).pipe(
@@ -55,28 +64,27 @@ export class GitRepositoryService {
   /**
    * Opens or retrieve repository after user picks a repo folder
    * - Reuses an existing repo if already opened
+   * - For a linked worktree's folder, opens its repository and works in that worktree
    * - Marks it as selected
    * - Refreshes logs, branches, and stashes
    */
-  openRepository = (repoPath: string) => {
+  openRepository = (folder: string) => {
+    const repoPath = withoutTrailingSlash(folder);
+    return from(this.findMainWorktree(repoPath)).pipe(switchMap(main => {
+      const id = main ?? repoPath;
 
-    const repos = this.gitRepositoryStore.repositories();
+      // Add repo if not already opened
+      if (!this.gitRepositoryStore.repositories().some(r => r.id === id))
+        this.gitRepositoryStore.addRepository(createRepository(id));
 
-    let repo = repos.find(r => r.id === repoPath);
+      // Select it — cwd is derived from selectedRepository, so this also updates cwd
+      // Also closes the new tab if it was open (selectRepository calls deactivateNewTab)
+      this.gitRepositoryStore.selectRepository(id);
+      this.gitRepositoryStore.closeNewTab();
 
-    // Add repo if not already opened
-    if (!repo) {
-      repo = createRepository(repoPath);
-      this.gitRepositoryStore.addRepository(repo);
-    }
-
-    // Select it — cwd is derived from selectedRepository, so this also updates cwd
-    // Also closes the new tab if it was open (selectRepository calls deactivateNewTab)
-    this.gitRepositoryStore.selectRepository(repoPath);
-    this.gitRepositoryStore.closeNewTab();
-
-    // Refresh git data
-    return this.gitRefresh.refreshAll();
+      // Works in the opened folder's worktree (back to the main worktree if that's the one opened), and refreshes git data
+      return this.switchWorktree(repoPath);
+    }));
   };
 
   closeRepository = (index: number) => {

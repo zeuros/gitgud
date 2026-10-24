@@ -1,4 +1,4 @@
-@if (currentRepo.cwd(); as repoId) {
+@if (currentRepo.id(); as repoId) {
     <p-splitter
             [style]="{ height: '100%' }"
             layout="vertical"
@@ -39,6 +39,9 @@
                                     }
                                     @if (ab?.behind) {
                                         <span class="ahead-behind"><i class="fa fa-arrow-down"></i>{{ ab.behind }}</span>
+                                    }
+                                    @if (currentRepo.otherWorktreeOf(node.data.name); as path) {
+                                        <i class="fa fa-tree text-gray small-icon ml-1" [title]="otherWorktreeTooltip(path)"></i>
                                     }
                                 </span>
                             } @else {
@@ -169,11 +172,13 @@
                         @let isCurrent = isCurrentWorktree(worktree);
                         <div class="flex align-items-center gap-2 ellipsis worktree-entry"
                              [class.worktree-current]="isCurrent"
+                             [title]="worktree.path"
                              (click)="selectWorktree(worktree)"
-                             (dblclick)="openWorktreeInNewTab(worktree)"
+                             (dblclick)="switchToWorktree(worktree)"
                              (contextmenu)="openWorktreeContextMenu(worktree, $event)">
-                            <i [class]="worktree.isMain ? 'fa fa-home' : (worktree.isDetached ? 'fa fa-scissors' : 'fa fa-code-fork')" class="text-gray worktree-icon small-icon"></i>
-                            <span class="ellipsis flex-1" [class.text-gray]="!isCurrent" [gitgudTitleIfOverflow]="worktree.branch ?? 'HEAD'">
+                            <i [class]="worktree.isMain ? 'fa fa-home' : worktree.isDetached ? 'fa fa-scissors' : 'fa fa-code-fork'"
+                               [class.text-gray]="!isCurrent" class="worktree-icon small-icon"></i>
+                            <span class="ellipsis flex-1" [class.text-gray]="!isCurrent">
                                 {{ worktree.branch ?? 'HEAD' }}
                             </span>
                             @let ab = aheadBehind.aheadBehindMap()[worktree.branch ?? ''];
