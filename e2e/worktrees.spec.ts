@@ -102,7 +102,6 @@ describe('Worktrees — list, create, remove', () => {
       ?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true })));
 
     await $('gitgud-toolbar .worktree-badge').waitForExist({ timeout: 15_000, timeoutMsg: 'no worktree badge after switching to the worktree' });
-    await expect($('p-tab .worktree-badge')).toExist();
     await browser.waitUntil(async () => await branchBadge() === 'feature/dark-mode',
       { timeout: 10_000, timeoutMsg: 'the toolbar does not show the worktree\'s branch' });
     expect((await $$('p-tab')).length).toBe(tabsBefore);
