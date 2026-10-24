@@ -16,25 +16,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Injectable } from '@angular/core';
-import type { StorageKey } from "../enums/storage-name.enum";
+import type {StorageKey} from '../enums/storage-name.enum';
 
-@Injectable({
-    providedIn: 'root'
-})
-export class LocalStorageService {
+// JSON values in localStorage, under the app's keys
+export class LocalStorage {
 
-    store = (where: StorageKey, item: unknown) => this.storeRaw(where, JSON.stringify(item));
+  static store = (where: StorageKey, item: unknown) => LocalStorage.storeRaw(where, JSON.stringify(item));
 
-    storeRaw = (where: StorageKey, json: string) => localStorage.setItem(where, json);
+  static storeRaw = (where: StorageKey, json: string) => localStorage.setItem(where, json);
 
-    // Undefined when nothing is stored, or what is stored isn't JSON
-    get = <T>(where: StorageKey): T | undefined => {
-        try {
-            return JSON.parse(localStorage.getItem(where)!) ?? undefined;
-        } catch {
-            return undefined;
-        }
-    };
-
+  // Undefined when nothing is stored, or what is stored isn't JSON
+  static get = <T>(where: StorageKey): T | undefined => {
+    try {
+      return JSON.parse(localStorage.getItem(where)!) ?? undefined;
+    } catch {
+      return undefined;
+    }
+  };
 }

@@ -16,9 +16,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, inject, Injectable, signal} from '@angular/core';
+import {computed, Injectable, signal} from '@angular/core';
 import type {GitRepository} from '../models/git-repository';
-import {LocalStorageService} from '../services/local-storage.service';
+import {LocalStorage} from '../utils/local-storage';
 import {StorageName} from '../enums/storage-name.enum';
 import {syncToStorage} from '../utils/store.utils';
 import {fromStoredRepository, type StoredRepository, toStoredRepository} from '../utils/repository-utils';
@@ -30,9 +30,8 @@ import {fromStoredRepository, type StoredRepository, toStoredRepository} from '.
 @Injectable({providedIn: 'root'})
 export class GitRepositoryStore {
 
-  private localStorage = inject(LocalStorageService);
 
-  private _repositories = signal<GitRepository[]>((this.localStorage.get<StoredRepository[]>(StorageName.GitRepositories) ?? []).map(fromStoredRepository));
+  private _repositories = signal<GitRepository[]>((LocalStorage.get<StoredRepository[]>(StorageName.GitRepositories) ?? []).map(fromStoredRepository));
   private _recentIds = signal<string[]>([]);
 
   // Allows to ctrl+shift+t to reopen a repo
@@ -54,8 +53,8 @@ export class GitRepositoryStore {
   deactivateNewTab = () => this.newTabSelected.set(false);
 
   constructor() {
-    syncToStorage(this._repositories, StorageName.GitRepositories, this.localStorage, repos => repos.map(toStoredRepository));
-    syncToStorage(this._recentIds, StorageName.RecentRepoIds, this.localStorage);
+    syncToStorage(this._repositories, StorageName.GitRepositories, repos => repos.map(toStoredRepository));
+    syncToStorage(this._recentIds, StorageName.RecentRepoIds);
   }
 
   removeRecent = (id: string) =>

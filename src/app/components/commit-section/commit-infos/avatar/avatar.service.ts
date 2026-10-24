@@ -16,10 +16,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {inject, Injectable} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {forkJoin, from, map, Observable, of, switchMap} from 'rxjs';
 import {notUndefined} from '../../../../utils/utils';
-import {LocalStorageService} from '../../../../services/local-storage.service';
+import {LocalStorage} from '../../../../utils/local-storage';
 import {StorageName} from '../../../../enums/storage-name.enum';
 
 // How long an avatar URL that answered 404 is not requested again (across restarts)
@@ -28,7 +28,6 @@ const MISSING_AVATAR_TTL_MS = 24 * 60 * 60 * 1000;
 @Injectable({providedIn: 'root'})
 export class AvatarService {
 
-  private localStorage = inject(LocalStorageService);
 
   // url → objectURL (null: no avatar). Promises, so concurrent requests for the same url share one fetch
   private blobUrlCache = new Map<string, Promise<string | null>>();
@@ -94,12 +93,12 @@ export class AvatarService {
 
   private rememberMissing = (url: string) => {
     this.missingAvatars[url] = Date.now();
-    this.localStorage.store(StorageName.MissingAvatars, this.missingAvatars);
+    LocalStorage.store(StorageName.MissingAvatars, this.missingAvatars);
   };
 
   private readMissingAvatars() {
     const now = Date.now();
-    return Object.fromEntries(Object.entries(this.localStorage.get<Record<string, number>>(StorageName.MissingAvatars) ?? {})
+    return Object.fromEntries(Object.entries(LocalStorage.get<Record<string, number>>(StorageName.MissingAvatars) ?? {})
       .filter(([, missingSince]) => now - missingSince < MISSING_AVATAR_TTL_MS));
   }
 

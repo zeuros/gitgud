@@ -19,7 +19,7 @@
 import {DestroyRef, Directive, effect, ElementRef, inject, input, linkedSignal, signal} from '@angular/core';
 import {fitColumnWidths} from './fit-column-widths';
 import {onResize} from '../../utils/resize.utils';
-import {LocalStorageService} from '../../services/local-storage.service';
+import {LocalStorage} from '../../utils/local-storage';
 import {type StorageKey, StorageName} from '../../enums/storage-name.enum';
 
 // Default log column widths, relative to each other (Branch / Tag, Graph, Commit message, Author, Commit date / time).
@@ -47,7 +47,6 @@ export class LogColumnsDirective {
 
   repoId = input.required<string | undefined>({alias: 'gitgudLogColumns'});
 
-  private localStorage = inject(LocalStorageService);
   private storageKey = (): StorageKey => `${StorageName.LogColumns}-${this.repoId()}`;
   private table = inject<ElementRef<HTMLTableElement>>(ElementRef).nativeElement;
   private destroyRef = inject(DestroyRef);
@@ -60,12 +59,12 @@ export class LogColumnsDirective {
   }
 
   private loadShares = () => {
-    const widths = this.localStorage.get<SavedColumns>(this.storageKey())?.columnWidths?.split(',').map(Number);
+    const widths = LocalStorage.get<SavedColumns>(this.storageKey())?.columnWidths?.split(',').map(Number);
     return widths?.length === LOG_COLUMN_SHARES.length && widths.every(w => w > 0) ? widths : undefined;
   };
 
   private saveShares = (widths: number[]) =>
-    this.localStorage.store(this.storageKey(), {columnWidths: widths.map(Math.round).join(',')} satisfies SavedColumns);
+    LocalStorage.store(this.storageKey(), {columnWidths: widths.map(Math.round).join(',')} satisfies SavedColumns);
 
   private headers = () => [...this.table.querySelectorAll<HTMLElement>(':scope > thead > tr > th')];
 
