@@ -31,6 +31,7 @@ import {BranchAheadBehindService} from './branch-ahead-behind.service';
 import {InteractiveRebaseService} from './interactive-rebase.service';
 import {ConflictPredictionService} from './conflict-prediction.service';
 import {withConflictWarning} from '../utils/conflict-prediction.utils';
+import {lockedByWorktree} from '../utils/worktree-utils';
 import {openBehindRemoteDialog, type BehindRemoteAction} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
 @Injectable({providedIn: 'root'})
@@ -72,9 +73,14 @@ export class BranchDragDropService {
     const isLocalSource = source.type === BranchType.Local;
     const isLocalTarget = target.type === BranchType.Local;
     const remoteRef = isLocalTarget ? (target.upstream ?? `origin/${target.name}`) : target.name;
-    // Items grouped by the branch they move, so the menu tells which side changes
+    // Items grouped by the branch they move, so the menu tells which side changes.
+    // A branch checked out in another worktree can't be moved from here: git refuses, or update-ref would leave that
+    // worktree's files behind
     const groups = new Map<string, MenuItem[]>([[source.name, []]]);
-    const add = (moved: string, item: MenuItem) => groups.set(moved, [...groups.get(moved) ?? [], item]);
+    const add = (moved: string, item: MenuItem) => {
+      const otherWorktreePath = this.currentRepo.otherWorktreeOf(moved);
+      groups.set(moved, [...groups.get(moved) ?? [], otherWorktreePath ? lockedByWorktree(item, otherWorktreePath) : item]);
+    };
     const conflicts = this.conflictPrediction.conflictsBetween(target.tip.sha, source.tip.sha);
     const warn = (item: MenuItem) => withConflictWarning(item, conflicts);
     const logs = this.currentRepo.logs();
@@ -119,7 +125,9 @@ export class BranchDragDropService {
     const source = this.source();
     const tag = this.tagTarget();
     if (!source || !tag) return [];
-    return [{label: `Reset ${source.name} on ${tag.name}`, icon: 'fa fa-undo', command: this.resetOnTag}];
+    const reset: MenuItem = {label: `Reset ${source.name} on ${tag.name}`, icon: 'fa fa-undo', command: this.resetOnTag};
+    const otherWorktreePath = this.currentRepo.otherWorktreeOf(source.name);
+    return [otherWorktreePath ? lockedByWorktree(reset, otherWorktreePath) : reset];
   });
 
   onDragStarted = (branch: Branch | null) => this.draggingBranch.set(branch);
@@ -242,7 +250,7 @@ export class BranchDragDropService {
       return;
     }
     const diverged = ab.ahead > 0;
-    openBehindRemoteDialog(this.dialog, src, ref, diverged)
+    openBehindRemoteDialog(this.dialog, src, ref, diverged, this.currentRepo.otherWorktreeOf(src))
       .subscribe((action: BehindRemoteAction) => {
         if (action === 'force-push') this.gitWorkflow.doRunAndRefresh(['push', '--force-with-lease', remote, `${src}:${branch}`], `Force-pushed ${src} to ${ref}`);
         if (action === 'pull')       this.gitWorkflow.doRunAndRefresh(['fetch', remote, `${branch}:${src}`], `Pulled ${ref} into ${src}`);

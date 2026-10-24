@@ -20,6 +20,7 @@ import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {Button} from 'primeng/button';
 import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import type {Observable} from 'rxjs';
+import {worktreeName} from '../../../utils/worktree-utils';
 
 export type BehindRemoteAction = 'pull' | 'merge' | 'rebase' | 'force-push' | null;
 
@@ -28,11 +29,13 @@ export const openBehindRemoteDialog = (
   localRef: string,
   remoteRef: string,
   diverged: boolean,
+  // Worktree that has localRef checked out: git can't pull, rebase or merge into it from here
+  otherWorktreePath?: string,
 ): Observable<BehindRemoteAction> =>
   dialog.open(BehindRemoteDialogComponent, {
     header: diverged ? 'Branches have diverged' : 'Branch is behind remote',
     width: '600px',
-    data: {localRef, remoteRef, diverged},
+    data: {localRef, remoteRef, diverged, otherWorktreeName: otherWorktreePath && worktreeName(otherWorktreePath)},
   })!.onClose;
 
 @Component({
@@ -47,21 +50,27 @@ export const openBehindRemoteDialog = (
           <strong>'{{ localRef }}'</strong> has diverged from <strong>'{{ remoteRef }}'</strong>.
           Choose how to reconcile before pushing.
         </span>
+        @if (otherWorktreeName) {
+          <span>It's checked out in worktree <strong>{{ otherWorktreeName }}</strong>: switch to it to rebase or merge.</span>
+        }
         <div class="flex gap-2 justify-content-end">
           <p-button label="Cancel" [text]="true" severity="secondary" (click)="ref.close(null)"/>
           <p-button label="Force Push" severity="danger" (click)="ref.close('force-push')"/>
-          <p-button label="Rebase" severity="secondary" (click)="ref.close('rebase')"/>
-          <p-button label="Merge" severity="success" (click)="ref.close('merge')"/>
+          <p-button label="Rebase" severity="secondary" [disabled]="!!otherWorktreeName" (click)="ref.close('rebase')"/>
+          <p-button label="Merge" severity="success" [disabled]="!!otherWorktreeName" (click)="ref.close('merge')"/>
         </div>
       } @else {
         <span>
           <strong>'{{ localRef }}'</strong> is behind <strong>'{{ remoteRef }}'</strong>.
           Update your branch by doing a Pull.
         </span>
+        @if (otherWorktreeName) {
+          <span>It's checked out in worktree <strong>{{ otherWorktreeName }}</strong>: switch to it to pull.</span>
+        }
         <div class="flex gap-2 justify-content-end">
           <p-button label="Cancel" [text]="true" severity="secondary" (click)="ref.close(null)"/>
           <p-button label="Force Push" severity="danger" (click)="ref.close('force-push')"/>
-          <p-button label="Pull (fast-forward if possible)" severity="success" (click)="ref.close('pull')"/>
+          <p-button label="Pull (fast-forward if possible)" severity="success" [disabled]="!!otherWorktreeName" (click)="ref.close('pull')"/>
         </div>
       }
     </div>
@@ -74,4 +83,5 @@ export class BehindRemoteDialogComponent {
   localRef: string = this.config.data.localRef;
   remoteRef: string = this.config.data.remoteRef;
   diverged: boolean = this.config.data.diverged;
+  otherWorktreeName: string | undefined = this.config.data.otherWorktreeName;
 }

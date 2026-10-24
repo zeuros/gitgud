@@ -210,7 +210,7 @@ export class BranchContextMenuService {
       return;
     }
     const diverged = ab.ahead > 0;
-    openBehindRemoteDialog(this.dialog, name, `origin/${name}`, diverged)
+    openBehindRemoteDialog(this.dialog, name, `origin/${name}`, diverged, this.currentRepo.otherWorktreeOf(name))
       .subscribe((action: BehindRemoteAction) => {
         if (action === 'force-push') this.gitWorkflow.doRunAndRefresh(['push', '--force-with-lease', 'origin', name], `Force-pushed ${name}`);
         if (action === 'pull')       this.gitWorkflow.doRunAndRefresh(['fetch', 'origin', `${name}:${name}`], `Pulled ${name}`);
