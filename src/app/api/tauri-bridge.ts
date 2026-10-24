@@ -15,7 +15,7 @@ import {open as openDialog} from '@tauri-apps/plugin-dialog';
 import {tempDir} from '@tauri-apps/api/path';
 import {openPath, openUrl} from '@tauri-apps/plugin-opener';
 import posixPath from './path-utils';
-import type {WatchOptions} from '../../typings';
+import type {FoundProcess, WatchOptions} from '../../typings';
 
 // ---------------------------------------------------------------------------
 // Watcher registry — maps caller IDs to Tauri event unlisten functions
@@ -137,6 +137,9 @@ async function buildBridge() {
 
     spawn: (cmd: string, args: string[], options: Record<string, unknown>) =>
       invoke<string>('spawn_cmd', {cmd, args, options}),
+
+    findProcesses: (names: string[]) =>
+      invoke<FoundProcess[]>('find_processes', {names}),
 
     zoom: {
       setFactor: (factor: number) => {

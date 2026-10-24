@@ -49,7 +49,7 @@ On startup `installTauriBridge()` calls `buildBridge()`, which kills any stale w
 | Module | Commands |
 |--------|---------|
 | `fs.rs` | `fs_readdir`, `fs_is_file`, `fs_write_file`, `fs_read_file`, `fs_read_file_bytes`, `fs_size`, `fs_exists`, `fs_mtime` |
-| `process.rs` | `exec_file`, `exec_file_bytes`, `spawn_sync_cmd`, `spawn_cmd` |
+| `process.rs` | `exec_file`, `exec_file_bytes`, `spawn_sync_cmd`, `spawn_cmd`, `find_processes` |
 | `watcher.rs` | `watch_paths`, `close_watcher`, `close_all_watchers` |
 | `util.rs` | `crypto_md5`, `get_env`, `get_platform`, `get_arch`, `get_package_format`, `get_build_commit`, `show_item_in_folder` |
 

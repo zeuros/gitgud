@@ -152,3 +152,21 @@
 ::ng-deep .checkout-icon {
   color: var(--branch-current-color);
 }
+
+// LLM console icon: in the primary color, glowing on hover, so it reads as something to hover for its tooltip
+.llm-session-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 4px;
+  color: var(--p-primary-color);
+  transition: background 0.15s, box-shadow 0.15s, text-shadow 0.15s;
+
+  &:hover {
+    background: var(--p-highlight-focus-background);
+    box-shadow: 0 0 6px var(--p-primary-color);
+    text-shadow: 0 0 4px var(--p-primary-color);
+  }
+}

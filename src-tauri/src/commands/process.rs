@@ -1,9 +1,11 @@
 use std::collections::HashMap;
+use std::path::Path;
 use std::process::Stdio;
 use tokio::io::AsyncWriteExt;
 // Async process API: std::process::Command::output() inside an async command blocks a tokio worker
 use tokio::process::Command;
 use serde::{Deserialize, Serialize};
+use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
 #[derive(Deserialize)]
 pub struct ExecOptions {
@@ -190,4 +192,51 @@ pub async fn spawn_cmd(
         let code = output.status.code().unwrap_or(-1);
         Err(format!("Process exited with code {code}\n{stderr}"))
     }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FoundProcess {
+    pub pid: u32,
+    pub parent_pid: Option<u32>,
+    pub name: String,
+    pub cwd: String,
+}
+
+/// Running processes started as one of `names` (the program itself, or the script an interpreter runs, as in
+/// `node …/bin/gemini`), with their working directory. Other users' processes, whose directory can't be read, are left out.
+#[tauri::command]
+pub async fn find_processes(names: Vec<String>) -> Vec<FoundProcess> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut system = System::new();
+        system.refresh_processes_specifics(
+            ProcessesToUpdate::All,
+            true,
+            ProcessRefreshKind::nothing()
+                .with_cmd(UpdateKind::Always)
+                .with_cwd(UpdateKind::Always)
+                .without_tasks(),
+        );
+        system
+            .processes()
+            .values()
+            .filter_map(|process| {
+                let name = process
+                    .cmd()
+                    .iter()
+                    .take(2)
+                    .filter_map(|arg| Path::new(arg).file_stem()?.to_str())
+                    .find(|program| names.iter().any(|name| name == program))?
+                    .to_string();
+                Some(FoundProcess {
+                    pid: process.pid().as_u32(),
+                    parent_pid: process.parent().map(|pid| pid.as_u32()),
+                    name,
+                    cwd: process.cwd()?.to_str()?.to_string(),
+                })
+            })
+            .collect()
+    })
+    .await
+    .unwrap_or_default()
 }

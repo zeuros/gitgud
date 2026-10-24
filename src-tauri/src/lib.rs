@@ -135,6 +135,7 @@ pub fn run() {
             exec_file_bytes,
             spawn_sync_cmd,
             spawn_cmd,
+            find_processes,
             // watcher
             watch_paths,
             close_watcher,

@@ -46,6 +46,8 @@ import {DialogService} from 'primeng/dynamicdialog';
 import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 import {otherWorktreeTooltip} from '../../utils/worktree-utils';
+import {LlmSessionsService} from '../../services/llm-sessions.service';
+import {llmSessionLabel} from '../../utils/llm-session-utils';
 
 @Component({
   selector: 'gitgud-left-panel',
@@ -87,7 +89,9 @@ export class LeftPanelComponent {
   protected branchDragDrop = inject(BranchDragDropService);
   protected activeContextMenu = inject(ActiveContextMenuService);
   protected aheadBehind = inject(BranchAheadBehindService);
-  protected worktreeContextMenu = inject(WorktreeContextMenuService);  private branch = inject(BranchService);
+  protected worktreeContextMenu = inject(WorktreeContextMenuService);
+  private llmSessions = inject(LlmSessionsService);
+  private branch = inject(BranchService);
   private dialog = inject(DialogService);
   private gitRepositoryService = inject(GitRepositoryService);
 
@@ -149,6 +153,9 @@ export class LeftPanelComponent {
   };
 
   protected isCurrentWorktree = ({path}: GitWorktree) => this.currentRepo.isCurrentWorktree(path);
+
+  protected llmSessionsIn = ({path}: GitWorktree) => this.llmSessions.byWorktree().get(path) ?? [];
+  protected llmSessionLabel = llmSessionLabel;
 
   protected otherWorktreeTooltip = otherWorktreeTooltip;
 

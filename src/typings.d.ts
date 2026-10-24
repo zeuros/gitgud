@@ -7,6 +7,13 @@
 
 import type {editor} from 'monaco-editor';
 
+export interface FoundProcess {
+  pid: number;
+  parentPid: number | null;
+  name: string;
+  cwd: string;
+}
+
 interface FsApi {
   readdir: (path: string) => Promise<string[]>;
   isFile: (path: string) => Promise<boolean>;
@@ -68,6 +75,8 @@ interface TauriApi {
   execFileBytes: (cmd: string, args: string[], options: ExecOptions) => Promise<ArrayBuffer>;
   spawnSync: (cmd: string, args: string[], options: SpawnOptions & {input?: string}) => Promise<SpawnSyncResult>;
   spawn: (cmd: string, args: string[], options: SpawnOptions) => Promise<string>;
+  /** Running processes started as one of `names` (the program, or the script an interpreter runs), with their working directory */
+  findProcesses: (names: string[]) => Promise<FoundProcess[]>;
   zoom: {
     setFactor: (factor: number) => void | Promise<void>;
     getFactor: () => number;

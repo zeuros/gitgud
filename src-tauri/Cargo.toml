@@ -23,6 +23,7 @@ notify = "8"
 tokio = { version = "1", features = ["full"] }
 tauri-plugin-window-state = "2.4.1"
 tauri-plugin-prevent-default = "5"
+sysinfo = { version = "0.39.6", default-features = false, features = ["system"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"

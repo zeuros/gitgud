@@ -17,7 +17,7 @@
  */
 
 import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
-import {defer, finalize, forkJoin, from, map, type Observable, of, switchMap, tap, throttleTime, asyncScheduler} from 'rxjs';
+import {asyncScheduler, defer, finalize, forkJoin, from, map, type Observable, of, switchMap, tap, throttleTime} from 'rxjs';
 import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
 import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
 import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
@@ -138,7 +138,6 @@ export class GitRefreshService {
       ));
 
   doUpdateLogsAndBranches = () => this.updateLogsAndBranches().subscribe();
-
 
 
   updateRebaseStatus = () =>

@@ -181,6 +181,12 @@
                             <span class="ellipsis flex-1" [class.text-gray]="!isCurrent">
                                 {{ worktree.branch ?? 'HEAD' }}
                             </span>
+                            <!-- One icon per LLM console open in the worktree: a spinner while it works -->
+                            @for (session of llmSessionsIn(worktree); track $index) {
+                                <span class="llm-session-icon" [title]="llmSessionLabel(session)">
+                                    <i [class]="session.isBusy ? 'fa fa-spinner fa-spin' : 'fa fa-terminal'" class="small-icon"></i>
+                                </span>
+                            }
                             @let ab = aheadBehind.aheadBehindMap()[worktree.branch ?? ''];
                             @if (ab?.ahead) {
                                 <span class="ahead-behind"><i class="fa fa-arrow-up"></i>{{ ab.ahead }}</span>
