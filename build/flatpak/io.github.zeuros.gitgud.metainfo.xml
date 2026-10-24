@@ -48,6 +48,28 @@
   </provides>
 
   <releases>
+    <release version="2.10.0" date="2026-10-24">
+      <description>
+        <p>What's new in GitGud 2.10.0:</p>
+        <ul>
+          <li>Show the LLM consoles open in each worktree</li>
+          <li>Switch worktrees within the repository's tab</li>
+          <li>Deploy a commit's pack of chips while a chip is dragged over it</li>
+          <li>Fade the commits of trees other than HEAD's</li>
+          <li>Draw a ground symbol under root commits</li>
+          <li>Shift the tip of a tree drawn right below another tree's root</li>
+          <li>Show the short commit after the version in the bonfire tooltip for non-release builds</li>
+          <li>Squash commits from the commit context menu, editing the resulting message in a dialog</li>
+          <li>Name the worktree locking a branch in the drag and drop menu</li>
+          <li>Grey out moving a branch checked out in another worktree</li>
+          <li>Cd into the repo before each command, so a worktree removed then added back at the same path still works</li>
+          <li>When git refuses to remove a worktree or delete its branch, show why and offer to force it with -f</li>
+          <li>Open the folder picker through the XDG portal</li>
+          <li>Ctrl+Home / Ctrl+End works</li>
+          <li>Copy reference, relative reference and permalink did nothing on committed files</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.9.2" date="2026-10-17">
       <description>
         <p>What's new in GitGud 2.9.2:</p>
