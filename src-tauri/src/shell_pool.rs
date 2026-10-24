@@ -15,7 +15,7 @@
 //! until a unique sentinel tells us the command finished and its exit code.
 //!
 //! Protocol (bash):
-//!   stdin  ← `'git' 'log' 2>/dev/null\nprintf '\nGITGUD_<id>:%d\n' $?\n`
+//!   stdin  ← `{ cd -- '<cwd>' && 'git' 'log'; } 2>&1; _rc=$?; printf '\nGITGUD_<id>:%d\n' $_rc\n`
 //!   stdout → <git output>\n\nGITGUD_<id>:0\n   (exit code in sentinel)
 
 use std::collections::HashMap;
@@ -67,7 +67,7 @@ impl Shell {
         Ok(Shell { stdin, reader: BufReader::new(stdout), dead: false, _child: child })
     }
 
-    async fn run(&mut self, cmd: &str, args: &[String]) -> Result<String, String> {
+    async fn run(&mut self, cwd: &str, cmd: &str, args: &[String]) -> Result<String, String> {
         let id = CMD_ID.fetch_add(1, Ordering::Relaxed);
         let sentinel = format!("GITGUD_{id}:");
 
@@ -79,7 +79,9 @@ impl Shell {
 
         // Send command + sentinel printer to the persistent shell.
         // Stderr is merged into stdout so non-zero exits include the git error message.
-        let payload = format!("{quoted} 2>&1; _rc=$?; printf '\\nGITGUD_{id}:%d\\n' $_rc\n");
+        // cd first: the shell's directory may have been deleted and created again at the same path (worktree removed then
+        // added back), which leaves the shell in the deleted one ("Unable to read current working directory")
+        let payload = format!("{{ cd -- {} && {quoted}; }} 2>&1; _rc=$?; printf '\\nGITGUD_{id}:%d\\n' $_rc\n", q(cwd));
         if let Err(e) = self.stdin.write_all(payload.as_bytes()).await {
             self.dead = true;
             return Err(format!("stdin write: {e}"));
@@ -153,7 +155,7 @@ impl Pool {
             _ => Shell::spawn(&self.cwd, &self.env).await?,
         };
 
-        let result = shell.run(cmd, args).await;
+        let result = shell.run(&self.cwd, cmd, args).await;
 
         // Return shell to idle list; replace dead ones so the pool self-heals
         if !shell.dead {
