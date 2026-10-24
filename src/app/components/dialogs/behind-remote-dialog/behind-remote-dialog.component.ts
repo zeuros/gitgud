@@ -24,6 +24,13 @@ import {worktreeName} from '../../../utils/worktree-utils';
 
 export type BehindRemoteAction = 'pull' | 'merge' | 'rebase' | 'force-push' | null;
 
+interface BehindRemoteData {
+  localRef: string;
+  remoteRef: string;
+  diverged: boolean;
+  otherWorktreeName?: string;
+}
+
 export const openBehindRemoteDialog = (
   dialog: DialogService,
   localRef: string,
@@ -32,7 +39,7 @@ export const openBehindRemoteDialog = (
   // Worktree that has localRef checked out: git can't pull, rebase or merge into it from here
   otherWorktreePath?: string,
 ): Observable<BehindRemoteAction> =>
-  dialog.open(BehindRemoteDialogComponent, {
+  dialog.open<BehindRemoteDialogComponent, BehindRemoteData>(BehindRemoteDialogComponent, {
     header: diverged ? 'Branches have diverged' : 'Branch is behind remote',
     width: '600px',
     data: {localRef, remoteRef, diverged, otherWorktreeName: otherWorktreePath && worktreeName(otherWorktreePath)},
@@ -45,32 +52,32 @@ export const openBehindRemoteDialog = (
   imports: [Button],
   template: `
     <div class="flex flex-column gap-3 pt-2">
-      @if (diverged) {
+      @if (data.diverged) {
         <span>
-          <strong>'{{ localRef }}'</strong> has diverged from <strong>'{{ remoteRef }}'</strong>.
+          <strong>'{{ data.localRef }}'</strong> has diverged from <strong>'{{ data.remoteRef }}'</strong>.
           Choose how to reconcile before pushing.
         </span>
-        @if (otherWorktreeName) {
-          <span>It's checked out in worktree <strong>{{ otherWorktreeName }}</strong>: switch to it to rebase or merge.</span>
+        @if (data.otherWorktreeName) {
+          <span>It's checked out in worktree <strong>{{ data.otherWorktreeName }}</strong>: switch to it to rebase or merge.</span>
         }
         <div class="flex gap-2 justify-content-end">
           <p-button label="Cancel" [text]="true" severity="secondary" (click)="ref.close(null)"/>
           <p-button label="Force Push" severity="danger" (click)="ref.close('force-push')"/>
-          <p-button label="Rebase" severity="secondary" [disabled]="!!otherWorktreeName" (click)="ref.close('rebase')"/>
-          <p-button label="Merge" severity="success" [disabled]="!!otherWorktreeName" (click)="ref.close('merge')"/>
+          <p-button label="Rebase" severity="secondary" [disabled]="!!data.otherWorktreeName" (click)="ref.close('rebase')"/>
+          <p-button label="Merge" severity="success" [disabled]="!!data.otherWorktreeName" (click)="ref.close('merge')"/>
         </div>
       } @else {
         <span>
-          <strong>'{{ localRef }}'</strong> is behind <strong>'{{ remoteRef }}'</strong>.
+          <strong>'{{ data.localRef }}'</strong> is behind <strong>'{{ data.remoteRef }}'</strong>.
           Update your branch by doing a Pull.
         </span>
-        @if (otherWorktreeName) {
-          <span>It's checked out in worktree <strong>{{ otherWorktreeName }}</strong>: switch to it to pull.</span>
+        @if (data.otherWorktreeName) {
+          <span>It's checked out in worktree <strong>{{ data.otherWorktreeName }}</strong>: switch to it to pull.</span>
         }
         <div class="flex gap-2 justify-content-end">
           <p-button label="Cancel" [text]="true" severity="secondary" (click)="ref.close(null)"/>
           <p-button label="Force Push" severity="danger" (click)="ref.close('force-push')"/>
-          <p-button label="Pull (fast-forward if possible)" severity="success" [disabled]="!!otherWorktreeName" (click)="ref.close('pull')"/>
+          <p-button label="Pull (fast-forward if possible)" severity="success" [disabled]="!!data.otherWorktreeName" (click)="ref.close('pull')"/>
         </div>
       }
     </div>
@@ -78,10 +85,5 @@ export const openBehindRemoteDialog = (
 })
 export class BehindRemoteDialogComponent {
   protected ref = inject(DynamicDialogRef);
-  private config = inject(DynamicDialogConfig);
-
-  localRef: string = this.config.data.localRef;
-  remoteRef: string = this.config.data.remoteRef;
-  diverged: boolean = this.config.data.diverged;
-  otherWorktreeName: string | undefined = this.config.data.otherWorktreeName;
+  protected data = inject<DynamicDialogConfig<BehindRemoteData>>(DynamicDialogConfig).data!;
 }
