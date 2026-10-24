@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {inject, Injectable} from '@angular/core';
+import {inject, Injectable, signal} from '@angular/core';
 import type {CdkDragEnd} from '@angular/cdk/drag-drop';
 import type {Branch} from '../lib/github-desktop/model/branch';
 import type {LocalAndDistantTagWithName} from '../utils/tag-utils';
@@ -31,6 +31,17 @@ const isBranch = (t: ChipTarget): t is Branch => 'tip' in t;
 export class LogDragDropService {
   private branchDragDrop = inject(BranchDragDropService);
   private tagDragDrop = inject(TagDragDropService);
+
+  // Commit whose pack of chips a dragged chip is over: deployed so any of them can be the drop target, as :hover
+  // isn't updated while the mouse button is held
+  private deployedChipsSha = signal<string | undefined>(undefined);
+  private isDragging = () => !!this.branchDragDrop.draggingBranch() || !!this.tagDragDrop.draggingTag();
+
+  isDeployed = (sha: string) => this.deployedChipsSha() === sha;
+  onChipsEnter = (sha: string) => {
+    if (this.isDragging()) this.deployedChipsSha.set(sha);
+  };
+  onChipsLeave = () => this.deployedChipsSha.set(undefined);
 
   isValidDropTarget = (target: ChipTarget | null): boolean => {
     if (!target) return false;
@@ -63,7 +74,13 @@ export class LogDragDropService {
   };
 
   onBranchDragStarted = (branch: Branch | null) => this.branchDragDrop.onDragStarted(branch);
-  onBranchDragEnded = (event: CdkDragEnd<Branch>) => this.branchDragDrop.completeDrop(event);
+  onBranchDragEnded = (event: CdkDragEnd<Branch>) => {
+    this.deployedChipsSha.set(undefined);
+    this.branchDragDrop.completeDrop(event);
+  };
   onTagDragStarted = (tag: LocalAndDistantTagWithName) => this.tagDragDrop.onDragStarted(tag);
-  onTagDragEnded = (event: CdkDragEnd<LocalAndDistantTagWithName>) => this.tagDragDrop.completeDrop(event);
+  onTagDragEnded = (event: CdkDragEnd<LocalAndDistantTagWithName>) => {
+    this.deployedChipsSha.set(undefined);
+    this.tagDragDrop.completeDrop(event);
+  };
 }

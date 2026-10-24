@@ -77,7 +77,10 @@
             @let branchesGrouped = currentRepo.mergedBranchesByTip()[commit.sha] ?? [];
             @let tagPairs = currentRepo.allTagsByShaAndName().get(commit.sha);
             @let extraCount = branchesGrouped.length + (tagPairs?.length ?? 0) + (isDetachedHead ? 1 : 0) - 1;
-            <td class="log-chip-parent-td">
+            <td class="log-chip-parent-td"
+                [class.deployed]="logDragDrop.isDeployed(commit.sha)"
+                (pointerenter)="logDragDrop.onChipsEnter(commit.sha)"
+                (pointerleave)="logDragDrop.onChipsLeave()">
                 @if (commit.sha === createBranch.newBranchSha()) {
                     <input pInputText
                            class="branch-name-input"

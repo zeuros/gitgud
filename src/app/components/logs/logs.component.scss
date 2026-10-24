@@ -175,8 +175,8 @@ $log-chip-parent-left-margin: 6px;
         display: flex;
         align-items: center;
 
-        // Other branches will appear below on hovering the branch <td>
-        &:hover {
+        // Other branches will appear below on hovering the branch <td>, or dragging a chip over it (no :hover then)
+        &:hover, &.deployed {
           z-index: 500; // hovered pack of chips over others
 
           .log-chip-parent {
