@@ -31,7 +31,7 @@ import {BranchAheadBehindService} from './branch-ahead-behind.service';
 import {InteractiveRebaseService} from './interactive-rebase.service';
 import {ConflictPredictionService} from './conflict-prediction.service';
 import {withConflictWarning} from '../utils/conflict-prediction.utils';
-import {lockedByWorktree} from '../utils/worktree-utils';
+import {worktreeName} from '../utils/worktree-utils';
 import {openBehindRemoteDialog, type BehindRemoteAction} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
 @Injectable({providedIn: 'root'})
@@ -73,14 +73,9 @@ export class BranchDragDropService {
     const isLocalSource = source.type === BranchType.Local;
     const isLocalTarget = target.type === BranchType.Local;
     const remoteRef = isLocalTarget ? (target.upstream ?? `origin/${target.name}`) : target.name;
-    // Items grouped by the branch they move, so the menu tells which side changes.
-    // A branch checked out in another worktree can't be moved from here: git refuses, or update-ref would leave that
-    // worktree's files behind
+    // Items grouped by the branch they move, so the menu tells which side changes
     const groups = new Map<string, MenuItem[]>([[source.name, []]]);
-    const add = (moved: string, item: MenuItem) => {
-      const otherWorktreePath = this.currentRepo.otherWorktreeOf(moved);
-      groups.set(moved, [...groups.get(moved) ?? [], otherWorktreePath ? lockedByWorktree(item, otherWorktreePath) : item]);
-    };
+    const add = (moved: string, item: MenuItem) => groups.set(moved, [...groups.get(moved) ?? [], item]);
     const conflicts = this.conflictPrediction.conflictsBetween(target.tip.sha, source.tip.sha);
     const warn = (item: MenuItem) => withConflictWarning(item, conflicts);
     const logs = this.currentRepo.logs();
@@ -116,18 +111,27 @@ export class BranchDragDropService {
 
     return [...groups].filter(([, items]) => items.length).flatMap(([moved, items], i) => [
       ...(i ? [{separator: true}] : []),
-      {label: `Updates ${moved}`, disabled: true, styleClass: 'menu-group-header'},
-      ...items,
+      ...this.groupItems(moved, items),
     ]);
   });
+
+  // A branch checked out in another worktree can't be moved from here: disabled, under a header naming the worktree
+  private groupItems = (moved: string, items: MenuItem[]): MenuItem[] => {
+    const otherWorktreePath = this.currentRepo.otherWorktreeOf(moved);
+    return otherWorktreePath
+      ? [
+        {label: `Updates ${moved}, checked out in worktree ${worktreeName(otherWorktreePath)}`, icon: 'fa fa-tree', disabled: true, styleClass: 'menu-group-header'},
+        ...items.map(item => ({...item, disabled: true})),
+      ]
+      : [{label: `Updates ${moved}`, disabled: true, styleClass: 'menu-group-header'}, ...items];
+  };
 
   private tagMenu = computed<MenuItem[]>(() => {
     const source = this.source();
     const tag = this.tagTarget();
     if (!source || !tag) return [];
     const reset: MenuItem = {label: `Reset ${source.name} on ${tag.name}`, icon: 'fa fa-undo', command: this.resetOnTag};
-    const otherWorktreePath = this.currentRepo.otherWorktreeOf(source.name);
-    return [otherWorktreePath ? lockedByWorktree(reset, otherWorktreePath) : reset];
+    return this.currentRepo.otherWorktreeOf(source.name) ? this.groupItems(source.name, [reset]) : [reset];
   });
 
   onDragStarted = (branch: Branch | null) => this.draggingBranch.set(branch);
