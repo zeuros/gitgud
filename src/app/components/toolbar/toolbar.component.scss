@@ -97,14 +97,21 @@ $repo-track-max-width: 260px;
   }
 
   .branch-badge {
-    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
     font-weight: 600;
-    padding: 1px 7px;
+    padding: 1px 8px;
     border-radius: 10px;
-    background: var(--p-primary-color);
-    color: var(--p-primary-contrast-color);
+    background: color-mix(in srgb, var(--p-primary-color) 18%, transparent);
+    color: var(--p-primary-color);
     white-space: nowrap;
     flex-shrink: 0;
+
+    :host-context(html.dark) & {
+      color: color-mix(in srgb, var(--p-primary-color), white 50%);
+    }
   }
 }
 
