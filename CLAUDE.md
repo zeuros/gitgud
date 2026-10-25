@@ -5,7 +5,7 @@ The scripts are in `package.json`; what they don't tell:
 - `npm start` runs the app in dev (`tauri dev`, which serves Angular on port 4201); `ng:serve` alone has no Tauri bridge.
 - Single test file: `npx vitest run src/path/to/file.spec.ts`. `npx eslint --fix <files>` fixes what `npm run lint` reports, e.g. type imports.
 - Release: `npm version <x.y.z>`. Its hook (`scripts/version.sh`) stamps the version into Cargo, tauri.conf, the AppStream metainfo, the flatpak manifest and the website, and stages them into the version commit.
-- `npm run video` records `docs/show.mp4` + `.webm` on its own Xvfb, rebuilding the release binary first if sources are newer.
+- `npm run video` records `docs/show.mp4` + `.webm` on its own Xvfb, rebuilding the release binary first if sources are newer. Its soundtrack `e2e/music.wav` isn't committed: `node e2e/export-music.mjs` renders it (headless Firefox) from the Strudel tune `e2e/music.html`, which also plays and exports in a browser; the video script runs it when the tune is newer.
 - Cargo, from `src-tauri/`: `cargo check`, `cargo clippy`.
 
 CI (`.github/workflows/ci.yml`) runs `npm test` on pushes and pull requests; `release.yml`, `flatpak.yml` and `pages.yml` build the packages and the website.

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GitGud Tavern</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #120d08; color: #e6d5b8; font-family: system-ui, sans-serif; }
+    header { padding: 8px 16px; font-size: 13px; opacity: .7; }
+    button { font: inherit; color: inherit; background: #2a1d10; border: 1px solid #6b4f2a; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    Ctrl+Enter = play / update &nbsp;·&nbsp; Ctrl+. = stop &nbsp;·&nbsp; prefix a line with _ to mute it (_$:)
+    &nbsp;·&nbsp; <button id="export">Export WAV</button>
+  </header>
+  <strudel-editor>
+<!--
+// ~ the git gud tavern ~  4/4, B minor, ~104 bpm: a galloping kick under a lute and a whistle
+// 19 bars of 8 eighths, one bar per cycle, lasting as long as docs/show.mp4 (44.03 s):
+// 1 bar of groove, the 4-bar tune 4 times (growing each time), 2 bars of ending
+setcps(19/44.033)
+
+// played by people: a little late, never twice the same loudness
+const human = register('human', pat => pat
+  .nudge(rand.range(0, .012)).postgain(rand.range(.85, 1)))
+
+// one bar per cycle (strudel reads `backtick` strings as mini-notation, hence the quotes)
+const bars = (...notes) => mini('<[' + notes.join('] [') + ']>')
+
+// a third below in B minor: two scale steps down, a new octave starting from c#
+const scaleNotes = ['c#', 'd', 'e', 'f#', 'g', 'a', 'b']
+const thirdBelow = bar => bar.replace(/([a-g]#?)(\d)/g, (_, letter, octave) => {
+  const index = scaleNotes.indexOf(letter) - 2
+  return index < 0 ? scaleNotes[index + 7] + (octave - 1) : scaleNotes[index] + octave
+})
+
+// the tune, plucked on every eighth
+const tune = [
+  'b3 e4 e4 d4 d4 d4 c#4 b3', 'b3 e4 e4 b3 b3 f#4 d4 d4',
+  'b3 e4 e4 d4 d4 d4 c#4 b3', 'a3 b3 b3 f#3 f#3 f#3 a3 c#4']
+// the whistle, an octave up, holds the repeated notes
+const whistleTune = [
+  'b4 e5@2 d5@3 c#5 b4', 'b4 e5@2 b4@2 f#5 d5@2',
+  'b4 e5@2 d5@3 c#5 b4', 'a4 b4@2 f#4@3 a4 c#5']
+const ending = ['b3 e4 e4 d4 d4 d4 c#4 a3', 'b3@8']
+const whistleEnding = ['b4 e5@2 d5@3 c#5 a4', 'b4@8']
+
+// the groove: galloping kick, shaker on the beats with a skip, B bass stepping to D
+const kick = 'x x ~ x x ~ ~ ~'
+const shaker = '<[x ~ x ~ x ~ x x] [x ~ x x x ~ x x]>'
+const bass = 'b1@2 b1@2 d2@2 b1@2'
+
+// kick: deep 808, the heart of the mix
+$: arrange([18, mini(kick)], [1, mini('x@8')])
+  .s("bd").bank("RolandTR808").gain(1.05).lpf(300)
+
+// sub bass under it
+$: arrange([18, mini(bass)], [1, mini('b1@8')])
+  .note().s("triangle").lpf(220).attack(.01).release(.2)
+  .gain(.55)
+
+// shaker, wide: an 808 hat with a tambourine's jingle (strudel's shaker samples don't load)
+$: arrange([18, mini(shaker)], [1, silence])
+  .s("[RolandTR808_hh,tambourine]").hpf(3000).lpf(9000)
+  .gain(1.4).pan(rand.range(.15, .85))
+  .human()
+
+// low drone on B and F#
+$: note("[b2,f#3]").s("gm_cello").attack(.8).release(1)
+  .gain(.18)
+
+// lute plucks the tune from bar 1
+$: arrange([1, silence], [16, bars(...tune)], [2, bars(...ending)])
+  .note().s("gm_acoustic_guitar_nylon")
+  .velocity("1 .7 .85 .7 .95 .7 .85 .7").gain(1.05).pan(.35)
+  .room(.25).human()
+  ._pianoroll()
+
+// tin whistle doubles it an octave up from the second pass
+$: arrange([5, silence], [12, bars(...whistleTune)], [2, bars(...whistleEnding)])
+  .note().s("gm_flute").gain(slider(0.6)).pan(.65)
+  .room(.3).human()
+  ._pianoroll()
+
+// fiddle a third below the whistle on the last two passes
+$: arrange([9, silence], [8, bars(...whistleTune.map(thirdBelow))], [2, bars(...whistleEnding)])
+  .note().s("gm_fiddle").gain(.5).pan(.25)
+  .room(.3).human()
+-->
+  </strudel-editor>
+  <script src="https://unpkg.com/@strudel/repl@1.3.0"></script>
+  <script>
+    // Renders the tune offline to a WAV as long as docs/show.mp4, for the button and for e2e/export-music.mjs.
+    // Strudel's renderPatternAudio downloads the file itself: the blob is caught on its way to the download link.
+    const videoSeconds = 44.033;
+    window.renderWav = async ({ download = true } = {}) => {
+      const strudelEditor = document.querySelector('strudel-editor');
+      while (!strudelEditor.editor) await new Promise(resolve => setTimeout(resolve, 100));
+      const { repl } = strudelEditor.editor;
+      // Live playback would send its notes into the offline render
+      await strudelEditor.editor.stop();
+      await strudelEditor.editor.evaluate(false);
+      const { cps } = repl.scheduler;
+      const { createObjectURL } = URL;
+      const anchorClick = HTMLAnchorElement.prototype.click;
+      let wavBlob;
+      URL.createObjectURL = blob => {
+        wavBlob = blob;
+        return createObjectURL.call(URL, blob);
+      };
+      if (!download) HTMLAnchorElement.prototype.click = () => {};
+      try {
+        await renderPatternAudio(repl.state.pattern, cps, 0, videoSeconds * cps, 48000, 1024, false, 'gitgud-tavern');
+      } finally {
+        URL.createObjectURL = createObjectURL;
+        HTMLAnchorElement.prototype.click = anchorClick;
+      }
+      return wavBlob;
+    };
+    document.getElementById('export').addEventListener('click', () => window.renderWav());
+  </script>
+</body>
+</html>

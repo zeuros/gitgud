@@ -35,6 +35,13 @@ if [[ ! -x "$BINARY" || -n "$(find src src-tauri/src src-tauri/Cargo.toml packag
   npx tauri build --no-bundle
 fi
 
+# The soundtrack is rendered from the Strudel tune, and not committed: render it again when the tune is newer
+MUSIC="$REPO_ROOT/e2e/music.wav"
+if [[ ! -f "$MUSIC" || "$REPO_ROOT/e2e/music.html" -nt "$MUSIC" ]]; then
+  echo "[record] rendering the soundtrack..."
+  node e2e/export-music.mjs
+fi
+
 cleanup() {
   [[ -n "${WDIO_PID:-}" ]]   && kill "$WDIO_PID"      2>/dev/null && wait "$WDIO_PID"      2>/dev/null || true
   [[ -n "${FFMPEG_PID:-}" ]] && kill -INT "$FFMPEG_PID" 2>/dev/null && wait "$FFMPEG_PID" 2>/dev/null || true
@@ -83,21 +90,27 @@ DURATION=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$RAW_VIDE
 DURATION_INT=$(printf "%.0f" "$DURATION")
 FADE_OUT_START=$((DURATION_INT - TRIM_START - 2))
 VF="trim=start=${TRIM_START},setpts=PTS-STARTPTS,fade=in:0:30:color=black,fade=out:st=${FADE_OUT_START}:d=1.5:color=black"
+# The music fades out with the picture, and is padded with silence (then cut by -shortest) to the video's length
+AF="afade=in:st=0:d=0.5,afade=out:st=${FADE_OUT_START}:d=1.5,apad"
 
-echo "[record] → MP4 (H.264)"
+echo "[record] → MP4 (H.264 + AAC)"
 ffmpeg -nostdin -y \
-  -i "$RAW_VIDEO" \
-  -vf "$VF" \
+  -i "$RAW_VIDEO" -i "$MUSIC" \
+  -map 0:v -map 1:a \
+  -vf "$VF" -af "$AF" -shortest \
   -c:v libx264 -preset slow -crf 20 \
   -pix_fmt yuv420p \
+  -c:a aac -b:a 192k \
   "$OUTPUT_MP4"
 
-echo "[record] → WebM (VP9)"
+echo "[record] → WebM (VP9 + Opus)"
 ffmpeg -nostdin -y \
-  -i "$RAW_VIDEO" \
-  -vf "$VF" \
+  -i "$RAW_VIDEO" -i "$MUSIC" \
+  -map 0:v -map 1:a \
+  -vf "$VF" -af "$AF" -shortest \
   -c:v libvpx-vp9 -crf 34 -b:v 0 -row-mt 1 \
   -pix_fmt yuv420p \
+  -c:a libopus -b:a 128k \
   "$OUTPUT_WEBM"
 
 rm -f "$RAW_VIDEO"
