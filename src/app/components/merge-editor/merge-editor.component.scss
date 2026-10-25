@@ -30,6 +30,7 @@
     &.op-rebase { background: rgba(220, 130, 0, 0.2); color: #e8a84a; }
     &.op-merge { background: rgba(80, 160, 80, 0.2); color: #7ec87e; }
     &.op-cherry-pick { background: rgba(180, 80, 200, 0.2); color: #d09ae0; }
+    &.op-revert { background: rgba(200, 60, 60, 0.2); color: #e88a8a; }
     &.op-stash { background: rgba(60, 130, 220, 0.2); color: #7ab8f5; }
   }
 }

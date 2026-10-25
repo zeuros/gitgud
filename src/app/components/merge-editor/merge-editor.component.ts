@@ -65,7 +65,7 @@ type ConflictSide = {
 
 // left is git's stage 2 (HEAD, `--ours`), right is stage 3 (`--theirs`), whatever the operation
 type ConflictCtx = {
-  operation: 'merge' | 'rebase' | 'cherry-pick' | 'stash' | 'unknown';
+  operation: 'merge' | 'rebase' | 'cherry-pick' | 'revert' | 'stash' | 'unknown';
   left: ConflictSide;
   right: ConflictSide;
 };
@@ -235,6 +235,16 @@ export class MergeEditorComponent {
         operation: 'cherry-pick',
         left: {name: head, role: 'current branch', ref: 'HEAD'},
         right: {name: `Cherry-picked ${sha}`, role: 'commit being picked', ref: 'CHERRY_PICK_HEAD'},
+      };
+    }
+
+    // A revert applies the reverted commit's changes backwards: the right column is its parent's version
+    if (await exists('REVERT_HEAD')) {
+      const sha = short(await read('REVERT_HEAD'));
+      return {
+        operation: 'revert',
+        left: {name: head, role: 'current branch', ref: 'HEAD'},
+        right: {name: `Revert of ${sha}`, role: 'commit being reverted, undone', ref: 'REVERT_HEAD'},
       };
     }
 
