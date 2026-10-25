@@ -86,7 +86,8 @@ export class CurrentRepoStore {
   private branchesInOtherWorktrees = computed(() => branchesCheckedOutElsewhere(this.worktrees(), this.cwd()), {equal: isEqual});
   // Path of the other worktree a local branch is checked out in: checking it out switches there
   otherWorktreeOf = (localBranchName?: string) => localBranchName ? this.branchesInOtherWorktrees().get(localBranchName) : undefined;
-  isRebasing = computed(() => this.reposStore.selectedRepository()?.isRebasing ?? false);
+  operationInProgress = computed(() => this.reposStore.selectedRepository()?.operationInProgress);
+  isRebasing = computed(() => this.operationInProgress() === 'rebase');
   headBranch = computed(() => this.branches().find(b => b.isHeadPointed));
 
   headSha = () => this.headBranch()?.tip?.sha ?? this.detachedHeadSha();

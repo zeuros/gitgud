@@ -26,6 +26,7 @@ import {WorktreeReaderService} from './electron-cmd-parser-layer/worktree-reader
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {filterOutStashes} from '../utils/repository-utils';
 import {gitPath} from '../utils/git-path.utils';
+import {detectOperationInProgress} from '../utils/operation-in-progress.utils';
 import type {GitRepository} from '../models/git-repository';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -77,7 +78,7 @@ export class GitRefreshService {
   refreshAll = () => this.track(this.leaveRemovedWorktree().pipe(switchMap(() => forkJoin({
     workDirStatus: this.updateWorkingDirChanges(),
     logsAndBranches: this.updateLogsAndBranches(), // refresh log and wait for it so that selected commit sha can be updated
-    isRebasing: this.updateRebaseStatus(),
+    operationInProgress: this.updateOperationInProgress(),
   }))));
 
   // Back to the main worktree when the active worktree's folder no longer exists
@@ -111,7 +112,7 @@ export class GitRefreshService {
         const unchanged = sig !== undefined && sig === this.lastGitStateSignature;
         this.lastGitStateSignature = sig;
         return unchanged
-          ? this.track(forkJoin({workDirStatus: this.updateWorkingDirChanges(), isRebasing: this.updateRebaseStatus()}))
+          ? this.track(forkJoin({workDirStatus: this.updateWorkingDirChanges(), operationInProgress: this.updateOperationInProgress()}))
           : this.refreshAll();
       }),
     ).subscribe();
@@ -140,11 +141,9 @@ export class GitRefreshService {
   doUpdateLogsAndBranches = () => this.updateLogsAndBranches().subscribe();
 
 
-  updateRebaseStatus = () =>
-    from(this.gitApi.gitPath('rebase-merge').then(window.tauri.fs.exists))
-      .pipe(tap(isRebasing => this.currentRepo.update({isRebasing})));
-
-  doUpdateRebaseStatus = () => this.updateRebaseStatus().subscribe();
+  updateOperationInProgress = () =>
+    from(this.gitApi.gitDirs(this.currentRepo.cwd()!).then(dirs => detectOperationInProgress(dirs, window.tauri.fs.exists)))
+      .pipe(tap(operationInProgress => this.currentRepo.update({operationInProgress})));
 
 
   /**

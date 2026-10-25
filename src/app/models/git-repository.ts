@@ -21,6 +21,7 @@ import type {Branch} from '../lib/github-desktop/model/branch';
 import type {WorkDirStatus} from '../lib/github-desktop/model/workdir';
 import type {GitTag} from './git-tag';
 import type {GitWorktree} from './git-worktree';
+import type {GitOperation} from '../utils/operation-in-progress.utils';
 
 export type ViewType = 'hunk' | 'inline' | 'split';
 
@@ -41,7 +42,7 @@ export class GitRepository {
     // Editor config
     public editorConfig: { viewType: ViewType } = {viewType: 'split'},
     public workDirStatus: WorkDirStatus = {unstaged: [], staged: [], conflicted: []},
-    public isRebasing = false,
+    public operationInProgress?: GitOperation,
     public worktrees: GitWorktree[] = [],
     // The linked worktree this tab works in (git runs there), undefined for the main worktree (`id`)
     public activeWorktree?: string,

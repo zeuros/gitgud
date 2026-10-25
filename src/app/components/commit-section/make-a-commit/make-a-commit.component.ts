@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, effect, inject, signal} from '@angular/core';
 import {Divider} from 'primeng/divider';
 import {FormBuilder, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
@@ -36,6 +36,7 @@ import {headCommit} from '../../../utils/commit-utils';
 import type {WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
 import {Splitter, SplitterPanel} from 'primeng/splitter';
 import {WorkingDirFileSelectionService} from '../../../services/working-dir-file-selection.service';
+import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
 
 @Component({
   selector: 'gitgud-make-a-commit',
@@ -78,6 +79,25 @@ export class MakeACommitComponent {
   private commitService = inject(CommitService);
   protected fixup = inject(FixupService);
   private savedFormState?: typeof this.commitForm.value;
+  private gitApi = inject(GitApiService);
+  private formBeforeOperation?: typeof this.commitForm.value;
+
+  constructor() {
+    // An operation stopped on a conflict: we preset summary for it ("Revert …", "Merge branch …")
+    effect(() => {
+      if (!this.currentRepo.operationInProgress()) {
+        if (this.formBeforeOperation) this.commitForm.patchValue(this.formBeforeOperation);
+        this.formBeforeOperation = undefined;
+        return;
+      }
+      this.gitApi.gitPath('MERGE_MSG').then(window.tauri.fs.readFile).then(message => {
+        // backup commit's summary & description fields to restore after resolving the conflict
+        this.formBeforeOperation ??= this.commitForm.value;
+        const [summary, ...body] = message.split('\n').filter(line => !line.startsWith('#'));
+        this.commitForm.patchValue({summary, description: body.join('\n').trim()});
+      }, () => undefined);
+    });
+  }
 
   protected commit() {
     const {summary, description} = this.commitForm.value;

@@ -22,33 +22,37 @@
 <p-divider layout="vertical"/>
 
 <div class="actions">
-    @if (currentRepo.isRebasing()) {
-        <span class="rebase-label">Rebase in progress</span>
+    @if (operationLabel(); as label) {
+        <span class="operation-label">{{ label }} in progress</span>
+        @if (canContinueOperation()) {
+            <button pButton
+                    class="sober operation-continue"
+                    text
+                    (click)="continueOperation()"
+                    [disabled]="!!loading() || !!currentRepo.workDirStatus()?.conflicted?.length"
+            >
+                <i [class]="loading() === 'operation-continue' ? 'pi pi-spin pi-spinner' : 'fa fa-play'"></i>
+                <span>Continue</span>
+            </button>
+        }
+        @if (canSkipOperation()) {
+            <button pButton
+                    class="sober operation-skip"
+                    text
+                    (click)="skipOperation()"
+                    [disabled]="!!loading()"
+            >
+                <i [class]="loading() === 'operation-skip' ? 'pi pi-spin pi-spinner' : 'fa fa-forward'"></i>
+                <span>Skip</span>
+            </button>
+        }
         <button pButton
-                class="sober rebase-continue"
+                class="sober operation-abort"
                 text
-                (click)="continueRebase()"
-                [disabled]="!!loading() || !!currentRepo.workDirStatus()?.conflicted?.length"
-        >
-            <i [class]="loading() === 'rebase-continue' ? 'pi pi-spin pi-spinner' : 'fa fa-play'"></i>
-            <span>Continue</span>
-        </button>
-        <button pButton
-                class="sober rebase-skip"
-                text
-                (click)="skipRebase()"
+                (click)="abortOperation()"
                 [disabled]="!!loading()"
         >
-            <i [class]="loading() === 'rebase-skip' ? 'pi pi-spin pi-spinner' : 'fa fa-forward'"></i>
-            <span>Skip</span>
-        </button>
-        <button pButton
-                class="sober rebase-abort"
-                text
-                (click)="abortRebase()"
-                [disabled]="!!loading()"
-        >
-            <i [class]="loading() === 'rebase-abort' ? 'pi pi-spin pi-spinner' : 'fa fa-times'"></i>
+            <i [class]="loading() === 'operation-abort' ? 'pi pi-spin pi-spinner' : 'fa fa-times'"></i>
             <span>Abort</span>
         </button>
         <p-divider layout="vertical"/>

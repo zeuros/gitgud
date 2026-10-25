@@ -157,7 +157,7 @@ $repo-track-max-width: 260px;
     text-wrap: nowrap;
   }
 
-  .rebase-label {
+  .operation-label {
     font-size: 0.78rem;
     font-style: italic;
     color: var(--warning-text-color);
@@ -166,11 +166,11 @@ $repo-track-max-width: 260px;
     padding: 0 4px;
   }
 
-  .p-button.rebase-continue {
+  .p-button.operation-continue {
     color: #6abf69;
   }
 
-  .p-button.rebase-abort {
+  .p-button.operation-abort {
     color: var(--warning-text-color);
   }
 

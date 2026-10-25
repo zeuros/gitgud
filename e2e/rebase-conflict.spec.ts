@@ -85,7 +85,7 @@ describe('rebase conflict — resolve & abort', () => {
     await triggerRebaseMainOntoFeature();
 
     // Toolbar enters rebase mode
-    await $('span.rebase-label').waitForDisplayed({ timeout: 20_000 });
+    await $('span.operation-label').waitForDisplayed({ timeout: 20_000 });
     await waitForConflict();
 
     // Click conflicted file → three-way merge editor opens
@@ -104,18 +104,18 @@ describe('rebase conflict — resolve & abort', () => {
     // Wait until Continue becomes enabled (no more conflicted files)
     await browser.waitUntil(
       async () => {
-        const disabled = await $('button.rebase-continue').getAttribute('disabled');
+        const disabled = await $('button.operation-continue').getAttribute('disabled');
         return disabled === null;
       },
       { timeout: 10_000, timeoutMsg: 'Continue button never became enabled after resolving conflicts' },
     );
 
     // Continue — our single commit is applied, rebase completes
-    await jsClick(await $('button.rebase-continue'));
-    await $('span.rebase-label').waitForDisplayed({ reverse: true, timeout: 20_000 });
+    await jsClick(await $('button.operation-continue'));
+    await $('span.operation-label').waitForDisplayed({ reverse: true, timeout: 20_000 });
 
     // Verify clean state
-    await expect($('span.rebase-label')).not.toBeDisplayed();
+    await expect($('span.operation-label')).not.toBeDisplayed();
     await expect($('gitgud-merge-editor')).not.toBeDisplayed();
   });
 
@@ -125,14 +125,14 @@ describe('rebase conflict — resolve & abort', () => {
 
     await triggerRebaseMainOntoFeature();
 
-    await $('span.rebase-label').waitForDisplayed({ timeout: 20_000 });
+    await $('span.operation-label').waitForDisplayed({ timeout: 20_000 });
     await waitForConflict();
 
     // Abort without resolving anything
-    await jsClick(await $('button.rebase-abort'));
+    await jsClick(await $('button.operation-abort'));
 
     // Rebase in progress label disappears
-    await $('span.rebase-label').waitForDisplayed({ reverse: true, timeout: 20_000 });
+    await $('span.operation-label').waitForDisplayed({ reverse: true, timeout: 20_000 });
 
     // No conflicted files remain
     await browser.waitUntil(

@@ -126,7 +126,7 @@ export class GitWorkflowService {
   };
 
   // Rebase currently checked-out branch onto `onto` in the main working tree.
-  // Conflicts leave .git/rebase-merge → updateRebaseStatus → conflict UI activates.
+  // Conflicts leave .git/rebase-merge → updateOperationInProgress → conflict UI activates.
   private inPlaceRebase = (onto: string) =>
     this.stash.stashAndRun(this.gitApi.gitAction(['rebase', '--empty=drop', onto]));
 

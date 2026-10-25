@@ -41,12 +41,12 @@ import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream
 import {type BehindRemoteAction, openBehindRemoteDialog} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
-import {RebaseService} from '../../services/rebase.service';
+import {canSkip, type GitOperation, OPERATION_LABELS} from '../../utils/operation-in-progress.utils';
 import {UpdateCheckService} from '../../services/update-check.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 
-type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-continue' | 'rebase-skip' | 'rebase-abort';
+type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'operation-continue' | 'operation-skip' | 'operation-abort';
 
 @Component({
   selector: 'gitgud-toolbar',
@@ -65,7 +65,6 @@ export class ToolbarComponent implements OnInit {
   protected createBranch = inject(CreateBranchService);
   protected gitRefresh = inject(GitRefreshService);
   protected updateCheck = inject(UpdateCheckService);
-  protected rebase = inject(RebaseService);
   protected loading = signal<ToolbarAction | undefined>(undefined);
   protected bonfireHovered = signal(false);
   protected appVersion = window.tauri.appVersion + (window.tauri.buildCommit ? ` (${window.tauri.buildCommit})` : '');
@@ -73,6 +72,16 @@ export class ToolbarComponent implements OnInit {
   protected hasWorkDirChanges = computed(() => workingDirHasChanges(this.currentRepo.workDirStatus()));
   protected hasStashes = computed(() => this.currentRepo.stashes().length > 0);
   protected short = short;
+  protected operationLabel = computed(() => {
+    const operation = this.currentRepo.operationInProgress();
+    return operation && OPERATION_LABELS[operation];
+  });
+  protected canSkipOperation = computed(() => {
+    const operation = this.currentRepo.operationInProgress();
+    return !!operation && canSkip(operation);
+  });
+  // Nothing left to commit: git refuses to continue and suggests skipping instead
+  protected canContinueOperation = computed(() => !this.canSkipOperation() || this.hasWorkDirChanges());
   protected zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
   private gitApi = inject(GitApiService);
   private branchAheadBehind = inject(BranchAheadBehindService);
@@ -111,11 +120,18 @@ export class ToolbarComponent implements OnInit {
   // --prune also forgets the branches deleted on the remote
   protected fetch = () => this.runAction('fetch', this.gitApi.gitAction(['fetch', '--prune']), () => this.autoFetch.lastFetchedAt.set(Date.now()));
 
-  protected continueRebase = () => this.runAction('rebase-continue', this.gitApi.gitAction(['rebase', '--continue']), () => this.toast.success('Rebase continued'));
+  protected continueOperation = () => this.runOperationAction('continue', operation => `${OPERATION_LABELS[operation]} continued`);
 
-  protected skipRebase = () => this.runAction('rebase-skip', this.gitApi.gitAction(['rebase', '--skip']), () => this.toast.success('Commit skipped'));
+  protected skipOperation = () => this.runOperationAction('skip', () => 'Commit skipped');
 
-  protected abortRebase = () => this.runAction('rebase-abort', this.rebase.abortRebase(), () => this.toast.success('Rebase aborted'));
+  protected abortOperation = () => this.runOperationAction('abort', operation => `${OPERATION_LABELS[operation]} aborted`);
+
+  // `git <operation> --<step>` on the operation stopped in progress
+  private runOperationAction = (step: 'continue' | 'skip' | 'abort', successMessage: (operation: GitOperation) => string) => {
+    const operation = this.currentRepo.operationInProgress();
+    if (!operation) return;
+    this.runAction(`operation-${step}`, this.gitApi.gitAction([operation, `--${step}`]), () => this.toast.success(successMessage(operation)));
+  };
 
   // Shows a loader while running action
   private runAction = (key: ToolbarAction, action$: Observable<unknown>, onSuccess: () => void) => {
