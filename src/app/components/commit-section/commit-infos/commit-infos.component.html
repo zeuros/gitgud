@@ -5,7 +5,7 @@
     <h4 class="m-0">Stash:
         <button pButton
                 class="p-0"
-                [link]="true"
+                link
                 size="small"
                 (click)="copyToClipboard(selectedStash.parentSHAs[1])"
                 (mouseout)="copyTooltip.set('Copy')"
@@ -24,7 +24,7 @@
     <h4 class="m-0">Commit:
         <button pButton
                 class="p-0"
-                [link]="true"
+                link
                 size="small"
                 (click)="copyToClipboard(selectedCommit.sha)"
                 (mouseout)="copyTooltip.set('Copy')"

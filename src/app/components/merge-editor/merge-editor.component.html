@@ -14,12 +14,12 @@
                             (click)="saveAndMarkResolved()"
                             size="small"
                             [disabled]="saving()"
-                    >@if (saving()) {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-check"></i>}Save & Mark Resolved</button>
+                    ><i [class]="saving() ? 'pi pi-spin pi-spinner' : 'fa fa-check'"></i>Save & Mark Resolved</button>
                 }
                 <button pButton
                         (click)="close()"
                         size="small"
-                        [text]="true"
+                        text
                         severity="secondary"
                         iconOnly
                 ><i class="fa fa-times"></i></button>
@@ -41,7 +41,7 @@
                     @for (column of columns; track column) {
                         <div class="flex flex-column align-items-center gap-2">
                             <ng-container *ngTemplateOutlet="sideInfo; context: {$implicit: conflictCtx()[column], commit: column === 'left' ? leftCommit() : rightCommit()}"/>
-                            <button pButton (click)="keepSide(column)" [disabled]="saving()">@if (saving()) {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-check"></i>}{{ 'Keep ' + conflictCtx()[column].name }}</button>
+                            <button pButton (click)="keepSide(column)" [disabled]="saving()"><i [class]="saving() ? 'pi pi-spin pi-spinner' : 'fa fa-check'"></i>Keep {{ conflictCtx()[column].name }}</button>
                         </div>
                     }
                 </div>

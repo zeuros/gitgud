@@ -35,7 +35,7 @@ import {ToastService} from '../../../services/toast.service';
     <div class="flex flex-column gap-3 pt-2">
       <input pInputText [formControl]="urlInput" (keydown.enter)="confirm()" autofocus/>
       <div class="flex gap-2 justify-content-end">
-        <button pButton [text]="true" severity="secondary" (click)="cancel()">Cancel</button>
+        <button pButton text severity="secondary" (click)="cancel()">Cancel</button>
         <button pButton (click)="confirm()" [disabled]="!urlInput.value.length">Save</button>
       </div>
     </div>

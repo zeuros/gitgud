@@ -30,7 +30,7 @@ import {DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
     <div class="flex flex-column gap-3 pt-2">
       <input pInputText [formControl]="textInput" (keydown.enter)="confirm()" autofocus/>
       <div class="flex gap-2 justify-content-end">
-        <button pButton [text]="true" severity="secondary" (click)="cancel()">Cancel</button>
+        <button pButton text severity="secondary" (click)="cancel()">Cancel</button>
         <button pButton (click)="confirm()" [disabled]="required && !textInput.value.length">Confirm</button>
       </div>
     </div>

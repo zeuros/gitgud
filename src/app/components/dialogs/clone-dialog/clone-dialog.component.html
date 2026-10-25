@@ -23,7 +23,7 @@
             />
             <label for="clone-dir">Target directory</label>
         </p-float-label>
-        <button pButton [text]="true" pTooltip="Browse" (click)="pickDirectory()" iconOnly><i class="fa fa-folder-open"></i></button>
+        <button pButton text pTooltip="Browse" (click)="pickDirectory()" iconOnly><i class="fa fa-folder-open"></i></button>
     </div>
 
     <p-float-label>
@@ -47,16 +47,16 @@
 </div>
 
 <div class="clone-actions">
-    <button pButton [text]="true" (click)="ref.close()">Cancel</button>
+    <button pButton text (click)="ref.close()">Cancel</button>
     @if (repoExists()) {
         <button pButton
                 (click)="openExisting()"
                 [disabled]="!targetDir().length || !repoName().length || loading()"
-        >@if (loading()) {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-folder-open"></i>}Open</button>
+        ><i [class]="loading() ? 'pi pi-spin pi-spinner' : 'fa fa-folder-open'"></i>Open</button>
     } @else {
         <button pButton
                 (click)="clone()"
                 [disabled]="!url().length || !targetDir().length || !repoName().length || loading()"
-        >@if (loading()) {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-download"></i>}Clone</button>
+        ><i [class]="loading() ? 'pi pi-spin pi-spinner' : 'fa fa-download'"></i>Clone</button>
     }
 </div>

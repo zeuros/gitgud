@@ -17,8 +17,8 @@
                 {{ repository.name }}
                 <button pButton
                         class="close-tab-btn"
-                        [rounded]="true"
-                        [text]="true"
+                        rounded
+                        text
                         [severity]="i === selectedIndex ? 'primary' : 'secondary'"
                         (click)="gitRepository.closeRepository(i);$event.stopPropagation()"
                         iconOnly
@@ -31,8 +31,8 @@
                 New tab
                 <button pButton
                         class="close-tab-btn"
-                        [rounded]="true"
-                        [text]="true"
+                        rounded
+                        text
                         severity="secondary"
                         (click)="gitRepositoryStore.closeNewTab(); $event.stopPropagation()"
                         iconOnly
@@ -40,13 +40,7 @@
             </p-tab>
         }
 
-        <button pButton
-                class="flex"
-                [text]="true"
-                severity="primary"
-                (click)="gitRepositoryStore.openNewTab()"
-                iconOnly
-        ><i class="pi pi-plus"></i></button>
+        <button pButton text (click)="gitRepositoryStore.openNewTab()" iconOnly><i class="pi pi-plus"></i></button>
     </p-tablist>
 
     <p-tabpanels class="fill-height">

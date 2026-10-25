@@ -52,7 +52,7 @@ export const openSetUpstreamDialog = (dialog: DialogService, branchName: string)
         <input pInputText [formControl]="branchControl" class="flex-1"/>
       </div>
       <div class="flex gap-2 justify-content-end">
-        <button pButton [text]="true" severity="secondary" (click)="cancel()">Cancel</button>
+        <button pButton text severity="secondary" (click)="cancel()">Cancel</button>
         <button pButton (click)="confirm()" [disabled]="!remoteControl.value || !branchControl.value">Submit</button>
       </div>
     </div>

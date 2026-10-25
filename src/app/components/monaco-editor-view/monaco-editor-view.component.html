@@ -32,7 +32,7 @@
                     [severity]="fileDiffPanel.blameOpen() ? 'primary' : 'secondary'"
                     (click)="fileDiffPanel.blameOpen.set(!fileDiffPanel.blameOpen())"
                     size="small"
-                    [text]="true"
+                    text
             ><i class="fa fa-user"></i>Blame</button>
         }
         <button pButton
@@ -40,13 +40,13 @@
                 [severity]="fileDiffPanel.historyOpen() ? 'primary' : 'secondary'"
                 (click)="fileDiffPanel.historyOpen.set(!fileDiffPanel.historyOpen())"
                 size="small"
-                [text]="true"
+                text
         ><i class="fa fa-history"></i>History</button>
 
         <button pButton
                 (click)="fileDiffPanel.closeDiffView()"
                 size="small"
-                [text]="true"
+                text
                 severity="secondary"
                 iconOnly
         ><i class="fa fa-times"></i></button>

@@ -61,7 +61,7 @@ export const openBehindRemoteDialog = (
           <span>It's checked out in worktree <strong>{{ data.otherWorktreeName }}</strong>: switch to it to rebase or merge.</span>
         }
         <div class="flex gap-2 justify-content-end">
-          <button pButton [text]="true" severity="secondary" (click)="ref.close(null)">Cancel</button>
+          <button pButton text severity="secondary" (click)="ref.close(null)">Cancel</button>
           <button pButton severity="danger" (click)="ref.close('force-push')">Force Push</button>
           <button pButton severity="secondary" (click)="ref.close('rebase')" [disabled]="!!data.otherWorktreeName">Rebase</button>
           <button pButton severity="success" (click)="ref.close('merge')" [disabled]="!!data.otherWorktreeName">Merge</button>
@@ -75,7 +75,7 @@ export const openBehindRemoteDialog = (
           <span>It's checked out in worktree <strong>{{ data.otherWorktreeName }}</strong>: switch to it to pull.</span>
         }
         <div class="flex gap-2 justify-content-end">
-          <button pButton [text]="true" severity="secondary" (click)="ref.close(null)">Cancel</button>
+          <button pButton text severity="secondary" (click)="ref.close(null)">Cancel</button>
           <button pButton severity="danger" (click)="ref.close('force-push')">Force Push</button>
           <button pButton severity="success" (click)="ref.close('pull')" [disabled]="!!data.otherWorktreeName">Pull (fast-forward if possible)</button>
         </div>

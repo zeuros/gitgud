@@ -36,7 +36,7 @@ export type DivergedBranchAction = 'reset' | 'merge' | null;
         Choose how to reconcile.
       </span>
       <div class="flex gap-2 justify-content-end">
-        <button pButton [text]="true" severity="secondary" (click)="ref.close(null)">Cancel</button>
+        <button pButton text severity="secondary" (click)="ref.close(null)">Cancel</button>
         <button pButton
                 severity="success"
                 (click)="ref.close('merge')"
