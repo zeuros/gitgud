@@ -41,7 +41,7 @@ const fullMessage = ({summary, body}: Commit) => `${summary}\n\n${body}`.trim();
       <input pInputText placeholder="Summary" class="w-full commit-summary" [formControl]="summary" autofocus/>
       <textarea pTextarea placeholder="Description" rows="8" class="w-full commit-description" [formControl]="description"></textarea>
       <div class="flex gap-2 justify-content-end mt-3">
-        <button pButton [text]="true" severity="secondary" (click)="cancel()">Cancel</button>
+        <button pButton type="button" [text]="true" severity="secondary" (click)="cancel()">Cancel</button>
         <button pButton type="submit" [disabled]="!summary.value.trim()">Squash</button>
       </div>
     </form>
