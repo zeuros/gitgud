@@ -25,7 +25,7 @@ import {DEFAULT_EDITOR_COMMAND} from '../utils/editor-command.utils';
 export class SettingsService {
 
   private _zoom = signal(window.tauri.zoom.getFactor());
-  private _autoFetchInterval = signal(parseFloat(localStorage.getItem('auto-fetch-interval') ?? DEFAULT_AUTO_FETCH_INTERVAL));
+  readonly autoFetchIntervalMs = signal(parseFloat(localStorage.getItem('auto-fetch-interval') ?? DEFAULT_AUTO_FETCH_INTERVAL));
   private _theme = signal<ThemeMode>(
     (localStorage.getItem('theme') as ThemeMode) ??
     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
@@ -35,8 +35,7 @@ export class SettingsService {
   private _editorCommand = signal(localStorage.getItem('editor-command') ?? DEFAULT_EDITOR_COMMAND);
 
   get zoom() { return this._zoom(); }
-  get autoFetchInterval() { return this._autoFetchInterval(); }
-  get autoFetchIntervalSeconds() { return this._autoFetchInterval() / 1000; }
+  get autoFetchIntervalSeconds() { return this.autoFetchIntervalMs() / 1000; }
   get theme() { return this._theme(); }
   get gitBin() { return this._gitBin(); }
   get editorCommand() { return this._editorCommand(); }
@@ -46,12 +45,10 @@ export class SettingsService {
     window.tauri.zoom.setFactor(factor);
   }
 
-  set autoFetchInterval(v: number) {
-    this._autoFetchInterval.set(v);
-    localStorage.setItem('auto-fetch-interval', String(v));
+  set autoFetchIntervalSeconds(v: number) {
+    this.autoFetchIntervalMs.set(v * 1000);
+    localStorage.setItem('auto-fetch-interval', String(v * 1000));
   }
-
-  set autoFetchIntervalSeconds(v: number) { this.autoFetchInterval = v * 1000; }
 
   set theme(v: ThemeMode) {
     this._theme.set(v);

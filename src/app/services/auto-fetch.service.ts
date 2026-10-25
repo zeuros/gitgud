@@ -16,8 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {effect, inject, Injectable, signal, untracked} from '@angular/core';
-import {GitRepositoryStore} from '../stores/git-repos.store';
+import {effect, inject, Injectable, signal} from '@angular/core';
 import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {SettingsService} from './settings.service';
@@ -31,40 +30,39 @@ export class AutoFetchService {
   private gitRefresh = inject(GitRefreshService);
   private currentRepo = inject(CurrentRepoStore);
   private gitApi = inject(GitApiService);
-  private gitRepositoryStore = inject(GitRepositoryStore);
   private settings = inject(SettingsService);
 
   lastFetchedAt = signal<number | undefined>(undefined);
 
-  private intervalId?: ReturnType<typeof setInterval>;
-
   constructor() {
-    // Restarted when the repo changes too, so each repo gets a full delay from the moment it is opened
-    effect(() => {
-      this.currentRepo.cwd();
-      clearInterval(this.intervalId);
-      this.intervalId = setInterval(this.autoFetch, this.settings.autoFetchInterval);
+    // Restarts when the delay changes
+    effect(onCleanup => {
+      this.lastFetchedAt();
+      const intervalId = setInterval(this.fetch, this.settings.autoFetchIntervalMs());
+      onCleanup(() => clearInterval(intervalId));
     });
 
-    // Initialize last-fetched time from FETCH_HEAD mtime when repo changes
+    // The last fetch of the opened repo, if any
     effect(() => {
       const cwd = this.currentRepo.cwd();
       if (!cwd) return;
-      this.gitApi.gitPath('FETCH_HEAD', cwd).then(fetchHead => window.tauri.fs.exists(fetchHead).then(exists =>
-        exists
-          ? window.tauri.fs.mtime(fetchHead).then(ms => untracked(() => this.lastFetchedAt.set(ms)))
-          : untracked(() => this.lastFetchedAt.set(undefined)),
-      )).catch(console.warn);
+
+      this.gitApi.gitPath('FETCH_HEAD', cwd).then(window.tauri.fs.mtime)
+        .then(lastFetchedAt => {
+          this.lastFetchedAt.set(lastFetchedAt);
+          // Fetches if fetchInterval is overdue on repo switch
+          if (Date.now() - lastFetchedAt > this.settings.autoFetchIntervalMs()) this.fetch();
+        }, () => this.lastFetchedAt.set(undefined));
     });
   }
 
-  private autoFetch = () => {
-    if (untracked(() => this.gitRepositoryStore.selectedRepository())) {
-      this.gitApi.git(['fetch', '--prune']).subscribe(() => {
-        this.lastFetchedAt.set(Date.now());
-        this.gitRefresh.doUpdateLogsAndBranches();
-      });
-    }
-  };
+
+  private fetch = () => this.currentRepo.cwd() && this.gitApi.git(['fetch', '--prune']).subscribe({
+    next: () => {
+      this.lastFetchedAt.set(Date.now());
+      this.gitRefresh.doUpdateLogsAndBranches();
+    },
+    error: error => console.warn('Auto-fetch failed', error),
+  });
 
 }
