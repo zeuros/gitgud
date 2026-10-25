@@ -20,7 +20,7 @@ import {ChangeDetectionStrategy, Component, effect, inject, signal, viewChild} f
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {InputText} from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {isEqual} from 'lodash-es';
 import {finalize} from 'rxjs';
 import {directory, fileName} from '../../../utils/utils';
@@ -44,7 +44,7 @@ import {short} from '../../../utils/commit-utils';
     Textarea,
     Tooltip,
     FormsModule,
-    Button,
+    ButtonDirective,
     IdentityCardComponent,
     Divider,
     CommitFileListComponent,

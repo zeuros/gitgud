@@ -2,7 +2,7 @@
 
 <gitgud-toolbar/>
 
-<p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" scrollable [class.refreshing]="gitRefresh.isRefreshing()">
+<p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" [class.refreshing]="gitRefresh.isRefreshing()">
 
     <p-tablist cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
         @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
@@ -15,38 +15,38 @@
                    (auxclick)="onMiddleClick($event, i)">
                 <i class="fa fa-code-fork"></i>
                 {{ repository.name }}
-                <p-button
-                        icon="pi pi-times"
+                <button pButton
+                        class="close-tab-btn"
                         [rounded]="true"
                         [text]="true"
                         [severity]="i === selectedIndex ? 'primary' : 'secondary'"
-                        styleClass="close-tab-btn"
                         (click)="gitRepository.closeRepository(i);$event.stopPropagation()"
-                />
+                        iconOnly
+                ><i class="pi pi-times"></i></button>
             </p-tab>
         }
 
         @if (gitRepositoryStore.newTabOpen()) {
             <p-tab value="new-tab" (auxclick)="$event.button === 1 && gitRepositoryStore.closeNewTab()">
                 New tab
-                <p-button
-                        icon="pi pi-times"
+                <button pButton
+                        class="close-tab-btn"
                         [rounded]="true"
                         [text]="true"
                         severity="secondary"
-                        styleClass="close-tab-btn"
                         (click)="gitRepositoryStore.closeNewTab(); $event.stopPropagation()"
-                />
+                        iconOnly
+                ><i class="pi pi-times"></i></button>
             </p-tab>
         }
 
-        <p-button
-                icon="pi pi-plus"
-                [text]="true"
+        <button pButton
                 class="flex"
+                [text]="true"
                 severity="primary"
                 (click)="gitRepositoryStore.openNewTab()"
-        />
+                iconOnly
+        ><i class="pi pi-plus"></i></button>
     </p-tablist>
 
     <p-tabpanels class="fill-height">

@@ -18,7 +18,7 @@
 
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {FloatLabel} from 'primeng/floatlabel';
 import {Tooltip} from 'primeng/tooltip';
@@ -34,7 +34,7 @@ export const openCloneDialog = (dialog: DialogService) => dialog.open(CloneDialo
   selector: 'gitgud-clone-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, InputText, FloatLabel, FormsModule, Tooltip],
+  imports: [ButtonDirective, InputText, FloatLabel, FormsModule, Tooltip],
   templateUrl: './clone-dialog.component.html',
   styleUrl: './clone-dialog.component.scss',
 })

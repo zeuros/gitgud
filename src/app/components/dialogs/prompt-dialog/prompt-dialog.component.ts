@@ -18,20 +18,20 @@
 
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import {FormControl, ReactiveFormsModule } from '@angular/forms';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 
 @Component({
   selector: 'gitgud-prompt-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, Button, InputText],
+  imports: [ReactiveFormsModule, ButtonDirective, InputText],
   template: `
     <div class="flex flex-column gap-3 pt-2">
       <input pInputText [formControl]="textInput" (keydown.enter)="confirm()" autofocus/>
       <div class="flex gap-2 justify-content-end">
-        <p-button label="Cancel" [text]="true" severity="secondary" (click)="cancel()"/>
-        <p-button label="Confirm" (click)="confirm()" [disabled]="required && !textInput.value.length"/>
+        <button pButton [text]="true" severity="secondary" (click)="cancel()">Cancel</button>
+        <button pButton (click)="confirm()" [disabled]="required && !textInput.value.length">Confirm</button>
       </div>
     </div>
   `,

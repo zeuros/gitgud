@@ -11,16 +11,15 @@
     @if (showParent()) {
         <div class="pt-1">
             <span>Parent: </span>
-            <p-button
-                    styleClass="p-0"
+            <button pButton
+                    class="p-0"
                     [link]="true"
                     size="small"
                     (click)="copyToClipboard(c.parentSHAs[0])"
                     (mouseout)="copyTooltip.set('Copy')"
                     [pTooltip]="copyTooltip()"
-                    [label]="short(c.parentSHAs[0])"
                     tooltipPosition="top"
-            />
+            >{{ short(c.parentSHAs[0]) }}</button>
         </div>
     }
 </div>

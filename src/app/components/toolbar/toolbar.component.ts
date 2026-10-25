@@ -19,7 +19,7 @@
 import {ChangeDetectionStrategy, Component, computed, inject, type OnInit, signal} from '@angular/core';
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {catchError, EMPTY, finalize, interval, map, type Observable, of, switchMap} from 'rxjs';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {Divider} from 'primeng/divider';
 import {Tooltip} from 'primeng/tooltip';
 import {Select} from 'primeng/select';
@@ -52,7 +52,7 @@ type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'rebase-conti
   selector: 'gitgud-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, Divider, Tooltip, Select, FormsModule, Menu, WorktreeBadgeComponent],
+  imports: [ButtonDirective, Divider, Tooltip, Select, FormsModule, Menu, WorktreeBadgeComponent],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
 })

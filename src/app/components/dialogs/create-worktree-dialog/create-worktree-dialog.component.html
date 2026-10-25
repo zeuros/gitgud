@@ -48,17 +48,15 @@
                     class="flex-1"
                     placeholder="/path/to/worktree"
             />
-            <p-button label="Browse" severity="secondary" (onClick)="browse()"/>
+            <button pButton severity="secondary" (click)="browse()">Browse</button>
         </div>
     </div>
 </div>
 
 <div class="worktree-footer">
-    <p-button
-            label="Create Worktree"
+    <button pButton
             severity="success"
-            [loading]="loading()"
-            [disabled]="!canSubmit()"
-            (onClick)="create()"
-    />
+            (click)="create()"
+            [disabled]="!canSubmit() || loading()"
+    >@if (loading()) {<i class="pi pi-spin pi-spinner"></i>}Create Worktree</button>
 </div>

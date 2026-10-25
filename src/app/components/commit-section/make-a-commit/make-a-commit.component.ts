@@ -20,7 +20,7 @@ import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core'
 import {Divider} from 'primeng/divider';
 import {FormBuilder, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
 import {TableModule} from 'primeng/table';
@@ -46,7 +46,7 @@ import {WorkingDirFileSelectionService} from '../../../services/working-dir-file
     Textarea,
     InputText,
     TableModule,
-    Button,
+    ButtonDirective,
     Checkbox,
     Splitter,
     SplitterPanel,

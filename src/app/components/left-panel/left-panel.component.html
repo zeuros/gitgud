@@ -14,7 +14,7 @@
                     <p-tree
                             selectionMode="single"
                             [value]="localBranches()"
-                            [selection]="selectedBranchNode()"
+                            [selectionKeys]="selectedBranchKeys()"
                             (onNodeUnselect)="selectBranchCommit($branchNode($event.node), localBranches)"
                             (onNodeSelect)="selectBranchCommit($branchNode($event.node), localBranches)"
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
@@ -62,7 +62,7 @@
                     <p-tree
                             selectionMode="single"
                             [value]="remoteBranches()"
-                            [selection]="selectedBranchNode()"
+                            [selectionKeys]="selectedBranchKeys()"
                             (onNodeUnselect)="selectBranchCommit($branchNode($event.node), remoteBranches)"
                             (onNodeSelect)="selectBranchCommit($branchNode($event.node), remoteBranches)"
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
@@ -124,7 +124,7 @@
                     <p-tree
                             selectionMode="single"
                             [value]="tagTree()"
-                            [selection]="selectedTagNode()"
+                            [selectionKeys]="selectedTagKeys()"
                             (onNodeUnselect)="selectTag($tagNode($event.node), tagTree)"
                             (onNodeSelect)="selectTag($tagNode($event.node), tagTree)"
                             [contextMenu]="activeContextMenu.menuRef"

@@ -17,7 +17,7 @@
  */
 
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {DatePipe} from '@angular/common';
 import {GitCommandHistoryService} from '../../../services/git-command-history.service';
 import {DynamicDialogRef} from 'primeng/dynamicdialog';
@@ -26,7 +26,7 @@ import {DynamicDialogRef} from 'primeng/dynamicdialog';
   selector: 'gitgud-shell-history-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, DatePipe],
+  imports: [ButtonDirective, DatePipe],
   templateUrl: './shell-history-dialog.component.html',
   styleUrl: './shell-history-dialog.component.scss',
 })

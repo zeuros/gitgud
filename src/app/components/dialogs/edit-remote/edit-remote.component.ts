@@ -19,7 +19,7 @@
 import {ChangeDetectionStrategy, Component, inject, type OnInit} from '@angular/core';
 import {FormControl, ReactiveFormsModule} from '@angular/forms';
 import {catchError, EMPTY, switchMap, tap} from 'rxjs';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
@@ -30,13 +30,13 @@ import {ToastService} from '../../../services/toast.service';
   selector: 'gitgud-edit-remote',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ReactiveFormsModule, Button, InputText],
+  imports: [ReactiveFormsModule, ButtonDirective, InputText],
   template: `
     <div class="flex flex-column gap-3 pt-2">
       <input pInputText [formControl]="urlInput" (keydown.enter)="confirm()" autofocus/>
       <div class="flex gap-2 justify-content-end">
-        <p-button label="Cancel" [text]="true" severity="secondary" (click)="cancel()"/>
-        <p-button label="Save" (click)="confirm()" [disabled]="!urlInput.value.length"/>
+        <button pButton [text]="true" severity="secondary" (click)="cancel()">Cancel</button>
+        <button pButton (click)="confirm()" [disabled]="!urlInput.value.length">Save</button>
       </div>
     </div>
   `,

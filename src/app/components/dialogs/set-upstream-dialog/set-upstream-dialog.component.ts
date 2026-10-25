@@ -18,7 +18,7 @@
 
 import {ChangeDetectionStrategy, Component, inject, type OnInit, signal} from '@angular/core';
 import {FormControl, ReactiveFormsModule} from '@angular/forms';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {Select} from 'primeng/select';
 import {InputText} from 'primeng/inputtext';
 import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
@@ -37,7 +37,7 @@ export const openSetUpstreamDialog = (dialog: DialogService, branchName: string)
   selector: 'gitgud-set-upstream-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ReactiveFormsModule, Button, Select, InputText],
+  imports: [ReactiveFormsModule, ButtonDirective, Select, InputText],
   template: `
     <div class="flex flex-column gap-3 pt-2">
       <span>What remote/branch should <strong>"{{ branchName }}"</strong> push to and pull from?</span>
@@ -52,8 +52,8 @@ export const openSetUpstreamDialog = (dialog: DialogService, branchName: string)
         <input pInputText [formControl]="branchControl" class="flex-1"/>
       </div>
       <div class="flex gap-2 justify-content-end">
-        <p-button label="Cancel" [text]="true" severity="secondary" (click)="cancel()"/>
-        <p-button label="Submit" (click)="confirm()" [disabled]="!remoteControl.value || !branchControl.value"/>
+        <button pButton [text]="true" severity="secondary" (click)="cancel()">Cancel</button>
+        <button pButton (click)="confirm()" [disabled]="!remoteControl.value || !branchControl.value">Submit</button>
       </div>
     </div>
   `,

@@ -22,7 +22,7 @@ import {ToastModule} from 'primeng/toast';
 import {ConfirmDialog} from 'primeng/confirmdialog';
 import {ContextMenu} from 'primeng/contextmenu';
 import {Dialog} from 'primeng/dialog';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {GitApiService} from './services/electron-cmd-parser-layer/git-api.service';
 import {SettingsService} from './services/settings.service';
 import {GitRepositoryStore} from './stores/git-repos.store';
@@ -36,7 +36,7 @@ import {GitRepositoryService} from './services/git-repository.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, Button],
+  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, ButtonDirective],
   selector: 'gitgud-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',

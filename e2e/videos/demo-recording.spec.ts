@@ -117,13 +117,13 @@ describe('demo recording', () => {
     await browser.refresh();
 
     // Welcome screen — wait for it to appear, then linger for 3 s so viewers see it
-    await $('gitgud-welcome-screen p-button[label="Open"] button').waitForDisplayed({ timeout: 15_000 });
+    await $('//gitgud-welcome-screen//button[normalize-space()="Open"]').waitForDisplayed({ timeout: 15_000 });
     await browser.pause(3000);
 
     await browser.execute((dir: string) => {
       window.tauri.dialog.showOpenDialog = async () => [dir];
     }, repoDir);
-    await jsClick(await $('gitgud-welcome-screen p-button[label="Open"] button'));
+    await jsClick(await $('//gitgud-welcome-screen//button[normalize-space()="Open"]'));
 
     await browser.waitUntil(
       async () => (await $$('tr.commit-row')).length > 0,

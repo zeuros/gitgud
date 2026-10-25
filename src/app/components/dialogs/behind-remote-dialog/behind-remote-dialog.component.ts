@@ -17,7 +17,7 @@
  */
 
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import type {Observable} from 'rxjs';
 import {worktreeName} from '../../../utils/worktree-utils';
@@ -49,7 +49,7 @@ export const openBehindRemoteDialog = (
   selector: 'gitgud-behind-remote-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button],
+  imports: [ButtonDirective],
   template: `
     <div class="flex flex-column gap-3 pt-2">
       @if (data.diverged) {
@@ -61,10 +61,10 @@ export const openBehindRemoteDialog = (
           <span>It's checked out in worktree <strong>{{ data.otherWorktreeName }}</strong>: switch to it to rebase or merge.</span>
         }
         <div class="flex gap-2 justify-content-end">
-          <p-button label="Cancel" [text]="true" severity="secondary" (click)="ref.close(null)"/>
-          <p-button label="Force Push" severity="danger" (click)="ref.close('force-push')"/>
-          <p-button label="Rebase" severity="secondary" [disabled]="!!data.otherWorktreeName" (click)="ref.close('rebase')"/>
-          <p-button label="Merge" severity="success" [disabled]="!!data.otherWorktreeName" (click)="ref.close('merge')"/>
+          <button pButton [text]="true" severity="secondary" (click)="ref.close(null)">Cancel</button>
+          <button pButton severity="danger" (click)="ref.close('force-push')">Force Push</button>
+          <button pButton severity="secondary" (click)="ref.close('rebase')" [disabled]="!!data.otherWorktreeName">Rebase</button>
+          <button pButton severity="success" (click)="ref.close('merge')" [disabled]="!!data.otherWorktreeName">Merge</button>
         </div>
       } @else {
         <span>
@@ -75,9 +75,9 @@ export const openBehindRemoteDialog = (
           <span>It's checked out in worktree <strong>{{ data.otherWorktreeName }}</strong>: switch to it to pull.</span>
         }
         <div class="flex gap-2 justify-content-end">
-          <p-button label="Cancel" [text]="true" severity="secondary" (click)="ref.close(null)"/>
-          <p-button label="Force Push" severity="danger" (click)="ref.close('force-push')"/>
-          <p-button label="Pull (fast-forward if possible)" severity="success" [disabled]="!!data.otherWorktreeName" (click)="ref.close('pull')"/>
+          <button pButton [text]="true" severity="secondary" (click)="ref.close(null)">Cancel</button>
+          <button pButton severity="danger" (click)="ref.close('force-push')">Force Push</button>
+          <button pButton severity="success" (click)="ref.close('pull')" [disabled]="!!data.otherWorktreeName">Pull (fast-forward if possible)</button>
         </div>
       }
     </div>

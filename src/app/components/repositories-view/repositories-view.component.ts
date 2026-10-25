@@ -18,7 +18,7 @@
 
 import {afterNextRender, ChangeDetectionStrategy, Component, computed, inject, Injector, viewChild} from '@angular/core';
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {RepositoryViewComponent} from '../repository-view/repository-view.component';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {GitRepositoryService} from '../../services/git-repository.service';
@@ -33,7 +33,7 @@ import {NewTabComponent} from '../new-tab/new-tab.component';
     Tabs,
     TabList,
     Tab,
-    Button,
+    ButtonDirective,
     TabPanels,
     TabPanel,
     RepositoryViewComponent,

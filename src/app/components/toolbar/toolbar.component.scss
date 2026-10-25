@@ -144,7 +144,7 @@ $repo-track-max-width: 260px;
   align-items: stretch;
   gap: 4px;
 
-  ::ng-deep .p-button {
+  .p-button {
     align-self: stretch;
     height: 100%;
     border-radius: 0;
@@ -166,15 +166,15 @@ $repo-track-max-width: 260px;
     padding: 0 4px;
   }
 
-  .rebase-continue ::ng-deep .p-button {
+  .p-button.rebase-continue {
     color: #6abf69;
   }
 
-  .rebase-abort ::ng-deep .p-button {
+  .p-button.rebase-abort {
     color: var(--warning-text-color);
   }
 
-  .update-btn ::ng-deep .p-button {
+  .p-button.update-btn {
     color: #6abf69;
     animation: pulse 2s ease-in-out infinite;
   }
@@ -187,7 +187,7 @@ $repo-track-max-width: 260px;
 .coffee-btn {
   margin-left: auto;
 
-  ::ng-deep button.p-button {
+  &.p-button {
     position: relative;
     overflow: visible;
 

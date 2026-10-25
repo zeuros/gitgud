@@ -24,7 +24,7 @@ import {ActiveContextMenuService} from '../../services/active-context-menu.servi
 import type {TreeNode} from 'primeng/api';
 import type {Branch} from '../../lib/github-desktop/model/branch';
 import {local, remote, toBranchTree} from '../../utils/branch-utils';
-import {findNode, toggleNode} from '../../utils/tree-utils';
+import {findNode, selectionKeysOf, toggleNode} from '../../utils/tree-utils';
 import type {Commit} from '../../lib/github-desktop/model/commit';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {TableModule} from 'primeng/table';
@@ -73,17 +73,15 @@ export class LeftPanelComponent {
   protected tagContextMenu = inject(TagContextMenuService);
   protected stashContextMenu = inject(StashContextMenuService);
   protected tagTree = signal<TreeNode<LocalAndDistantTagWithName>[]>([]);
-  protected selectedTagNode = computed(() => {
+  protected selectedTagKeys = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
-    if (!sha) return null;
-    return findNode(this.tagTree(), t => t.sha === sha);
+    return selectionKeysOf(sha ? findNode(this.tagTree(), t => t.sha === sha) : null);
   });
   protected localBranches = signal<TreeNode<Branch>[]>([]);
   protected remoteBranches = signal<TreeNode<Branch>[]>([]);
-  protected selectedBranchNode = computed(() => {
+  protected selectedBranchKeys = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
-    if (!sha) return null;
-    return findNode([...this.localBranches(), ...this.remoteBranches()], b => b.tip.sha === sha);
+    return selectionKeysOf(sha ? findNode([...this.localBranches(), ...this.remoteBranches()], b => b.tip.sha === sha) : null);
   });
   protected branchContextMenu = inject(BranchContextMenuService);
   protected branchDragDrop = inject(BranchDragDropService);

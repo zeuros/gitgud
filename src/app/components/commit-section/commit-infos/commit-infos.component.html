@@ -3,16 +3,15 @@
 
 @if (selectedStash) {
     <h4 class="m-0">Stash:
-        <p-button
-                styleClass="p-0"
+        <button pButton
+                class="p-0"
                 [link]="true"
                 size="small"
                 (click)="copyToClipboard(selectedStash.parentSHAs[1])"
                 (mouseout)="copyTooltip.set('Copy')"
                 [pTooltip]="copyTooltip()"
-                [label]="short(selectedStash.parentSHAs[1])"
                 tooltipPosition="top"
-        />
+        >{{ short(selectedStash.parentSHAs[1]) }}</button>
     </h4>
 
     <p-divider class="mb-0"/>
@@ -23,16 +22,15 @@
 
 } @else if (selectedCommit) {
     <h4 class="m-0">Commit:
-        <p-button
-                styleClass="p-0"
+        <button pButton
+                class="p-0"
                 [link]="true"
                 size="small"
                 (click)="copyToClipboard(selectedCommit.sha)"
                 (mouseout)="copyTooltip.set('Copy')"
                 [pTooltip]="copyTooltip()"
-                [label]="selectedCommit.shortSha"
                 tooltipPosition="top"
-        />
+        >{{ selectedCommit.shortSha }}</button>
     </h4>
 
     <p-divider class="mb-0"/>
@@ -47,16 +45,19 @@
 
             <textarea pTextarea placeholder="Description" rows="6" class="flex-1 commit-description" formControlName="description"></textarea>
 
-            <p-button type="submit"
-                      [disabled]="!commitFormValueChanged()"
-                      [loading]="rewording()"
-                      class="flex gap-2 mt-2 w-full"
-                      styleClass="w-full border-round-xs">
+            <button pButton
+                    type="submit"
+                    class="flex gap-2 mt-2 w-full border-round-xs"
+                    [disabled]="!commitFormValueChanged() || rewording()"
+            >
+                @if (rewording()) {
+                    <i class="pi pi-spin pi-spinner"></i>
+                }
                 Update message
                 @if (reworded()) {
                     <i class="pi pi-check reworded-check" (animationend)="reworded.set(false)"></i>
                 }
-            </p-button>
+            </button>
 
         </form>
     </div>

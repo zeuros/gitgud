@@ -6,9 +6,9 @@
   <h2 class="title">GitGud</h2>
 
   <div class="actions">
-    <p-button label="Open" icon="pi pi-folder-open" styleClass="action-btn" (onClick)="gitRepository.pickFolderAndOpenRepository()"/>
-    <p-button label="Clone" icon="pi pi-cloud-download" styleClass="action-btn" (onClick)="openClone()"/>
-    <p-button label="Init" icon="pi pi-plus-circle" styleClass="action-btn" (onClick)="gitRepository.initRepository()"/>
+    <button pButton class="action-btn" (click)="gitRepository.pickFolderAndOpenRepository()"><i class="pi pi-folder-open"></i>Open</button>
+    <button pButton class="action-btn" (click)="openClone()"><i class="pi pi-cloud-download"></i>Clone</button>
+    <button pButton class="action-btn" (click)="gitRepository.initRepository()"><i class="pi pi-plus-circle"></i>Init</button>
   </div>
 
   @if (gitRepositoryStore.recentIds().length > 0) {

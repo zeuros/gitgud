@@ -82,7 +82,7 @@ describe('Worktrees — list, create, remove', () => {
     await beat();
 
     // workDir is auto-filled by refreshWorkDir(); submit
-    await jsClick(await $('//p-button[@label="Create Worktree"]//button'));
+    await jsClick(await $('//button[normalize-space()="Create Worktree"]'));
     await see();
     await see(); // git worktree add + full refresh pipeline
 

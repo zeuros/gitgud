@@ -19,7 +19,7 @@
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {CdkDrag, type CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray} from '@angular/cdk/drag-drop';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {Select} from 'primeng/select';
 import {Textarea} from 'primeng/textarea';
 import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
@@ -40,7 +40,7 @@ export const openInteractiveRebaseDialog = (dialog: DialogService, data: Interac
   selector: 'gitgud-interactive-rebase-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [FormsModule, Button, Select, Textarea, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [FormsModule, ButtonDirective, Select, Textarea, CdkDropList, CdkDrag, CdkDragHandle],
   templateUrl: './interactive-rebase-dialog.component.html',
   styleUrl: './interactive-rebase-dialog.component.scss',
 })

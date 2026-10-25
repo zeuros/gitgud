@@ -17,7 +17,7 @@
  */
 
 import {ChangeDetectionStrategy, Component, computed, inject, type OnDestroy, type OnInit, signal} from '@angular/core';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {InputNumber} from 'primeng/inputnumber';
 import {InputText} from 'primeng/inputtext';
 import {FormsModule} from '@angular/forms';
@@ -36,7 +36,7 @@ import {DEFAULT_EDITOR_COMMAND} from '../../../utils/editor-command.utils';
   selector: 'gitgud-settings-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, InputNumber, InputText, FormsModule, Tooltip],
+  imports: [ButtonDirective, InputNumber, InputText, FormsModule, Tooltip],
   templateUrl: './settings-dialog.component.html',
   styleUrl: './settings-dialog.component.scss',
 })

@@ -22,3 +22,7 @@ export const findNode = <T>(nodes: TreeNode<T>[], predicate: (data: T) => boolea
   }
   return null;
 };
+
+/** The `selectionKeys` of a single-selection p-tree with this node selected (null would leave the tree's selection as it is) */
+export const selectionKeysOf = (node: TreeNode | null | undefined): Record<string, boolean> =>
+  node?.key ? {[node.key]: true} : {};

@@ -10,17 +10,19 @@
             }
             <div class="editor-actions">
                 @if (!binary()) {
-                    <p-button
-                            label="Save & Mark Resolved"
-                            styleClass="p-button-sm p-button-primary"
-                            icon="fa fa-check"
-                            [loading]="saving()"
-                            (click)="saveAndMarkResolved()"/>
+                    <button pButton
+                            (click)="saveAndMarkResolved()"
+                            size="small"
+                            [disabled]="saving()"
+                    >@if (saving()) {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-check"></i>}Save & Mark Resolved</button>
                 }
-                <p-button
-                        styleClass="p-button-sm p-button-text p-button-secondary"
-                        icon="fa fa-times"
-                        (click)="close()"/>
+                <button pButton
+                        (click)="close()"
+                        size="small"
+                        [text]="true"
+                        severity="secondary"
+                        iconOnly
+                ><i class="fa fa-times"></i></button>
             </div>
         </div>
         <ng-template #sideInfo let-side let-commit="commit">
@@ -39,7 +41,7 @@
                     @for (column of columns; track column) {
                         <div class="flex flex-column align-items-center gap-2">
                             <ng-container *ngTemplateOutlet="sideInfo; context: {$implicit: conflictCtx()[column], commit: column === 'left' ? leftCommit() : rightCommit()}"/>
-                            <p-button [label]="'Keep ' + conflictCtx()[column].name" icon="fa fa-check" [loading]="saving()" (click)="keepSide(column)"/>
+                            <button pButton (click)="keepSide(column)" [disabled]="saving()">@if (saving()) {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-check"></i>}{{ 'Keep ' + conflictCtx()[column].name }}</button>
                         </div>
                     }
                 </div>

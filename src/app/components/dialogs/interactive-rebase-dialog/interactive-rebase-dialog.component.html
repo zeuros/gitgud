@@ -41,7 +41,7 @@
         @if (invalidReason(); as reason) {
             <span class="warning flex-1">{{ reason }}</span>
         }
-        <p-button label="Cancel" [text]="true" severity="secondary" (click)="cancel()"/>
-        <p-button label="Rebase" class="start-rebase" (click)="confirm()" [disabled]="!!invalidReason()"/>
+        <button pButton [text]="true" severity="secondary" (click)="cancel()">Cancel</button>
+        <button pButton class="start-rebase" (click)="confirm()" [disabled]="!!invalidReason()">Rebase</button>
     </div>
 </div>

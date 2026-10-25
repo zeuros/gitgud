@@ -24,118 +24,146 @@
 <div class="actions">
     @if (currentRepo.isRebasing()) {
         <span class="rebase-label">Rebase in progress</span>
-        <p-button class="sober rebase-continue"
-                  [text]="true"
-                  [loading]="loading() === 'rebase-continue'"
-                  [disabled]="!!loading() || !!currentRepo.workDirStatus()?.conflicted?.length"
-                  (onClick)="continueRebase()"
+        <button pButton
+                class="sober rebase-continue"
+                [text]="true"
+                (click)="continueRebase()"
+                [disabled]="!!loading() || !!currentRepo.workDirStatus()?.conflicted?.length"
         >
-            <i class="fa fa-play"></i>
+            @if (loading() === 'rebase-continue') {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-play"></i>}
             <span>Continue</span>
-        </p-button>
-        <p-button class="sober rebase-skip"
-                  [text]="true"
-                  [loading]="loading() === 'rebase-skip'"
-                  [disabled]="!!loading()"
-                  (onClick)="skipRebase()"
+        </button>
+        <button pButton
+                class="sober rebase-skip"
+                [text]="true"
+                (click)="skipRebase()"
+                [disabled]="!!loading()"
         >
-            <i class="fa fa-forward"></i>
+            @if (loading() === 'rebase-skip') {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-forward"></i>}
             <span>Skip</span>
-        </p-button>
-        <p-button class="sober rebase-abort"
-                  [text]="true"
-                  [loading]="loading() === 'rebase-abort'"
-                  [disabled]="!!loading()"
-                  (onClick)="abortRebase()"
+        </button>
+        <button pButton
+                class="sober rebase-abort"
+                [text]="true"
+                (click)="abortRebase()"
+                [disabled]="!!loading()"
         >
-            <i class="fa fa-times"></i>
+            @if (loading() === 'rebase-abort') {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-times"></i>}
             <span>Abort</span>
-        </p-button>
+        </button>
         <p-divider layout="vertical"/>
     }
-    <p-button class="sober"
-              [text]="true"
-              [loading]="loading() === 'push'"
-              [disabled]="!!loading()"
-              (onClick)="push()"
+    <button pButton
+            class="sober"
+            [text]="true"
+            (click)="push()"
+            [disabled]="!!loading()"
     >
-        <i class="fa fa-arrow-up"></i>
+        @if (loading() === 'push') {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-arrow-up"></i>}
         <span>Push</span>
-    </p-button>
+    </button>
 
-    <p-button class="sober"
-              [text]="true"
-              [loading]="loading() === 'pull'"
-              [disabled]="!!loading()"
-              (onClick)="pull()"
+    <button pButton
+            class="sober"
+            [text]="true"
+            (click)="pull()"
+            [disabled]="!!loading()"
     >
-        <i class="fa fa-arrow-down"></i>
+        @if (loading() === 'pull') {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-arrow-down"></i>}
         <span>Pull</span>
-    </p-button>
+    </button>
 
     <p-divider layout="vertical"/>
 
-    <p-button class="sober"
-              [text]="true"
-              [loading]="loading() === 'stash'"
-              [disabled]="!!loading() || !hasWorkDirChanges()"
-              (onClick)="stash()"
+    <button pButton
+            class="sober"
+            [text]="true"
+            (click)="stash()"
+            [disabled]="!!loading() || !hasWorkDirChanges()"
     >
-        <i class="fa fa-archive"></i>
+        @if (loading() === 'stash') {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-archive"></i>}
         <span>Stash</span>
-    </p-button>
+    </button>
 
-    <p-button class="sober"
-              [text]="true"
-              [loading]="loading() === 'pop'"
-              [disabled]="!!loading() || !hasStashes()"
-              (onClick)="pop()"
+    <button pButton
+            class="sober"
+            [text]="true"
+            (click)="pop()"
+            [disabled]="!!loading() || !hasStashes()"
     >
-        <i class="fa fa-inbox"></i>
+        @if (loading() === 'pop') {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-inbox"></i>}
         <span>Pop</span>
-    </p-button>
+    </button>
 
     <p-divider layout="vertical"/>
 
-    <p-button class="sober"
-              [text]="true"
-              (onClick)="createBranch.createBranchAtSha(currentRepo.headSha()!)"
+    <button pButton
+            class="sober"
+            [text]="true"
+            (click)="createBranch.createBranchAtSha(currentRepo.headSha()!)"
     >
         <i class="fa fa-code-fork"></i>
         <span>Branch</span>
-    </p-button>
+    </button>
 
-    <p-button class="sober"
-              [text]="true"
-              [loading]="loading() === 'fetch'"
-              [disabled]="!!loading()"
-              (onClick)="fetch()"
+    <button pButton
+            class="sober"
+            [text]="true"
+            (click)="fetch()"
+            [disabled]="!!loading()"
     >
-        <i class="fa fa-refresh"></i>
+        @if (loading() === 'fetch') {<i class="pi pi-spin pi-spinner"></i>} @else {<i class="fa fa-refresh"></i>}
         <span>Fetch</span>
         @if (fetchedAgo(); as ago) {
             <span class="fetched-ago">{{ ago }}</span>
         }
-    </p-button>
+    </button>
 
-    <p-button class="sober" icon="fa fa-history" [text]="true" [rounded]="true" [pTooltip]="undo.undoTooltip()" tooltipPosition="bottom" [disabled]="!undo.undoAvailable()"
-              (onClick)="undo.undo()"/>
-    <p-button class="sober" icon="fa fa-repeat" [text]="true" [rounded]="true" [pTooltip]="undo.redoTooltip()" tooltipPosition="bottom" [disabled]="!undo.redoAvailable()"
-              (onClick)="undo.redo()"/>
-    <p-button class="sober" icon="fa fa-terminal" [text]="true" [rounded]="true" pTooltip="Git command history" tooltipPosition="bottom" (onClick)="openShellHistoryDialog()"/>
+    <button pButton
+            class="sober"
+            [text]="true"
+            [rounded]="true"
+            [pTooltip]="undo.undoTooltip()"
+            tooltipPosition="bottom"
+            (click)="undo.undo()"
+            [disabled]="!undo.undoAvailable()"
+            iconOnly
+    ><i class="fa fa-history"></i></button>
+    <button pButton
+            class="sober"
+            [text]="true"
+            [rounded]="true"
+            [pTooltip]="undo.redoTooltip()"
+            tooltipPosition="bottom"
+            (click)="undo.redo()"
+            [disabled]="!undo.redoAvailable()"
+            iconOnly
+    ><i class="fa fa-repeat"></i></button>
+    <button pButton class="sober" [text]="true" [rounded]="true" pTooltip="Git command history" tooltipPosition="bottom" (click)="openShellHistoryDialog()" iconOnly><i class="fa fa-terminal"></i></button>
     @if (updateCheck.availableRelease(); as release) {
-        <p-button class="sober update-btn" icon="fa fa-arrow-circle-up" [text]="true" [rounded]="true"
-                  [pTooltip]="'Update available: v' + release.version" tooltipPosition="bottom"
-                  (onClick)="updateCheck.downloadUpdate()"/>
+        <button pButton
+                class="sober update-btn"
+                [text]="true"
+                [rounded]="true"
+                [pTooltip]="'Update available: v' + release.version"
+                tooltipPosition="bottom"
+                (click)="updateCheck.downloadUpdate()"
+                iconOnly
+        ><i class="fa fa-arrow-circle-up"></i></button>
     }
-    <p-button class="sober" icon="fa fa-cog" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (onClick)="openSettingsDialog()"/>
+    <button pButton class="sober" [text]="true" [rounded]="true" pTooltip="Settings" tooltipPosition="bottom" (click)="openSettingsDialog()" iconOnly><i class="fa fa-cog"></i></button>
 </div>
 
 <p-menu #donateMenu [model]="donateItems" [popup]="true"/>
-<p-button
-        class="sober coffee-btn" icon="fa fa-coffee" [text]="true" [rounded]="true"
-        pTooltip="Support GitGud ☕ - give me riches aplenty" tooltipPosition="bottom"
-        (onClick)="donateMenu.toggle($event)"/>
+<button pButton
+        class="sober coffee-btn"
+        [text]="true"
+        [rounded]="true"
+        pTooltip="Support GitGud ☕ - give me riches aplenty"
+        tooltipPosition="bottom"
+        (click)="donateMenu.toggle($event)"
+        iconOnly
+><i class="fa fa-coffee"></i></button>
 
 <p-select
         [options]="zoomLevels"

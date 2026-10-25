@@ -33,7 +33,7 @@ type IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
 type IEditorOptions = editor.IEditorOptions;
 type IDiffEditorOptions = editor.IDiffEditorOptions;
 import {fileName} from '../../utils/utils';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {DatePipe} from '@angular/common';
 import {FileHistoryReaderService} from '../../services/electron-cmd-parser-layer/file-history-reader.service';
 import {type Blame, type BlameCommit, type FileHistoryEntry, startsBlameBlock} from '../../utils/file-history.utils';
@@ -87,7 +87,7 @@ const formatSize = (bytes: number) =>
 @Component({
   standalone: true,
   selector: 'gitgud-monaco-editor-view',
-  imports: [FormsModule, SelectButton, Button, DatePipe],
+  imports: [FormsModule, SelectButton, ButtonDirective, DatePipe],
   templateUrl: './monaco-editor-view.component.html',
   styleUrl: './monaco-editor-view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

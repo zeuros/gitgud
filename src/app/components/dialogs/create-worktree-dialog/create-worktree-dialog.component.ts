@@ -18,7 +18,7 @@
 
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {Select} from 'primeng/select';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
@@ -37,7 +37,7 @@ interface BranchOption {
   selector: 'gitgud-create-worktree-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button, InputText, Select, FormsModule],
+  imports: [ButtonDirective, InputText, Select, FormsModule],
   templateUrl: './create-worktree-dialog.component.html',
   styleUrl: './create-worktree-dialog.component.scss',
 })

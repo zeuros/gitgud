@@ -27,26 +27,29 @@
         }
 
         @if (content().kind === 'text') {
-            <p-button
+            <button pButton
                     class="toggle-blame"
-                    styleClass="p-button-sm p-button-text"
                     [severity]="fileDiffPanel.blameOpen() ? 'primary' : 'secondary'"
-                    icon="fa fa-user"
-                    label="Blame"
-                    (click)="fileDiffPanel.blameOpen.set(!fileDiffPanel.blameOpen())"/>
+                    (click)="fileDiffPanel.blameOpen.set(!fileDiffPanel.blameOpen())"
+                    size="small"
+                    [text]="true"
+            ><i class="fa fa-user"></i>Blame</button>
         }
-        <p-button
+        <button pButton
                 class="toggle-history"
-                styleClass="p-button-sm p-button-text"
                 [severity]="fileDiffPanel.historyOpen() ? 'primary' : 'secondary'"
-                icon="fa fa-history"
-                label="History"
-                (click)="fileDiffPanel.historyOpen.set(!fileDiffPanel.historyOpen())"/>
+                (click)="fileDiffPanel.historyOpen.set(!fileDiffPanel.historyOpen())"
+                size="small"
+                [text]="true"
+        ><i class="fa fa-history"></i>History</button>
 
-        <p-button
-                styleClass="p-button-sm p-button-text p-button-secondary"
-                icon="fa fa-times"
-                (click)="fileDiffPanel.closeDiffView()"/>
+        <button pButton
+                (click)="fileDiffPanel.closeDiffView()"
+                size="small"
+                [text]="true"
+                severity="secondary"
+                iconOnly
+        ><i class="fa fa-times"></i></button>
     </div>
 </div>
 

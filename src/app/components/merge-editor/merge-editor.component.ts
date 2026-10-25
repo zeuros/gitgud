@@ -20,7 +20,7 @@ import '@mismerge/core/web';
 
 import {ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, type ElementRef, HostListener, inject, signal, viewChild, type WritableSignal} from '@angular/core';
 import {NgTemplateOutlet} from '@angular/common';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
@@ -77,7 +77,7 @@ const UNKNOWN_CTX: ConflictCtx = {operation: 'unknown', left: {name: 'Ours', rol
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [Button, NgTemplateOutlet],
+  imports: [ButtonDirective, NgTemplateOutlet],
   templateUrl: './merge-editor.component.html',
   styleUrl: './merge-editor.component.scss',
 })

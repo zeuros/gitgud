@@ -122,13 +122,13 @@ export async function initRepo(template: string): Promise<void> {
   });
   await browser.refresh();
 
-  await $('gitgud-welcome-screen p-button[label="Open"] button').waitForDisplayed({ timeout: 15_000 });
+  await $('//gitgud-welcome-screen//button[normalize-space()="Open"]').waitForDisplayed({ timeout: 15_000 });
 
   await browser.execute((dir: string) => {
     window.tauri.dialog.showOpenDialog = async () => [dir];
   }, repoDir);
 
-  await jsClick(await $('gitgud-welcome-screen p-button[label="Open"] button'));
+  await jsClick(await $('//gitgud-welcome-screen//button[normalize-space()="Open"]'));
 
   await browser.waitUntil(
     async () => (await $$('tr.commit-row')).length > 0,
@@ -142,7 +142,7 @@ export async function addRepoViaUI(template: string): Promise<void> {
   await browser.execute((dir: string) => {
     window.tauri.dialog.showOpenDialog = async () => [dir];
   }, repoDir);
-  await jsClick(await $('//p-button[@icon="pi pi-plus"]//button'));
+  await jsClick(await $('//button[i[@class="pi pi-plus"]]'));
   // Wait for the new tab to appear (more tabs than before)
   await browser.waitUntil(
     async () => (await $$('p-tab')).length > 1,
@@ -201,7 +201,7 @@ export async function initRepoWithWorktrees(
   });
   await browser.refresh();
 
-  await $('gitgud-welcome-screen p-button[label="Open"] button').waitForDisplayed({ timeout: 15_000 });
+  await $('//gitgud-welcome-screen//button[normalize-space()="Open"]').waitForDisplayed({ timeout: 15_000 });
 
   // Create the linked worktree on disk now — the welcome screen is showing so
   // the execSync blocking won't interfere with the WebKit startup sequence.
@@ -212,7 +212,7 @@ export async function initRepoWithWorktrees(
     window.tauri.dialog.showOpenDialog = async () => [dir];
   }, repoDir);
 
-  await jsClick(await $('gitgud-welcome-screen p-button[label="Open"] button'));
+  await jsClick(await $('//gitgud-welcome-screen//button[normalize-space()="Open"]'));
 
   await browser.waitUntil(
     async () => (await $$('tr.commit-row')).length > 0,

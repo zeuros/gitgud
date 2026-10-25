@@ -21,7 +21,7 @@ import {DATE_FORMAT} from '../../../utils/constants';
 import type {Commit} from '../../../lib/github-desktop/model/commit';
 import {Tooltip} from 'primeng/tooltip';
 import {AvatarComponent} from '../commit-infos/avatar/avatar.component';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {DatePipe} from '@angular/common';
 import {short} from '../../../utils/commit-utils';
 
@@ -31,7 +31,7 @@ import {short} from '../../../utils/commit-utils';
   imports: [
     Tooltip,
     AvatarComponent,
-    Button,
+    ButtonDirective,
     DatePipe,
   ],
   templateUrl: './identity-card.component.html',

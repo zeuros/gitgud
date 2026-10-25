@@ -52,9 +52,9 @@
                     style="flex: 1"
             />
             @if (gitPathDirty()) {
-                <p-button icon="fa fa-check" [text]="true" severity="success" pTooltip="Validate & apply" (onClick)="validateGitPath()"/>
+                <button pButton [text]="true" severity="success" pTooltip="Validate & apply" (click)="validateGitPath()" iconOnly><i class="fa fa-check"></i></button>
             }
-            <p-button icon="fa fa-folder-open" [text]="true" pTooltip="Browse" (onClick)="pickGitBinaryPath()"/>
+            <button pButton [text]="true" pTooltip="Browse" (click)="pickGitBinaryPath()" iconOnly><i class="fa fa-folder-open"></i></button>
         </div>
     </div>
 

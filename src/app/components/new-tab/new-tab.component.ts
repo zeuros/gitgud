@@ -20,7 +20,7 @@ import {ChangeDetectionStrategy, Component, inject, type OnInit} from '@angular/
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {GitRepositoryStore} from '../../stores/git-repos.store';
 import {lastFolderName} from '../../utils/utils';
-import {Button} from 'primeng/button';
+import {ButtonDirective} from 'primeng/button';
 import {DialogService} from 'primeng/dynamicdialog';
 import {openCloneDialog} from '../dialogs/clone-dialog/clone-dialog.component';
 
@@ -28,7 +28,7 @@ import {openCloneDialog} from '../dialogs/clone-dialog/clone-dialog.component';
   selector: 'gitgud-new-tab',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Button],
+  imports: [ButtonDirective],
   templateUrl: './new-tab.component.html',
   styleUrl: './new-tab.component.scss',
   host: {class: 'fill-height'},

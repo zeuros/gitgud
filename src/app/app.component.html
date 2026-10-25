@@ -13,7 +13,7 @@
   <code>{{ installInfo.cmd }}</code>
   <p style="margin-top: 1rem">Then restart GitGud.</p>
   <ng-template #footer>
-    <p-button label="Browse for git..." severity="secondary" (onClick)="browseForGit()"/>
-    <p-button label="Open download page" (onClick)="openDownloadPage()"/>
+    <button pButton severity="secondary" (click)="browseForGit()">Browse for git...</button>
+    <button pButton (click)="openDownloadPage()">Open download page</button>
   </ng-template>
 </p-dialog>
