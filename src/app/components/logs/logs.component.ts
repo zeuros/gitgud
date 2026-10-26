@@ -18,10 +18,10 @@
 
 import {RefType} from '../../enums/ref-type.enum';
 import {workingDirHasChanges} from '../../utils/utils';
-import {bySha} from '../../utils/log-utils';
+import {bySha, followSelection} from '../../utils/log-utils';
 import type {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import type {Commit} from '../../lib/github-desktop/model/commit';
-import {once} from 'lodash-es';
+import {isEqual, once} from 'lodash-es';
 import {commitColor, findCurrentHeadCommit, hasName, isCommit, isStash} from '../../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
 import type {Edge} from '../../models/edge';
@@ -279,15 +279,16 @@ export class LogsComponent {
 
     this.conflict.markWorkDirCommitConflicted(displayLog);
 
+    const previousLog = this.computedDisplayLog();
     this.computedDisplayLog.set(displayLog);
     this.edges.set(edges);
     this.graphColumnCount.set(graphColumnCount);
     this.untrackedStashes.set(untrackedStashes);
 
-    // Auto-show the work in progress (index) commit — or first commit — when nothing valid is selected
-    if (!this.currentRepo.selectedCommitsShas()?.length && displayLog.length) {
-      this.currentRepo.update({selectedCommitsShas: [displayLog[0].sha]});
-    }
+    // Keeps the user's place when selected commits vanish (dropped, rewritten, branch deleted…)
+    const selectedShas = this.currentRepo.selectedCommitsShas() ?? [];
+    const followedShas = followSelection(selectedShas, previousLog, displayLog);
+    if (!isEqual(followedShas, selectedShas)) this.currentRepo.update({selectedCommitsShas: followedShas});
   };
 
   // Called after canvas is available (runs once) — restores last scroll position, once the table's margins give the full scroll height
