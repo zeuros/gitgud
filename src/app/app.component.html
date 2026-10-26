@@ -4,7 +4,7 @@
 }
 
 <p-toast position="bottom-center" (click)="dismissToastOnClick($event)"/>
-<p-confirm-dialog/>
+<p-confirm-dialog [style]="{width: '32rem', minWidth: '24rem', maxWidth: '60vw'}"/>
 <p-context-menu #globalMenu [model]="activeContextMenu.contextMenu()" appendTo="body"/>
 
 <p-dialog header="Git not found" [visible]="!gitApi.gitFound()" [modal]="true" [closable]="false" [style]="{width: '28rem'}">
