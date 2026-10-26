@@ -20,11 +20,11 @@ https://github.com/user-attachments/assets/7c56dde9-3404-4b9a-a6d0-fe188927c0f4
 
 Every platform, no account, no price. Just git gud.
 
-| Platform | Package | Architecture |
-|----------|---------|--------------|
-| 🐧 Linux | [.deb](https://github.com/zeuros/gitgud/releases/latest) · [.rpm](https://github.com/zeuros/gitgud/releases/latest) · [AppImage](https://github.com/zeuros/gitgud/releases/latest) · [Flatpak](https://github.com/zeuros/gitgud/releases/latest) · [.tar.gz](https://github.com/zeuros/gitgud/releases/latest) | x64 · ARM64 |
-| 🪟 Windows | [installer](https://github.com/zeuros/gitgud/releases/latest) · [portable](https://github.com/zeuros/gitgud/releases/latest) | x64 · ARM64 |
-| 🍎 macOS | [.dmg (Apple Silicon)](https://github.com/zeuros/gitgud/releases/latest) · [.dmg (Intel)](https://github.com/zeuros/gitgud/releases/latest) | M1–M4 · x64 |
+| Platform | x64 | ARM64 |
+|----------|-----|-------|
+| 🐧 Linux | [.deb](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_amd64.deb) · [.rpm](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-1.x86_64.rpm) · [AppImage](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_amd64.AppImage) · [Flatpak](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-Linux-x64.flatpak) · [.tar.gz](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-Linux-x64.tar.gz) | [.deb](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_arm64.deb) · [.rpm](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-1.aarch64.rpm) · [AppImage](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_aarch64.AppImage) · [.tar.gz](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-Linux-arm64.tar.gz) |
+| 🪟 Windows | [installer](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_x64-setup.exe) | [installer](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_arm64-setup.exe) |
+| 🍎 macOS | [.dmg (Intel)](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_x64.dmg) | [.dmg (Apple Silicon)](https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_aarch64.dmg) |
 
 ## Spells & miracles
 

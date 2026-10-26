@@ -501,7 +501,7 @@
     /* ── Download ───────────────────────────────────────────────────── */
     .download-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
       gap: 1rem;
     }
 
@@ -555,22 +555,44 @@
       gap: .4rem;
     }
 
-    .dl-list a {
+    /* One row per package format, with a download link per architecture */
+    .dl-list li {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: .5rem .75rem;
+      gap: .5rem;
+      padding: .4rem .5rem .4rem .75rem;
       border-radius: 6px;
       background: rgba(255,255,255,.04);
-      border: 1px solid transparent;
       color: var(--text);
-      text-decoration: none;
       font-size: .8125rem;
       font-family: 'JetBrains Mono', monospace;
+    }
+
+    .dl-format {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .4rem;
+    }
+
+    .dl-archs {
+      display: flex;
+      gap: .3rem;
+      flex-shrink: 0;
+    }
+
+    .dl-archs a {
+      padding: .2rem .55rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      font-size: .75rem;
       transition: background .15s, border-color .15s, color .15s;
     }
 
-    .dl-list a:hover {
+    .dl-archs a:hover {
       background: rgba(167,139,250,.1);
       border-color: rgba(167,139,250,.25);
       color: var(--purple);
@@ -818,51 +840,21 @@
 
   <div class="download-grid">
 
-    <!-- Linux x64 -->
+    <!-- Linux -->
     <div class="platform-card">
       <div class="platform-header">
         <div class="platform-icon">🐧</div>
         <div>
           <div class="platform-name">Linux</div>
-          <div class="platform-arch">x86_64</div>
+          <div class="platform-arch">x64 &amp; arm64</div>
         </div>
       </div>
       <ul class="dl-list">
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_amd64.deb" download>.deb <span class="dl-badge">Ubuntu / Debian</span></a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-1.x86_64.rpm" download>.rpm <span class="dl-badge">Fedora / RHEL</span></a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_amd64.AppImage" download>.AppImage</a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-Linux-x64.flatpak" download>.flatpak</a></li>
-      </ul>
-    </div>
-
-    <!-- Linux arm64 -->
-    <div class="platform-card">
-      <div class="platform-header">
-        <div class="platform-icon">🐧</div>
-        <div>
-          <div class="platform-name">Linux</div>
-          <div class="platform-arch">arm64</div>
-        </div>
-      </div>
-      <ul class="dl-list">
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_arm64.deb" download>.deb</a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-1.aarch64.rpm" download>.rpm</a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_aarch64.AppImage" download>.AppImage</a></li>
-      </ul>
-    </div>
-
-    <!-- macOS -->
-    <div class="platform-card">
-      <div class="platform-header">
-        <div class="platform-icon">🍎</div>
-        <div>
-          <div class="platform-name">macOS</div>
-          <div class="platform-arch">Apple Silicon &amp; Intel</div>
-        </div>
-      </div>
-      <ul class="dl-list">
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_aarch64.dmg" download>.dmg  <span class="dl-badge">Apple Silicon</span></a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_x64.dmg" download>.dmg  <span class="dl-badge">Intel</span></a></li>
+        <li><span class="dl-format">.deb <span class="dl-badge">Debian</span></span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_amd64.deb" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_arm64.deb" download>arm64</a></span></li>
+        <li><span class="dl-format">.rpm <span class="dl-badge">Fedora</span></span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-1.x86_64.rpm" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-1.aarch64.rpm" download>arm64</a></span></li>
+        <li><span class="dl-format">.AppImage</span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_amd64.AppImage" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_aarch64.AppImage" download>arm64</a></span></li>
+        <li><span class="dl-format">.flatpak</span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-Linux-x64.flatpak" download>x64</a></span></li>
+        <li><span class="dl-format">.tar.gz</span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-Linux-x64.tar.gz" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud-2.10.0-Linux-arm64.tar.gz" download>arm64</a></span></li>
       </ul>
     </div>
 
@@ -876,8 +868,21 @@
         </div>
       </div>
       <ul class="dl-list">
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_x64-setup.exe" download>.exe installer <span class="dl-badge">x64</span></a></li>
-        <li><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_arm64-setup.exe" download>.exe installer <span class="dl-badge">arm64</span></a></li>
+        <li><span class="dl-format">.exe installer</span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_x64-setup.exe" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_arm64-setup.exe" download>arm64</a></span></li>
+      </ul>
+    </div>
+
+    <!-- macOS -->
+    <div class="platform-card">
+      <div class="platform-header">
+        <div class="platform-icon">🍎</div>
+        <div>
+          <div class="platform-name">macOS</div>
+          <div class="platform-arch">Intel (x64) &amp; Apple Silicon (arm64)</div>
+        </div>
+      </div>
+      <ul class="dl-list">
+        <li><span class="dl-format">.dmg</span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_x64.dmg" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.10.0/GitGud_2.10.0_aarch64.dmg" download>arm64</a></span></li>
       </ul>
     </div>
 
