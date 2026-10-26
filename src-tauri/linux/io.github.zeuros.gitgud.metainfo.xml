@@ -52,6 +52,19 @@
   </provides>
 
   <releases>
+    <release version="2.11.0" date="2026-10-26">
+      <description>
+        <p>What's new in GitGud 2.11.0:</p>
+        <ul>
+          <li>Continue, skip or abort a stopped cherry-pick, revert or merge</li>
+          <li>Name the sides of a revert conflict</li>
+          <li>Follow the selected commit when it vanishes</li>
+          <li>Wider, with a minimum width</li>
+          <li>Restart the interval when the delay setting changes</li>
+          <li>Cancel no longer submits the squash form</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.10.0" date="2026-10-24">
       <description>
         <p>What's new in GitGud 2.10.0:</p>
