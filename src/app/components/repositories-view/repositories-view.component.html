@@ -1,47 +1,51 @@
 @let selectedIndex = gitRepositoryStore.selectedIndex();
 
-<gitgud-toolbar/>
-
 <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" [class.refreshing]="gitRefresh.isRefreshing()">
 
-    <p-tablist cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
-        @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
-            <p-tab [value]="i"
-                   cdkDrag
-                   cdkDragLockAxis="x"
-                   cdkDragBoundary=".p-tablist"
-                   cdkDragPreviewContainer="parent"
-                   animate.enter="fade-slide-in"
-                   (auxclick)="onMiddleClick($event, i)">
-                <i class="fa fa-code-fork"></i>
-                {{ repository.name }}
-                <button pButton
-                        class="close-tab-btn"
-                        rounded
-                        text
-                        [severity]="i === selectedIndex ? 'primary' : 'secondary'"
-                        (click)="gitRepository.closeRepository(i);$event.stopPropagation()"
-                        iconOnly
-                ><i class="pi pi-times"></i></button>
-            </p-tab>
-        }
+    <!-- The window's title bar, like a browser's: dragging its empty space moves the window -->
+    <div class="tab-strip" data-tauri-drag-region="deep" [class.macos]="isMacOs">
+        <p-tablist cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
+            @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
+                <p-tab [value]="i"
+                       cdkDrag
+                       cdkDragLockAxis="x"
+                       cdkDragBoundary=".p-tablist"
+                       cdkDragPreviewContainer="parent"
+                       animate.enter="fade-slide-in"
+                       (auxclick)="onMiddleClick($event, i)">
+                    <i class="fa fa-code-fork"></i>
+                    {{ repository.name }}
+                    <button pButton
+                            class="close-tab-btn"
+                            rounded
+                            text
+                            [severity]="i === selectedIndex ? 'primary' : 'secondary'"
+                            (click)="gitRepository.closeRepository(i);$event.stopPropagation()"
+                            iconOnly
+                    ><i class="pi pi-times"></i></button>
+                </p-tab>
+            }
 
-        @if (gitRepositoryStore.newTabOpen()) {
-            <p-tab value="new-tab" (auxclick)="$event.button === 1 && gitRepositoryStore.closeNewTab()">
-                New tab
-                <button pButton
-                        class="close-tab-btn"
-                        rounded
-                        text
-                        severity="secondary"
-                        (click)="gitRepositoryStore.closeNewTab(); $event.stopPropagation()"
-                        iconOnly
-                ><i class="pi pi-times"></i></button>
-            </p-tab>
-        }
+            @if (gitRepositoryStore.newTabOpen()) {
+                <p-tab value="new-tab" (auxclick)="$event.button === 1 && gitRepositoryStore.closeNewTab()">
+                    New tab
+                    <button pButton
+                            class="close-tab-btn"
+                            rounded
+                            text
+                            severity="secondary"
+                            (click)="gitRepositoryStore.closeNewTab(); $event.stopPropagation()"
+                            iconOnly
+                    ><i class="pi pi-times"></i></button>
+                </p-tab>
+            }
 
-        <button pButton text (click)="gitRepositoryStore.openNewTab()" iconOnly><i class="pi pi-plus"></i></button>
-    </p-tablist>
+            <button pButton text (click)="gitRepositoryStore.openNewTab()" iconOnly><i class="pi pi-plus"></i></button>
+        </p-tablist>
+        <gitgud-window-controls/>
+    </div>
+
+    <gitgud-toolbar/>
 
     <p-tabpanels class="fill-height">
         <p-tabpanel>

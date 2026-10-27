@@ -9,6 +9,22 @@
   100% { transform: translateX(400%); }
 }
 
+.tab-strip {
+  display: flex;
+  align-items: center;
+  background: var(--app-chrome-bg);
+
+  // Room for the native traffic lights drawn over the window's top-left corner
+  &.macos {
+    padding-left: 78px;
+  }
+
+  p-tablist {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
 :host ::ng-deep {
   .refreshing .p-tablist {
     position: relative;

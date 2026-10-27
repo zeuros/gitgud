@@ -26,6 +26,7 @@ import {ToolbarComponent} from '../toolbar/toolbar.component';
 import {CdkDrag, type CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {NewTabComponent} from '../new-tab/new-tab.component';
+import {WindowControlsComponent} from '../window-controls/window-controls.component';
 
 @Component({
   selector: 'gitgud-repositories-view',
@@ -41,6 +42,7 @@ import {NewTabComponent} from '../new-tab/new-tab.component';
     CdkDropList,
     CdkDrag,
     NewTabComponent,
+    WindowControlsComponent,
   ],
   templateUrl: './repositories-view.component.html',
   styleUrl: './repositories-view.component.scss',
@@ -53,6 +55,7 @@ export class RepositoriesViewComponent {
   protected gitRepositoryStore = inject(GitRepositoryStore);
   protected gitRepository = inject(GitRepositoryService);
   protected gitRefresh = inject(GitRefreshService);
+  protected readonly isMacOs = window.tauri.process.platform === 'darwin';
   private injector = inject(Injector);
 
   private tabList = viewChild(TabList);

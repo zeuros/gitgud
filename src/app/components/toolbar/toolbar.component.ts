@@ -55,6 +55,8 @@ type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'operation-co
   imports: [ButtonDirective, Divider, Tooltip, Select, FormsModule, Menu, WorktreeBadgeComponent],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
+  // Below the tab strip, its empty space moves the window too
+  host: {'data-tauri-drag-region': 'deep'},
 })
 export class ToolbarComponent implements OnInit {
 

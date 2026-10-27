@@ -180,6 +180,10 @@ async function buildBridge() {
       return {} as unknown as Window;
     },
 
+    appWindow: {
+      close: () => getCurrentWindow().close(),
+    },
+
     process: {
       platform,
       arch,
