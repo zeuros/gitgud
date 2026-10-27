@@ -47,7 +47,7 @@
 
 import type {ChangeSet} from './model/change-set';
 import {type AppFileStatus, AppFileStatusKind, CommittedFileChange, isConflictedStatusCode} from './model/status';
-import {forceUnwrap} from './throw-ex';
+import {throwEx} from '../../utils/utils';
 import {isCopyOrRename, mapPorcelainStatus, mapStatus} from './log';
 import {type WorkDirStatus, WorkingDirectoryFileChange} from './model/workdir';
 
@@ -89,13 +89,12 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, shas: string[]): 
     }
     // Regular diff format (2 commits): :mode mode hash hash status path
     else if (line.startsWith(':')) {
-      const lineComponents = line.split(' ');
-      const status = forceUnwrap('Invalid log output (status)', lineComponents.at(-1));
+      const status = line.split(' ').pop()!;
       const oldPath = /^R|C/.test(status)
-        ? forceUnwrap('Missing old path', lines.at(++i))
+        ? lines.at(++i) ?? throwEx('Missing old path')
         : undefined;
 
-      const path = forceUnwrap('Missing path', lines.at(++i));
+      const path = lines.at(++i) ?? throwEx('Missing path');
 
       files.push(new CommittedFileChange(
         path,

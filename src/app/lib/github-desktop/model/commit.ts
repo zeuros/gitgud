@@ -45,7 +45,6 @@ const parseSingleUnfoldedTrailer = (line: string, separators: string): Trailer |
  * @param body The commit message without the first line and CR.
  * @param branches Branches the commit is pointed by, separated by comma. e.g: origin/HEAD, origin/develop
  * @param ref Almost always present, tells which branch commit comes from.
- * @param refLogSubject TODO: remove ?
  * @param author Information about the author of this commit.
  *               Includes name, email and date.
  * @param committer Information about the committer of this commit.
@@ -70,7 +69,6 @@ export class Commit implements LogObject {
     public readonly body: string,
     public readonly branches: string, // Branches the commit is pointed by, separated by comma. e.g: origin/HEAD, origin/develop
     public readonly ref: string, //
-    public readonly refLogSubject: string,
     public readonly author: CommitIdentity,
     public readonly committer: CommitIdentity,
     public readonly parentSHAs: string[],

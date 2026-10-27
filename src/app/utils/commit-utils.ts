@@ -40,13 +40,6 @@ export const commitColor = (lane: number) => `hue-rotate(${lane * 360 / 7}deg)`;
 
 export const short = (sha: string) => sha.substring(0, 6);
 
-// TODO move somewhere
-export const edgeType = (childCommit: DisplayRef) => {
-  if (childCommit.refType == RefType.INDEX) return RefType.INDEX;
-  else if (isMergeCommit(childCommit)) return RefType.MERGE_COMMIT;
-  else return RefType.COMMIT;
-};
-
 export const buildStashMap = (stashes: Commit[]) => {
   const stashMap: StashMap = {};
 

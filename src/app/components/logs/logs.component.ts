@@ -166,7 +166,8 @@ export class LogsComponent {
     effect(() => {
       const logs = this.currentRepo.logs();
       const stashes = this.currentRepo.stashes();
-      this.currentRepo.branches(); // FIXME: test this: if branches change, we want to update logs.commit.isPointedByLocalHead
+      // Rows hold Branch objects (context menu, drag & drop): rebuild when one changes without moving, e.g. its upstream
+      this.currentRepo.branches();
       const workDirStatus = this.currentRepo.workDirStatus();
       // Wait for stash image before drawing stashes in the graph
       if (!this.stashImg() || !logs.length || !workDirStatus) return;

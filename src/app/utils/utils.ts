@@ -26,7 +26,6 @@ export const lastFolderName = (f: string) => f.replace(/.*[/\\]([^\\]+)[/\\]/, '
 
 export const isRootDirectory = (path: string) => ['C:\\', '/'].includes(path);
 
-// TODO: test
 export const throwEx = (message: string): never => {
   throw new Error(message);
 };

@@ -18,12 +18,20 @@
 
 import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
 import {Edge} from '../models/edge';
-import {edgeType} from '../utils/commit-utils';
+import {isMergeCommit} from '../utils/commit-utils';
+import {RefType} from '../enums/ref-type.enum';
 
 export interface GraphLayout {
   edges: Edge[];
   columnCount: number;
 }
+
+// How the edge to a child is drawn
+const edgeType = (childCommit: DisplayRef) => {
+  if (childCommit.refType == RefType.INDEX) return RefType.INDEX;
+  else if (isMergeCommit(childCommit)) return RefType.MERGE_COMMIT;
+  else return RefType.COMMIT;
+};
 
 /**
  * Assigns a lane (column) to every commit of a log sorted children first (git log --date-order), and the lane every

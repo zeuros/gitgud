@@ -70,7 +70,7 @@ export const FileStatusesIcons: Record<AppFileStatusKind, Icon> = {
   [AppFileStatusKind.Copied]: Icons.Copied,
   [AppFileStatusKind.Renamed]: Icons.Renamed,
   [AppFileStatusKind.Unchanged]: Icons.Unchanged,
-  [AppFileStatusKind.Untracked]: Icons.New, // TODO: manage better
+  [AppFileStatusKind.Untracked]: Icons.New, // An untracked file is shown as a new file
   [AppFileStatusKind.Conflicted]: Icons.Conflicted,
   [AppFileStatusKind.Ignored]: Icons.Ignored,
   [AppFileStatusKind.UpdatedButUnmerged]: Icons.UpdatedButUnmerged,

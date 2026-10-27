@@ -26,7 +26,6 @@ export interface LogObject {
   body: string
   branches: string
   ref: string
-  refLogSubject: string
   author: CommitIdentity
   committer: CommitIdentity
   parentSHAs: string[]

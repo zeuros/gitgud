@@ -66,7 +66,6 @@ export class LogBuilderService {
 
   /**
    * Read commits top to bottom and style them (lanes & connections)
-   * TODO: Cleanup this branch mess and use basic types provided by github-desktop, also clean the uniqBy
    */
   private commitToDisplayRef(commit: Commit, stashChild?: Commit): DisplayRef {
     const commitBranches = this.findCommitBranches(commit.branches) ?? [];

@@ -76,8 +76,8 @@ export class RebaseService {
       catchError(e => this.abortRebase().pipe(switchMap(() => throwError(() => e)))),
     );
 
-  // FIXME: if main electron process (the one calling git rebase) crashes during a git operation,
-  //  git could keep a lock file, we have to write the .done and git lock file on error so that git rebase can finish and state be ok
+  // FIXME: if the app dies while git rebase waits for the todo list, git can keep its lock file:
+  //  writing the .done file and removing the lock on error would let the rebase finish in a clean state
   finishRebase = (contents: string) => {
     // Fire-and-forget writes; the pending rebase observable waits for the .done signal
     // The todo is written before .done appears: git reads it as soon as the editor script exits
@@ -92,10 +92,10 @@ export class RebaseService {
     this.rebaseActionsFilePath().then(path => window.tauri.fs.writeFile(path + '.done', '')).catch(e => console.warn(e));
   };
 
-  // TODO: make it portable, test on other platforms (e.g: windaube without git bash)
+  // Git runs it as `<editor> <todo file>`, so the file is $0 of `sh -c`. On Windows, sh comes with Git for Windows (untested without it)
   private waitForFileSaveScript = () =>
     window.tauri.process.platform === 'win32'
-      ? 'sh -c "while [ ! -f \\"$0.done\\" ]; do sleep 0.3; done && rm \\"$0.done\\""' // Fixme: double check it's $0 and not $1 on git bash
+      ? 'sh -c "while [ ! -f \\"$0.done\\" ]; do sleep 0.3; done && rm \\"$0.done\\""'
       : 'sh -c \'while [ ! -f "$0.done" ]; do sleep 0.3; done && rm "$0.done"\'';
 
   hasRebaseFile = () => this.gitApi.gitPath('rebase-merge').then(window.tauri.fs.exists);

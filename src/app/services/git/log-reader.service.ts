@@ -35,7 +35,6 @@ export class LogReaderService {
     body: '%b', // body
     branch: '%D', // same as branch, without '(%x,%y)' wrapping
     ref: '%S', // Associated reference, for EACH commit (%d show branch but only for last commit of the branch)
-    refLogSubject: '%gs',
     // author identity string, matching format of GIT_AUTHOR_IDENT.
     //   author name <author email> <author date>
     // author date format dependent on --date arg, should be raw
@@ -74,46 +73,47 @@ export class LogReaderService {
     }
 
 
-    args.push(
+    args.push('--all', ...additionalArgs);
+    return this.readCommits(args);
+  };
+
+  // Runs a git command listing commits (log, stash list…) in the format above, parsed into commits
+  readCommits = (args: string[]): Observable<Commit[]> =>
+    this.gitApi.git([
+      ...args,
       '--date=raw',
-      '--all',
       '-z', // Separate lines with NUL character
       this.parser.formatArg,
       '--no-show-signature',
       '--no-color',
-      ...additionalArgs,
       '--',
-    );
-    return this.gitApi.git(args)
-      .pipe(map(log => this.parser.parse(log).map(commit => {
-        // Ref is of the format: (HEAD -> master, tag: some-tag-name, tag: some-other-tag,with-a-comma, origin/master, origin/HEAD)
-        // Refs are comma separated, but some like tags can also contain commas in the name, so we split on the pattern ", " and then
-        // check each ref for the tag prefix. We used to use the regex /tag: ([^\s,]+)/g)`, but will clip a tag with a comma short.
-        const tags = commit.refs
-          .split(', ')
-          .flatMap(ref => (ref.startsWith('tag: ') ? ref.substring(5) : []));
+    ]).pipe(map(log => this.parser.parse(log).map(commit => {
+      // Ref is of the format: (HEAD -> master, tag: some-tag-name, tag: some-other-tag,with-a-comma, origin/master, origin/HEAD)
+      // Refs are comma separated, but some like tags can also contain commas in the name, so we split on the pattern ", " and then
+      // check each ref for the tag prefix: a regex like /tag: ([^\s,]+)/g would clip a tag with a comma short.
+      const tags = commit.refs
+        .split(', ')
+        .flatMap(ref => (ref.startsWith('tag: ') ? ref.substring(5) : []));
 
-        return new Commit(
-          commit.sha,
-          short(commit.shortSha),
-          commit.summary,
-          commit.body,
-          commit.branch,
-          commit.ref,
-          commit.refLogSubject,
-          CommitIdentity.parseIdentity(commit.author),
-          CommitIdentity.parseIdentity(commit.committer),
-          commit.parents.length > 0 ? commit.parents.split(' ') : [],
-          // We know for sure that the trailer separator will be ':' since we got
-          // them from %(trailers:unfold) above, see `git help log`:
-          //
-          //   key_value_separator=<SEP>: specify a separator inserted between
-          //    trailer lines. When this option is not given each trailer key-value
-          //    pair is separated by ": ". Otherwise, it shares the same semantics as
-          //    separator=<SEP> above."
-          parseRawUnfoldedTrailers(commit.trailers, ':'),
-          tags,
-        );
-      })));
-  };
+      return new Commit(
+        commit.sha,
+        short(commit.shortSha),
+        commit.summary,
+        commit.body,
+        commit.branch,
+        commit.ref,
+        CommitIdentity.parseIdentity(commit.author),
+        CommitIdentity.parseIdentity(commit.committer),
+        commit.parents.length > 0 ? commit.parents.split(' ') : [],
+        // We know for sure that the trailer separator will be ':' since we got
+        // them from %(trailers:unfold) above, see `git help log`:
+        //
+        //   "key_value_separator=<SEP>: specify a separator inserted between
+        //    trailer lines. When this option is not given each trailer key-value
+        //    pair is separated by ": ". Otherwise, it shares the same semantics as
+        //    separator=<SEP> above."
+        parseRawUnfoldedTrailers(commit.trailers, ':'),
+        tags,
+      );
+    })));
 }
