@@ -23,7 +23,7 @@ import {ConfirmDialog} from 'primeng/confirmdialog';
 import {ContextMenu} from 'primeng/contextmenu';
 import {Dialog} from 'primeng/dialog';
 import {ButtonDirective} from 'primeng/button';
-import {GitApiService} from './services/electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './services/git/git-api.service';
 import {SettingsService} from './services/settings.service';
 import {GitRepositoryStore} from './stores/git-repos.store';
 import {AutoFetchService} from './services/auto-fetch.service';

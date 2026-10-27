@@ -18,12 +18,12 @@
 
 import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
 import {asyncScheduler, defer, finalize, forkJoin, from, map, type Observable, of, switchMap, tap, throttleTime} from 'rxjs';
-import {LogReaderService} from './electron-cmd-parser-layer/log-reader.service';
-import {BranchReaderService} from './electron-cmd-parser-layer/branch-reader.service';
-import {StashReaderService} from './electron-cmd-parser-layer/stash-reader.service';
-import {TagReaderService} from './electron-cmd-parser-layer/tag-reader.service';
-import {WorktreeReaderService} from './electron-cmd-parser-layer/worktree-reader.service';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {LogReaderService} from './git/log-reader.service';
+import {BranchReaderService} from './git/branch-reader.service';
+import {StashReaderService} from './git/stash-reader.service';
+import {TagReaderService} from './git/tag-reader.service';
+import {WorktreeReaderService} from './git/worktree-reader.service';
+import {GitApiService} from './git/git-api.service';
 import {filterOutStashes} from '../utils/repository-utils';
 import {gitPath} from '../utils/git-path.utils';
 import {detectOperationInProgress} from '../utils/operation-in-progress.utils';

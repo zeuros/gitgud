@@ -23,7 +23,7 @@ import {createRepository} from '../utils/repository-utils';
 import {FileWatcherService} from './file-watcher.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {GitRefreshService} from './git-refresh.service';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {mainWorktreeOf, withoutTrailingSlash} from '../utils/worktree-utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 

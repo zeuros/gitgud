@@ -19,7 +19,7 @@
 import {inject, Injectable} from '@angular/core';
 import {type FileChange, isCommittedFileChange} from '../lib/github-desktop/model/status';
 import type {WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import type {ChangeSet} from '../lib/github-desktop/model/change-set';
 import {catchError, combineLatest, forkJoin, from, map, type Observable, of} from 'rxjs';
 import {parseRawLogWithNumstat} from '../lib/github-desktop/commit-files-changes';

@@ -22,7 +22,7 @@ import {InputNumber} from 'primeng/inputnumber';
 import {InputText} from 'primeng/inputtext';
 import {FormsModule} from '@angular/forms';
 import {SettingsService} from '../../../services/settings.service';
-import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from '../../../services/git/git-api.service';
 import {ThemeService} from '../../../services/theme.service';
 import {catchError, forkJoin, of, throwError} from 'rxjs';
 import {Tooltip} from 'primeng/tooltip';

@@ -18,7 +18,7 @@
 
 import {inject, Injectable, signal} from '@angular/core';
 import {switchMap, tap} from 'rxjs';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {ToastService} from './toast.service';
 import type {DisplayRef} from '../lib/github-desktop/model/display-ref';

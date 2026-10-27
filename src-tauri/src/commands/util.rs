@@ -1,6 +1,6 @@
 use std::env;
 
-/// Returns the MD5 hex digest — mirrors Electron's crypto.md5.
+/// Returns the MD5 hex digest of `data`.
 #[tauri::command]
 pub fn crypto_md5(data: String) -> String {
     format!("{:x}", md5::compute(data.as_bytes()))
@@ -77,7 +77,7 @@ pub fn get_platform() -> &'static str {
     }
 }
 
-/// Opens a file manager at the given path — mirrors Electron's shell.showItemInFolder.
+/// Opens a file manager at the given path.
 #[tauri::command]
 pub fn show_item_in_folder(path: String) -> Result<(), String> {
     #[cfg(target_os = "linux")]

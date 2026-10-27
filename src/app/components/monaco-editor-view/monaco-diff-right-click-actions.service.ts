@@ -18,13 +18,13 @@
 
 import {inject, Injectable} from '@angular/core';
 import type {editor} from 'monaco-editor';
-import {WorkingDirectoryService} from '../../services/electron-cmd-parser-layer/working-directory.service';
+import {WorkingDirectoryService} from '../../services/git/working-directory.service';
 import {idsToHide} from '../../utils/diff-editor.utils';
 import {buildZeroContextPatch} from './monaco-patch-builder';
 import {AppFileStatusKind, type FileChange, isCommittedFileChange, isWorkingDirectoryFileChange} from '../../lib/github-desktop/model/status';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {ToastService} from '../../services/toast.service';
-import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from '../../services/git/git-api.service';
 import {SettingsService} from '../../services/settings.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {permalink, remoteWebUrl} from '../../utils/permalink.utils';

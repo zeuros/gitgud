@@ -8,7 +8,7 @@
 
   <description>
     <p>
-      GitGud is a fast, native Git GUI built with Electron and Angular. It provides an
+      GitGud is a fast, native Git GUI built with Tauri and Angular. It provides an
       intuitive interface for managing Git repositories with branch visualization, commit
       history, staging area management, interactive rebase, diff viewer, and more.
     </p>

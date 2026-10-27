@@ -20,7 +20,7 @@ import {inject, Injectable} from '@angular/core';
 import {DialogService} from 'primeng/dynamicdialog';
 import {filter, from, switchMap} from 'rxjs';
 import {GitWorkflowService} from './git-workflow.service';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {ToastService} from './toast.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import type {Commit} from '../lib/github-desktop/model/commit';

@@ -39,7 +39,7 @@ pub struct SpawnSyncResult {
     pub status: Option<i32>,
 }
 
-/// Runs a command and collects all output — mirrors Electron's execFile.
+/// Runs a command and collects all output, like Node's execFile.
 ///
 /// On Unix, routes through the ShellPool (persistent bash processes keyed by cwd)
 /// to avoid git exec overhead (10th of seconds saved) on successive git calls. Falls back to a direct
@@ -114,7 +114,7 @@ pub async fn exec_file_bytes(
     Ok(tauri::ipc::Response::new(output.stdout))
 }
 
-/// Runs a command with optional stdin input, collecting full output — mirrors Electron's spawnSync.
+/// Runs a command with optional stdin input, collecting full output, like Node's spawnSync.
 /// Async: a sync #[tauri::command] runs on the main thread and would freeze the UI meanwhile.
 #[tauri::command]
 pub async fn spawn_sync_cmd(
@@ -162,7 +162,7 @@ pub async fn spawn_sync_cmd(
     }
 }
 
-/// Runs a command asynchronously, collecting full output — mirrors Electron's spawn.
+/// Runs a command asynchronously, collecting full output.
 #[tauri::command]
 pub async fn spawn_cmd(
     cmd: String,

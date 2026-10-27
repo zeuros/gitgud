@@ -18,7 +18,7 @@
 
 import {computed, effect, inject, Injectable, signal, untracked} from '@angular/core';
 import {catchError, from, map, type Observable, of, switchMap, tap, throwError} from 'rxjs';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {ToastService} from './toast.service';
 import {GitCommandHistoryService} from './git-command-history.service';

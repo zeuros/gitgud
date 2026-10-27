@@ -22,7 +22,7 @@ import {catchError, EMPTY, switchMap, tap} from 'rxjs';
 import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
-import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from '../../../services/git/git-api.service';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
 import {ToastService} from '../../../services/toast.service';
 

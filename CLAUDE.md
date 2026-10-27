@@ -55,14 +55,14 @@ On startup `installTauriBridge()` calls `buildBridge()`, which kills any stale w
 
 ### Git execution layer
 
-`GitApiService` (`src/app/services/electron-cmd-parser-layer/git-api.service.ts`) is the sole entry point for running git. It calls `window.tauri.execFile`, which routes to the Rust `exec_file` command backed by `ShellPoolManager` (`src-tauri/src/shell_pool.rs`) — a pool of 6 persistent bash processes per repo path. This eliminates per-call `fork()+execve()` overhead (~30ms each).
+`GitApiService` (`src/app/services/git/git-api.service.ts`) is the sole entry point for running git. It calls `window.tauri.execFile`, which routes to the Rust `exec_file` command backed by `ShellPoolManager` (`src-tauri/src/shell_pool.rs`) — a pool of 6 persistent bash processes per repo path. This eliminates per-call `fork()+execve()` overhead (~30ms each).
 
 - `git()` — read operations, used by reader services
 - `gitAction()` — user-triggered mutations (commit, rebase, push…), also records to history
 - `waitForLock()` — waits for `index.lock` to go away before a call, except for read-only subcommands (`log`, `status`, `diff`…)
 - `gitDirs()` / `gitPath(name)` — the repo's git dir and common dir (`git rev-parse --absolute-git-dir --git-common-dir`, memoized per cwd). In a linked worktree `.git` is a file and per-worktree state (`index.lock`, `rebase-merge`, `COMMIT_EDIT_MSG`, `HEAD`…) lives in `<main>/.git/worktrees/<name>`, while refs are shared: never build `${cwd}/.git/...` paths, use `gitPath()`
 
-Reader services (`electron-cmd-parser-layer/`) each wrap one git command and parse its output into typed models. They only call `gitApi.git()`.
+Reader services (`git/`) each wrap one git command and parse its output into typed models. They only call `gitApi.git()`.
 
 ### File watcher
 

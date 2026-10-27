@@ -83,7 +83,7 @@ fn watch_tree(watcher: &Mutex<RecommendedWatcher>, dir: &Path, skip: &[String]) 
 }
 
 /// Starts watching one or more paths; emits `watcher-event:{id}` on changes.
-/// Mirrors the chokidar.watch() API surface from the Electron preload.
+/// Backs `window.tauri.chokidar.watch()` in the bridge.
 /// Events are debounced (QUIET / MAX_WAIT) and deduplicated per path.
 #[tauri::command]
 pub fn watch_paths(

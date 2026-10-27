@@ -3,7 +3,7 @@
  * Copyright (C) 2026 zeuros
  *
  * Tauri bridge — implements the window.tauri interface using Tauri IPC.
- * Keeps API parity with the Electron preload so consumer code needs minimal changes.
+ * Node-like signatures (execFile, spawn, fs…), so the app's code doesn't depend on Tauri's API.
  */
 
 import {invoke} from '@tauri-apps/api/core';

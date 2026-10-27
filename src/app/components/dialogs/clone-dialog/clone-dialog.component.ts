@@ -22,7 +22,7 @@ import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {FloatLabel} from 'primeng/floatlabel';
 import {Tooltip} from 'primeng/tooltip';
-import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from '../../../services/git/git-api.service';
 import {GitRepositoryService} from '../../../services/git-repository.service';
 import {ToastService} from '../../../services/toast.service';
 import {finalize, switchMap} from 'rxjs';

@@ -22,7 +22,7 @@ import {FormBuilder, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
 import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
-import {WorkingDirectoryService} from '../../../services/electron-cmd-parser-layer/working-directory.service';
+import {WorkingDirectoryService} from '../../../services/git/working-directory.service';
 import {TableModule} from 'primeng/table';
 import {type AppFileStatusKind, FileStatusesIcons} from '../../../lib/github-desktop/model/status';
 import {ThemeService} from '../../../services/theme.service';
@@ -36,7 +36,7 @@ import {headCommit} from '../../../utils/commit-utils';
 import type {WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
 import {Splitter, SplitterPanel} from 'primeng/splitter';
 import {WorkingDirFileSelectionService} from '../../../services/working-dir-file-selection.service';
-import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from '../../../services/git/git-api.service';
 
 @Component({
   selector: 'gitgud-make-a-commit',

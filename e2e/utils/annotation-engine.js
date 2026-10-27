@@ -1,5 +1,5 @@
 /**
- * Annotation engine — injected into the Electron renderer at test runtime.
+ * Annotation engine — injected into the app's webview at test runtime.
  * Requires rough.js to already be injected (window.rough must exist).
  * E2E only: never imported by the Angular app.
  */

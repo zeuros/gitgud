@@ -17,7 +17,7 @@
  */
 
 import {effect, inject, Injectable, signal} from '@angular/core';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {SettingsService} from './settings.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';

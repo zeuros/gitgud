@@ -19,7 +19,7 @@
 import {computed, effect, inject, Injectable, signal, untracked} from '@angular/core';
 import {ConfirmationService, type MenuItem, type TreeNode} from 'primeng/api';
 import {catchError, EMPTY, filter, first, switchMap, throwError} from 'rxjs';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';

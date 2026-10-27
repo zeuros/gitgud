@@ -18,7 +18,7 @@
 
 import {computed, inject, Injectable, signal} from '@angular/core';
 import type {MenuItem} from 'primeng/api';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {ToastService} from './toast.service';
 import {finalize} from 'rxjs';

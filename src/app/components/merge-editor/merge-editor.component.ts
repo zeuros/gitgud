@@ -22,7 +22,7 @@ import {ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, ef
 import {NgTemplateOutlet} from '@angular/common';
 import {ButtonDirective} from 'primeng/button';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
-import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from '../../services/git/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {catchError, combineLatest, finalize, firstValueFrom, of, switchMap} from 'rxjs';
 import {fileName} from '../../utils/utils';

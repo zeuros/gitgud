@@ -22,7 +22,7 @@ import {ButtonDirective} from 'primeng/button';
 import {Select} from 'primeng/select';
 import {InputText} from 'primeng/inputtext';
 import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
-import {GitApiService} from '../../../services/electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from '../../../services/git/git-api.service';
 import type {Observable} from 'rxjs';
 
 export interface SetUpstreamResult {

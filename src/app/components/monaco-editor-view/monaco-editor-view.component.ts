@@ -35,7 +35,7 @@ type IDiffEditorOptions = editor.IDiffEditorOptions;
 import {fileName} from '../../utils/utils';
 import {ButtonDirective} from 'primeng/button';
 import {DatePipe} from '@angular/common';
-import {FileHistoryReaderService} from '../../services/electron-cmd-parser-layer/file-history-reader.service';
+import {FileHistoryReaderService} from '../../services/git/file-history-reader.service';
 import {type Blame, type BlameCommit, type FileHistoryEntry, startsBlameBlock} from '../../utils/file-history.utils';
 import {ToastService} from '../../services/toast.service';
 import {short} from '../../utils/commit-utils';

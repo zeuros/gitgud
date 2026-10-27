@@ -19,7 +19,7 @@
 import {inject, Injectable} from '@angular/core';
 import {DialogService} from 'primeng/dynamicdialog';
 import {EMPTY, filter, forkJoin, from, switchMap} from 'rxjs';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {GitWorkflowService} from './git-workflow.service';
 import {ToastService} from './toast.service';
 import {notUndefined} from '../utils/utils';

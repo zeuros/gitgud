@@ -4,7 +4,7 @@ import {catchError, EMPTY, finalize, switchMap} from 'rxjs';
 import {normalizedBranchName} from '../utils/branch-utils';
 import {StashService} from './stash.service';
 import {GitRefreshService} from './git-refresh.service';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {BranchAheadBehindService} from './branch-ahead-behind.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {GitRepositoryService} from './git-repository.service';

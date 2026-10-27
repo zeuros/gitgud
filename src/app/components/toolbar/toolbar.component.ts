@@ -26,7 +26,7 @@ import {Select} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import {Menu} from 'primeng/menu';
 import type {MenuItem} from 'primeng/api';
-import {GitApiService} from '../../services/electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from '../../services/git/git-api.service';
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {ToastService} from '../../services/toast.service';
 import {AutoFetchService} from '../../services/auto-fetch.service';

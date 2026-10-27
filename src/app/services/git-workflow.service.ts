@@ -18,7 +18,7 @@
 
 import {inject, Injectable} from '@angular/core';
 import {catchError, defer, finalize, from, map, of, switchMap, tap, throwError} from 'rxjs';
-import {GitApiService} from './electron-cmd-parser-layer/git-api.service';
+import {GitApiService} from './git/git-api.service';
 import {ToastService} from './toast.service';
 import {StashService} from './stash.service';
 import {RebaseService} from './rebase.service';

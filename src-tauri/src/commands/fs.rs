@@ -1,7 +1,7 @@
 use std::fs;
 use std::time::UNIX_EPOCH;
 
-/// Lists directory entries — mirrors Electron's fs.readdirSync.
+/// Lists the names of a directory's entries.
 #[tauri::command]
 pub fn fs_readdir(path: String) -> Result<Vec<String>, String> {
     let entries = fs::read_dir(&path).map_err(|e| e.to_string())?;
