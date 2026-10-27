@@ -34,6 +34,20 @@ import {withConflictWarning} from '../utils/conflict-prediction.utils';
 import {worktreeName} from '../utils/worktree-utils';
 import {openBehindRemoteDialog, type BehindRemoteAction} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 
+// A branch dropped on another one, and how to add items to the menu offered for it
+interface BranchDrop {
+  source: Branch;
+  target: Branch;
+  // source is strictly behind target / strictly ahead of it; neither means diverged
+  behind: boolean;
+  ahead: boolean;
+  // Commit counts, e.g. "2 commits", of each side missing from the other
+  sourceOnly: string;
+  targetOnly: string;
+  add: (moved: string, item: MenuItem) => void;
+  warn: (item: MenuItem) => MenuItem;
+}
+
 @Injectable({providedIn: 'root'})
 export class BranchDragDropService {
   private activeContextMenu = inject(ActiveContextMenuService);
@@ -70,50 +84,62 @@ export class BranchDragDropService {
     const target = this.target();
     if (!source || !target) return [];
 
-    const isLocalSource = source.type === BranchType.Local;
-    const isLocalTarget = target.type === BranchType.Local;
-    const remoteRef = isLocalTarget ? (target.upstream ?? `origin/${target.name}`) : target.name;
+    const remoteRef = target.type === BranchType.Local ? (target.upstream ?? `origin/${target.name}`) : target.name;
     // Items grouped by the branch they move, so the menu tells which side changes
     const groups = new Map<string, MenuItem[]>([[source.name, []]]);
     const add = (moved: string, item: MenuItem) => groups.set(moved, [...groups.get(moved) ?? [], item]);
     const conflicts = this.conflictPrediction.conflictsBetween(target.tip.sha, source.tip.sha);
-    const warn = (item: MenuItem) => withConflictWarning(item, conflicts);
     const logs = this.currentRepo.logs();
-    // source is strictly behind target / strictly ahead of it; neither means diverged
-    const behind = isAncestor(source.tip.sha, target.tip.sha, logs);
-    const ahead = isAncestor(target.tip.sha, source.tip.sha, logs);
-    const sourceOnly = commitCount(countCommitsNotIn(source.tip.sha, target.tip.sha, logs));
-    const targetOnly = commitCount(countCommitsNotIn(target.tip.sha, source.tip.sha, logs));
+    const drop: BranchDrop = {
+      source,
+      target,
+      behind: isAncestor(source.tip.sha, target.tip.sha, logs),
+      ahead: isAncestor(target.tip.sha, source.tip.sha, logs),
+      sourceOnly: commitCount(countCommitsNotIn(source.tip.sha, target.tip.sha, logs)),
+      targetOnly: commitCount(countCommitsNotIn(target.tip.sha, source.tip.sha, logs)),
+      add,
+      warn: item => withConflictWarning(item, conflicts),
+    };
 
-    if (isLocalSource) {
-      // Rebase and merge are no-ops or plain fast-forwards unless the branches diverged
-      if (behind) add(source.name, {label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForward});
-      if (ahead && isLocalTarget) add(target.name, {label: `Fast-forward ${target.name} to ${source.name} (${sourceOnly})`, icon: 'fa fa-forward', command: this.fastForwardTarget});
-      if (!behind && !ahead) {
-        if (isLocalTarget) add(target.name, warn({label: `Merge ${source.name} into ${target.name} (${sourceOnly})`, icon: 'fa fa-compress', command: this.merge}));
-        else add(source.name, warn({label: `Merge ${target.name} into ${source.name} (${targetOnly})`, icon: 'fa fa-compress', command: this.mergeRemoteIntoLocal}));
-        add(source.name, warn({label: `Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-code-fork', command: this.rebase}));
-      }
-      // Still useful when ahead: reword/squash the commits target doesn't have yet
-      if (!behind) add(source.name, warn({label: `Interactive Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
-    } else if (isLocalTarget) {
-      if (behind) add(source.name, {label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForwardRemote});
-      add(source.name, {label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeLocalIntoRemote});
-    }
+    if (source.type === BranchType.Local) this.addLocalSourceItems(drop);
+    else if (target.type === BranchType.Local) this.addRemoteSourceItems(drop);
 
-    // Pushing a branch that's only behind its upstream has nothing to send
-    if (isLocalSource && remoteRef && source.upstream === remoteRef) {
-      const remoteTip = this.currentRepo.branches().find(b => b.name === remoteRef)?.tip.sha;
-      if (remoteTip && remoteTip !== source.tip.sha && !isAncestor(source.tip.sha, remoteTip, logs)) {
-        add(remoteRef, {label: `Push ${source.name} to ${remoteRef} (${commitCount(countCommitsNotIn(source.tip.sha, remoteTip, logs))})`, icon: 'fa fa-cloud-upload', command: this.push});
-      }
-    }
+    const push = this.pushItem(source, remoteRef);
+    if (push) add(remoteRef, push);
 
     return [...groups].filter(([, items]) => items.length).flatMap(([moved, items], i) => [
       ...(i ? [{separator: true}] : []),
       ...this.groupItems(moved, items),
     ]);
   });
+
+  private addLocalSourceItems = ({source, target, behind, ahead, sourceOnly, targetOnly, add, warn}: BranchDrop) => {
+    const isLocalTarget = target.type === BranchType.Local;
+    // Rebase and merge are no-ops or plain fast-forwards unless the branches diverged
+    if (behind) add(source.name, {label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForward});
+    if (ahead && isLocalTarget) add(target.name, {label: `Fast-forward ${target.name} to ${source.name} (${sourceOnly})`, icon: 'fa fa-forward', command: this.fastForwardTarget});
+    if (!behind && !ahead) {
+      if (isLocalTarget) add(target.name, warn({label: `Merge ${source.name} into ${target.name} (${sourceOnly})`, icon: 'fa fa-compress', command: this.merge}));
+      else add(source.name, warn({label: `Merge ${target.name} into ${source.name} (${targetOnly})`, icon: 'fa fa-compress', command: this.mergeRemoteIntoLocal}));
+      add(source.name, warn({label: `Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-code-fork', command: this.rebase}));
+    }
+    // Still useful when ahead: reword/squash the commits target doesn't have yet
+    if (!behind) add(source.name, warn({label: `Interactive Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
+  };
+
+  private addRemoteSourceItems = ({source, target, behind, targetOnly, add}: BranchDrop) => {
+    if (behind) add(source.name, {label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForwardRemote});
+    add(source.name, {label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeLocalIntoRemote});
+  };
+
+  // Pushing a branch that's only behind its upstream has nothing to send
+  private pushItem = (source: Branch, remoteRef: string): MenuItem | undefined => {
+    if (source.type !== BranchType.Local || !remoteRef || source.upstream !== remoteRef) return undefined;
+    const logs = this.currentRepo.logs();
+    const remoteTip = this.currentRepo.branches().find(b => b.name === remoteRef)?.tip.sha;
+    if (!remoteTip || remoteTip === source.tip.sha || isAncestor(source.tip.sha, remoteTip, logs)) return undefined;
+    return {label: `Push ${source.name} to ${remoteRef} (${commitCount(countCommitsNotIn(source.tip.sha, remoteTip, logs))})`, icon: 'fa fa-cloud-upload', command: this.push};
+  };
 
   // A branch checked out in another worktree can't be moved from here: disabled, under a header naming the worktree
   private groupItems = (moved: string, items: MenuItem[]): MenuItem[] => {

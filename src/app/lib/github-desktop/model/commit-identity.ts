@@ -38,7 +38,7 @@ export class CommitIdentity {
     // Note also that this expects a date formatted with the RAW option in git see:
     //  https://github.com/git/git/blob/35f6318d4/date.c#L191
     //
-    const m = identity.match(/^(.*?) <(.*?)> (\d+) (\+|-)?(\d{2})(\d{2})/)
+    const m = identity.match(/^(.*?) <(.*?)> (\d+) ([+-])?(\d{2})(\d{2})/)
     if (!m) {
       throw new Error(`Couldn't parse identity ${identity}`)
     }

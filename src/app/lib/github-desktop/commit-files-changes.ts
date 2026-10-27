@@ -51,6 +51,43 @@ import {throwEx} from '../../utils/utils';
 import {isCopyOrRename, mapPorcelainStatus, mapStatus} from './log';
 import {type WorkDirStatus, WorkingDirectoryFileChange} from './model/workdir';
 
+// A raw entry (its status line and path lines) parsed into a file change, with the index of its last line
+interface RawEntry {
+  file: CommittedFileChange;
+  lastIndex: number;
+}
+
+// Combined diff format (3+ commits): ::mode mode mode hash hash hash MM path
+const parseCombinedEntry = (lines: string[], i: number, latestSha: string): RawEntry => {
+  const parts = lines[i].split('\t');
+  const statusPart = parts[0].split(' ').pop()!;
+  const lastIndex = parts[1] ? i : i + 1;
+
+  // Take last character of combined status (e.g., "MM" -> "M")
+  const statusChar = statusPart.charAt(statusPart.length - 1);
+
+  return {file: new CommittedFileChange(parts[1] || lines[lastIndex], {kind: mapStatus(statusChar)} as AppFileStatus, latestSha), lastIndex};
+};
+
+// Regular diff format (2 commits): :mode mode hash hash status path
+const parseRegularEntry = (lines: string[], i: number, latestSha: string, baseSha?: string): RawEntry => {
+  const status = lines[i].split(' ').pop()!;
+  const isCopyOrRenameStatus = /^[RC]/.test(status);
+  const oldPath = isCopyOrRenameStatus ? lines.at(i + 1) ?? throwEx('Missing old path') : undefined;
+  const lastIndex = isCopyOrRenameStatus ? i + 2 : i + 1;
+  const path = lines.at(lastIndex) ?? throwEx('Missing path');
+
+  return {file: new CommittedFileChange(path, {kind: mapStatus(status, oldPath), oldPath} as AppFileStatus, latestSha, baseSha), lastIndex};
+};
+
+// Numstat line: added deleted path, "-" for binary files
+const parseNumstat = (line: string) => {
+  const match = /^(\d+|-)\t(\d+|-)\t/.exec(line);
+  if (!match) return undefined;
+  const lineCount = (count: string) => count === '-' ? 0 : Number.parseInt(count);
+  return {added: lineCount(match[1]), deleted: lineCount(match[2])};
+};
+
 /**
  * Parses output of diff flags -z --raw --numstat.
  * Handles single commits, 2-commit ranges, and 3+ commit combined diffs.
@@ -72,51 +109,20 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, shas: string[]): 
   for (let i = 0 ; i < lines.length - 1 ; i++) {
     const line = lines[i];
 
-    // Combined diff format (3+ commits): ::mode mode mode hash hash hash MM path
-    if (line.startsWith('::')) {
-      const parts = line.split('\t');
-      const statusPart = parts[0].split(' ').pop()!;
-      const path = parts[1] || lines[++i];
-
-      // Take last character of combined status (e.g., "MM" -> "M")
-      const statusChar = statusPart.charAt(statusPart.length - 1);
-
-      files.push(new CommittedFileChange(
-        path,
-        {kind: mapStatus(statusChar)} as AppFileStatus,
-        latestSha,
-      ));
+    if (line.startsWith(':')) {
+      const {file, lastIndex} = line.startsWith('::') ? parseCombinedEntry(lines, i, latestSha) : parseRegularEntry(lines, i, latestSha, baseSha);
+      files.push(file);
+      i = lastIndex;
+      continue;
     }
-    // Regular diff format (2 commits): :mode mode hash hash status path
-    else if (line.startsWith(':')) {
-      const status = line.split(' ').pop()!;
-      const oldPath = /^R|C/.test(status)
-        ? lines.at(++i) ?? throwEx('Missing old path')
-        : undefined;
 
-      const path = lines.at(++i) ?? throwEx('Missing path');
-
-      files.push(new CommittedFileChange(
-        path,
-        {kind: mapStatus(status, oldPath), oldPath} as AppFileStatus,
-        latestSha,
-        baseSha,
-      ));
-    }
-    // Numstat line: added deleted path
-    else {
-      const match = /^(\d+|-)\t(\d+|-)\t/.exec(line);
-      if (match) {
-        const [, added, deleted] = match;
-        linesAdded += added === '-' ? 0 : Number.parseInt(added);
-        linesDeleted += deleted === '-' ? 0 : Number.parseInt(deleted);
-
-        if (files[numStatCount] && isCopyOrRename(files[numStatCount].status)) {
-          i += 2;
-        }
-        numStatCount++;
-      }
-    }
+    const numstat = parseNumstat(line);
+    if (!numstat) continue;
+    linesAdded += numstat.added;
+    linesDeleted += numstat.deleted;
+    // A copy or rename's numstat line is followed by its two paths
+    if (files[numStatCount] && isCopyOrRename(files[numStatCount].status)) i += 2;
+    numStatCount++;
   }
 
   return {
@@ -126,7 +132,6 @@ export const parseRawLogWithNumstat = (rawFileChanges: string, shas: string[]): 
     linesDeleted,
   };
 };
-
 
 /**
  * Parses the output of `git status --porcelain -z` into staged and unstaged changes.

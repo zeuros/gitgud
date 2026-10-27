@@ -236,37 +236,44 @@ const unapplyStash = (sha: string): UndoStep[] => [
 
 const storeStash = ({sha, msg}: {sha: string; msg: string}): UndoStep => ({args: ['stash', 'store', '-m', msg, sha]});
 
-const journalSteps = (payload: JournalPayload, forward: boolean): UndoStep[] => {
+// The steps doing a journaled action again (forward) and reverting it (backward)
+const journalStepPair = (payload: JournalPayload): {forward: UndoStep[]; backward: UndoStep[]} => {
   switch (payload.t) {
     case 'stash':
       // Stashing again would make another stash, that the actions to redo next wouldn't know
-      return forward ? [...unapplyStash(payload.sha), storeStash(payload)] : [{args: ['stash', 'pop', '--index', stashRef(payload.sha)]}];
+      return {forward: [...unapplyStash(payload.sha), storeStash(payload)], backward: [{args: ['stash', 'pop', '--index', stashRef(payload.sha)]}]};
     case 'stash-pop':
-      return forward ? [{args: ['stash', 'pop', stashRef(payload.sha)]}] : [...unapplyStash(payload.sha), storeStash(payload)];
+      return {forward: [{args: ['stash', 'pop', stashRef(payload.sha)]}], backward: [...unapplyStash(payload.sha), storeStash(payload)]};
     case 'stash-apply':
-      return forward ? [{args: ['stash', 'apply', payload.sha]}] : unapplyStash(payload.sha);
+      return {forward: [{args: ['stash', 'apply', payload.sha]}], backward: unapplyStash(payload.sha)};
     case 'stash-drop':
-      return forward ? [{args: ['stash', 'drop', stashRef(payload.sha)]}] : [storeStash(payload)];
+      return {forward: [{args: ['stash', 'drop', stashRef(payload.sha)]}], backward: [storeStash(payload)]};
     case 'branch-create':
-      return forward ? [{args: ['branch', payload.name, payload.sha]}] : [{args: ['branch', '-D', payload.name]}];
+      return {forward: [{args: ['branch', payload.name, payload.sha]}], backward: [{args: ['branch', '-D', payload.name]}]};
     case 'branch-delete':
-      return forward
-        ? [{args: ['branch', '-D', payload.name]}]
-        : [
+      return {
+        forward: [{args: ['branch', '-D', payload.name]}],
+        backward: [
           {args: ['branch', payload.name, payload.sha]},
           ...(payload.upstream ? [{args: ['branch', `--set-upstream-to=${payload.upstream}`, payload.name], optional: true}] : []),
-        ];
+        ],
+      };
     case 'branch-rename':
-      return [{args: forward ? ['branch', '-m', payload.from, payload.to] : ['branch', '-m', payload.to, payload.from]}];
+      return {forward: [{args: ['branch', '-m', payload.from, payload.to]}], backward: [{args: ['branch', '-m', payload.to, payload.from]}]};
     case 'branch-move':
       // Refuses to move the checked out branch, which would leave the working directory behind
-      return [{args: ['branch', '-f', payload.name, forward ? payload.to : payload.from]}];
+      return {forward: [{args: ['branch', '-f', payload.name, payload.to]}], backward: [{args: ['branch', '-f', payload.name, payload.from]}]};
     case 'tag-delete':
-      return forward ? [{args: ['tag', '-d', payload.name]}] : [{args: ['update-ref', `refs/tags/${payload.name}`, payload.sha]}];
+      return {forward: [{args: ['tag', '-d', payload.name]}], backward: [{args: ['update-ref', `refs/tags/${payload.name}`, payload.sha]}]};
     case 'remote-delete':
       // Pushes the commit (or annotated tag) the ref pointed to: it has to still be in this repository
-      return [{args: forward ? ['push', payload.remote, '--delete', payload.ref] : ['push', payload.remote, `${payload.sha}:${payload.ref}`]}];
+      return {forward: [{args: ['push', payload.remote, '--delete', payload.ref]}], backward: [{args: ['push', payload.remote, `${payload.sha}:${payload.ref}`]}]};
   }
+};
+
+const journalSteps = (payload: JournalPayload, forward: boolean): UndoStep[] => {
+  const steps = journalStepPair(payload);
+  return forward ? steps.forward : steps.backward;
 };
 
 // Puts things back as they were before `action`
@@ -345,64 +352,77 @@ const branchMoved = (name: string): JournalRecorder => ({
   },
 });
 
-/** Tells how to journal a git command the reflog of HEAD won't show, if it is one */
-export const journalFor = (args: string[]): JournalRecorder | undefined => {
-  const [command, a, b, c] = args;
+const stashJournal = ([subcommand, ref = 'stash@{0}']: string[]): JournalRecorder | undefined => {
+  const target = {sha: ['rev-parse', '-q', '--verify', ref], msg: stashSubject(ref)};
+  if (subcommand == 'pop') return {before: target, payload: ({sha, msg}) => sha ? {t: 'stash-pop', sha, msg: msg ?? ''} : undefined};
+  if (subcommand == 'drop') return {before: target, payload: ({sha, msg}) => sha ? {t: 'stash-drop', sha, msg: msg ?? ''} : undefined};
+  if (subcommand == 'apply') return {before: target, payload: ({sha}) => sha ? {t: 'stash-apply', sha} : undefined};
+  if (subcommand !== undefined && subcommand != 'push' && !subcommand.startsWith('-')) return undefined;
+  return {
+    before: {sha: TOP_STASH},
+    after: {sha: TOP_STASH, msg: stashSubject('stash@{0}')},
+    // Nothing gets stashed when there are no local changes
+    payload: ({sha: previous}, {sha, msg}) => sha && sha != previous ? {t: 'stash', sha, msg: msg ?? ''} : undefined,
+  };
+};
 
-  if (command == 'stash') {
-    const ref = b ?? 'stash@{0}';
-    const target = {sha: ['rev-parse', '-q', '--verify', ref], msg: stashSubject(ref)};
-    if (a == 'pop') return {before: target, payload: ({sha, msg}) => sha ? {t: 'stash-pop', sha, msg: msg ?? ''} : undefined};
-    if (a == 'drop') return {before: target, payload: ({sha, msg}) => sha ? {t: 'stash-drop', sha, msg: msg ?? ''} : undefined};
-    if (a == 'apply') return {before: target, payload: ({sha}) => sha ? {t: 'stash-apply', sha} : undefined};
-    if (a === undefined || a == 'push' || a.startsWith('-'))
-      return {
-        before: {sha: TOP_STASH},
-        after: {sha: TOP_STASH, msg: stashSubject('stash@{0}')},
-        // Nothing gets stashed when there are no local changes
-        payload: ({sha: previous}, {sha, msg}) => sha && sha != previous ? {t: 'stash', sha, msg: msg ?? ''} : undefined,
-      };
-  }
-
-  if (command == 'branch') {
-    if ((a == '-d' || a == '-D') && isName(b) && c === undefined)
-      return {
-        before: {sha: branchSha(b), upstream: ['rev-parse', '-q', '--abbrev-ref', `${b}@{upstream}`]},
-        payload: ({sha, upstream}) => sha ? {t: 'branch-delete', name: b, sha, upstream} : undefined,
-      };
-    if (a == '-m' && isName(b) && isName(c)) return {payload: () => ({t: 'branch-rename', from: b, to: c})};
-    if (isName(a) && (b === undefined || isName(b)) && c === undefined)
-      return {after: {sha: branchSha(a)}, payload: (_, {sha}) => sha ? {t: 'branch-create', name: a, sha} : undefined};
-  }
-
-  if (command == 'tag' && a == '-d' && isName(b) && c === undefined)
+const branchJournal = ([a, b, c]: string[]): JournalRecorder | undefined => {
+  if ((a == '-d' || a == '-D') && isName(b) && c === undefined)
     return {
-      before: {sha: ['rev-parse', '-q', '--verify', `refs/tags/${b}`]},
-      payload: ({sha}) => sha ? {t: 'tag-delete', name: b, sha} : undefined,
+      before: {sha: branchSha(b), upstream: ['rev-parse', '-q', '--abbrev-ref', `${b}@{upstream}`]},
+      payload: ({sha, upstream}) => sha ? {t: 'branch-delete', name: b, sha, upstream} : undefined,
     };
-
-  // `git push <remote> --delete <name>` drops a branch or a tag of the remote, whichever bears that name
-  if (command == 'push' && isName(a) && b == '--delete' && isName(c) && args.length == 4)
-    return {
-      before: {refs: ['ls-remote', a, `refs/heads/${c}`, `refs/tags/${c}`]},
-      payload: ({refs}) => {
-        // "<sha>\t<ref>" lines; an annotated tag comes with a peeled "<ref>^{}" one
-        const found = (refs ?? '').split('\n').map(line => line.trim().split('\t')).filter(([, ref]) => ref && !ref.endsWith('^{}'));
-        if (found.length != 1) return undefined;
-        const [[sha, ref]] = found;
-        return {t: 'remote-delete', remote: a, ref, sha};
-      },
-    };
-
-  // `git fetch <remote> <src>:<branch>` fast-forwards a branch without checking it out
-  if (command == 'fetch' && isName(a) && b?.includes(':') && c === undefined) {
-    const branch = b.split(':')[1];
-    if (branch && !branch.startsWith('refs/')) return branchMoved(branch);
-  }
-
-  if (command == 'update-ref' && a?.startsWith('refs/heads/') && isName(b) && c === undefined) return branchMoved(a.slice('refs/heads/'.length));
-
+  if (a == '-m' && isName(b) && isName(c)) return {payload: () => ({t: 'branch-rename', from: b, to: c})};
+  if (isName(a) && (b === undefined || isName(b)) && c === undefined)
+    return {after: {sha: branchSha(a)}, payload: (_, {sha}) => sha ? {t: 'branch-create', name: a, sha} : undefined};
   return undefined;
+};
+
+const tagJournal = ([option, name, extra]: string[]): JournalRecorder | undefined => {
+  if (option != '-d' || !isName(name) || extra !== undefined) return undefined;
+  return {
+    before: {sha: ['rev-parse', '-q', '--verify', `refs/tags/${name}`]},
+    payload: ({sha}) => sha ? {t: 'tag-delete', name, sha} : undefined,
+  };
+};
+
+// `git push <remote> --delete <name>` drops a branch or a tag of the remote, whichever bears that name
+const pushJournal = (pushArgs: string[]): JournalRecorder | undefined => {
+  const [remote, option, name] = pushArgs;
+  if (!isName(remote) || option != '--delete' || !isName(name) || pushArgs.length != 3) return undefined;
+  return {
+    before: {refs: ['ls-remote', remote, `refs/heads/${name}`, `refs/tags/${name}`]},
+    payload: ({refs}) => {
+      // "<sha>\t<ref>" lines; an annotated tag comes with a peeled "<ref>^{}" one
+      const found = (refs ?? '').split('\n').map(line => line.trim().split('\t')).filter(([, ref]) => ref && !ref.endsWith('^{}'));
+      if (found.length != 1) return undefined;
+      const [[sha, ref]] = found;
+      return {t: 'remote-delete', remote, ref, sha};
+    },
+  };
+};
+
+// `git fetch <remote> <src>:<branch>` fast-forwards a branch without checking it out
+const fetchJournal = ([remote, refspec, extra]: string[]): JournalRecorder | undefined => {
+  if (!isName(remote) || !refspec?.includes(':') || extra !== undefined) return undefined;
+  const branch = refspec.split(':')[1];
+  return branch && !branch.startsWith('refs/') ? branchMoved(branch) : undefined;
+};
+
+const updateRefJournal = ([ref, sha, extra]: string[]): JournalRecorder | undefined =>
+  ref?.startsWith('refs/heads/') && isName(sha) && extra === undefined ? branchMoved(ref.slice('refs/heads/'.length)) : undefined;
+
+/** Tells how to journal a git command the reflog of HEAD won't show, if it is one */
+export const journalFor = ([command, ...commandArgs]: string[]): JournalRecorder | undefined => {
+  switch (command) {
+    case 'stash': return stashJournal(commandArgs);
+    case 'branch': return branchJournal(commandArgs);
+    case 'tag': return tagJournal(commandArgs);
+    case 'push': return pushJournal(commandArgs);
+    case 'fetch': return fetchJournal(commandArgs);
+    case 'update-ref': return updateRefJournal(commandArgs);
+    default: return undefined;
+  }
 };
 
 /** Runs git in the repository, failing when git does. `reflogAction` is the GIT_REFLOG_ACTION to run it with */

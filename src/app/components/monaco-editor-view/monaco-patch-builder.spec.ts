@@ -164,6 +164,11 @@ describe('"Stage this line" / "Stage lines"  (stage=true)', () => {
       expect(buildZeroContextPatch([c_unequal], original, modified, 13, 15, FILE, true))
         .toBe(header(FILE) + '@@ -14,2 +13,3 @@\n-    const a = 1;\n-    const b = 2;\n+    const a = 10;\n+    const b = 20;\n+    const c = 30;\n');
     });
+
+    it('Stage lines — selection after the first new line: the hunk still starts where the change does', () => {
+      expect(buildZeroContextPatch([c_unequal], original, modified, 14, 15, FILE, true))
+        .toBe(header(FILE) + '@@ -14,2 +13,2 @@\n-    const a = 1;\n-    const b = 2;\n+    const b = 20;\n+    const c = 30;\n');
+    });
   });
 
   describe('multiple hunks in one patch', () => {

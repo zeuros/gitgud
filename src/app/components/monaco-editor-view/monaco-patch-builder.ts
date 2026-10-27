@@ -25,6 +25,40 @@ type ILineChange = editor.ILineChange;
 // Patch bytes need the real \r back.
 const realLine = (model: ITextModel, i: number) => model.getLineContent(i).replace(/␍/g, '\r');
 
+// Lines from..to of a model, each prefixed with + or -
+const prefixedLines = (model: ITextModel, prefix: '+' | '-', from: number, to: number) => {
+  const lines: string[] = [];
+  for (let i = from ; i <= to ; i++) lines.push(prefix + realLine(model, i));
+  return lines;
+};
+
+// Hunk adding the modified lines from..to. origStart = first old line after the gap; subtract 1 → "insert after this line"
+const insertionHunk = (modifiedModel: ITextModel, origStart: number, from: number, to: number, countSuffix: (n: number) => string) => {
+  const lines = prefixedLines(modifiedModel, '+', from, to);
+  return `@@ -${Math.max(0, origStart - 1)},0 +${from}${countSuffix(lines.length)} @@\n${lines.join('\n')}\n`;
+};
+
+// One mini-hunk per line pair of an equal-count replacement: original line origFrom + k became modified line modFrom + k
+const linePairHunks = (originalModel: ITextModel, modifiedModel: ITextModel, origFrom: number, modFrom: number, pairCount: number) => {
+  const hunks: string[] = [];
+  for (let k = 0 ; k < pairCount ; k++) {
+    const origLine = origFrom + k;
+    const modLine = modFrom + k;
+    hunks.push(`@@ -${origLine} +${modLine} @@\n-${realLine(originalModel, origLine)}\n+${realLine(modifiedModel, modLine)}\n`);
+  }
+  return hunks.join('');
+};
+
+// Hunk of a replacement starting at origStart / modStart: removes original lines origStart..origEnd, adds modified lines modFrom..modTo
+const replacementHunk = (
+  originalModel: ITextModel, modifiedModel: ITextModel,
+  origStart: number, origEnd: number, modStart: number, modFrom: number, modTo: number,
+  countSuffix: (n: number) => string,
+) => {
+  const lines = [...prefixedLines(originalModel, '-', origStart, origEnd), ...prefixedLines(modifiedModel, '+', modFrom, modTo)];
+  return `@@ -${origStart}${countSuffix(origEnd - origStart + 1)} +${modStart}${countSuffix(modTo - modFrom + 1)} @@\n${lines.join('\n')}\n`;
+};
+
 /**
  * Builds the hunk string(s) for a single change when staging (apply --cached).
  * Selection is expressed in modified-editor coordinates.
@@ -52,45 +86,25 @@ export function stageHunk(
 
   const isPureInsertion = origEnd === 0; // hunk has nothing removed in original side
   const isPureDeletion = modEnd === 0;  // hunk has nothing added in modified side
-  const oldCount = origEnd - origStart + 1;
-  const newCount = modEnd - modStart + 1;
 
   if (isPureDeletion) return null;                          // nothing to stage on the add side
   if (endLine < modStart || startLine > modEnd) return null; // selection doesn't overlap
 
-  if (isPureInsertion) {
-    // Only + lines — no old content to remove
-    const selStart = Math.max(startLine, modStart);
-    const selEnd = Math.min(endLine, modEnd);
-    const lines: string[] = [];
-    for (let i = selStart ; i <= selEnd ; i++) lines.push('+' + realLine(modifiedModel, i));
-    // origStart = first old line after the gap; subtract 1 → "insert after this line"
-    return `@@ -${Math.max(0, origStart - 1)},0 +${selStart}${countSuffix(lines.length)} @@\n${lines.join('\n')}\n`;
-  }
+  const selStart = Math.max(startLine, modStart);
+  const selEnd = Math.min(endLine, modEnd);
 
-  if (oldCount === newCount) {
-    // Equal-count replacement: 1-to-1 line correspondence by offset →
-    // stage only the selected line pairs instead of the whole hunk
-    const selStart = Math.max(startLine, modStart);
-    const selEnd = Math.min(endLine, modEnd);
-    const hunks: string[] = [];
-    for (let modLine = selStart ; modLine <= selEnd ; modLine++) {
-      const origLine = origStart + (modLine - modStart);
-      hunks.push(`@@ -${origLine} +${modLine} @@\n${'-' + realLine(originalModel, origLine)}\n${'+' + realLine(modifiedModel, modLine)}\n`);
-    }
-    return hunks.join('');
+  // Only + lines — no old content to remove
+  if (isPureInsertion) return insertionHunk(modifiedModel, origStart, selStart, selEnd, countSuffix);
+
+  // Equal-count replacement: 1-to-1 line correspondence by offset →
+  // stage only the selected line pairs instead of the whole hunk
+  if (origEnd - origStart === modEnd - modStart) {
+    return linePairHunks(originalModel, modifiedModel, origStart + (selStart - modStart), selStart, selEnd - selStart + 1);
   }
 
   // Unequal-count replacement: all old lines must be removed atomically;
   // only stage the selected new lines (unselected ones remain as unstaged insertions)
-  const selStart = Math.max(startLine, modStart);
-  const selEnd = Math.min(endLine, modEnd);
-  const oldLines: string[] = [];
-  for (let i = origStart ; i <= origEnd ; i++) oldLines.push('-' + realLine(originalModel, i));
-  const newLines: string[] = [];
-  for (let i = selStart ; i <= selEnd ; i++) newLines.push('+' + realLine(modifiedModel, i));
-  const selCount = selEnd - selStart + 1;
-  return `@@ -${origStart}${countSuffix(oldCount)} +${modStart}${countSuffix(selCount)} @@\n${[...oldLines, ...newLines].join('\n')}\n`;
+  return replacementHunk(originalModel, modifiedModel, origStart, origEnd, modStart, selStart, selEnd, countSuffix);
 }
 
 /**
@@ -122,56 +136,39 @@ export function unstageHunk(
 
   const isPureInsertion = origEnd === 0; // hunk has nothing removed in original side
   const isPureDeletion = modEnd === 0;  // hunk has nothing added in modified side
-  const oldCount = origEnd - origStart + 1;
-  const newCount = modEnd - modStart + 1;
 
   if (isPureInsertion) {
     // Lines added to index but not in HEAD; user selects them in the modified editor.
     // Forward patch; git apply -R --cached reverses it → removes lines from index.
     if (endLine < modStart || startLine > modEnd) return null;
-    const selStart = Math.max(startLine, modStart);
-    const selEnd = Math.min(endLine, modEnd);
-    const lines: string[] = [];
-    for (let i = selStart ; i <= selEnd ; i++) lines.push('+' + realLine(modifiedModel, i));
-    return `@@ -${Math.max(0, origStart - 1)},0 +${selStart}${countSuffix(lines.length)} @@\n${lines.join('\n')}\n`;
+    return insertionHunk(modifiedModel, origStart, Math.max(startLine, modStart), Math.min(endLine, modEnd), countSuffix);
   }
 
   // In modified editor (inline view) deletion coords are mod-based; otherwise orig-based
-  if (inOriginalEditor) {
-    if (endLine < origStart || startLine > origEnd) return null;
-  } else {
-    if (startLine > modStart || endLine < modStart) return null;
-  }
+  const overlapsSelection = inOriginalEditor
+    ? endLine >= origStart && startLine <= origEnd
+    : startLine <= modStart && endLine >= modStart;
+  if (!overlapsSelection) return null;
+
+  const selStart = Math.max(startLine, origStart);
+  const selEnd = Math.min(endLine, origEnd);
 
   if (isPureDeletion) {
     // Only - lines — no new content to add back.
     // When coming from modified editor we can't partially select within a deletion block.
-    const selStart = inOriginalEditor ? Math.max(startLine, origStart) : origStart;
-    const selEnd = inOriginalEditor ? Math.min(endLine, origEnd) : origEnd;
-    const lines: string[] = [];
-    for (let i = selStart ; i <= selEnd ; i++) lines.push('-' + realLine(originalModel, i));
+    const [from, to] = inOriginalEditor ? [selStart, selEnd] : [origStart, origEnd];
+    const lines = prefixedLines(originalModel, '-', from, to);
     // modStart = first new line after the gap; subtract 1 → "insert after this line"
-    return `@@ -${selStart}${countSuffix(lines.length)} +${Math.max(0, modStart - 1)},0 @@\n${lines.join('\n')}\n`;
+    return `@@ -${from}${countSuffix(lines.length)} +${Math.max(0, modStart - 1)},0 @@\n${lines.join('\n')}\n`;
   }
 
-  if (oldCount === newCount) {
-    // Equal-count replacement: unstage individual line pairs within the selection
-    const selStart = Math.max(startLine, origStart);
-    const selEnd = Math.min(endLine, origEnd);
-    const hunks: string[] = [];
-    for (let origLine = selStart ; origLine <= selEnd ; origLine++) {
-      const modLine = modStart + (origLine - origStart);
-      hunks.push(`@@ -${origLine} +${modLine} @@\n${'-' + realLine(originalModel, origLine)}\n${'+' + realLine(modifiedModel, modLine)}\n`);
-    }
-    return hunks.join('');
+  // Equal-count replacement: unstage individual line pairs within the selection
+  if (origEnd - origStart === modEnd - modStart) {
+    return linePairHunks(originalModel, modifiedModel, selStart, modStart + (selStart - origStart), selEnd - selStart + 1);
   }
 
   // Unequal-count replacement: full hunk — git apply -R --cached will reverse it
-  const oldLines: string[] = [];
-  for (let i = origStart ; i <= origEnd ; i++) oldLines.push('-' + realLine(originalModel, i));
-  const newLines: string[] = [];
-  for (let i = modStart ; i <= modEnd ; i++) newLines.push('+' + realLine(modifiedModel, i));
-  return `@@ -${origStart}${countSuffix(oldCount)} +${modStart}${countSuffix(newCount)} @@\n${[...oldLines, ...newLines].join('\n')}\n`;
+  return replacementHunk(originalModel, modifiedModel, origStart, origEnd, modStart, modStart, modEnd, countSuffix);
 }
 
 /**
