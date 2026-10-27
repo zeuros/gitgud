@@ -12,14 +12,32 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "GitGud",
         "width": 1920,
         "height": 1080,
         "resizable": true,
         "fullscreen": false,
+        "visible": false,
         "devtools": true,
         "decorations": false,
+        "transparent": true,
         "backgroundColor": "#1c1e23"
+      },
+      {
+        "label": "splashscreen",
+        "title": "GitGud",
+        "url": "assets/splashscreen.html",
+        "width": 320,
+        "height": 240,
+        "center": true,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "focus": false
       }
     ],
     "security": {

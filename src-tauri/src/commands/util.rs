@@ -108,3 +108,27 @@ pub fn show_item_in_folder(path: String) -> Result<(), String> {
     }
     Ok(())
 }
+
+/// Shows the main window, which starts hidden behind the splash screen, once the app has rendered.
+#[tauri::command]
+pub fn show_main_window(app: tauri::AppHandle) {
+    use tauri::Manager;
+    if let Some(main) = app.get_webview_window("main") {
+        let _ = main.show();
+        let _ = main.set_focus();
+        // Opened once the window is shown: WebKitGTK can't dock the inspector into a hidden window
+        #[cfg(debug_assertions)]
+        if !main.is_devtools_open() {
+            main.open_devtools();
+        }
+    }
+}
+
+/// Closes the splash screen window, once the main window is shown.
+#[tauri::command]
+pub fn close_splashscreen(app: tauri::AppHandle) {
+    use tauri::Manager;
+    if let Some(splashscreen) = app.get_webview_window("splashscreen") {
+        let _ = splashscreen.close();
+    }
+}

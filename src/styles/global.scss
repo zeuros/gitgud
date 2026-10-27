@@ -6,6 +6,11 @@ html, body {
   background-color: var(--background);
 }
 
+// The main window is transparent: invisible while it gets its size after being shown, see main.ts
+html.starting {
+  opacity: 0;
+}
+
 /* Disable text selection by default — GUI apps don't need click-drag selecting labels */
 * {
   user-select: none;

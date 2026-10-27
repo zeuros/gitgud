@@ -21,8 +21,25 @@ import {appConfig} from './app/app.config';
 import {AppComponent} from './app/app.component';
 import {ErrorHandler} from '@angular/core';
 import {editor} from 'monaco-editor';
-import {config} from 'rxjs';
+import {animationFrames, config, debounceTime, firstValueFrom, fromEvent, of, skip, startWith, switchMap, take, timeout} from 'rxjs';
 import {installTauriBridge} from './app/api/tauri-bridge';
+import {invoke} from '@tauri-apps/api/core';
+import {GitRefreshService} from './app/services/git-refresh.service';
+
+// Longest the splash screen waits for the repository to load before showing the main window anyway
+const STARTUP_LOAD_TIMEOUT_MS = 2000;
+// The window gets its restored size in several resizes after being shown: it is settled once they stop for this long
+const WINDOW_SETTLE_QUIET_MS = 150;
+const WINDOW_SETTLE_TIMEOUT_MS = 1500;
+
+// Emits once the window stopped resizing and the layout that follows (log columns, canvas) was painted
+const windowSettled = () => firstValueFrom(fromEvent(window, 'resize').pipe(
+  startWith(null),
+  debounceTime(WINDOW_SETTLE_QUIET_MS),
+  switchMap(() => animationFrames().pipe(skip(1))),
+  take(1),
+  timeout({first: WINDOW_SETTLE_TIMEOUT_MS, with: () => of(null)}),
+));
 
 window.MonacoEnvironment = {
   getWorker(_: string, label: string): Worker {
@@ -76,16 +93,20 @@ installTauriBridge()
   .catch(err => console.error('[tauri-bridge] init failed, falling back to stub:', err))
   .then(() => bootstrapApplication(AppComponent, appConfig))
   .then(appRef => {
-    // The splash sits over the app: fading it out fades the app in
-    const splash = document.querySelector('.splash');
-    splash?.addEventListener('animationend', e => e.target === splash && splash.remove());
-    splash?.classList.add('splash-out');
-
     const globalErrorHandler = appRef.injector.get(ErrorHandler);
     config.onUnhandledError = err => globalErrorHandler.handleError(err);
     window.addEventListener('unhandledrejection', (event) => {
       globalErrorHandler.handleError(event.reason);
       event.preventDefault();
     });
+    return firstValueFrom(appRef.injector.get(GitRefreshService).appReady$.pipe(timeout({first: STARTUP_LOAD_TIMEOUT_MS, with: () => of(true)})));
   })
-  .catch(err => console.error('[bootstrap] Angular failed to start:', err));
+  .catch(err => console.error('[bootstrap] Angular failed to start:', err))
+  // The main window starts hidden behind the splash screen window: show it once the repository is loaded, or if the app failed to start,
+  // see-through until its layout settled
+  .finally(() => invoke('show_main_window')
+    .then(windowSettled)
+    .finally(() => document.documentElement.classList.remove('starting'))
+    .then(() => invoke('close_splashscreen'))
+    .catch(console.error));
+

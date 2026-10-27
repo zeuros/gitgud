@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GitGud</title>
+  <style>
+    /* The window is transparent: only the logo and title are drawn over the desktop */
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      user-select: none;
+      cursor: default;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+    }
+    img {
+      height: 96px;
+      filter: drop-shadow(0 0 24px rgba(255, 170, 60, 0.45));
+      animation: splash-in 0.4s ease both;
+    }
+    .title {
+      font: 700 28px sans-serif;
+      letter-spacing: 0.15em;
+      color: transparent;
+      background: linear-gradient(110deg, #b8742a 40%, #fff3c4 50%, #b8742a 60%) 0 0 / 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: splash-shine 2.4s linear infinite, splash-in 0.4s ease both;
+    }
+    @keyframes splash-in {
+      from { opacity: 0; }
+    }
+    @keyframes splash-shine {
+      from { background-position: 100% 0; }
+      to { background-position: 0 0; }
+    }
+  </style>
+</head>
+<body>
+  <img src="images/bonfire.webp" alt="">
+  <span class="title">gitgud</span>
+</body>
+</html>

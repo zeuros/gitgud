@@ -12,6 +12,7 @@ mod commands;
 mod shell_pool;
 
 use commands::{fs::*, process::*, util::*, watcher::*};
+use tauri_plugin_window_state::StateFlags;
 
 const FALLBACK_PATHS: &[&str] = &["/usr/local/bin", "/usr/bin", "/bin", "/opt/homebrew/bin"];
 
@@ -106,25 +107,17 @@ pub fn run() {
         .manage(shell_pool::ShellPoolManager::new())
         .plugin(tauri_plugin_prevent_default::with_flags(tauri_plugin_prevent_default::Flags::CONTEXT_MENU))
         .plugin(
-            // Decorations come from the config (the app draws its title bar): a saved state would restore the native one
+            // Decorations come from the config (the app draws its title bar): a saved state would restore the native one.
+            // The main window starts hidden behind the splash screen: restoring its saved visibility would show it early
             tauri_plugin_window_state::Builder::default()
-                .with_state_flags(tauri_plugin_window_state::StateFlags::all() - tauri_plugin_window_state::StateFlags::DECORATIONS)
+                .with_state_flags(StateFlags::all() - StateFlags::DECORATIONS - StateFlags::VISIBLE)
+                .with_denylist(&["splashscreen"])
                 .build(),
         )
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
-        .setup(|_app| {
-            #[cfg(debug_assertions)]
-            {
-                use tauri::Manager;
-                if let Some(win) = _app.get_webview_window("main") {
-                    win.open_devtools();
-                }
-            }
-            Ok(())
-        })
         .invoke_handler(tauri::generate_handler![
             // fs
             fs_readdir,
@@ -153,6 +146,8 @@ pub fn run() {
             get_package_format,
             get_build_commit,
             show_item_in_folder,
+            show_main_window,
+            close_splashscreen,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -17,7 +17,7 @@
  */
 
 import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
-import {asyncScheduler, defer, finalize, forkJoin, from, map, type Observable, of, switchMap, tap, throttleTime} from 'rxjs';
+import {asyncScheduler, defer, finalize, forkJoin, from, map, type Observable, of, ReplaySubject, switchMap, tap, throttleTime} from 'rxjs';
 import {LogReaderService} from './git/log-reader.service';
 import {BranchReaderService} from './git/branch-reader.service';
 import {StashReaderService} from './git/stash-reader.service';
@@ -28,6 +28,8 @@ import {filterOutStashes} from '../utils/repository-utils';
 import {gitPath} from '../utils/git-path.utils';
 import {detectOperationInProgress} from '../utils/operation-in-progress.utils';
 import type {GitRepository} from '../models/git-repository';
+import type {GitTag} from '../models/git-tag';
+import type {Commit} from '../lib/github-desktop/model/commit';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {FileWatcherService} from './file-watcher.service';
@@ -65,8 +67,14 @@ export class GitRefreshService {
       return source$.pipe(finalize(() => this._active.update(n => n - 1)));
     });
 
+  // Emits once the selected repository's first load ended (loaded or failed), right away with no repository open
+  readonly appReady$ = new ReplaySubject<true>(1);
+
   constructor() {
-    if (this.currentRepo.cwd()) this.doRefreshAll();
+    // First load of the selected repository (if any) and show main window
+    (this.currentRepo.cwd() ? this.refreshAll() : of({}))
+      .pipe(finalize(() => this.appReady$.next(true)))
+      .subscribe();
     window.tauri.onWindowFocus(this.onWindowFocus);
     this.destroyRef.onDestroy(() => window.tauri.offWindowFocus(this.onWindowFocus));
     this.fileWatcher.onWorkingDirFileChange$.pipe(
@@ -121,22 +129,42 @@ export class GitRefreshService {
   /**
    * Fetches logs, branches, and stashes for the current repository
    * and returns a partial repository update.
+   * The log includes the remote tags already known; remote tags are read afterwards, without holding the refresh on the network.
    */
   updateLogsAndBranches = () => this.track(
-    forkJoin({stashes: this.stashReader.getStashes(), remoteTags: this.tagReader.getRemoteTags()})
+    this.stashReader.getStashes()
       .pipe(
-        switchMap(({stashes, remoteTags}) => forkJoin({
-          logs: this.logReader.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', '--ignore-missing', ...stashes.map(s => s.sha), ...remoteTags.map(t => t.sha)])
-            .pipe(map(logs => logs.filter(filterOutStashes(stashes)))),
-          branches: this.branchReader.getBranches(),
-          detachedHeadSha: this.branchReader.detachedHeadSha(),
-          stashes: of(stashes),
-          tags: this.tagReader.getTags(),
-          remoteTags: of(remoteTags),
-          worktrees: this.worktreeReader.getWorktrees(),
-        })),
-        tap((r: Partial<GitRepository>) => this.gitRepositoryStore.updateSelectedRepository(r)),
+        switchMap(stashes => {
+          const remoteTagsInLog = this.currentRepo.remoteTags();
+          return forkJoin({
+            logs: this.loadCommitLog(stashes, remoteTagsInLog),
+            branches: this.branchReader.getBranches(),
+            detachedHeadSha: this.branchReader.detachedHeadSha(),
+            stashes: of(stashes),
+            tags: this.tagReader.getTags(),
+            worktrees: this.worktreeReader.getWorktrees(),
+          }).pipe(tap((r: Partial<GitRepository>) => {
+            this.gitRepositoryStore.updateSelectedRepository(r);
+            this.updateRemoteTags(stashes, remoteTagsInLog);
+          }));
+        }),
       ));
+
+  // Reloads the log when a remote tag points to a commit it didn't include
+  private updateRemoteTags = (stashes: Commit[], remoteTagsInLog: GitTag[]) => this.track(
+    this.tagReader.getRemoteTags().pipe(
+      tap(remoteTags => this.gitRepositoryStore.updateSelectedRepository({remoteTags})),
+      switchMap(remoteTags => {
+        const shasInLog = new Set(remoteTagsInLog.map(t => t.sha));
+        return remoteTags.every(t => shasInLog.has(t.sha))
+          ? of(undefined)
+          : this.loadCommitLog(stashes, remoteTags).pipe(tap(logs => this.gitRepositoryStore.updateSelectedRepository({logs})));
+      }),
+    )).subscribe();
+
+  private loadCommitLog = (stashes: Commit[], remoteTags: GitTag[]) =>
+    this.logReader.getCommitLog('--branches', DEFAULT_NUMBER_OR_COMMITS_TO_SHOW, 0, ['--remotes', '--tags', '--source', '--date-order', '--ignore-missing', ...stashes.map(s => s.sha), ...remoteTags.map(t => t.sha)])
+      .pipe(map(logs => logs.filter(filterOutStashes(stashes))));
 
   doUpdateLogsAndBranches = () => this.updateLogsAndBranches().subscribe();
 
