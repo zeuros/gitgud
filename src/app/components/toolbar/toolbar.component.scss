@@ -4,8 +4,9 @@ $spacing: 8px;
   // Main actions centered, whatever the width of the badges and of the zoom select on each side
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding: 3px $spacing 3px $spacing;
+  align-items: stretch;
+  height: 40px;
+  padding: 0 $spacing;
   background: var(--app-chrome-bg);
   border-bottom: 1px solid var(--p-content-border-color);
   gap: 6px;

@@ -4,7 +4,7 @@
 
     <!-- The window's title bar, like a browser's: dragging its empty space moves the window -->
     <div class="tab-strip" data-tauri-drag-region="deep" [class.macos]="isMacOs">
-        <gitgud-repo-title/>
+        <gitgud-app-title/>
         <p-tablist cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
             @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
                 <p-tab [value]="i"

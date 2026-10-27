@@ -12,6 +12,7 @@
 .tab-strip {
   display: flex;
   align-items: center;
+  height: 40px;
   background: var(--app-chrome-bg);
 
   // Room for the native traffic lights drawn over the window's top-left corner
@@ -22,6 +23,27 @@
   p-tablist {
     flex: 1;
     min-width: 0;
+    align-self: stretch;
+  }
+
+  // Tabs as tall as the strip, the new tab button as tall as the other chrome controls
+  ::ng-deep {
+    .p-tablist, .p-tablist-content, .p-tablist-tab-list {
+      height: 100%;
+    }
+
+    .p-tab {
+      padding-block: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .p-tablist-tab-list > .p-button {
+      align-self: center;
+      width: 28px;
+      height: 28px;
+    }
   }
 }
 

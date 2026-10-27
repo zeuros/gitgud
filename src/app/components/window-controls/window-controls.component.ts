@@ -40,8 +40,8 @@ import {ChangeDetectionStrategy, Component} from '@angular/core';
 
     // Round buttons, like a browser's tab strip
     .window-control {
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       padding: 0;
       border: none;
       border-radius: 50%;

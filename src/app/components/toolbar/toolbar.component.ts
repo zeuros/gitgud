@@ -22,8 +22,6 @@ import {catchError, EMPTY, finalize, interval, map, type Observable, of, switchM
 import {ButtonDirective} from 'primeng/button';
 import {Divider} from 'primeng/divider';
 import {Tooltip} from 'primeng/tooltip';
-import {Select} from 'primeng/select';
-import {FormsModule} from '@angular/forms';
 import {Menu} from 'primeng/menu';
 import type {MenuItem} from 'primeng/api';
 import {GitApiService} from '../../services/git/git-api.service';
@@ -52,7 +50,7 @@ type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'operation-co
   selector: 'gitgud-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ButtonDirective, Divider, Tooltip, Select, FormsModule, Menu, WorktreeBadgeComponent],
+  imports: [ButtonDirective, Divider, Tooltip, Menu, WorktreeBadgeComponent],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
   // Below the tab strip, its empty space moves the window too
@@ -81,7 +79,14 @@ export class ToolbarComponent implements OnInit {
   });
   // Nothing left to commit: git refuses to continue and suggests skipping instead
   protected canContinueOperation = computed(() => !this.canSkipOperation() || this.hasWorkDirChanges());
-  protected zoomLevels = [70, 80, 90, 100, 110, 120, 130, 140, 150].map(v => ({label: `${v}%`, value: v / 100}));
+  protected zoomPercent = computed(() => Math.round(this.settings.zoom * 100));
+  protected zoomItems = computed<MenuItem[]>(() => [70, 80, 90, 100, 110, 120, 130, 140, 150].map(percent => ({
+    label: `${percent}%`,
+    icon: percent === this.zoomPercent() ? 'pi pi-check' : 'pi pi-fw',
+    command: () => {
+      this.settings.zoom = percent / 100;
+    },
+  })));
   private gitApi = inject(GitApiService);
   private branchAheadBehind = inject(BranchAheadBehindService);
   private toast = inject(ToastService);

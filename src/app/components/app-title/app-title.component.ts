@@ -18,20 +18,18 @@
 
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {Tooltip} from 'primeng/tooltip';
-import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {GitRefreshService} from '../../services/git-refresh.service';
 
-/** The bonfire logo and the current repository's name, at the start of the tab strip */
+/** The bonfire logo and the app's name, at the start of the tab strip */
 @Component({
-  selector: 'gitgud-repo-title',
+  selector: 'gitgud-app-title',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [Tooltip],
-  templateUrl: './repo-title.component.html',
-  styleUrl: './repo-title.component.scss',
+  templateUrl: './app-title.component.html',
+  styleUrl: './app-title.component.scss',
 })
-export class RepoTitleComponent {
-  protected currentRepo = inject(CurrentRepoStore);
+export class AppTitleComponent {
   private gitRefresh = inject(GitRefreshService);
   protected bonfireHovered = signal(false);
   protected appVersion = window.tauri.appVersion + (window.tauri.buildCommit ? ` (${window.tauri.buildCommit})` : '');

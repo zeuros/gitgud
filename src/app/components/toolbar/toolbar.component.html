@@ -107,6 +107,8 @@
         }
     </button>
 
+    <p-divider layout="vertical"/>
+
     <button pButton
             class="sober"
             text
@@ -154,15 +156,9 @@
             iconOnly
     ><i class="fa fa-coffee"></i></button>
 
-    <p-select
-            [options]="zoomLevels"
-            [(ngModel)]="settings.zoom"
-            optionLabel="label"
-            optionValue="value"
-            [style]="{'width': 'fit-content'}"
-    >
-        <ng-template #selectedItem let-item>
-            Zoom ({{ item.label }})
-        </ng-template>
-    </p-select>
+    <p-menu #zoomMenu [model]="zoomItems()" [popup]="true"/>
+    <button pButton class="sober" text pTooltip="Zoom" tooltipPosition="bottom" (click)="zoomMenu.toggle($event)">
+        <i class="fa fa-search"></i>
+        <span>{{ zoomPercent() }}%</span>
+    </button>
 </div>
