@@ -1,25 +1,9 @@
-<div class="repo-info">
-    <!-- An animated image can't be paused: show its still first frame, and the animation on hover / while refreshing -->
-    <img class="bonfire" alt=""
-         [class.playing]="bonfirePlaying()"
-         [src]="bonfirePlaying() ? './assets/images/bonfire.webp' : './assets/images/bonfire-still.png'"
-         [pTooltip]="'GitGud v' + appVersion" tooltipPosition="bottom"
-         (mouseenter)="bonfireHovered.set(true)"
-         (mouseleave)="bonfireHovered.set(false)">
-    <div class="repo-name-clip">
-        <div class="repo-info-track">
-            <span class="repo-name">
-                {{ currentRepo.name() }}
-            </span>
-        </div>
-    </div>
+<div class="toolbar-start">
     @if (currentRepo.activeWorktree(); as worktree) {
         <gitgud-worktree-badge [repoId]="currentRepo.id()!" [path]="worktree"/>
     }
     <span class="branch-badge"><i class="fa fa-code-fork"></i>{{ currentRepo.headBranch()?.name ?? short(currentRepo.detachedHeadSha() ?? '') + ' (detached HEAD)' }}</span>
 </div>
-
-<p-divider layout="vertical"/>
 
 <div class="actions">
     @if (operationLabel(); as label) {
@@ -158,25 +142,27 @@
     <button pButton class="sober" text rounded pTooltip="Settings" tooltipPosition="bottom" (click)="openSettingsDialog()" iconOnly><i class="fa fa-cog"></i></button>
 </div>
 
-<p-menu #donateMenu [model]="donateItems" [popup]="true"/>
-<button pButton
-        class="sober coffee-btn"
-        text
-        rounded
-        pTooltip="Support GitGud ☕ - give me riches aplenty"
-        tooltipPosition="bottom"
-        (click)="donateMenu.toggle($event)"
-        iconOnly
-><i class="fa fa-coffee"></i></button>
+<div class="toolbar-end">
+    <p-menu #donateMenu [model]="donateItems" [popup]="true"/>
+    <button pButton
+            class="sober coffee-btn"
+            text
+            rounded
+            pTooltip="Support GitGud ☕ - give me riches aplenty"
+            tooltipPosition="bottom"
+            (click)="donateMenu.toggle($event)"
+            iconOnly
+    ><i class="fa fa-coffee"></i></button>
 
-<p-select
-        [options]="zoomLevels"
-        [(ngModel)]="settings.zoom"
-        optionLabel="label"
-        optionValue="value"
-        [style]="{'width': 'fit-content'}"
->
-    <ng-template #selectedItem let-item>
-        Zoom ({{ item.label }})
-    </ng-template>
-</p-select>
+    <p-select
+            [options]="zoomLevels"
+            [(ngModel)]="settings.zoom"
+            optionLabel="label"
+            optionValue="value"
+            [style]="{'width': 'fit-content'}"
+    >
+        <ng-template #selectedItem let-item>
+            Zoom ({{ item.label }})
+        </ng-template>
+    </p-select>
+</div>

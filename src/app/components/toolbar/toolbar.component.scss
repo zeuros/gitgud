@@ -1,7 +1,9 @@
 $spacing: 8px;
 
 :host {
-  display: flex;
+  // Main actions centered, whatever the width of the badges and of the zoom select on each side
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 3px $spacing 3px $spacing;
   background: var(--app-chrome-bg);
@@ -10,92 +12,18 @@ $spacing: 8px;
   font-size: 0.9rem;
 }
 
-$repo-track-max-width: 260px;
-
-.repo-info {
+.toolbar-start, .toolbar-end {
   display: flex;
-  gap: $spacing;
   align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
 
-  .bonfire {
-    height: 30px;
-    flex-shrink: 0;
-    margin-left: 4px; // same space on its left as between it and the repo name
-    position: relative;
-    top: -3px; // the fire's visual weight (logs, flame body) is in its lower half
+.toolbar-end {
+  justify-content: flex-end;
+}
 
-    &.playing {
-      animation: bonfire-bounce 0.6s ease-in-out infinite;
-    }
-  }
-
-  .repo-name-clip {
-    max-width: $repo-track-max-width;
-    overflow: hidden;
-  }
-
-  .repo-info-track {
-    display: flex;
-    align-items: center;
-    width: max-content;
-    padding: 0 4px;
-    white-space: nowrap;
-    animation: repo-marquee 3s ease-in-out infinite alternate;
-    animation-play-state: paused;
-    will-change: transform;
-  }
-
-  &:hover .repo-info-track,
-  &:hover .repo-name {
-    animation-play-state: running;
-  }
-
-  .repo-name {
-    font-family: 'Cinzel Decorative', 'Palatino Linotype', serif;
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-
-    // Light theme — deep rich palette so the "hottest" stop is the darkest color
-    background: linear-gradient(
-            180deg,
-            #b03010 0%,
-            #a05800 12%,
-            #c07800 30%,
-            #9b3a10 50%,
-            #6028b8 68%,
-            #9b3a10 82%,
-            #c07800 92%,
-            #a05800 100%
-    );
-
-    :host-context(html.dark) & {
-      background: linear-gradient(
-              180deg,
-              #fff6f7 0%,
-              #ffe8b0 12%,
-              #f3c86b 30%,
-              #d77838 50%,
-              #9b5cf2 68%,
-              #d77838 82%,
-              #f3c86b 92%,
-              #ffe8b0 100%
-      );
-      background-size: 100% 280%;
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    background-size: 100% 280%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: repo-flames 3s ease-in-out infinite;
-    animation-play-state: paused;
-  }
-
+.toolbar-start {
   .branch-badge {
     display: inline-flex;
     align-items: center;
@@ -113,26 +41,6 @@ $repo-track-max-width: 260px;
       color: color-mix(in srgb, var(--p-primary-color), white 50%);
     }
   }
-}
-
-@keyframes repo-marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(min(calc(-100% + #{$repo-track-max-width}), 0px));
-  }
-}
-
-
-@keyframes repo-flames {
-  0%, 100% { background-position: 0% 0%; }
-  50%       { background-position: 0% 100%; }
-}
-
-@keyframes bonfire-bounce {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-3px); }
 }
 
 ::ng-deep p-divider.p-divider-vertical {
@@ -185,8 +93,6 @@ $repo-track-max-width: 260px;
   50%       { opacity: 0.55; }
 }
 .coffee-btn {
-  margin-left: auto;
-
   &.p-button {
     position: relative;
     overflow: visible;

@@ -27,6 +27,7 @@ import {CdkDrag, type CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 import {GitRefreshService} from '../../services/git-refresh.service';
 import {NewTabComponent} from '../new-tab/new-tab.component';
 import {WindowControlsComponent} from '../window-controls/window-controls.component';
+import {RepoTitleComponent} from '../repo-title/repo-title.component';
 
 @Component({
   selector: 'gitgud-repositories-view',
@@ -43,6 +44,7 @@ import {WindowControlsComponent} from '../window-controls/window-controls.compon
     CdkDrag,
     NewTabComponent,
     WindowControlsComponent,
+    RepoTitleComponent,
   ],
   templateUrl: './repositories-view.component.html',
   styleUrl: './repositories-view.component.scss',

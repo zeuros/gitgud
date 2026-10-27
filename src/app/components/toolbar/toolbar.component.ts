@@ -68,9 +68,6 @@ export class ToolbarComponent implements OnInit {
   protected gitRefresh = inject(GitRefreshService);
   protected updateCheck = inject(UpdateCheckService);
   protected loading = signal<ToolbarAction | undefined>(undefined);
-  protected bonfireHovered = signal(false);
-  protected appVersion = window.tauri.appVersion + (window.tauri.buildCommit ? ` (${window.tauri.buildCommit})` : '');
-  protected bonfirePlaying = computed(() => this.bonfireHovered() || this.gitRefresh.isRefreshing());
   protected hasWorkDirChanges = computed(() => workingDirHasChanges(this.currentRepo.workDirStatus()));
   protected hasStashes = computed(() => this.currentRepo.stashes().length > 0);
   protected short = short;
