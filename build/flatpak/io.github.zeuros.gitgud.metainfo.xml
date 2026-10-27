@@ -48,6 +48,20 @@
   </provides>
 
   <releases>
+    <release version="2.12.0" date="2026-10-27">
+      <description>
+        <p>What's new in GitGud 2.12.0:</p>
+        <ul>
+          <li>Transparent splash window while the app loads</li>
+          <li>Logo and repository name in the tab strip, main actions centered</li>
+          <li>Borderless window, browser-like tab strip as title bar</li>
+          <li>Offer a merge commit when dropping an ahead branch on a local branch</li>
+          <li>Hovering a file shows its path from the repo root</li>
+          <li>Keep a chip's icons on one line when its name is cut</li>
+          <li>Wait up to 2 s for another git process's index.lock</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.11.0" date="2026-10-26">
       <description>
         <p>What's new in GitGud 2.11.0:</p>
