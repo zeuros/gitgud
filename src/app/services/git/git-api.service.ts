@@ -21,7 +21,7 @@ import {inject, Injectable, isDevMode, signal} from '@angular/core';
 // If you import a module but never use any of the imported values other than as TypeScript types,
 // the resulting JavaScript file will look as if you never imported the module at all.
 // import type {ExecOptions} from 'child_process';
-import {catchError, defer, firstValueFrom, from, map, Observable, of, retry, switchMap, tap, throwError} from 'rxjs';
+import {catchError, defer, firstValueFrom, from, map, Observable, of, retry, switchMap, tap, throwError, timer} from 'rxjs';
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
 import type {ExecOptions, SpawnOptionsWithoutStdio} from 'node:child_process';
 import {GitCommandHistoryService} from '../git-command-history.service';
@@ -181,27 +181,24 @@ export class GitApiService {
         .catch(e => observer.error(e));
     })));
 
-  /**
-   * Guards against external git processes, but:
-   * 1. The maxWaitMs / count duality is confusing — only one should drive the retry limit
-   * 2. 700ms may time out prematurely for longer external operations
-   */
-  waitForLock = (maxWaitMs = 700, intervalMs = 100): Observable<void> => {
-    const start = Date.now();
+  // Waits for another git process (a terminal, an IDE…) to release index.lock, checking every intervalMs, for at most maxWaitMs
+  waitForLock = (maxWaitMs = 2000, intervalMs = 100): Observable<void> => {
     // No repository yet (clone, init…): nothing can hold its lock
     const lockExists = () => this.currentRepo.cwd()
       ? this.gitPath('index.lock').then(window.tauri.fs.exists).catch(() => false)
       : Promise.resolve(false);
 
-    return defer(() =>
-      from(lockExists()).pipe(
-        switchMap(exists => {
-          if (!exists) return of(undefined as void);
-          if (Date.now() - start > maxWaitMs) return throwError(() => new Error('Git lock timeout'));
-          return throwError(() => new Error('Lock exists'));
+    return defer(() => {
+      const deadline = Date.now() + maxWaitMs;
+      return defer(lockExists).pipe(
+        switchMap(exists => exists ? throwError(() => new Error('index.lock exists')) : of(undefined as void)),
+        retry({
+          delay: () => Date.now() < deadline
+            ? timer(intervalMs)
+            : throwError(() => new Error('Another git process is running: its index.lock is still there (remove it if no git process is left)')),
         }),
-      ),
-    ).pipe(retry({delay: intervalMs, count: 10}));
+      );
+    });
   };
 
   recheckGit = () =>
