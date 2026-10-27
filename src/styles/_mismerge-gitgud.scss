@@ -40,8 +40,3 @@ html.dark mis-merge3 {
   border-radius: 4px;
   font-size: 1rem;
 }
-
-.mismerge ::-webkit-scrollbar        { width: 6px; }
-.mismerge ::-webkit-scrollbar-track  { background: none; }
-.mismerge ::-webkit-scrollbar-thumb  { background: var(--primary-200); border-radius: 9999px; }
-.mismerge ::-webkit-scrollbar-thumb:hover { background: var(--primary-300); }

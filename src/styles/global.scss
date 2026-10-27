@@ -62,28 +62,55 @@ gitgud-root {
   outline: none;
 }
 
+// Thin scrollbars that widen while hovered or dragged: transparent borders narrow the painted part
+// (scrollbar pseudo-elements can't animate nor change their own size on hover)
 ::-webkit-scrollbar {
-  transition: all 1s;
   width: 10px;
   height: 10px;
-  border-radius: 10px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-track {
-  transition: all 1s;
-  background: var(--scrollbar-track);
-  border-radius: 13px;
+  background: var(--scrollbar-track) padding-box;
+  border: 4px solid transparent;
+  border-radius: 10px;
+}
+
+// The thumb brightens while its scrollable element is hovered, with a fade: scrollbar pseudo-elements can't transition,
+// but they read this registered property from their element, which can. Its layer comes first, so any other transition wins
+@property --scrollbar-thumb-shown {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
+@layer scrollbar-fade, primeng, my-theme;
+
+@layer scrollbar-fade {
+  * {
+    --scrollbar-thumb-shown: color-mix(in srgb, var(--scrollbar-thumb) 45%, transparent);
+    transition: --scrollbar-thumb-shown .3s;
+  }
+
+  *:hover {
+    --scrollbar-thumb-shown: var(--scrollbar-thumb);
+  }
 }
 
 ::-webkit-scrollbar-thumb {
-  transition: all 1s;
-  background: var(--scrollbar-thumb);
-  border-radius: 7px;
+  background: var(--scrollbar-thumb-shown) padding-box;
+  border: 3px solid transparent;
+  border-radius: 10px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  transition: all 1s;
-  background: var(--scrollbar-thumb-hover);
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-hover);
+  border-width: 1px;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .hidden {
