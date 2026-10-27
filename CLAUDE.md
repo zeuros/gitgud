@@ -8,7 +8,7 @@ The scripts are in `package.json`; what they don't tell:
 - `npm run video` records `docs/show.mp4` + `.webm` on its own Xvfb, rebuilding the release binary first if sources are newer.
 - Cargo, from `src-tauri/`: `cargo check`, `cargo clippy`.
 
-CI (`.github/workflows/ci.yml`) runs `npm test` on pushes and pull requests; `release.yml`, `flatpak.yml` and `pages.yml` build the packages and the website.
+CI (`.github/workflows/ci.yml`) runs `npm run lint` and `npm test` on pushes to main and pull requests, and `cargo clippy -- -D warnings` when `src-tauri/` or the workflow changed; `release.yml`, `flatpak.yml` and `pages.yml` build the packages and the website.
 
 ### Running e2e / driving the app headless
 

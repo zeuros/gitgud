@@ -20,11 +20,64 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: Lint
+        run: npm run lint
+
       - name: Run unit tests
         run: npm test
 
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'src-tauri/**'
+              - '.github/workflows/ci.yml'
+
+  clippy:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
+          version: 1.0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # tauri::generate_context! needs frontendDist to exist at compile time
+      - name: Create empty frontend dist
+        run: mkdir -p dist/gitgud
+
+      - name: Clippy
+        working-directory: src-tauri
+        run: cargo clippy --all-targets -- -D warnings
+
+  notify:
+    needs: [unit-tests, clippy]
+    if: failure() && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Notify on failure
-        if: failure() && github.event_name == 'push'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -36,7 +89,7 @@ jobs:
           to: ${{ secrets.MAIL_USERNAME }}
           from: GitGud CI <${{ secrets.MAIL_USERNAME }}>
           body: |
-            Unit tests failed on commit ${{ github.sha }}.
+            CI failed on commit ${{ github.sha }} (unit tests: ${{ needs.unit-tests.result }}, clippy: ${{ needs.clippy.result }}).
 
             Pushed by: ${{ github.actor }}
             Branch: ${{ github.ref_name }}
