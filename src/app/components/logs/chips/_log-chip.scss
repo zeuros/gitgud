@@ -14,5 +14,7 @@ i.with-padding {
 }
 
 .float-icons {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 16px;
 }
