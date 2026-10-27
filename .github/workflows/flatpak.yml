@@ -91,7 +91,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.local/share/flatpak
-          key: flatpak-sdk-gnome-47-x64
+          key: flatpak-sdk-gnome-50-x64
 
       - name: Install Flatpak build tools
         run: |
@@ -99,15 +99,15 @@ jobs:
           flatpak remote-add --user --if-not-exists flathub \
             https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user --noninteractive -y \
-            org.gnome.Platform//47 \
-            org.gnome.Sdk//47
+            org.gnome.Platform//50 \
+            org.gnome.Sdk//50
 
       - name: Write CI manifest (uses local staging dir, no remote download)
         run: |
           cat > /tmp/ci-manifest.yml << 'MANIFEST'
           app-id: io.github.zeuros.gitgud
           runtime: org.gnome.Platform
-          runtime-version: "47"
+          runtime-version: "50"
           sdk: org.gnome.Sdk
           command: gitgud
           separate-locales: false
@@ -296,10 +296,14 @@ jobs:
             --sha256-arm64 "${{ needs.build-arm64.outputs.sha256_arm64 }}" \
             --manifest "flathub-manifest/${{ env.APP_ID }}.yml"
 
+      # The release notes and the desktop entry live in this repo: keep Flathub's copies in sync
+      - name: Copy metainfo and desktop file
+        run: cp build/flatpak/${{ env.APP_ID }}.metainfo.xml build/flatpak/${{ env.APP_ID }}.desktop flathub-manifest/
+
       - name: Commit and push to manifest repo
         run: |
           git -C flathub-manifest config user.name  "github-actions[bot]"
           git -C flathub-manifest config user.email "github-actions[bot]@users.noreply.github.com"
-          git -C flathub-manifest add "${{ env.APP_ID }}.yml"
+          git -C flathub-manifest add "${{ env.APP_ID }}.yml" "${{ env.APP_ID }}.metainfo.xml" "${{ env.APP_ID }}.desktop"
           git -C flathub-manifest commit -m "Update to v${{ needs.build.outputs.version }}"
           git -C flathub-manifest push
