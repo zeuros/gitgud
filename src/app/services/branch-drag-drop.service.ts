@@ -115,12 +115,12 @@ export class BranchDragDropService {
 
   private addLocalSourceItems = ({source, target, behind, ahead, sourceOnly, targetOnly, add, warn}: BranchDrop) => {
     const isLocalTarget = target.type === BranchType.Local;
-    // Rebase and merge are no-ops or plain fast-forwards unless the branches diverged
+    // Rebase is a no-op unless the branches diverged; merging an ahead branch still makes a merge commit
     if (behind) add(source.name, {label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForward});
     if (ahead && isLocalTarget) add(target.name, {label: `Fast-forward ${target.name} to ${source.name} (${sourceOnly})`, icon: 'fa fa-forward', command: this.fastForwardTarget});
+    if (!behind && isLocalTarget) add(target.name, warn({label: `Merge ${source.name} into ${target.name} (${sourceOnly})`, icon: 'fa fa-compress', command: this.merge}));
     if (!behind && !ahead) {
-      if (isLocalTarget) add(target.name, warn({label: `Merge ${source.name} into ${target.name} (${sourceOnly})`, icon: 'fa fa-compress', command: this.merge}));
-      else add(source.name, warn({label: `Merge ${target.name} into ${source.name} (${targetOnly})`, icon: 'fa fa-compress', command: this.mergeRemoteIntoLocal}));
+      if (!isLocalTarget) add(source.name, warn({label: `Merge ${target.name} into ${source.name} (${targetOnly})`, icon: 'fa fa-compress', command: this.mergeRemoteIntoLocal}));
       add(source.name, warn({label: `Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-code-fork', command: this.rebase}));
     }
     // Still useful when ahead: reword/squash the commits target doesn't have yet
