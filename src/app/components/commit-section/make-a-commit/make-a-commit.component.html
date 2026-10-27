@@ -25,7 +25,7 @@
                 @let fileChanges = $WorkDirFileChanges(workingDirFileChanges);
                 <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex">
                     <td>
-                        <div class="file-row-content">
+                        <div class="file-row-content" [title]="fileChanges.path">
                             <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
                                [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
                                [style.filter]="iconDropShadow(fileChanges.status.kind)"></i>
@@ -84,7 +84,7 @@
                         <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex"
                             (contextmenu)="workingDirSelection.openFileContextMenu(fileChanges, false, $event)">
                             <td>
-                                <div class="file-row-content">
+                                <div class="file-row-content" [title]="fileChanges.path">
                                     <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
                                        [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
                                        [style.filter]="iconDropShadow(fileChanges.status.kind)"></i>
@@ -137,7 +137,7 @@
                         <tr [pSelectableRow]="fileChanges" [pSelectableRowIndex]="rowIndex"
                             (contextmenu)="workingDirSelection.openFileContextMenu(fileChanges, true, $event)">
                             <td>
-                                <div class="file-row-content">
+                                <div class="file-row-content" [title]="fileChanges.path">
                                     <i class="text-gray mr-2 fa {{ FileStatusesIcons[fileChanges.status.kind].icon }}"
                                        [style.color]="FileStatusesIcons[fileChanges.status.kind].color"
                                        [style.filter]="iconDropShadow(fileChanges.status.kind)"></i>

@@ -42,15 +42,23 @@ import {CommittedFileContextMenuService} from '../../../services/committed-file-
       <ng-template #item let-f>
         @let file = file$(f);
         @let dir = directory(file.path);
-        <i class="text-gray mr-2 fa {{ FileStatusesIcons[file.status.kind].icon }}"
-           [style.color]="FileStatusesIcons[file.status.kind].color"
-           [style.filter]="iconDropShadow(file.status.kind)"></i>
-        @if (dir.length) {
-          <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
-        }
-        <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(file.path) }}</span>
+        <span class="file-row" [title]="file.path">
+          <i class="text-gray mr-2 fa {{ FileStatusesIcons[file.status.kind].icon }}"
+             [style.color]="FileStatusesIcons[file.status.kind].color"
+             [style.filter]="iconDropShadow(file.status.kind)"></i>
+          @if (dir.length) {
+            <span class="ellipsis text-gray" [style.min-width.rem]="1.3">{{ dir }}</span>
+          }
+          <span class="white-space-nowrap">{{ (dir?.length ? '/' : '') + fileName(file.path) }}</span>
+        </span>
       </ng-template>
     </p-listbox>
+  `,
+  styles: `
+    // Lays out its children as direct items of the option, only there to hold the tooltip
+    .file-row {
+      display: contents;
+    }
   `,
   host: {
     class: 'overflow-hidden',
