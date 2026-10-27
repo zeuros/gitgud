@@ -1,6 +1,17 @@
 :host {
   display: flex;
+  flex-direction: column;
   overflow: hidden;
+}
+
+// The window's title bar, like the repository view's tab strip
+.title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  height: 40px;
+  background: var(--app-chrome-bg);
 }
 
 // ── Stretch new-tab to fill the welcome-screen slot ───────────────────────────

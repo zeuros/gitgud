@@ -18,12 +18,13 @@
 
 import {ChangeDetectionStrategy, Component} from '@angular/core';
 import {NewTabComponent} from '../new-tab/new-tab.component';
+import {WindowControlsComponent} from '../window-controls/window-controls.component';
 
 @Component({
   selector: 'gitgud-welcome-screen',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [NewTabComponent],
+  imports: [NewTabComponent, WindowControlsComponent],
   templateUrl: './welcome-screen.component.html',
   styleUrl: './welcome-screen.component.scss',
   host: {class: 'fill-height'},

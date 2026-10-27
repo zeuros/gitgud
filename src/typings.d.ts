@@ -92,6 +92,10 @@ interface TauriApi {
   packageFormat?: string;
   onWindowFocus: (cb: () => void) => unknown;
   offWindowFocus: (cb: () => void) => unknown;
+  /** The main window, for the title bar the app draws itself */
+  appWindow: {
+    close: () => Promise<void>;
+  };
   process: {
     platform: string;
     arch: string;

@@ -1,0 +1,8 @@
+<!-- An animated image can't be paused: show its still first frame, and the animation on hover / while refreshing -->
+<img class="bonfire" alt=""
+     [class.playing]="bonfirePlaying()"
+     [src]="bonfirePlaying() ? './assets/images/bonfire.webp' : './assets/images/bonfire-still.png'"
+     [pTooltip]="'GitGud v' + appVersion" tooltipPosition="bottom"
+     (mouseenter)="bonfireHovered.set(true)"
+     (mouseleave)="bonfireHovered.set(false)">
+<span class="app-name">GitGud</span>
