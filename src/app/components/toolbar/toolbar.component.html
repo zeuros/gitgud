@@ -145,6 +145,8 @@
 </div>
 
 <div class="toolbar-end">
+    <button pButton class="sober" text rounded pTooltip="Report an issue" tooltipPosition="bottom" (click)="reportIssue()" iconOnly><i class="fa fa-bug"></i></button>
+
     <p-menu #donateMenu [model]="donateItems" [popup]="true"/>
     <button pButton
             class="sober coffee-btn"
