@@ -165,28 +165,37 @@
         <div class="flex flex-column h-full" [style.min-height.px]="60">
             <div class="flex align-items-center justify-content-between h-3rem">
                 <h4>Commit message</h4>
-                <div class="flex align-items-center gap-3">
-                    <button pButton
+                <div class="flex align-items-center gap-1">
+                    <button type="button"
+                            class="commit-mode-chip"
                             (click)="fixup.openFixupPicker()"
-                            size="small"
-                            text
-                            severity="secondary"
                             [disabled]="!workDirStatus?.staged?.length"
                     ><i class="fa fa-wrench"></i>Fixup</button>
-                    <label class="flex align-items-center gap-2 cursor-pointer">
-                        <span>Amend</span>
-                        <p-checkbox [binary]="true" [ngModel]="amend()" (onChange)="toggleAmendMode($event.checked)"/>
-                    </label>
+                    <button type="button"
+                            class="commit-mode-chip"
+                            [class.active]="amend()"
+                            [attr.aria-pressed]="amend()"
+                            (click)="toggleAmendMode(!amend())"
+                    ><i class="fa fa-pencil"></i>Amend</button>
                 </div>
             </div>
             <form class="flex flex-column flex-1" (ngSubmit)="commit()" [formGroup]="commitForm" (keydown.control.enter)="commitReady(workDirStatus) && commit()">
-                <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
+                <div class="summary-field">
+                    <input pInputText placeholder="Summary" class="w-full commit-summary" formControlName="summary"/>
+                    @let length = summaryLength();
+                    @if (length > SUMMARY_LENGTH_SHOWN_FROM) {
+                        <span class="summary-length"
+                              [class.warn]="length > SUMMARY_LENGTH_ADVISED"
+                              [class.over]="length > SUMMARY_LENGTH_MAX"
+                        >{{ length }}/{{ SUMMARY_LENGTH_MAX }}</span>
+                    }
+                </div>
                 <textarea pTextarea placeholder="Description" rows="3" class="flex-1 commit-description" formControlName="description"></textarea>
                 <button pButton
                         type="submit"
-                        class="mt-2 w-full border-round-xs"
+                        class="commit-button w-full"
                         [disabled]="!commitReady(workDirStatus)"
-                >{{ amend() ? 'Amend last commit' : 'Commit staged changes' }}</button>
+                >{{ amend() ? 'Amend last commit' : 'Commit staged changes' }}<kbd class="shortcut-hint">Ctrl+Enter</kbd></button>
             </form>
         </div>
     </p-splitter-panel>

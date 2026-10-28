@@ -87,3 +87,87 @@
 .conflict-header {
   color: var(--warning-text-color);
 }
+
+// Fixup and Amend: small chips, Amend lit while on
+.commit-mode-chip {
+  flex-shrink: 0;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--p-text-muted-color);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--p-text-color) 6%, transparent);
+    color: var(--p-text-color);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &.active {
+    background: color-mix(in srgb, var(--p-primary-color) 16%, transparent);
+    border-color: color-mix(in srgb, var(--p-primary-color) 40%, transparent);
+    color: var(--p-primary-color);
+  }
+}
+
+// Summary length, shown inside the field near git's limits
+.summary-field {
+  position: relative;
+
+  .commit-summary {
+    padding-right: 3.5rem;
+  }
+}
+
+.summary-length {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  pointer-events: none;
+
+  &.warn {
+    color: var(--warning-text-color);
+  }
+
+  &.over {
+    color: var(--p-red-400);
+  }
+}
+
+// Commit button: a ghost while there's nothing to commit, filled once ready
+.commit-button {
+  margin-top: 10px;
+  gap: 0.6rem;
+  border-radius: 6px;
+
+  &:disabled {
+    opacity: 1;
+    background: transparent;
+    border-color: color-mix(in srgb, var(--p-text-color) 14%, transparent);
+    color: var(--p-text-muted-color);
+  }
+
+  .shortcut-hint {
+    font: inherit;
+    font-size: 0.7rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    opacity: 0.8;
+  }
+}

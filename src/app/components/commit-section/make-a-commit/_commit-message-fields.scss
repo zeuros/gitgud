@@ -1,0 +1,33 @@
+textarea {
+  resize: none;
+}
+
+// Summary and description: one soft, borderless block split by a faded line; focus only lightens the field
+.commit-summary,
+.commit-description {
+  border: none;
+  outline: none;
+  background: color-mix(in srgb, var(--p-text-color) 4%, transparent);
+  box-shadow: none;
+  caret-color: var(--p-primary-color);
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--p-text-color) 6%, transparent);
+  }
+
+  &:focus {
+    background: color-mix(in srgb, var(--p-text-color) 8%, transparent);
+    box-shadow: none;
+  }
+}
+
+.commit-summary {
+  border-radius: 6px 6px 0 0;
+  border-bottom: 1px solid var(--separator-color);
+  border-image: var(--separator-fade-horizontal) 1;
+}
+
+.commit-description {
+  border-radius: 0 0 6px 6px;
+}

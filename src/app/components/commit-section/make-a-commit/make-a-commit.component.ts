@@ -17,8 +17,10 @@
  */
 
 import {ChangeDetectionStrategy, Component, effect, inject, signal} from '@angular/core';
+import {toSignal} from '@angular/core/rxjs-interop';
+import {map} from 'rxjs';
 import {Divider} from 'primeng/divider';
-import {FormBuilder, FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
 import {Textarea} from 'primeng/textarea';
 import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
@@ -31,7 +33,6 @@ import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {CommitService} from '../../../services/commit.service';
 import {FixupService} from '../../../services/fixup.service';
-import {Checkbox} from 'primeng/checkbox';
 import {headCommit} from '../../../utils/commit-utils';
 import type {WorkDirStatus, WorkingDirectoryFileChange} from '../../../lib/github-desktop/model/workdir';
 import {Splitter, SplitterPanel} from 'primeng/splitter';
@@ -48,10 +49,8 @@ import {GitApiService} from '../../../services/git/git-api.service';
     InputText,
     TableModule,
     ButtonDirective,
-    Checkbox,
     Splitter,
     SplitterPanel,
-    FormsModule,
   ],
   templateUrl: './make-a-commit.component.html',
   styleUrl: './make-a-commit.component.scss',
@@ -65,6 +64,11 @@ export class MakeACommitComponent {
   protected workingDirSelection = inject(WorkingDirFileSelectionService);
   protected commitForm = inject(FormBuilder).nonNullable.group({summary: '', description: ''});
   protected amend = signal(false);
+  protected summaryLength = toSignal(this.commitForm.controls.summary.valueChanges.pipe(map(summary => summary.length)), {initialValue: 0});
+  // Git's conventions for a commit summary: about 50 characters, at most 72
+  protected readonly SUMMARY_LENGTH_SHOWN_FROM = 40;
+  protected readonly SUMMARY_LENGTH_ADVISED = 50;
+  protected readonly SUMMARY_LENGTH_MAX = 72;
   private theme = inject(ThemeService);
   protected FileStatusesIcons = FileStatusesIcons;
   protected keys = Object.keys;

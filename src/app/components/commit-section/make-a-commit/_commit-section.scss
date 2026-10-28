@@ -1,39 +1,5 @@
+@forward "commit-message-fields";
+
 h4 {
   margin: 4px;
-}
-
-textarea {
-  resize: none;
-}
-
-// Summary and description: one soft, borderless block split by a faded line, outlined only while focused
-.commit-summary,
-.commit-description {
-  border: none;
-  background: color-mix(in srgb, var(--p-text-color) 4%, transparent);
-  box-shadow: none;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
-
-  &:hover {
-    background: color-mix(in srgb, var(--p-text-color) 6%, transparent);
-  }
-
-  &:focus {
-    background: color-mix(in srgb, var(--p-text-color) 6%, transparent);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--p-primary-color) 60%, transparent),
-                0 0 10px color-mix(in srgb, var(--p-primary-color) 20%, transparent);
-    // Above the other field, so its glow isn't covered
-    position: relative;
-    z-index: 1;
-  }
-}
-
-.commit-summary {
-  border-radius: 6px 6px 0 0;
-  border-bottom: 1px solid var(--separator-color);
-  border-image: var(--separator-fade-horizontal) 1;
-}
-
-.commit-description {
-  border-radius: 0 0 6px 6px;
 }
