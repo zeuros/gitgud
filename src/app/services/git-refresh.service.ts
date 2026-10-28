@@ -67,6 +67,12 @@ export class GitRefreshService {
       return source$.pipe(finalize(() => this._active.update(n => n - 1)));
     });
 
+  // Runs a load with a function saving its results into the repository selected when it started: the user may switch tabs before git answers
+  private forSelectedRepository = <T>(load: (save: (updates: Partial<GitRepository>) => void) => Observable<T>) => defer(() => {
+    const repoId = this.currentRepo.id();
+    return load(updates => repoId && this.gitRepositoryStore.updateRepository(repoId, updates));
+  });
+
   // Emits once the selected repository's first load ended (loaded or failed), right away with no repository open
   readonly appReady$ = new ReplaySubject<true>(1);
 
@@ -131,7 +137,7 @@ export class GitRefreshService {
    * and returns a partial repository update.
    * The log includes the remote tags already known; remote tags are read afterwards, without holding the refresh on the network.
    */
-  updateLogsAndBranches = () => this.track(
+  updateLogsAndBranches = () => this.track(this.forSelectedRepository(save =>
     this.stashReader.getStashes()
       .pipe(
         switchMap(stashes => {
@@ -144,21 +150,21 @@ export class GitRefreshService {
             tags: this.tagReader.getTags(),
             worktrees: this.worktreeReader.getWorktrees(),
           }).pipe(tap((r: Partial<GitRepository>) => {
-            this.gitRepositoryStore.updateSelectedRepository(r);
-            this.updateRemoteTags(stashes, remoteTagsInLog);
+            save(r);
+            this.updateRemoteTags(stashes, remoteTagsInLog, save);
           }));
         }),
-      ));
+      )));
 
   // Reloads the log when a remote tag points to a commit it didn't include
-  private updateRemoteTags = (stashes: Commit[], remoteTagsInLog: GitTag[]) => this.track(
+  private updateRemoteTags = (stashes: Commit[], remoteTagsInLog: GitTag[], save: (updates: Partial<GitRepository>) => void) => this.track(
     this.tagReader.getRemoteTags().pipe(
-      tap(remoteTags => this.gitRepositoryStore.updateSelectedRepository({remoteTags})),
+      tap(remoteTags => save({remoteTags})),
       switchMap(remoteTags => {
         const shasInLog = new Set(remoteTagsInLog.map(t => t.sha));
         return remoteTags.every(t => shasInLog.has(t.sha))
           ? of(undefined)
-          : this.loadCommitLog(stashes, remoteTags).pipe(tap(logs => this.gitRepositoryStore.updateSelectedRepository({logs})));
+          : this.loadCommitLog(stashes, remoteTags).pipe(tap(logs => save({logs})));
       }),
     )).subscribe();
 
@@ -169,22 +175,22 @@ export class GitRefreshService {
   doUpdateLogsAndBranches = () => this.updateLogsAndBranches().subscribe();
 
 
-  updateOperationInProgress = () =>
+  updateOperationInProgress = () => this.forSelectedRepository(save =>
     from(this.gitApi.gitDirs(this.currentRepo.cwd()!).then(dirs => detectOperationInProgress(dirs, window.tauri.fs.exists)))
-      .pipe(tap(operationInProgress => this.currentRepo.update({operationInProgress})));
+      .pipe(tap(operationInProgress => save({operationInProgress}))));
 
 
   /**
    * Get a list of files which have recorded changes in the index as compared to
    * HEAD along with the type of change.
    */
-  updateWorkingDirChanges = () => this.track(
+  updateWorkingDirChanges = () => this.track(this.forSelectedRepository(save =>
     this.gitApi.git(['--no-optional-locks', 'status', '--porcelain', '-z', '--untracked-files=all', '--'])
       .pipe(
         map(parseWorkingDirChanges),
-        tap(workDirStatus => this.currentRepo.update({workDirStatus})),
+        tap(workDirStatus => save({workDirStatus})),
         tap(this.fileDiffPanel.refreshWorkingDirView),
-      ));
+      )));
 
   /**
    * Get a list of files which have recorded changes in the index as compared to
