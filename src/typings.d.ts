@@ -32,7 +32,8 @@ interface PathApi {
 
 export interface WatchOptions {
   recursive?: boolean;
-  ignored?: unknown[];
+  // Directory names skipped anywhere below the watched root
+  ignoredDirs?: string[];
 }
 
 interface ChokidarApi {

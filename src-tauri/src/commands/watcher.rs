@@ -42,8 +42,11 @@ struct Pending {
     new_dirs: Vec<PathBuf>,
 }
 
-fn is_ignored(p: &Path, skip: &[String]) -> bool {
-    p.components().any(|c| {
+/// Whether `path` is in an ignored dir below the watched root it belongs to: a root may itself be in
+/// one (a git dir, a repository under /tmp)
+fn is_ignored(path: &Path, roots: &[PathBuf], skip: &[String]) -> bool {
+    let relative = roots.iter().find_map(|root| path.strip_prefix(root).ok()).unwrap_or(path);
+    relative.components().any(|c| {
         let name = c.as_os_str().to_string_lossy();
         skip.iter().any(|s| name == s.as_str())
     })
@@ -91,7 +94,7 @@ pub fn watch_paths(
     id: String,
     paths: Vec<String>,
     recursive: Option<bool>,
-    ignored_dirs: Option<Vec<String>>,
+    ignored_dirs: Vec<String>,
 ) -> Result<(), String> {
     let recursive = recursive.unwrap_or(true);
 
@@ -101,19 +104,8 @@ pub fn watch_paths(
         .collect();
     let event_name = format!("watcher-event:{safe_id}");
 
-    let mut skip: Vec<String> = vec![
-        ".git".into(), "node_modules".into(), "dist".into(),
-        "build".into(), "cache".into(), "tmp".into(),
-        "target".into(), ".angular".into(),
-    ];
-    if let Some(extra) = ignored_dirs {
-        for dir in extra {
-            if !skip.contains(&dir) {
-                skip.push(dir);
-            }
-        }
-    }
-    let skip = Arc::new(skip);
+    let skip = Arc::new(ignored_dirs);
+    let roots: Arc<Vec<PathBuf>> = Arc::new(paths.iter().map(PathBuf::from).collect());
 
     let pending = Arc::new(Mutex::new(Pending::default()));
     let stop = Arc::new(AtomicBool::new(false));
@@ -122,6 +114,7 @@ pub fn watch_paths(
     let handler = {
         let pending = pending.clone();
         let skip = skip.clone();
+        let roots = roots.clone();
         move |res: notify::Result<Event>| {
             let Ok(event) = res else { return };
             if matches!(event.kind, EventKind::Access(_)) {
@@ -133,7 +126,7 @@ pub fn watch_paths(
 
             let mut p = pending.lock().unwrap();
             for path in &event.paths {
-                if is_ignored(path, &skip) {
+                if is_ignored(path, &roots, &skip) {
                     continue;
                 }
                 // symlink_metadata: a symlink to a directory must not be walked
