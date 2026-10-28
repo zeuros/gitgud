@@ -31,6 +31,7 @@ import {loadStashImage} from './log-draw-utils';
 import {DatePipe} from '@angular/common';
 import {local, remote} from '../../utils/branch-utils';
 import {DATE_FORMAT} from '../../utils/constants';
+import {GitRefreshService} from '../../services/git-refresh.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {LogBuilderService} from '../../services/log-builder.service';
 import {CANVAS_DPR_MULTIPLIER, CANVAS_MARGIN, DRAWING_PAD_LEFT, NODE_RADIUS, NODES_VERTICAL_SPACING, ROW_HEIGHT} from './log-canvas-drawer-settings';
@@ -89,6 +90,7 @@ const RENDER_CHUNK = 20;
 export class LogsComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
+  protected gitRefresh = inject(GitRefreshService);
   protected createBranch = inject(CreateBranchService);
   protected logDragDrop = inject(LogDragDropService);
   protected fixup = inject(FixupService);

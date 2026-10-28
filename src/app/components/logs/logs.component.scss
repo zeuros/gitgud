@@ -429,3 +429,72 @@ $log-chip-parent-left-margin: 6px;
   color: var(--babedouGray);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
+// A repository without commits: covers the table (and what it still shows of the previous repository)
+@keyframes empty-log-nudge {
+  0%, 100% { transform: translateX(0); }
+  50%       { transform: translateX(6px); }
+}
+
+@keyframes empty-log-ember {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%       { opacity: 1; transform: scale(1.08); }
+}
+
+.empty-log {
+  position: absolute;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  user-select: none;
+  // Light theme: deep embers that stay readable on a light background
+  --ember-color: #d9530b;
+  --ember-glow: rgba(255, 110, 20, 0.25);
+  --empty-title-color: #7a3410;
+  --empty-title-glow: 0 0 10px rgba(255, 130, 40, 0.25);
+  --empty-halo: rgba(255, 120, 30, 0.07);
+  background:
+    radial-gradient(ellipse 40% 35% at 50% 45%, var(--empty-halo) 0%, transparent 70%),
+    var(--background);
+
+  :host-context(html.dark) & {
+    --ember-color: rgba(255, 150, 50, 0.92);
+    --ember-glow: rgba(255, 120, 35, 0.7);
+    --empty-title-color: #f3deb6;
+    --empty-title-glow: 0 0 8px rgba(255, 140, 40, 0.6), 0 0 28px rgba(255, 85, 0, 0.3);
+    --empty-halo: rgba(255, 105, 18, 0.10);
+  }
+
+  .empty-log-fire {
+    font-size: 3.5rem;
+    color: var(--ember-color);
+    text-shadow: 0 0 12px var(--ember-glow);
+    animation: empty-log-ember 2.4s ease-in-out infinite;
+  }
+
+  .empty-log-title {
+    margin: 0.4rem 0 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--empty-title-color);
+    text-shadow: var(--empty-title-glow);
+  }
+
+  .empty-log-hint {
+    margin: 0;
+    color: var(--p-text-muted-color);
+  }
+
+  // Points at the commit panel, on the right
+  .empty-log-arrow {
+    display: inline-block; // transforms ignore inline boxes
+    margin-left: 0.4rem;
+    color: var(--ember-color);
+    animation: empty-log-nudge 1.4s ease-in-out infinite;
+  }
+}

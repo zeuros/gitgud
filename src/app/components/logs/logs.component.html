@@ -5,6 +5,13 @@
         <span class="fixup-banner-esc">Esc to cancel</span>
     </div>
 }
+@if (!currentRepo.logs().length && !gitRefresh.isRefreshing()) {
+    <div class="empty-log">
+        <i class="fa fa-fire empty-log-fire"></i>
+        <h3 class="empty-log-title">The quest log is blank</h3>
+        <p class="empty-log-hint">Every legend starts with a first commit <i class="fa fa-long-arrow-right empty-log-arrow"></i></p>
+    </div>
+}
 @let displayLog = computedDisplayLog();
 @let graphColCount = graphColumnCount();
 @let visibleCommitsCnt = visibleCommitsCount();
