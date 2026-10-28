@@ -327,3 +327,13 @@ button.p-button.sober {
   border-inline-start: 1px solid var(--separator-color);
   border-image: var(--separator-fade-vertical) 1;
 }
+
+// A bottom tooltip starting at the left of its ~20px wide host, instead of centered on it, for hosts at the window's left edge.
+// PrimeNG centers it: 50% of its own width undoes that, -10px is half the host
+.p-tooltip.tooltip-from-left-edge {
+  transform: translateX(calc(50% - 10px));
+
+  .p-tooltip-arrow {
+    left: 10px !important;
+  }
+}

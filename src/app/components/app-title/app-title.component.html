@@ -2,7 +2,7 @@
 <img class="bonfire" alt=""
      [class.playing]="bonfirePlaying()"
      [src]="bonfirePlaying() ? './assets/images/bonfire.webp' : './assets/images/bonfire-still.png'"
-     [pTooltip]="'GitGud v' + appVersion" tooltipPosition="bottom"
+     [pTooltip]="'GitGud v' + appVersion" tooltipPosition="bottom" tooltipStyleClass="tooltip-from-left-edge"
      (mouseenter)="bonfireHovered.set(true)"
      (mouseleave)="bonfireHovered.set(false)">
 <span class="app-name">GitGud</span>
