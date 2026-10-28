@@ -157,12 +157,11 @@ export class GitRepositoryService {
     const files = await window.tauri.fs.readdir(gitDir);
     if (files.includes('.git'))
       return gitDir;
-    else if (isRootDirectory(gitDir))
-      throwEx(`This folder is not a valid git repository`);
-    else
-      return this.findGitDir(window.tauri.path.resolve(gitDir, '..'));
 
-    return gitDir;
+    const parentDir = window.tauri.path.dirname(gitDir);
+    if (isRootDirectory(gitDir) || [gitDir, '.'].includes(parentDir))
+      throwEx(`This folder is not a valid git repository`);
+    return this.findGitDir(parentDir);
   };
 
 }
