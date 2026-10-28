@@ -44,6 +44,12 @@ import {UpdateCheckService} from '../../services/update-check.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 import {recentConsoleMessages, reportIssueUrl} from '../../utils/report-issue.utils';
+import {type GitCommandRecord, GitCommandHistoryService} from '../../services/git-command-history.service';
+
+const REPORTED_GIT_COMMANDS = 10;
+
+const gitCommandLine = ({args, timestamp, success}: GitCommandRecord) =>
+  `[${timestamp.toISOString()}] ${success ? 'ok' : 'failed'}: git ${args.join(' ')}`;
 
 type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'operation-continue' | 'operation-skip' | 'operation-abort';
 
@@ -92,6 +98,7 @@ export class ToolbarComponent implements OnInit {
   private branchAheadBehind = inject(BranchAheadBehindService);
   private toast = inject(ToastService);
   private dialog = inject(DialogService);
+  private gitCommandHistory = inject(GitCommandHistoryService);
   private now = toSignal(
     toObservable(this.autoFetch.lastFetchedAt).pipe(
       switchMap(at => at ? interval(1000).pipe(map(() => Date.now())) : EMPTY),
@@ -157,7 +164,10 @@ export class ToolbarComponent implements OnInit {
     packageFormat: window.tauri.packageFormat,
     platform: window.tauri.process.platform,
     arch: window.tauri.process.arch,
-  }, recentConsoleMessages()));
+  }, {
+    gitCommands: this.gitCommandHistory.history().slice(0, REPORTED_GIT_COMMANDS).reverse().map(gitCommandLine),
+    consoleMessages: recentConsoleMessages(),
+  }));
 
   protected openShellHistoryDialog = () => this.dialog.open(ShellHistoryDialogComponent, {header: 'Git Command History', width: '700px'});
 

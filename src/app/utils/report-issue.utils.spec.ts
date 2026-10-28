@@ -22,15 +22,30 @@ describe('reportIssueUrl', () => {
   });
 
   it('adds the console messages', () => {
-    const body = bodyOf(reportIssueUrl(environment, ['warn: a', 'error: b']));
+    const body = bodyOf(reportIssueUrl(environment, {consoleMessages: ['warn: a', 'error: b']}));
     expect(body).toContain('### Console warnings and errors\n\n```text\nwarn: a\nerror: b\n```');
   });
 
   it('leaves out the oldest console messages to fit the url', () => {
     const messages = Array.from({length: 50}, (_, index) => `error ${index}: ${'x'.repeat(500)}`);
-    const url = reportIssueUrl(environment, messages);
+    const url = reportIssueUrl(environment, {consoleMessages: messages});
     expect(url.length).toBeLessThanOrEqual(8000);
     expect(bodyOf(url)).not.toContain('error 0:');
     expect(bodyOf(url)).toContain('error 49:');
+  });
+
+  it('adds the git commands before the console messages', () => {
+    const body = bodyOf(reportIssueUrl(environment, {gitCommands: ['git push'], consoleMessages: ['error: b']}));
+    expect(body).toContain('### Recent git commands\n\n```text\ngit push\n```\n\n### Console warnings and errors');
+  });
+
+  it('leaves out the console messages before the git commands to fit the url', () => {
+    const gitCommands = Array.from({length: 10}, (_, index) => `git commit ${index}`);
+    const consoleMessages = Array.from({length: 20}, (_, index) => `error ${index}: ${'x'.repeat(1000)}`);
+    const url = reportIssueUrl(environment, {gitCommands, consoleMessages});
+    expect(url.length).toBeLessThanOrEqual(8000);
+    expect(bodyOf(url)).toContain('git commit 0');
+    expect(bodyOf(url)).not.toContain('error 0:');
+    expect(bodyOf(url)).toContain('error 19:');
   });
 });
