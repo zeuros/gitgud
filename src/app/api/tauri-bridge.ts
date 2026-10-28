@@ -59,7 +59,7 @@ async function buildBridge() {
     chokidar: {
       watch: (id: string, paths: string | string[], options?: WatchOptions) => {
         const pathList = Array.isArray(paths) ? paths : [paths];
-        // Rust handles its own base ignore list (.git, node_modules, etc.).
+        // `ignored` replaces Rust's default ignore list (.git, node_modules, etc.).
         // Only forward plain directory name strings — globs and regexes are not
         // understood by the Rust path-component filter.
         const ignoredDirs = Array.isArray(options?.ignored)
@@ -71,7 +71,7 @@ async function buildBridge() {
           id,
           paths: pathList,
           recursive: options?.recursive ?? true,
-          ignoredDirs: ignoredDirs?.length ? ignoredDirs : undefined,
+          ignoredDirs,
         }).catch(console.error);
       },
       on: (id: string, event: string, cb: (...args: unknown[]) => void) => {

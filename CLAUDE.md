@@ -66,20 +66,21 @@ Reader services (`git/`) each wrap one git command and parse its output into typ
 
 ### File watcher
 
-`watcher.rs` uses `notify` directly with its own debounce: a flush thread emits one batch of deduplicated paths after 600 ms of quiet, or at most 2 s after the first pending event. Events are filtered by path component — ignored dirs: `.git`, `node_modules`, `dist`, `build`, `cache`, `tmp`, `target`, `.angular`.
+`watcher.rs` uses `notify` directly with its own debounce: a flush thread emits one batch of deduplicated paths after 600 ms of quiet, or at most 2 s after the first pending event. Events are filtered by path component below the watched root — ignored dirs by default: `.git`, `node_modules`, `dist`, `build`, `cache`, `tmp`, `target`, `.angular`; the `ignored` watch option replaces that list.
 
 On Linux, recursive watches are not delegated to inotify: `watch_tree` walks the repo and adds a non-recursive watch per directory, skipping ignored dirs and symlinks, so no watches are registered inside `node_modules`/`target`. Directories created later are watched by the flush thread. Other platforms use a single recursive watch.
 
-`FileWatcherService` (`src/app/services/file-watcher.service.ts`) wraps `window.tauri.chokidar.watch/on/close` and exposes `onWorkingDirFileChange$` via `auditTime(300)`. Git-refresh subscribes with `switchMap(() => updateWorkingDirChanges())` so a new file event cancels the previous in-flight `git status`.
+`FileWatcherService` (`src/app/services/file-watcher.service.ts`) wraps `window.tauri.chokidar.watch/on/close` and exposes `onWorkingDirFileChange$` via `auditTime(300)`. It also watches git's state, which the working-tree watch skips: the git dir and common dir non-recursively, keeping only the entries the app shows (`HEAD`, `index`, `rebase-merge`, `MERGE_HEAD`…, `packed-refs`, `config`, `worktrees`), and `<common dir>/refs` recursively, lock files left out, exposed as `onGitStateChange$`. `FETCH_HEAD` is left out: every fetch rewrites it, and one that moved a ref also wrote below `refs/`. Git-refresh subscribes with `switchMap(() => updateWorkingDirChanges())` so a new file event cancels the previous in-flight `git status`.
 
 ### Refresh pipeline
 
 `GitRefreshService` orchestrates all data refreshes:
 
 1. **`refreshAll()`** — on app load, after toolbar actions, and manual trigger. Runs `updateWorkingDirChanges`, `updateLogsAndBranches`, and `updateRebaseStatus` in parallel via `forkJoin`.
-   On window focus, only the status and rebase state are refreshed, unless git's state files (`HEAD`, `index`, refs, `FETCH_HEAD`…; mtimes compared with the last focus) changed in the background, then `refreshAll()`.
+   On window focus, only the status and rebase state are refreshed.
 2. **`updateLogsAndBranches()`** — two-phase waterfall: Phase 1 fetches stashes + remote tags in parallel, Phase 2 uses those results to fetch logs + branches + tags + detached HEAD in parallel.
 3. **File-triggered refresh** — `FileWatcherService` emits via `auditTime(300)`, then `throttleTime(500, trailing)` + `switchMap(() => updateWorkingDirChanges())` in the refresh service to cancel in-flight calls.
+4. **Git commands run outside the app** — on `onGitStateChange$`, a changed path newer (mtime) than the last log load runs `refreshAll()`, the index newer than the last status load refreshes the status. Older writes are the app's own actions, which call `refreshAll()` themselves.
 
 ### State management
 
