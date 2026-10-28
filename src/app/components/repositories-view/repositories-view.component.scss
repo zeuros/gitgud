@@ -14,6 +14,10 @@
   align-items: center;
   height: 40px;
   background: var(--app-chrome-bg);
+  // Under the whole strip, logo included, instead of the tablist's own border under the tabs only
+  border-bottom: 1px solid var(--separator-color);
+  border-image: var(--separator-fade-horizontal-slight) 1;
+  --p-tabs-tablist-border-width: 0;
 
   // Room for the native traffic lights drawn over the window's top-left corner
   &.macos {

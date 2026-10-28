@@ -458,7 +458,7 @@ $log-chip-parent-left-margin: 6px;
   --empty-halo: rgba(255, 120, 30, 0.07);
   background:
     radial-gradient(ellipse 40% 35% at 50% 45%, var(--empty-halo) 0%, transparent 70%),
-    var(--background);
+    var(--p-content-background); // The log table's own background, like the side panels
 
   :host-context(html.dark) & {
     --ember-color: rgba(255, 150, 50, 0.92);

@@ -8,7 +8,8 @@ $spacing: 8px;
   height: 40px;
   padding: 0 $spacing;
   background: var(--app-chrome-bg);
-  border-bottom: 1px solid var(--p-content-border-color);
+  border-bottom: 1px solid var(--separator-color);
+  border-image: var(--separator-fade-horizontal-slight) 1;
   gap: 6px;
   font-size: 0.9rem;
 }

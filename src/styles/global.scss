@@ -156,7 +156,8 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
   align-items: center;
   justify-content: space-between;
   padding: 0.4rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--separator-color);
+  border-image: var(--separator-fade-horizontal) 1;
   flex-shrink: 0;
 }
 
@@ -290,3 +291,39 @@ button.p-button.sober {
   }
 }
 
+
+// No frame around splitters: it doubled the separators drawn next to them (e.g. under the toolbar)
+.p-splitter {
+  border: none;
+}
+
+// Splitter gutters: a faded separator line at rest, a primary-colored gutter on hover and while dragging
+.p-splitter-gutter {
+  background: transparent no-repeat center;
+  transition: background-color 0.15s ease;
+
+  .p-splitter-horizontal > & {
+    background-image: var(--separator-fade-vertical);
+    background-size: 1px 100%;
+  }
+
+  .p-splitter-vertical > & {
+    background-image: var(--separator-fade-horizontal);
+    background-size: 100% 1px;
+  }
+
+  &:hover, &[data-resizing] {
+    background: color-mix(in srgb, var(--p-primary-color) 45%, transparent);
+  }
+}
+
+// Dividers: the same faded lines as the other separators
+.p-divider-horizontal:before {
+  border-block-start: 1px solid var(--separator-color);
+  border-image: var(--separator-fade-horizontal) 1;
+}
+
+.p-divider-vertical:before {
+  border-inline-start: 1px solid var(--separator-color);
+  border-image: var(--separator-fade-vertical) 1;
+}

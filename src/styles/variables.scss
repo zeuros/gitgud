@@ -69,6 +69,13 @@
   // Divider / border (surface-200 is invisible on light bg at default)
   --p-content-border-color: rgba(142, 78, 140, 0.18);
 
+  // Lines between panels: faint, fading out at both ends
+  --separator-color: rgba(142, 78, 140, 0.10);
+  --separator-fade-horizontal: linear-gradient(to right, transparent, var(--separator-color) 15%, var(--separator-color) 85%, transparent);
+  // Window-wide lines (tab strip, toolbar): a slight fade, close to the window's edges
+  --separator-fade-horizontal-slight: linear-gradient(to right, transparent, var(--separator-color) 6%, var(--separator-color) 94%, transparent);
+  --separator-fade-vertical: linear-gradient(to bottom, transparent, var(--separator-color) 15%, var(--separator-color) 85%, transparent);
+
   // Tablist + toolbar share the chrome color
   --p-tabs-tablist-background: var(--app-chrome-bg);
 
@@ -133,6 +140,7 @@ html.dark {
   --p-highlight-focus-background: rgba(160, 100, 200, 0.32);
 
   --p-content-border-color: rgba(80, 65, 95, 0.45);
+  --separator-color: rgba(170, 145, 195, 0.10);
   --p-tabs-tablist-background: var(--app-chrome-bg);
 }
 
@@ -161,6 +169,7 @@ html.dark.forest {
   --p-highlight-background: rgba(100, 190, 100, 0.18);
   --p-highlight-focus-background: rgba(100, 190, 100, 0.30);
   --p-content-border-color: rgba(65, 125, 75, 0.45);
+  --separator-color: rgba(120, 200, 130, 0.10);
 }
 
 // ── Submarine overrides ───────────────────────────────────────────────────────
@@ -188,6 +197,7 @@ html.dark.submarine {
   --p-highlight-background: rgba(40, 182, 210, 0.18);
   --p-highlight-focus-background: rgba(40, 182, 210, 0.30);
   --p-content-border-color: rgba(28, 95, 135, 0.50);
+  --separator-color: rgba(60, 170, 215, 0.10);
 }
 
 // ── Darcula overrides ─────────────────────────────────────────────────────────
@@ -215,6 +225,7 @@ html.dark.darcula {
   --p-highlight-background: rgba(200, 120, 50, 0.20);
   --p-highlight-focus-background: rgba(200, 120, 50, 0.32);
   --p-content-border-color: rgba(100, 75, 38, 0.52);
+  --separator-color: rgba(210, 160, 100, 0.10);
 }
 
 // ── Ember overrides — embers glowing in the dark ──────────────────────────────
@@ -246,4 +257,5 @@ html.dark.ember {
   --p-highlight-background: rgba(206, 128, 84, 0.14);
   --p-highlight-focus-background: rgba(206, 128, 84, 0.24);
   --p-content-border-color: rgba(110, 76, 58, 0.45);
+  --separator-color: rgba(206, 140, 100, 0.10);
 }

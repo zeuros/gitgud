@@ -80,7 +80,8 @@
   flex: 0 0 auto;
   min-height: 120px;
   max-height: 30%;
-  border-bottom: 1px solid var(--p-content-border-color);
+  border-bottom: 1px solid var(--separator-color);
+  border-image: var(--separator-fade-horizontal) 1;
 }
 
 .conflict-header {
