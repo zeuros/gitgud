@@ -17,8 +17,9 @@
  */
 
 import {effect, inject, Injectable} from '@angular/core';
-import {concatMap, EMPTY, from, switchMap} from 'rxjs';
-import {isRootDirectory, throwEx} from '../utils/utils';
+import {concatMap, EMPTY, from, Observable, switchMap} from 'rxjs';
+import {ConfirmationService} from 'primeng/api';
+import {isRootDirectory} from '../utils/utils';
 import {createRepository} from '../utils/repository-utils';
 import {FileWatcherService} from './file-watcher.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
@@ -37,6 +38,7 @@ export class GitRepositoryService {
   private gitRefresh = inject(GitRefreshService);
   private gitApi = inject(GitApiService);
   private currentRepo = inject(CurrentRepoStore);
+  private confirmation = inject(ConfirmationService);
 
   constructor() {
     effect(() => {
@@ -48,10 +50,31 @@ export class GitRepositoryService {
 
   // Opens the repository of each folder dropped on the window, one after the other
   private openDroppedRepositories = (paths: string[]) => {
-    from(paths).pipe(
-      concatMap(path => from(this.findGitDir(path)).pipe(switchMap(this.openRepository))),
-    ).subscribe();
+    from(paths).pipe(concatMap(this.openFolder)).subscribe();
   };
+
+  // Opens the repository `path` is in, or offers to create one in its folder
+  private openFolder = (path: string) =>
+    from(this.folderOf(path)).pipe(switchMap(folder => from(this.findGitDir(folder)).pipe(
+      switchMap(repoPath => repoPath ? this.openRepository(repoPath) : this.confirmInitRepository(folder)),
+    )));
+
+  private folderOf = async (path: string) =>
+    await window.tauri.fs.isFile(path).catch(() => false) ? window.tauri.path.dirname(path) : path;
+
+  private confirmInitRepository = (folder: string) => new Observable<unknown>(subscriber => {
+    this.confirmation.confirm({
+      header: 'Not a git repository',
+      message: `${folder} isn't in a git repository. Create one there?`,
+      acceptLabel: 'Init',
+      rejectLabel: 'Cancel',
+      accept: () => this.initAndOpenRepository(folder).subscribe(subscriber),
+      reject: () => subscriber.complete(),
+    });
+  });
+
+  private initAndOpenRepository = (folder: string) =>
+    this.gitApi.init(folder).pipe(switchMap(() => this.openRepository(folder)));
 
   // The main worktree when `path` is a linked worktree, undefined otherwise (or when it isn't a repository)
   private findMainWorktree = (path: string) =>
@@ -64,8 +87,8 @@ export class GitRepositoryService {
   };
 
   pickFolderAndOpenRepository = () => {
-    from(this.pickGitFolder()).pipe(
-      switchMap(path => this.openRepository(path)),
+    from(window.tauri.dialog.showOpenDialog({properties: ['openDirectory']})).pipe(
+      switchMap(picked => picked?.length ? this.openFolder(picked[0]) : EMPTY),
     ).subscribe();
   };
 
@@ -131,36 +154,22 @@ export class GitRepositoryService {
 
   initRepository = () => {
     from(window.tauri.dialog.showOpenDialog({properties: ['openDirectory']})).pipe(
-      switchMap(picked => {
-        if (!picked?.length) return EMPTY;
-        const dir = picked[0];
-        return this.gitApi.init(dir).pipe(switchMap(() => this.openRepository(dir)));
-      }),
+      switchMap(picked => picked?.length ? this.initAndOpenRepository(picked[0]) : EMPTY),
     ).subscribe();
   };
 
-  pickGitFolder = async (): Promise<string> => {
-    const picked = await window.tauri.dialog.showOpenDialog({properties: ['openDirectory']});
-    if (!picked?.length) throwEx('No folder picked');
-    return this.findGitDir(picked![0]);
-  };
-
   /**
-   * Walks up the picked directory tree until a `.git` folder is found.
-   * Throws if no git repository exists.
+   * Walks up from `gitDir` until a folder holding `.git` is found.
+   * Resolves undefined when it isn't inside a git repository.
    */
-  findGitDir = async (gitDir: string): Promise<string> => {
-    const isFile = await window.tauri.fs.isFile(gitDir).catch(() => false);
-    if (isFile)
-      return this.findGitDir(window.tauri.path.dirname(gitDir));
-
+  private findGitDir = async (gitDir: string): Promise<string | undefined> => {
     const files = await window.tauri.fs.readdir(gitDir);
     if (files.includes('.git'))
       return gitDir;
 
     const parentDir = window.tauri.path.dirname(gitDir);
     if (isRootDirectory(gitDir) || [gitDir, '.'].includes(parentDir))
-      throwEx(`This folder is not a valid git repository`);
+      return undefined;
     return this.findGitDir(parentDir);
   };
 
