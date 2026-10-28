@@ -25,6 +25,9 @@ import {animationFrames, config, debounceTime, firstValueFrom, fromEvent, of, sk
 import {installTauriBridge} from './app/api/tauri-bridge';
 import {invoke} from '@tauri-apps/api/core';
 import {GitRefreshService} from './app/services/git-refresh.service';
+import {captureConsoleMessages} from './app/utils/report-issue.utils';
+
+captureConsoleMessages();
 
 // Longest the splash screen waits for the repository to load before showing the main window anyway
 const STARTUP_LOAD_TIMEOUT_MS = 2000;

@@ -43,7 +43,7 @@ import {canSkip, type GitOperation, OPERATION_LABELS} from '../../utils/operatio
 import {UpdateCheckService} from '../../services/update-check.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
-import {reportIssueUrl} from '../../utils/report-issue.utils';
+import {recentConsoleMessages, reportIssueUrl} from '../../utils/report-issue.utils';
 
 type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'operation-continue' | 'operation-skip' | 'operation-abort';
 
@@ -157,7 +157,7 @@ export class ToolbarComponent implements OnInit {
     packageFormat: window.tauri.packageFormat,
     platform: window.tauri.process.platform,
     arch: window.tauri.process.arch,
-  }));
+  }, recentConsoleMessages()));
 
   protected openShellHistoryDialog = () => this.dialog.open(ShellHistoryDialogComponent, {header: 'Git Command History', width: '700px'});
 
