@@ -1,6 +1,6 @@
 import {computeGraphColors} from '../utils/color-utils';
 
-export type ThemeMode = 'dark' | 'light' | 'forest' | 'submarine' | 'darcula' | 'one-rainbow';
+export type ThemeMode = 'dark' | 'light' | 'forest' | 'submarine' | 'darcula' | 'ember';
 
 export type MonacoTheme = 'gitgud-dark' | 'gitgud-light';
 
@@ -83,14 +83,14 @@ export const DARCULA_TOKENS: ThemeTokens = {
   monacoTheme: 'gitgud-dark',
 };
 
-export const ONE_RAINBOW_TOKENS: ThemeTokens = {
+export const EMBER_TOKENS: ThemeTokens = {
   canvas: {
-    primary: 'rgba(255, 0, 204, 0.95)',
-    graphColors: computeGraphColors('rgb(255,0,0)'),  // pure red → full saturated rainbow
-    background: '#07001a',
-    avatarRing: '#1a0038',
-    nodeShadowColor: 'rgba(255, 0, 200, 0.55)',
-    nodeShadowBlur: 14,
+    primary: 'rgba(206, 128, 84, 0.85)',
+    graphColors: computeGraphColors('rgb(190,118,78)'),
+    background: '#1e1815',
+    avatarRing: '#2b221d',
+    nodeShadowColor: 'rgba(0, 0, 0, 0.75)',
+    nodeShadowBlur: 10,
   },
   monacoTheme: 'gitgud-dark',
 };
@@ -101,7 +101,7 @@ export const THEME_TOKENS: Partial<Record<ThemeMode, ThemeTokens>> = {
   forest: FOREST_TOKENS,
   submarine: SUBMARINE_TOKENS,
   darcula: DARCULA_TOKENS,
-  'one-rainbow': ONE_RAINBOW_TOKENS,
+  ember: EMBER_TOKENS,
 };
 
 export const THEMES: ThemeDefinition[] = [
@@ -110,5 +110,5 @@ export const THEMES: ThemeDefinition[] = [
   {id: 'forest',      label: 'Forest'},
   {id: 'submarine',   label: 'Submarine'},
   {id: 'darcula',     label: 'Darcula'},
-  {id: 'one-rainbow', label: 'One Rainbow'},
+  {id: 'ember',       label: 'Ember'},
 ];

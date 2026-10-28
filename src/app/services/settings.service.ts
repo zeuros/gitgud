@@ -18,7 +18,7 @@
 
 import {Injectable, signal} from '@angular/core';
 import {DEFAULT_AUTO_FETCH_INTERVAL} from '../utils/constants';
-import type { ThemeMode } from "../models/theme.model";
+import { THEMES, type ThemeMode } from "../models/theme.model";
 import {DEFAULT_EDITOR_COMMAND} from '../utils/editor-command.utils';
 
 @Injectable({providedIn: 'root'})
@@ -26,8 +26,9 @@ export class SettingsService {
 
   private _zoom = signal(window.tauri.zoom.getFactor());
   readonly autoFetchIntervalMs = signal(parseFloat(localStorage.getItem('auto-fetch-interval') ?? DEFAULT_AUTO_FETCH_INTERVAL));
+  // A stored theme that no longer exists falls back to the system's color scheme
   private _theme = signal<ThemeMode>(
-    (localStorage.getItem('theme') as ThemeMode) ??
+    THEMES.find(t => t.id === localStorage.getItem('theme'))?.id ??
     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
   );
   readonly themeSignal = this._theme.asReadonly();

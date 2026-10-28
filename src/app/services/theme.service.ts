@@ -20,7 +20,7 @@ import {effect, inject, Injectable, signal} from '@angular/core';
 import {SettingsService} from './settings.service';
 import {DARK_TOKENS, LIGHT_TOKENS, THEME_TOKENS, type ThemeMode} from '../models/theme.model';
 
-const DARK_CLASSES: ReadonlyArray<ThemeMode> = ['dark', 'forest', 'submarine', 'darcula', 'one-rainbow'];
+const DARK_CLASSES: ReadonlyArray<ThemeMode> = ['dark', 'forest', 'submarine', 'darcula', 'ember'];
 
 @Injectable({providedIn: 'root'})
 export class ThemeService {
