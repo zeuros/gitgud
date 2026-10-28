@@ -125,15 +125,19 @@ fn is_ignored(path: &Path, is_dir: bool, roots: &[Root], skip: &[String]) -> boo
     let (relative, git_ignore_rules) = roots.iter()
         .find_map(|root| Some((path.strip_prefix(&root.path).ok()?, root.git_ignore_rules.as_deref())))
         .unwrap_or((path, None));
-    relative.components().any(|c| {
-        let name = c.as_os_str().to_string_lossy();
-        skip.iter().any(|s| name == s.as_str())
-    }) || git_ignore_rules.is_some_and(|rules| rules.is_ignored(relative, is_dir))
+    relative.components().enumerate().any(|(depth, c)| is_skipped(&c.as_os_str().to_string_lossy(), depth == 0, skip))
+        || git_ignore_rules.is_some_and(|rules| rules.is_ignored(relative, is_dir))
 }
 
-/// The directories below `dir`, never descending into ignored dirs (`skip` names, and with `git_ignore` what the
+/// Whether a dir named `name` is skipped: a `skip` entry matches at any depth, or only right below the watched root
+/// when it starts with `/` (as in .gitignore)
+fn is_skipped(name: &str, below_root: bool, skip: &[String]) -> bool {
+    skip.iter().any(|s| s.strip_prefix('/').map_or(name == s.as_str(), |anchored| below_root && name == anchored))
+}
+
+/// The directories below `dir` (a watched root when `is_root`), never descending into ignored dirs (`skip` names, and with `git_ignore` what the
 /// repository's ignore rules exclude) or symlinks. A directory that can't be read is skipped.
-fn tree_dirs(dir: &Path, skip: &[String], git_ignore: bool) -> Vec<PathBuf> {
+fn tree_dirs(dir: &Path, is_root: bool, skip: &[String], git_ignore: bool) -> Vec<PathBuf> {
     let skip = skip.to_vec();
     WalkBuilder::new(dir)
         .standard_filters(false)
@@ -144,7 +148,7 @@ fn tree_dirs(dir: &Path, skip: &[String], git_ignore: bool) -> Vec<PathBuf> {
         .filter_entry(move |entry| {
             let name = entry.file_name().to_string_lossy();
             // DirEntry::file_type doesn't follow symlinks
-            entry.file_type().is_some_and(|t| t.is_dir()) && !skip.iter().any(|s| name == s.as_str())
+            entry.file_type().is_some_and(|t| t.is_dir()) && !is_skipped(&name, is_root && entry.depth() == 1, &skip)
         })
         .build()
         .flatten()
@@ -197,7 +201,7 @@ pub fn watch_paths(
     let skip = Arc::new(ignored_dirs);
     // The directories of each recursive root: watched one by one on Linux, their .gitignore files read with git_ignore
     let root_dirs: Vec<Vec<PathBuf>> = paths.iter()
-        .map(|p| if recursive && (git_ignore || cfg!(target_os = "linux")) { tree_dirs(Path::new(p), &skip, git_ignore) } else { vec![] })
+        .map(|p| if recursive && (git_ignore || cfg!(target_os = "linux")) { tree_dirs(Path::new(p), true, &skip, git_ignore) } else { vec![] })
         .collect();
     // The canonical roots too: FSEvents (macOS) reports resolved paths, /private/tmp/… for a root opened as /tmp/…
     let roots: Arc<Vec<Root>> = Arc::new(paths.iter().map(PathBuf::from).zip(&root_dirs)
@@ -296,7 +300,7 @@ pub fn watch_paths(
                 #[cfg(target_os = "linux")]
                 for new_dir in &new_dirs {
                     // The dir may already be gone again: only the watch limit is reported, once
-                    if let Err(error) = watch_tree(&watcher, new_dir, &tree_dirs(new_dir, &skip, git_ignore)) {
+                    if let Err(error) = watch_tree(&watcher, new_dir, &tree_dirs(new_dir, false, &skip, git_ignore)) {
                         if matches!(error.kind, notify::ErrorKind::MaxFilesWatch) && !watch_limit_reported {
                             watch_limit_reported = true;
                             let _ = app.emit(&error_event_name, WatchError::from(error));

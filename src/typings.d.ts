@@ -32,7 +32,7 @@ interface PathApi {
 
 export interface WatchOptions {
   recursive?: boolean;
-  // Directory names skipped anywhere below the watched root
+  // Directory names skipped anywhere below the watched root, or only right below it when starting with '/'
   ignoredDirs?: string[];
   // Also skips what the repository's ignore rules exclude (.gitignore, info/exclude, global excludes), read when the watch starts
   respectGitIgnore?: boolean;

@@ -26,7 +26,7 @@ export interface GitDirs {
 // Same split as `git rev-parse --git-path`: refs (but the per-worktree ones), packed-refs and their logs are shared
 const SHARED = /^(refs\/(?!bisect|worktree|rewritten)|packed-refs$|logs\/refs\/)/;
 
-/** Absolute path of `name` (e.g. 'rebase-merge', 'refs/stash') in the repository's git directory */
+/** Absolute path of `name`, a path inside `.git` as `git rev-parse --git-path` takes it: 'rebase-merge' resolves in the git dir, 'refs/stash' in the common dir */
 export const gitPath = ({gitDir, commonDir}: GitDirs, name: string) => `${SHARED.test(name) ? commonDir : gitDir}/${name}`;
 
 const shellQuote = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`;

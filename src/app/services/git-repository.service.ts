@@ -16,12 +16,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {effect, inject, Injectable} from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {concatMap, EMPTY, from, Observable, switchMap} from 'rxjs';
 import {ConfirmationService} from 'primeng/api';
 import {isRootDirectory} from '../utils/utils';
 import {createRepository} from '../utils/repository-utils';
-import {FileWatcherService} from './file-watcher.service';
 import {GitRepositoryStore} from '../stores/git-repos.store';
 import {GitRefreshService} from './git-refresh.service';
 import {GitApiService} from './git/git-api.service';
@@ -33,7 +32,6 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
 })
 export class GitRepositoryService {
 
-  private fileWatcher = inject(FileWatcherService);
   private gitRepositoryStore = inject(GitRepositoryStore);
   private gitRefresh = inject(GitRefreshService);
   private gitApi = inject(GitApiService);
@@ -41,10 +39,6 @@ export class GitRepositoryService {
   private confirmation = inject(ConfirmationService);
 
   constructor() {
-    effect(() => {
-      const cwd = this.currentRepo.cwd();
-      if (cwd) this.fileWatcher.setWatcher(cwd);
-    });
     window.tauri.onPathsDropped(this.openDroppedRepositories);
   }
 

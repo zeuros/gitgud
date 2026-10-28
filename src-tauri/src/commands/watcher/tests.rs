@@ -11,7 +11,7 @@ fn git_ignore_rules_skip_ignored_dirs_and_files() {
     std::fs::write(worktree.join("src/.gitignore"), "generated/\n!keep.log\n").unwrap();
     std::fs::write(worktree.join(".git/info/exclude"), "local.txt\n").unwrap();
 
-    let dirs = tree_dirs(&worktree, &[".git".into()], true);
+    let dirs = tree_dirs(&worktree, true, &[".git".into()], true);
     let rules = GitIgnoreRules::read(&worktree, &dirs);
     let relative_dirs: Vec<_> = dirs.iter().map(|d| d.strip_prefix(&worktree).unwrap().to_path_buf()).collect();
     let _ = std::fs::remove_dir_all(&worktree);
@@ -24,4 +24,24 @@ fn git_ignore_rules_skip_ignored_dirs_and_files() {
     assert!(rules.is_ignored(Path::new("local.txt"), false));
     assert!(!rules.is_ignored(Path::new("src/keep.log"), false));
     assert!(!rules.is_ignored(Path::new("src/kept/a.ts"), false));
+}
+
+#[test]
+fn anchored_skip_entries_match_only_below_the_root() {
+    let common_dir = std::env::temp_dir().join(format!("gitgud-watcher-anchored-test-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&common_dir);
+    for dir in ["objects/ab", "refs/heads/hooks", "hooks"] {
+        std::fs::create_dir_all(common_dir.join(dir)).unwrap();
+    }
+    let skip = ["/objects".to_string(), "/hooks".to_string()];
+
+    let dirs = tree_dirs(&common_dir, true, &skip, false);
+    let roots = [Root { path: common_dir.clone(), git_ignore_rules: None }];
+    let _ = std::fs::remove_dir_all(&common_dir);
+
+    assert_eq!(dirs.len(), 3, "{dirs:?}");
+    assert!(dirs.contains(&common_dir.join("refs/heads/hooks")));
+    assert!(is_ignored(&common_dir.join("objects/ab/cd"), false, &roots, &skip));
+    assert!(!is_ignored(&common_dir.join("refs/heads/hooks/main"), false, &roots, &skip));
+    assert!(!is_ignored(&common_dir.join("refs/heads/objects"), false, &roots, &skip));
 }

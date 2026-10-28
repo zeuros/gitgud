@@ -17,7 +17,7 @@
  */
 
 import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
-import {asyncScheduler, defer, finalize, forkJoin, from, map, type Observable, of, ReplaySubject, switchMap, tap, throttleTime} from 'rxjs';
+import {concatMap, defer, EMPTY, finalize, forkJoin, from, map, type Observable, of, ReplaySubject, switchMap, tap} from 'rxjs';
 import {LogReaderService} from './git/log-reader.service';
 import {BranchReaderService} from './git/branch-reader.service';
 import {StashReaderService} from './git/stash-reader.service';
@@ -25,7 +25,6 @@ import {TagReaderService} from './git/tag-reader.service';
 import {WorktreeReaderService} from './git/worktree-reader.service';
 import {GitApiService} from './git/git-api.service';
 import {filterOutStashes} from '../utils/repository-utils';
-import {gitPath} from '../utils/git-path.utils';
 import {detectOperationInProgress} from '../utils/operation-in-progress.utils';
 import type {GitRepository} from '../models/git-repository';
 import type {GitTag} from '../models/git-tag';
@@ -37,9 +36,9 @@ import {parseWorkingDirChanges} from '../lib/github-desktop/commit-files-changes
 import {FileDiffPanelService} from './file-diff-panel.service';
 
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
+// A worktree's index: staging rewrites it, which only changes the status
+const isIndex = (path: string) => path.endsWith('/index') && !path.includes('/refs/');
 
-// .git entries whose mtime changes whenever refs/HEAD/index move (commit, checkout, fetch, branch, stash…)
-const GIT_STATE_FILES = ['HEAD', 'index', 'packed-refs', 'FETCH_HEAD', 'ORIG_HEAD', 'logs/HEAD', 'refs/heads', 'refs/tags', 'refs/stash'];
 
 @Injectable({
   providedIn: 'root',
@@ -83,8 +82,13 @@ export class GitRefreshService {
       .subscribe();
     window.tauri.onWindowFocus(this.onWindowFocus);
     this.destroyRef.onDestroy(() => window.tauri.offWindowFocus(this.onWindowFocus));
+    // Each batch's refresh completes: logLoadedAt is set when a load starts, it must not be cancelled
+    this.fileWatcher.onGitStateChange$.pipe(
+      concatMap(paths => from(this.changedSinceLogLoad(paths.filter(path => !isIndex(path)))).pipe(
+        concatMap(changed => changed ? this.refreshAll() : paths.some(isIndex) ? this.updateWorkingDirChanges() : EMPTY),
+      )),
+    ).subscribe();
     this.fileWatcher.onWorkingDirFileChange$.pipe(
-      throttleTime(500, asyncScheduler, {leading: false, trailing: true}),
       switchMap(() => this.updateWorkingDirChanges()),
     ).subscribe();
   }
@@ -105,31 +109,20 @@ export class GitRefreshService {
 
   doRefreshAll = () => this.refreshAll().subscribe();
 
-  private lastGitStateSignature?: string;
+  // When the log started loading: older writes were the app's own, newer ones may be missing from it
+  private logLoadedAt = 0;
 
-  // Stats a few git-dir entries; a changed signature means refs/HEAD/index moved since last check.
-  // All-missing (or no git dir found) yields undefined → caller must assume changed.
-  private gitStateSignature = async () => {
-    const cwd = this.currentRepo.cwd();
-    const dirs = await this.gitApi.gitDirs(cwd).catch(() => undefined);
-    if (!dirs) return undefined;
-    const mtimes = await Promise.all(GIT_STATE_FILES.map(f => window.tauri.fs.mtime(gitPath(dirs, f)).catch(() => 0)));
-    return mtimes.some(Boolean) ? `${cwd}|${mtimes.join(',')}` : undefined;
-  };
+  // A path written since the log started loading, or deleted (a branch removed)
+  private changedSinceLogLoad = (paths: string[]) =>
+    Promise.all(paths.map(path => window.tauri.fs.mtime(path).then(mtime => mtime > this.logLoadedAt, () => true)))
+      .then(changed => changed.some(Boolean));
 
-  // On focus, the working dir may have changed (editor), so always refresh status; only reload the
-  // (expensive) logs/branches/tags when git state actually moved while we were in the background.
+  private refreshStatus = () =>
+    this.track(forkJoin({workDirStatus: this.updateWorkingDirChanges(), operationInProgress: this.updateOperationInProgress()}));
+
+  // An editor may have changed files while in the background; git commands run elsewhere are seen by the git state watcher
   private onWindowFocus = () => {
-    if (!this.currentRepo.cwd()) return;
-    from(this.gitStateSignature()).pipe(
-      switchMap(sig => {
-        const unchanged = sig !== undefined && sig === this.lastGitStateSignature;
-        this.lastGitStateSignature = sig;
-        return unchanged
-          ? this.track(forkJoin({workDirStatus: this.updateWorkingDirChanges(), operationInProgress: this.updateOperationInProgress()}))
-          : this.refreshAll();
-      }),
-    ).subscribe();
+    if (this.currentRepo.cwd()) this.refreshStatus().subscribe();
   };
 
   /**
@@ -137,8 +130,9 @@ export class GitRefreshService {
    * and returns a partial repository update.
    * The log includes the remote tags already known; remote tags are read afterwards, without holding the refresh on the network.
    */
-  updateLogsAndBranches = () => this.track(this.forSelectedRepository(save =>
-    this.stashReader.getStashes()
+  updateLogsAndBranches = () => this.track(this.forSelectedRepository(save => {
+    this.logLoadedAt = Date.now();
+    return this.stashReader.getStashes()
       .pipe(
         switchMap(stashes => {
           const remoteTagsInLog = this.currentRepo.remoteTags();
@@ -154,7 +148,8 @@ export class GitRefreshService {
             this.updateRemoteTags(stashes, remoteTagsInLog, save);
           }));
         }),
-      )));
+      );
+  }));
 
   // Reloads the log when a remote tag points to a commit it didn't include
   private updateRemoteTags = (stashes: Commit[], remoteTagsInLog: GitTag[], save: (updates: Partial<GitRepository>) => void) => this.track(
