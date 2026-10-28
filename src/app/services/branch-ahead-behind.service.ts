@@ -17,7 +17,7 @@
  */
 
 import {effect, inject, Injectable, signal} from '@angular/core';
-import {catchError, EMPTY, from, map, mergeMap, type Observable} from 'rxjs';
+import {catchError, EMPTY, from, map, mergeMap, type Observable, toArray} from 'rxjs';
 import {type AheadBehind, type Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {GitApiService} from './git/git-api.service';
@@ -38,9 +38,10 @@ export class BranchAheadBehindService {
 
       const localTrackedBranches = this.currentRepo.branches().filter(b => b.type === BranchType.Local && b.upstream);
 
+      // Replaces the whole map: branches of the previously selected repository, or gone, keep no count
       const sub = from(localTrackedBranches)
-        .pipe(mergeMap(this.aheadBehindCountsForBranch))
-        .subscribe(([branch, aheadBehind]) => this.aheadBehindMap.update(map => ({...map, [branch]: aheadBehind})));
+        .pipe(mergeMap(this.aheadBehindCountsForBranch), toArray())
+        .subscribe(counts => this.aheadBehindMap.set(Object.fromEntries(counts)));
       onCleanup(() => sub.unsubscribe());
     });
   }
