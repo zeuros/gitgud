@@ -17,7 +17,7 @@
  */
 
 import {effect, inject, Injectable} from '@angular/core';
-import {EMPTY, from, switchMap} from 'rxjs';
+import {concatMap, EMPTY, from, switchMap} from 'rxjs';
 import {isRootDirectory, throwEx} from '../utils/utils';
 import {createRepository} from '../utils/repository-utils';
 import {FileWatcherService} from './file-watcher.service';
@@ -43,7 +43,15 @@ export class GitRepositoryService {
       const cwd = this.currentRepo.cwd();
       if (cwd) this.fileWatcher.setWatcher(cwd);
     });
+    window.tauri.onPathsDropped(this.openDroppedRepositories);
   }
+
+  // Opens the repository of each folder dropped on the window, one after the other
+  private openDroppedRepositories = (paths: string[]) => {
+    from(paths).pipe(
+      concatMap(path => from(this.findGitDir(path)).pipe(switchMap(this.openRepository))),
+    ).subscribe();
+  };
 
   // The main worktree when `path` is a linked worktree, undefined otherwise (or when it isn't a repository)
   private findMainWorktree = (path: string) =>

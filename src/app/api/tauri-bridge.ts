@@ -180,6 +180,12 @@ async function buildBridge() {
       return {} as unknown as Window;
     },
 
+    onPathsDropped: (cb: (paths: string[]) => void) => {
+      getCurrentWebview().onDragDropEvent(({payload}) => {
+        if (payload.type === 'drop' && payload.paths.length) cb(payload.paths);
+      });
+    },
+
     appWindow: {
       close: () => getCurrentWindow().close(),
     },

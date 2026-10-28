@@ -92,6 +92,8 @@ interface TauriApi {
   packageFormat?: string;
   onWindowFocus: (cb: () => void) => unknown;
   offWindowFocus: (cb: () => void) => unknown;
+  /** Files or folders dropped from the file manager onto the main window */
+  onPathsDropped: (cb: (paths: string[]) => void) => void;
   /** The main window, for the title bar the app draws itself */
   appWindow: {
     close: () => Promise<void>;
