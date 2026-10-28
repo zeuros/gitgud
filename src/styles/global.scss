@@ -315,6 +315,22 @@ button.p-button.sober {
   &:hover, &[data-resizing] {
     background: color-mix(in srgb, var(--p-primary-color) 45%, transparent);
   }
+
+  // A wider area to grab than the drawn gutter: PrimeNG's invisible pseudo-element (5px, centered on it) made to overflow more.
+  // Between side-by-side panels, only to the right: the left panel's scrollbar runs along the gutter
+  &::before {
+    width: auto;
+    height: auto;
+    transform: none;
+
+    .p-splitter-horizontal > & {
+      inset: 0 -8px 0 0;
+    }
+
+    .p-splitter-vertical > & {
+      inset: -4px 0;
+    }
+  }
 }
 
 // Dividers: the same faded lines as the other separators
