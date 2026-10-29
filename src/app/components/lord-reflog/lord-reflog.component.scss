@@ -1,0 +1,191 @@
+// Timeline (seconds after the code is entered)
+$rise-at: 0.2s;
+$cast-at: 1.6s;
+$break-at: 1.8s;
+$leave-at: 4.2s;
+$died-at: 4.6s;
+$button-at: 6.4s;
+
+.wrath-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  overflow: hidden;
+  animation: dim-in 0.6s ease-out forwards, cast-flash 0.5s ease-out $cast-at;
+}
+
+.lord-reflog {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  height: 80vh;
+  aspect-ratio: 1024 / 1536;
+  transform: translate(-50%, 100%);
+  animation: lord-rise 1.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) $rise-at forwards,
+             lord-float 1.2s ease-in-out calc($rise-at + 1.4s) 2,
+             lord-leave 0.8s ease-in $leave-at forwards;
+
+  img {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.7));
+  }
+}
+
+// Over the orb at the top of the staff
+.orb-flash {
+  position: absolute;
+  left: 84%;
+  top: 17.5%;
+  width: 90%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: radial-gradient(circle, rgba(237, 233, 254, 0.95) 0%, rgba(139, 92, 246, 0.6) 30%, transparent 70%);
+  animation: orb-flash 0.9s ease-out $cast-at;
+}
+
+.lord-speech {
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  transform: translate(-50%, -100%);
+  width: max-content;
+  margin: 0;
+  font-family: 'Cinzel Decorative', 'Palatino Linotype', serif;
+  font-size: 22px;
+  color: #ddd6fe;
+  text-shadow: 0 0 12px #8b5cf6;
+  opacity: 0;
+  animation: fade-in 0.6s ease-out calc($rise-at + 1.2s) forwards;
+}
+
+.you-died-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 28px 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85) 25%, rgba(0, 0, 0, 0.85) 75%, transparent);
+  text-align: center;
+  opacity: 0;
+  animation: fade-in 1.5s ease-in $died-at forwards;
+}
+
+.you-died {
+  margin: 0;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+  font-size: 96px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a51c1c;
+  text-shadow: 0 0 24px rgba(165, 28, 28, 0.5);
+  animation: you-died-grow 6s ease-out $died-at forwards;
+}
+
+.rest-button {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 110px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  border: 1px solid rgba(243, 200, 107, 0.4);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #f3c86b;
+  font-family: 'Cinzel Decorative', 'Palatino Linotype', serif;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  animation: fade-in 0.8s ease-out $button-at forwards, enable-pointer 0s $button-at forwards;
+
+  &:hover {
+    border-color: #f3c86b;
+    box-shadow: 0 0 16px rgba(243, 200, 107, 0.35);
+  }
+
+  img {
+    height: 24px;
+  }
+}
+
+@keyframes dim-in {
+  from { background: rgba(0, 0, 0, 0); }
+  to   { background: rgba(0, 0, 0, 0.45); }
+}
+
+@keyframes cast-flash {
+  0%   { box-shadow: inset 0 0 0 100vmax rgba(139, 92, 246, 0.45); }
+  100% { box-shadow: inset 0 0 0 100vmax rgba(139, 92, 246, 0); }
+}
+
+@keyframes lord-rise {
+  to { transform: translate(-50%, 0); }
+}
+
+@keyframes lord-float {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -12px; }
+}
+
+@keyframes lord-leave {
+  from { transform: translate(-50%, 0); opacity: 1; }
+  to   { transform: translate(-50%, 15%) scale(0.9); opacity: 0; }
+}
+
+@keyframes orb-flash {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+}
+
+@keyframes fade-in {
+  to { opacity: 1; }
+}
+
+@keyframes enable-pointer {
+  to { pointer-events: auto; }
+}
+
+@keyframes you-died-grow {
+  from { transform: scale(1); }
+  to   { transform: scale(1.08); }
+}
+
+// Breaking the log, in gitgud-logs: rows shake, then each falls with its own tilt, drift and delay
+::ng-deep html.reflog-wrath gitgud-logs {
+  animation: log-quake 0.5s ease-in-out $break-at;
+
+  .commit-row, .commit-graph-canvas-container {
+    --fall-delay: 0s;
+    --fall-rotate: 14deg;
+    --fall-drift: 40px;
+    animation: log-fall 2s cubic-bezier(0.5, 0, 1, 0.5) calc($break-at + var(--fall-delay)) forwards;
+  }
+
+  .commit-row:nth-child(even) { --fall-rotate: -11deg; --fall-drift: -60px; }
+  .commit-row:nth-child(3n)   { --fall-delay: 0.25s; }
+  .commit-row:nth-child(4n+1) { --fall-delay: 0.5s; --fall-rotate: 24deg; }
+  .commit-row:nth-child(5n+2) { --fall-delay: 0.1s; --fall-drift: 120px; }
+  .commit-row:nth-child(7n)   { --fall-delay: 0.7s; --fall-rotate: -30deg; }
+  .commit-graph-canvas-container { --fall-delay: 0.4s; --fall-rotate: -6deg; --fall-drift: 0px; }
+}
+
+@keyframes log-quake {
+  0%, 100% { transform: translate(0, 0); }
+  20%      { transform: translate(-8px, 4px); }
+  40%      { transform: translate(7px, -5px); }
+  60%      { transform: translate(-5px, 6px); }
+  80%      { transform: translate(4px, -3px); }
+}
+
+@keyframes log-fall {
+  0%   { transform: translate(0, 0) rotate(0); }
+  15%  { transform: translate(calc(var(--fall-drift) * 0.1), -6px) rotate(calc(var(--fall-rotate) * 0.2)); }
+  100% { transform: translate(var(--fall-drift), 110vh) rotate(var(--fall-rotate)); opacity: 0.6; }
+}

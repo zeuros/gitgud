@@ -33,10 +33,11 @@ import {ActiveContextMenuService} from './services/active-context-menu.service';
 import {FixupService} from './services/fixup.service';
 import {MessageService} from 'primeng/api';
 import {GitRepositoryService} from './services/git-repository.service';
+import {LordReflogComponent} from './components/lord-reflog/lord-reflog.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, ButtonDirective],
+  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, ButtonDirective, LordReflogComponent],
   selector: 'gitgud-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',

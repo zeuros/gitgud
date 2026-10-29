@@ -1,0 +1,16 @@
+@if (summoned()) {
+    <div class="wrath-overlay">
+        <div class="lord-reflog">
+            <img src="./assets/images/lord-reflog.svg" alt="Lord Reflog"/>
+            <div class="orb-flash"></div>
+            <p class="lord-speech">Every commit you abandoned… I remember.</p>
+        </div>
+        <div class="you-died-band">
+            <h1 class="you-died">You died</h1>
+        </div>
+        <button class="rest-button" (click)="restAtBonfire()">
+            <img src="./assets/images/bonfire-still.png" alt=""/>
+            Rest at bonfire
+        </button>
+    </div>
+}
