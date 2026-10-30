@@ -141,8 +141,10 @@ pub fn watch_paths(
                     p.new_dirs.push(path.clone());
                 }
                 if let Some(s) = path.to_str() {
-                    if p.seen.insert(s.to_owned()) {
-                        p.paths.push(s.to_owned());
+                    // git reports paths with `/`; on Windows notify joins the watched root and the file name with `\`
+                    let s = if cfg!(windows) { s.replace('\\', "/") } else { s.to_owned() };
+                    if p.seen.insert(s.clone()) {
+                        p.paths.push(s);
                     }
                 }
             }
