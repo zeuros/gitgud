@@ -27,7 +27,7 @@ import {worktreeName} from '../../utils/worktree-utils';
   standalone: true,
   imports: [Tooltip],
   template: `
-    <span class="worktree-badge" [pTooltip]="tooltip()" tooltipPosition="bottom">
+    <span class="worktree-badge" [pTooltip]="tooltip()" tooltipPosition="right" tooltipStyleClass="tooltip-wide">
       <i class="fa fa-tree"></i>{{ name() }}
     </span>
   `,
@@ -53,6 +53,7 @@ export class WorktreeBadgeComponent {
   path = input.required<string>();
 
   protected name = computed(() => worktreeName(this.path()));
+
   protected tooltip = computed(() =>
     `Working in the linked worktree ${this.path()} of ${this.repoId()}. Double-click a worktree, or check out its branch, to switch`);
 }
