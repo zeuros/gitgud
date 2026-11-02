@@ -45,21 +45,9 @@ const windowSettled = () => firstValueFrom(fromEvent(window, 'resize').pipe(
 ));
 
 window.MonacoEnvironment = {
-  getWorker(_: string, label: string): Worker {
-    if (label === 'json') {
-      return new Worker(new URL('./monaco-workers/json.worker', import.meta.url), {type: 'module'});
-    }
-    if (label === 'css' || label === 'scss' || label === 'less') {
-      return new Worker(new URL('./monaco-workers/css.worker', import.meta.url), {type: 'module'});
-    }
-    if (label === 'html' || label === 'handlebars' || label === 'razor') {
-      return new Worker(new URL('./monaco-workers/html.worker', import.meta.url), {type: 'module'});
-    }
-    if (label === 'typescript' || label === 'javascript') {
-      return new Worker(new URL('./monaco-workers/ts.worker', import.meta.url), {type: 'module'});
-    }
-    return new Worker(new URL('./monaco-workers/editor.worker', import.meta.url), {type: 'module'});
-  }
+  // Language services are off (disableMonacoLanguageServices): only the editor worker (diff computation) runs.
+  // Re-enabling a TS/CSS/HTML/JSON service needs its worker added back here.
+  getWorker: () => new Worker(new URL('./monaco-workers/editor.worker', import.meta.url), {type: 'module'}),
 };
 
 editor.setTheme('vs-dark');

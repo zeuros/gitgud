@@ -56,7 +56,7 @@ export const registerMonacoEditorThemes = once(() => {
 });
 
 // The diff view is read-only: language services (diagnostics, colors, symbols, completions…)
-// only cost worker startups (the TS worker alone is 6.8 MB) and main-thread decoration work.
+// only cost workers (not bundled, see main.ts) and main-thread decoration work.
 // Syntax highlighting comes from Monarch tokenizers on the main thread and is unaffected.
 export const disableMonacoLanguageServices = once(() => {
   const off = {
