@@ -4,6 +4,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use notify::event::{EventKind, ModifyKind};
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
+use ignore::WalkBuilder;
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use tauri::{AppHandle, Emitter};
 
@@ -42,41 +44,102 @@ struct Pending {
     new_dirs: Vec<PathBuf>,
 }
 
-fn is_ignored(p: &Path, skip: &[String]) -> bool {
-    p.components().any(|c| {
-        let name = c.as_os_str().to_string_lossy();
-        skip.iter().any(|s| name == s.as_str())
-    })
+/// The ignore rules of a worktree, read when the watch starts: its .gitignore files (the deepest first),
+/// then the repository's info/exclude and the global excludes file
+struct GitIgnoreRules {
+    /// Each matcher with its directory, relative to the worktree
+    matchers: Vec<(PathBuf, Gitignore)>,
 }
 
-/// Adds a non-recursive watch on `dir` and every subdirectory, never descending into ignored
-/// dirs or symlinks. Recursive inotify watching would register a watch for every directory of
-/// node_modules/target/… only to drop their events afterwards.
-/// Fails if `dir` itself can't be watched or the inotify watch limit is hit; a subdirectory
-/// that vanished mid-walk is skipped.
-#[cfg(target_os = "linux")]
-fn watch_tree(watcher: &Mutex<RecommendedWatcher>, dir: &Path, skip: &[String]) -> notify::Result<()> {
-    let mut stack = vec![dir.to_path_buf()];
-    let mut watcher = watcher.lock().unwrap();
-    while let Some(d) = stack.pop() {
-        if let Err(e) = watcher.watch(&d, RecursiveMode::NonRecursive) {
-            if d == dir || matches!(e.kind, notify::ErrorKind::MaxFilesWatch) {
-                return Err(e);
-            }
-            continue;
-        }
-        let Ok(entries) = std::fs::read_dir(&d) else { continue };
-        for e in entries.flatten() {
+impl GitIgnoreRules {
+    /// `dirs`: the worktree's directories, whose .gitignore files are read
+    fn read(worktree: &Path, dirs: &[PathBuf]) -> Self {
+        let mut matchers: Vec<(PathBuf, Gitignore)> = std::iter::once(worktree)
+            .chain(dirs.iter().map(PathBuf::as_path))
+            .filter_map(|dir| Some((dir.strip_prefix(worktree).ok()?.to_path_buf(), Gitignore::new(dir.join(".gitignore")).0)))
+            .chain(common_dir(worktree).map(|dir| (PathBuf::new(), Gitignore::new(dir.join("info/exclude")).0)))
+            .chain(std::iter::once((PathBuf::new(), GitignoreBuilder::new(worktree).build_global().0)))
+            .filter(|(_, matcher)| !matcher.is_empty())
+            .collect();
+        // Stable: at the worktree's root, .gitignore comes before info/exclude and the global file
+        matchers.sort_by_key(|(dir, _)| std::cmp::Reverse(dir.components().count()));
+        GitIgnoreRules { matchers }
+    }
+
+    /// `relative`: a path relative to the worktree. The first rule matching it or a parent decides, a `!pattern` keeping it
+    fn is_ignored(&self, relative: &Path, is_dir: bool) -> bool {
+        self.matchers.iter()
+            .filter_map(|(dir, matcher)| Some(matcher.matched_path_or_any_parents(relative.strip_prefix(dir).ok()?, is_dir)))
+            .find(|matched| !matched.is_none())
+            .is_some_and(|matched| matched.is_ignore())
+    }
+}
+
+/// The common dir of the repository `worktree` belongs to: its `.git` dir, or for a linked worktree (`.git` file
+/// holding `gitdir: <main>/.git/worktrees/<name>`) the dir its `commondir` file names
+fn common_dir(worktree: &Path) -> Option<PathBuf> {
+    let dot_git = worktree.join(".git");
+    if dot_git.is_dir() {
+        return Some(dot_git);
+    }
+    let git_dir = worktree.join(std::fs::read_to_string(&dot_git).ok()?.trim().strip_prefix("gitdir: ")?);
+    let common_dir = std::fs::read_to_string(git_dir.join("commondir")).ok()?;
+    Some(git_dir.join(common_dir.trim()))
+}
+
+/// A watched root, and the ignore rules of the worktree it is when the watch respects them
+struct Root {
+    path: PathBuf,
+    git_ignore_rules: Option<Arc<GitIgnoreRules>>,
+}
+
+/// Whether `path` is in an ignored dir below the watched root it belongs to (a root may itself be in
+/// one: a git dir, a repository under /tmp), or excluded by the root's ignore rules
+fn is_ignored(path: &Path, is_dir: bool, roots: &[Root], skip: &[String]) -> bool {
+    let (relative, git_ignore_rules) = roots.iter()
+        .find_map(|root| Some((path.strip_prefix(&root.path).ok()?, root.git_ignore_rules.as_deref())))
+        .unwrap_or((path, None));
+    relative.components().any(|c| {
+        let name = c.as_os_str().to_string_lossy();
+        skip.iter().any(|s| name == s.as_str())
+    }) || git_ignore_rules.is_some_and(|rules| rules.is_ignored(relative, is_dir))
+}
+
+/// The directories below `dir`, never descending into ignored dirs (`skip` names, and with `git_ignore` what the
+/// repository's ignore rules exclude) or symlinks. A directory that can't be read is skipped.
+fn tree_dirs(dir: &Path, skip: &[String], git_ignore: bool) -> Vec<PathBuf> {
+    let skip = skip.to_vec();
+    WalkBuilder::new(dir)
+        .standard_filters(false)
+        .git_ignore(git_ignore)
+        .git_exclude(git_ignore)
+        .git_global(git_ignore)
+        .parents(git_ignore)
+        .filter_entry(move |entry| {
+            let name = entry.file_name().to_string_lossy();
             // DirEntry::file_type doesn't follow symlinks
-            if !e.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-                continue;
+            entry.file_type().is_some_and(|t| t.is_dir()) && !skip.iter().any(|s| name == s.as_str())
+        })
+        .build()
+        .flatten()
+        .filter(|entry| entry.depth() > 0)
+        .map(|entry| entry.into_path())
+        .collect()
+}
+
+/// Adds a non-recursive watch on `dir` and its subdirectories `dirs` (from `tree_dirs`). Recursive inotify
+/// watching would register a watch for every directory of node_modules/target/.venv… only to drop their events afterwards.
+/// Fails if `dir` itself can't be watched or the inotify watch limit is hit; a subdirectory
+/// that vanished meanwhile is skipped.
+#[cfg(target_os = "linux")]
+fn watch_tree(watcher: &Mutex<RecommendedWatcher>, dir: &Path, dirs: &[PathBuf]) -> notify::Result<()> {
+    let mut watcher = watcher.lock().unwrap();
+    watcher.watch(dir, RecursiveMode::NonRecursive)?;
+    for subdir in dirs {
+        if let Err(error) = watcher.watch(subdir, RecursiveMode::NonRecursive) {
+            if matches!(error.kind, notify::ErrorKind::MaxFilesWatch) {
+                return Err(error);
             }
-            let name = e.file_name();
-            let name = name.to_string_lossy();
-            if skip.iter().any(|s| name == s.as_str()) {
-                continue;
-            }
-            stack.push(e.path());
         }
     }
     Ok(())
@@ -91,9 +154,11 @@ pub fn watch_paths(
     id: String,
     paths: Vec<String>,
     recursive: Option<bool>,
-    ignored_dirs: Option<Vec<String>>,
+    ignored_dirs: Vec<String>,
+    respect_git_ignore: Option<bool>,
 ) -> Result<(), String> {
     let recursive = recursive.unwrap_or(true);
+    let git_ignore = recursive && respect_git_ignore.unwrap_or(false);
 
     // Tauri event names allow only [a-zA-Z0-9\-/:\_ ] — replace everything else with '_'.
     let safe_id: String = id.chars()
@@ -101,19 +166,20 @@ pub fn watch_paths(
         .collect();
     let event_name = format!("watcher-event:{safe_id}");
 
-    let mut skip: Vec<String> = vec![
-        ".git".into(), "node_modules".into(), "dist".into(),
-        "build".into(), "cache".into(), "tmp".into(),
-        "target".into(), ".angular".into(),
-    ];
-    if let Some(extra) = ignored_dirs {
-        for dir in extra {
-            if !skip.contains(&dir) {
-                skip.push(dir);
-            }
-        }
-    }
-    let skip = Arc::new(skip);
+    let skip = Arc::new(ignored_dirs);
+    // The directories of each recursive root: watched one by one on Linux, their .gitignore files read with git_ignore
+    let root_dirs: Vec<Vec<PathBuf>> = paths.iter()
+        .map(|p| if recursive && (git_ignore || cfg!(target_os = "linux")) { tree_dirs(Path::new(p), &skip, git_ignore) } else { vec![] })
+        .collect();
+    // The canonical roots too: FSEvents (macOS) reports resolved paths, /private/tmp/… for a root opened as /tmp/…
+    let roots: Arc<Vec<Root>> = Arc::new(paths.iter().map(PathBuf::from).zip(&root_dirs)
+        .flat_map(|(root, dirs)| {
+            let git_ignore_rules = git_ignore.then(|| Arc::new(GitIgnoreRules::read(&root, dirs)));
+            let canonical = root.canonicalize().ok().filter(|canonical| *canonical != root)
+                .map(|path| Root { path, git_ignore_rules: git_ignore_rules.clone() });
+            std::iter::once(Root { path: root, git_ignore_rules }).chain(canonical)
+        })
+        .collect());
 
     let pending = Arc::new(Mutex::new(Pending::default()));
     let stop = Arc::new(AtomicBool::new(false));
@@ -122,6 +188,7 @@ pub fn watch_paths(
     let handler = {
         let pending = pending.clone();
         let skip = skip.clone();
+        let roots = roots.clone();
         move |res: notify::Result<Event>| {
             let Ok(event) = res else { return };
             if matches!(event.kind, EventKind::Access(_)) {
@@ -133,11 +200,12 @@ pub fn watch_paths(
 
             let mut p = pending.lock().unwrap();
             for path in &event.paths {
-                if is_ignored(path, &skip) {
+                // symlink_metadata: a symlink to a directory must not be walked
+                let is_dir = path.symlink_metadata().is_ok_and(|m| m.is_dir());
+                if is_ignored(path, is_dir, &roots, &skip) {
                     continue;
                 }
-                // symlink_metadata: a symlink to a directory must not be walked
-                if adds_dir && path.symlink_metadata().is_ok_and(|m| m.is_dir()) {
+                if adds_dir && is_dir {
                     p.new_dirs.push(path.clone());
                 }
                 if let Some(s) = path.to_str() {
@@ -161,14 +229,15 @@ pub fn watch_paths(
         notify::recommended_watcher(handler).map_err(|e| e.to_string())?,
     ));
 
-    for p in &paths {
+    for (path, dirs) in paths.iter().zip(&root_dirs) {
         #[cfg(target_os = "linux")]
         if recursive {
-            watch_tree(&watcher, Path::new(p), &skip).map_err(|e| e.to_string())?;
+            watch_tree(&watcher, Path::new(path), dirs).map_err(|e| e.to_string())?;
             continue;
         }
+        let _ = dirs;
         let mode = if recursive { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive };
-        watcher.lock().unwrap().watch(Path::new(p), mode).map_err(|e| e.to_string())?;
+        watcher.lock().unwrap().watch(Path::new(path), mode).map_err(|e| e.to_string())?;
     }
 
     // Flush thread: watches newly created dirs and emits debounced batches.
@@ -196,9 +265,9 @@ pub fn watch_paths(
                 };
 
                 #[cfg(target_os = "linux")]
-                for d in &new_dirs {
+                for new_dir in &new_dirs {
                     // The dir may already be gone again; nobody to report to from here.
-                    let _ = watch_tree(&watcher, d, &skip);
+                    let _ = watch_tree(&watcher, new_dir, &tree_dirs(new_dir, &skip, git_ignore));
                 }
                 #[cfg(not(target_os = "linux"))]
                 let _ = (&new_dirs, &watcher);
@@ -237,3 +306,6 @@ pub fn close_all_watchers() {
         map.clear();
     }
 }
+
+#[cfg(test)]
+mod tests;

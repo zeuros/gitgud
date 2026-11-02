@@ -66,9 +66,9 @@ Reader services (`git/`) each wrap one git command and parse its output into typ
 
 ### File watcher
 
-`watcher.rs` uses `notify` directly with its own debounce: a flush thread emits one batch of deduplicated paths after 600 ms of quiet, or at most 2 s after the first pending event. Events are filtered by path component — ignored dirs: `.git`, `node_modules`, `dist`, `build`, `cache`, `tmp`, `target`, `.angular`. Emitted paths use `/` on every platform, as git reports them, so they compare to `gitDirs()` paths.
+`watcher.rs` uses `notify` directly with its own debounce: a flush thread emits one batch of deduplicated paths after 600 ms of quiet, or at most 2 s after the first pending event. Events are filtered by path component below the watched root, skipping the `ignoredDirs` watch option (none by default; `FileWatcherService` passes `.git` and `node_modules` for the working tree, the rest left to the ignore rules). With `respectGitIgnore` (the working-tree watch), paths the repository's ignore rules exclude are skipped too: the `ignore` crate walks the tree and `GitIgnoreRules` matches events against its `.gitignore` files, `info/exclude` and the global excludes file, all read when the watch starts. Emitted paths use `/` on every platform, as git reports them, so they compare to `gitDirs()` paths.
 
-On Linux, recursive watches are not delegated to inotify: `watch_tree` walks the repo and adds a non-recursive watch per directory, skipping ignored dirs and symlinks, so no watches are registered inside `node_modules`/`target`. Directories created later are watched by the flush thread. Other platforms use a single recursive watch.
+On Linux, recursive watches are not delegated to inotify: `watch_tree` walks the repo and adds a non-recursive watch per directory, skipping ignored dirs and symlinks, so no watches are registered inside `node_modules`/`target`/`.venv`. Directories created later are watched by the flush thread. Other platforms use a single recursive watch.
 
 `FileWatcherService` (`src/app/services/file-watcher.service.ts`) wraps `window.tauri.chokidar.watch/on/close` and exposes `onWorkingDirFileChange$` via `auditTime(300)`. Git-refresh subscribes with `switchMap(() => updateWorkingDirChanges())` so a new file event cancels the previous in-flight `git status`.
 

@@ -20,6 +20,10 @@ import {Injectable} from '@angular/core';
 import {auditTime, Subject} from 'rxjs';
 import {createWatcher} from '../utils/file-watcher.utils';
 
+// node_modules is skipped even when git doesn't ignore it: it can exhaust the watch limit. Generic names (build, dist,
+// cache…) are left to the ignore rules: they may be source folders
+const WORKING_TREE_IGNORED_DIRS = ['.git', 'node_modules'];
+
 @Injectable({
   providedIn: 'root',
 })
@@ -39,12 +43,12 @@ export class FileWatcherService {
     this.watcher?.close();
 
     // Watch a project's files changes
-    this.watcher = this.makeWatcher(projectPath);
+    this.watcher = this.makeFilesWatcher(projectPath);
   };
 
-  private makeWatcher = (projectPath: string) =>
-    // Ignored dirs and debouncing are handled in Rust (watcher.rs)
-    createWatcher(projectPath, projectPath)
+  private makeFilesWatcher = (projectPath: string) =>
+    // Debouncing is handled in Rust (watcher.rs)
+    createWatcher(projectPath, projectPath, {ignoredDirs: WORKING_TREE_IGNORED_DIRS, respectGitIgnore: true})
       .on('add', f => this.fileChangeSubject$.next(String(f)))
       .on('change', f => this.fileChangeSubject$.next(String(f)))
       .on('unlink', f => this.fileChangeSubject$.next(String(f)))

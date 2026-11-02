@@ -24,6 +24,7 @@ tokio = { version = "1", features = ["full"] }
 tauri-plugin-window-state = "2.4.1"
 tauri-plugin-prevent-default = "6"
 sysinfo = { version = "0.40.0", default-features = false, features = ["system"] }
+ignore = "0.4.34"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"
