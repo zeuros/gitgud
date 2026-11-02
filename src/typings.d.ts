@@ -38,6 +38,14 @@ export interface WatchOptions {
   respectGitIgnore?: boolean;
 }
 
+// Why a watch failed (watcher.rs). 'watch-limit': the OS limit of watched directories is reached (Linux inotify's
+// fs.inotify.max_user_watches, shared by every app of the user), watchLimit being its value when known
+export interface WatchError {
+  kind: 'watch-limit' | 'other';
+  message: string;
+  watchLimit?: number | null;
+}
+
 interface ChokidarApi {
   watch: (id: string, paths: string | string[], options?: WatchOptions) => void;
   on: (id: string, event: string, cb: (...args: unknown[]) => void) => void;

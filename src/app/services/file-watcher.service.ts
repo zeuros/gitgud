@@ -16,9 +16,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Injectable} from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {auditTime, Subject} from 'rxjs';
-import {createWatcher} from '../utils/file-watcher.utils';
+import {createWatcher, watchErrorMessage} from '../utils/file-watcher.utils';
+import {ToastService} from './toast.service';
+import type {WatchError} from '../../typings';
 
 // node_modules is skipped even when git doesn't ignore it: it can exhaust the watch limit. Generic names (build, dist,
 // cache…) are left to the ignore rules: they may be source folders
@@ -29,6 +31,7 @@ const WORKING_TREE_IGNORED_DIRS = ['.git', 'node_modules'];
 })
 export class FileWatcherService {
 
+  private toast = inject(ToastService);
   private watcher?: ReturnType<typeof createWatcher>;
   private watchedPath?: string;
   private fileChangeSubject$ = new Subject<string>();
@@ -46,12 +49,21 @@ export class FileWatcherService {
     this.watcher = this.makeFilesWatcher(projectPath);
   };
 
-  private makeFilesWatcher = (projectPath: string) =>
+  private makeFilesWatcher = (projectPath: string) => {
+    // Told once per worktree opened
+    let errorShown = false;
+    const showWatchError = (error: unknown) => {
+      console.error(error);
+      if (errorShown || projectPath !== this.watchedPath) return;
+      errorShown = true;
+      this.toast.err(watchErrorMessage(projectPath, error as WatchError), {sticky: true});
+    };
     // Debouncing is handled in Rust (watcher.rs)
-    createWatcher(projectPath, projectPath, {ignoredDirs: WORKING_TREE_IGNORED_DIRS, respectGitIgnore: true})
+    return createWatcher(projectPath, projectPath, {ignoredDirs: WORKING_TREE_IGNORED_DIRS, respectGitIgnore: true})
       .on('add', f => this.fileChangeSubject$.next(String(f)))
       .on('change', f => this.fileChangeSubject$.next(String(f)))
       .on('unlink', f => this.fileChangeSubject$.next(String(f)))
-      .on('error', console.error);
+      .on('error', showWatchError);
+  };
 
 }
