@@ -31,9 +31,9 @@ jobs:
       sha256_x64:  ${{ steps.tar.outputs.sha256_x64 }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
           cache: npm
@@ -88,7 +88,7 @@ jobs:
 
       # ── Flatpak bundle via flatpak-builder ─────────────────────────────────
       - name: Cache Flatpak SDK
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.local/share/flatpak
           key: flatpak-sdk-gnome-50-x64
@@ -194,15 +194,15 @@ jobs:
           retention-days: 7
 
   build-arm64:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
 
     outputs:
       sha256_arm64: ${{ steps.tar.outputs.sha256_arm64 }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
           cache: npm
@@ -277,12 +277,12 @@ jobs:
       needs.build.outputs.sha256_x64 != ''
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
 
       - name: Checkout Flathub manifest repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ vars.FLATHUB_MANIFEST_REPO }}
           token: ${{ secrets.FLATHUB_REPO_TOKEN }}
