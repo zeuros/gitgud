@@ -208,7 +208,9 @@ pub struct FoundProcess {
 #[tauri::command]
 pub async fn find_processes(names: Vec<String>) -> Vec<FoundProcess> {
     tauri::async_runtime::spawn_blocking(move || {
-        let mut system = System::new();
+        let Ok(mut system) = System::new() else {
+            return Vec::new();
+        };
         system.refresh_processes_specifics(
             ProcessesToUpdate::All,
             true,
