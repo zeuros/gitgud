@@ -35,6 +35,8 @@ export class ToastService {
 
   warn = (message: Error | string) => this.message.add({...defaultMessageConfig, severity: 'warn', detail: errorMessage(message)});
 
-  err = (message: Error | string) => this.message.add({...defaultMessageConfig, severity: 'error', detail: errorMessage(message)});
+  // sticky: stays until closed, for an error the user has to act on
+  err = (message: Error | string, {sticky = false} = {}) =>
+    this.message.add({...defaultMessageConfig, severity: 'error', detail: errorMessage(message), sticky});
 
 }

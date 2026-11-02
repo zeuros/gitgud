@@ -70,6 +70,8 @@ Reader services (`git/`) each wrap one git command and parse its output into typ
 
 On Linux, recursive watches are not delegated to inotify: `watch_tree` walks the repo and adds a non-recursive watch per directory, skipping ignored dirs and symlinks, so no watches are registered inside `node_modules`/`target`/`.venv`. Directories created later are watched by the flush thread. Other platforms use a single recursive watch.
 
+A watch that fails rejects `watch_paths` with a `WatchError` (`kind` `watch-limit` when inotify's `fs.inotify.max_user_watches` is reached, with its value, else `other`); a directory created later that hits the limit emits `watcher-error:{id}` once. The bridge hands both to the watcher's `'error'` callbacks, and `FileWatcherService` shows one sticky toast per worktree opened (`watchErrorMessage`): what is missed, and how to raise the limit.
+
 `FileWatcherService` (`src/app/services/file-watcher.service.ts`) wraps `window.tauri.chokidar.watch/on/close` and exposes `onWorkingDirFileChange$` via `auditTime(300)`. Git-refresh subscribes with `switchMap(() => updateWorkingDirChanges())` so a new file event cancels the previous in-flight `git status`.
 
 ### Refresh pipeline

@@ -7,6 +7,7 @@ use notify::event::{EventKind, ModifyKind};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::WalkBuilder;
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
+use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
 /// Emit once no new event arrived for this long…
@@ -25,6 +26,31 @@ impl Drop for WatchHandle {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Relaxed);
     }
+}
+
+/// Why a watch failed, for the app to tell the user. `watch-limit`: the OS limit of watched directories is reached
+/// (Linux inotify's fs.inotify.max_user_watches, shared by every app of the user), `watchLimit` being its value when known.
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WatchError {
+    kind: &'static str,
+    message: String,
+    watch_limit: Option<u64>,
+}
+
+impl From<notify::Error> for WatchError {
+    fn from(error: notify::Error) -> Self {
+        let is_watch_limit = matches!(error.kind, notify::ErrorKind::MaxFilesWatch);
+        WatchError {
+            kind: if is_watch_limit { "watch-limit" } else { "other" },
+            message: error.to_string(),
+            watch_limit: if is_watch_limit { inotify_watch_limit() } else { None },
+        }
+    }
+}
+
+fn inotify_watch_limit() -> Option<u64> {
+    std::fs::read_to_string("/proc/sys/fs/inotify/max_user_watches").ok()?.trim().parse().ok()
 }
 
 static WATCHERS: Mutex<Option<HashMap<String, WatchHandle>>> = Mutex::new(None);
@@ -148,6 +174,7 @@ fn watch_tree(watcher: &Mutex<RecommendedWatcher>, dir: &Path, dirs: &[PathBuf])
 /// Starts watching one or more paths; emits `watcher-event:{id}` on changes.
 /// Backs `window.tauri.chokidar.watch()` in the bridge.
 /// Events are debounced (QUIET / MAX_WAIT) and deduplicated per path.
+/// A directory created later that can't be watched (Linux watch limit) emits `watcher-error:{id}` once, the rest staying watched.
 #[tauri::command]
 pub fn watch_paths(
     app: AppHandle,
@@ -156,7 +183,7 @@ pub fn watch_paths(
     recursive: Option<bool>,
     ignored_dirs: Vec<String>,
     respect_git_ignore: Option<bool>,
-) -> Result<(), String> {
+) -> Result<(), WatchError> {
     let recursive = recursive.unwrap_or(true);
     let git_ignore = recursive && respect_git_ignore.unwrap_or(false);
 
@@ -165,6 +192,7 @@ pub fn watch_paths(
         .map(|c| if c.is_alphanumeric() || matches!(c, '-' | '/' | ':' | '_') { c } else { '_' })
         .collect();
     let event_name = format!("watcher-event:{safe_id}");
+    let error_event_name = format!("watcher-error:{safe_id}");
 
     let skip = Arc::new(ignored_dirs);
     // The directories of each recursive root: watched one by one on Linux, their .gitignore files read with git_ignore
@@ -226,18 +254,18 @@ pub fn watch_paths(
     };
 
     let watcher = Arc::new(Mutex::new(
-        notify::recommended_watcher(handler).map_err(|e| e.to_string())?,
+        notify::recommended_watcher(handler)?,
     ));
 
     for (path, dirs) in paths.iter().zip(&root_dirs) {
         #[cfg(target_os = "linux")]
         if recursive {
-            watch_tree(&watcher, Path::new(path), dirs).map_err(|e| e.to_string())?;
+            watch_tree(&watcher, Path::new(path), dirs)?;
             continue;
         }
         let _ = dirs;
         let mode = if recursive { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive };
-        watcher.lock().unwrap().watch(Path::new(path), mode).map_err(|e| e.to_string())?;
+        watcher.lock().unwrap().watch(Path::new(path), mode)?;
     }
 
     // Flush thread: watches newly created dirs and emits debounced batches.
@@ -245,6 +273,7 @@ pub fn watch_paths(
         let watcher = watcher.clone();
         let stop = stop.clone();
         std::thread::spawn(move || {
+            let mut watch_limit_reported = false;
             while !stop.load(Ordering::Relaxed) {
                 std::thread::sleep(TICK);
 
@@ -266,11 +295,16 @@ pub fn watch_paths(
 
                 #[cfg(target_os = "linux")]
                 for new_dir in &new_dirs {
-                    // The dir may already be gone again; nobody to report to from here.
-                    let _ = watch_tree(&watcher, new_dir, &tree_dirs(new_dir, &skip, git_ignore));
+                    // The dir may already be gone again: only the watch limit is reported, once
+                    if let Err(error) = watch_tree(&watcher, new_dir, &tree_dirs(new_dir, &skip, git_ignore)) {
+                        if matches!(error.kind, notify::ErrorKind::MaxFilesWatch) && !watch_limit_reported {
+                            watch_limit_reported = true;
+                            let _ = app.emit(&error_event_name, WatchError::from(error));
+                        }
+                    }
                 }
                 #[cfg(not(target_os = "linux"))]
-                let _ = (&new_dirs, &watcher);
+                let _ = (&new_dirs, &watcher, &error_event_name, &mut watch_limit_reported);
 
                 if let Some((kind, paths)) = batch {
                     let _ = app.emit(&event_name, serde_json::json!({

@@ -15,12 +15,25 @@ import {open as openDialog} from '@tauri-apps/plugin-dialog';
 import {tempDir} from '@tauri-apps/api/path';
 import {openPath, openUrl} from '@tauri-apps/plugin-opener';
 import posixPath from './path-utils';
-import type {FoundProcess, WatchOptions} from '../../typings';
+import type {FoundProcess, WatchError, WatchOptions} from '../../typings';
 
 // ---------------------------------------------------------------------------
 // Watcher registry — maps caller IDs to Tauri event unlisten functions
 // ---------------------------------------------------------------------------
 const watcherUnlisteners = new Map<string, Array<() => void>>();
+// The 'error' callbacks of each watcher, which a failed watch_paths call is reported to
+const watcherErrorCallbacks = new Map<string, Array<(error: WatchError) => void>>();
+
+const toWatchError = (error: unknown): WatchError =>
+  typeof error === 'object' && error !== null && 'kind' in error && 'message' in error
+    ? error as WatchError
+    : {kind: 'other', message: String(error)};
+
+const addWatcherUnlistener = (id: string, unlisten: () => void) => {
+  const list = watcherUnlisteners.get(id) ?? [];
+  list.push(unlisten);
+  watcherUnlisteners.set(id, list);
+};
 
 // ---------------------------------------------------------------------------
 // Assemble the bridge object
@@ -65,11 +78,22 @@ async function buildBridge() {
           recursive: options?.recursive ?? true,
           ignoredDirs: options?.ignoredDirs ?? [],
           respectGitIgnore: options?.respectGitIgnore ?? false,
-        }).catch(console.error);
+        }).catch((error: unknown) => {
+          const callbacks = watcherErrorCallbacks.get(id) ?? [];
+          if (callbacks.length) callbacks.forEach(cb => cb(toWatchError(error)));
+          else console.error(error);
+        });
       },
       on: (id: string, event: string, cb: (...args: unknown[]) => void) => {
         // Tauri emits 'watcher-event:{id}'; map to chokidar event names
         const safeId = id.replace(/[^a-zA-Z0-9\-/:_]/g, '_');
+        // Errors: the watch failing to start, or a directory created later that can't be watched ('watcher-error:{id}')
+        if (event === 'error') {
+          watcherErrorCallbacks.set(id, [...watcherErrorCallbacks.get(id) ?? [], cb]);
+          listen<WatchError>(`watcher-error:${safeId}`, tauriEvent => cb(tauriEvent.payload))
+            .then(unlisten => addWatcherUnlistener(id, unlisten));
+          return;
+        }
         listen<{ kind: string; paths: string[] }>(`watcher-event:${safeId}`, (tauriEvent) => {
           const payload = tauriEvent.payload;
           const paths: string[] = payload.paths ?? [];
@@ -81,17 +105,14 @@ async function buildBridge() {
           } else if (kindToChokidar(kind) === event) {
             paths.forEach(p => cb(p));
           }
-        }).then((unlisten: () => void) => {
-          const list = watcherUnlisteners.get(id) ?? [];
-          list.push(unlisten);
-          watcherUnlisteners.set(id, list);
-        });
+        }).then((unlisten: () => void) => addWatcherUnlistener(id, unlisten));
       },
       close: (id: string) => {
         invoke('close_watcher', {id}).catch(console.error);
         const unlisteners = watcherUnlisteners.get(id) ?? [];
         unlisteners.forEach(fn => fn());
         watcherUnlisteners.delete(id);
+        watcherErrorCallbacks.delete(id);
       },
     },
 
