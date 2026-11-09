@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {type GitDirs, gitPath} from './git-path.utils';
+import {type GitDirs, gitPath, type GitStatePath} from './git-path.utils';
 
 /** A git command stopped on a conflict, waiting for `--continue`, `--skip` or `--abort` */
 export type GitOperation = 'rebase' | 'cherry-pick' | 'revert' | 'merge';
@@ -24,7 +24,7 @@ export type GitOperation = 'rebase' | 'cherry-pick' | 'revert' | 'merge';
 export const OPERATION_LABELS: Record<GitOperation, string> = {rebase: 'Rebase', 'cherry-pick': 'Cherry-pick', revert: 'Revert', merge: 'Merge'};
 
 // In priority order: a rebase replaying a merge also leaves MERGE_HEAD. `rebase-apply/rebasing` tells a rebase from a `git am`
-const STATE_FILES: [GitOperation, string][] = [
+const STATE_FILES: [GitOperation, GitStatePath][] = [
   ['rebase', 'rebase-merge'],
   ['rebase', 'rebase-apply/rebasing'],
   ['cherry-pick', 'CHERRY_PICK_HEAD'],

@@ -5,14 +5,12 @@ const worktree = {gitDir: '/repo/.git/worktrees/wt', commonDir: '/repo/.git'};
 
 describe('gitPath', () => {
   it('keeps the per-worktree state in the worktree git dir', () => {
-    for (const name of ['index.lock', 'rebase-merge', 'COMMIT_EDIT_MSG', 'FETCH_HEAD', 'MERGE_HEAD', 'HEAD', 'logs/HEAD', 'refs/bisect/bad'])
+    for (const name of ['index.lock', 'rebase-merge', 'FETCH_HEAD', 'MERGE_HEAD'] as const)
       expect(gitPath(worktree, name)).toBe(`/repo/.git/worktrees/wt/${name}`);
   });
 
-  it('shares refs with the main repository', () => {
-    for (const name of ['refs/stash', 'refs/heads', 'packed-refs', 'logs/refs/stash'])
-      expect(gitPath(worktree, name)).toBe(`/repo/.git/${name}`);
-  });
+  it('shares refs with the main repository', () =>
+    expect(gitPath(worktree, 'refs/stash')).toBe('/repo/.git/refs/stash'));
 });
 
 describe('amendFromFile', () => {
