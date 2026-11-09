@@ -108,7 +108,7 @@ async function buildBridge() {
         }).then((unlisten: () => void) => addWatcherUnlistener(id, unlisten));
       },
       close: (id: string) => {
-        invoke('close_watcher', {id}).catch(console.error);
+        invoke('close_watcher', {id});
         const unlisteners = watcherUnlisteners.get(id) ?? [];
         unlisteners.forEach(fn => fn());
         watcherUnlisteners.delete(id);
@@ -163,7 +163,7 @@ async function buildBridge() {
       getFactor: () => parseFloat(localStorage.getItem('zoom') ?? '1'),
     },
 
-    showItemInFolder: (fullPath: string) => invoke('show_item_in_folder', {path: fullPath}).catch(console.error),
+    showItemInFolder: (fullPath: string) => invoke<void>('show_item_in_folder', {path: fullPath}),
 
     openExternal: (url: string): Promise<void> => openUrl(url),
 
