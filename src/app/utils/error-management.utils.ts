@@ -18,6 +18,7 @@
 
 import {type ErrorHandler, inject} from '@angular/core';
 import {ToastService} from '../services/toast.service';
+import {errorMessage} from './error-message.utils';
 
 export class GlobalErrorHandler implements ErrorHandler {
 
@@ -29,14 +30,7 @@ export class GlobalErrorHandler implements ErrorHandler {
 
     console.error('[GlobalErrorHandler]', error);
 
-    let message: string | undefined;
-    if (error instanceof Error) {
-      message = error.message;
-    } else if (typeof error === 'string') {
-      // Tauri IPC errors arrive as "exited N\n<stderr>" — strip the status prefix
-      message = error.replace(/^exited \d+\n/, '').trim();
-    }
-
+    const message = errorMessage(error);
     if (message) this.toast.err(message);
   }
 }
