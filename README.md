@@ -14,7 +14,7 @@ Every boss fight in git, made beatable. Rebase without fear, undo without shame:
 
 [<img src="src/assets/images/bonfire.webp" height="20" alt=""> Visit the bonfire](https://git-gud.mooo.com/)
 
-https://github.com/user-attachments/assets/7c56dde9-3404-4b9a-a6d0-fe188927c0f4
+https://github.com/user-attachments/assets/dddf0546-a4c6-4107-adbf-cb6c50c088e5
 
 ## Loot
 
