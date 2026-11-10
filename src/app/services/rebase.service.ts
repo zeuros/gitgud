@@ -47,7 +47,6 @@ export class RebaseService {
     defer(() => from(this.hasRebaseFile())).pipe(
       switchMap(isRebasing => {
         if (isRebasing) throw new Error('Rebase is already in progress');
-        this.cleanWaitFile();
         this.spawnRebaseProcess(sha, autosquash);
         return this.readRebaseActionsFile();
       }),
@@ -83,14 +82,13 @@ export class RebaseService {
     // The todo is written before .done appears: git reads it as soon as the editor script exits
     this.rebaseActionsFilePath()
       .then(path => window.tauri.fs.writeFile(path, contents))
-      .then(this.cleanWaitFile, console.error);
+      .then(this.cleanWaitFile);
     return this.pendingRebase$.pipe(first());
   };
 
   // terminates the waitForFileSaveScript (process waiting for .done file) script and finishes the 'git rebase ...' spawned observable
-  private cleanWaitFile = () => {
-    this.rebaseActionsFilePath().then(path => window.tauri.fs.writeFile(path + '.done', '')).catch(e => console.warn(e));
-  };
+  private cleanWaitFile = () =>
+    this.rebaseActionsFilePath().then(path => window.tauri.fs.writeFile(path + '.done', ''));
 
   // Git runs it as `<editor> <todo file>`, so the file is $0 of `sh -c`. On Windows, sh comes with Git for Windows (untested without it)
   private waitForFileSaveScript = () =>

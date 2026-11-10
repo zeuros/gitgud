@@ -15,12 +15,25 @@ import {open as openDialog} from '@tauri-apps/plugin-dialog';
 import {tempDir} from '@tauri-apps/api/path';
 import {openPath, openUrl} from '@tauri-apps/plugin-opener';
 import posixPath from './path-utils';
-import type {FoundProcess, WatchOptions} from '../../typings';
+import type {FoundProcess, WatchError, WatchOptions} from '../../typings';
 
 // ---------------------------------------------------------------------------
 // Watcher registry — maps caller IDs to Tauri event unlisten functions
 // ---------------------------------------------------------------------------
 const watcherUnlisteners = new Map<string, Array<() => void>>();
+// The 'error' callbacks of each watcher, which a failed watch_paths call is reported to
+const watcherErrorCallbacks = new Map<string, Array<(error: WatchError) => void>>();
+
+const toWatchError = (error: unknown): WatchError =>
+  typeof error === 'object' && error !== null && 'kind' in error && 'message' in error
+    ? error as WatchError
+    : {kind: 'other', message: String(error)};
+
+const addWatcherUnlistener = (id: string, unlisten: () => void) => {
+  const list = watcherUnlisteners.get(id) ?? [];
+  list.push(unlisten);
+  watcherUnlisteners.set(id, list);
+};
 
 // ---------------------------------------------------------------------------
 // Assemble the bridge object
@@ -39,7 +52,7 @@ async function buildBridge() {
     invoke<string | null>('get_build_commit'),
   ]);
 
-  const bridge = {
+  return {
     fs: {
       readdir: (path: string) => invoke<string[]>('fs_readdir', {path}),
       isFile: (path: string) => invoke<boolean>('fs_is_file', {path}),
@@ -59,24 +72,28 @@ async function buildBridge() {
     chokidar: {
       watch: (id: string, paths: string | string[], options?: WatchOptions) => {
         const pathList = Array.isArray(paths) ? paths : [paths];
-        // Rust handles its own base ignore list (.git, node_modules, etc.).
-        // Only forward plain directory name strings — globs and regexes are not
-        // understood by the Rust path-component filter.
-        const ignoredDirs = Array.isArray(options?.ignored)
-          ? options.ignored.filter(
-            (x): x is string => typeof x === 'string' && !x.includes('*') && !x.includes('/'),
-          )
-          : undefined;
         invoke('watch_paths', {
           id,
           paths: pathList,
           recursive: options?.recursive ?? true,
-          ignoredDirs: ignoredDirs?.length ? ignoredDirs : undefined,
-        }).catch(console.error);
+          ignoredDirs: options?.ignoredDirs ?? [],
+          respectGitIgnore: options?.respectGitIgnore ?? false,
+        }).catch((error: unknown) => {
+          const callbacks = watcherErrorCallbacks.get(id) ?? [];
+          if (!callbacks.length) throw error;
+          callbacks.forEach(cb => cb(toWatchError(error)));
+        });
       },
       on: (id: string, event: string, cb: (...args: unknown[]) => void) => {
         // Tauri emits 'watcher-event:{id}'; map to chokidar event names
         const safeId = id.replace(/[^a-zA-Z0-9\-/:_]/g, '_');
+        // Errors: the watch failing to start, or a directory created later that can't be watched ('watcher-error:{id}')
+        if (event === 'error') {
+          watcherErrorCallbacks.set(id, [...watcherErrorCallbacks.get(id) ?? [], cb]);
+          listen<WatchError>(`watcher-error:${safeId}`, tauriEvent => cb(tauriEvent.payload))
+            .then(unlisten => addWatcherUnlistener(id, unlisten));
+          return;
+        }
         listen<{ kind: string; paths: string[] }>(`watcher-event:${safeId}`, (tauriEvent) => {
           const payload = tauriEvent.payload;
           const paths: string[] = payload.paths ?? [];
@@ -88,17 +105,14 @@ async function buildBridge() {
           } else if (kindToChokidar(kind) === event) {
             paths.forEach(p => cb(p));
           }
-        }).then((unlisten: () => void) => {
-          const list = watcherUnlisteners.get(id) ?? [];
-          list.push(unlisten);
-          watcherUnlisteners.set(id, list);
-        });
+        }).then((unlisten: () => void) => addWatcherUnlistener(id, unlisten));
       },
       close: (id: string) => {
-        invoke('close_watcher', {id}).catch(console.error);
+        invoke('close_watcher', {id});
         const unlisteners = watcherUnlisteners.get(id) ?? [];
         unlisteners.forEach(fn => fn());
         watcherUnlisteners.delete(id);
+        watcherErrorCallbacks.delete(id);
       },
     },
 
@@ -149,7 +163,7 @@ async function buildBridge() {
       getFactor: () => parseFloat(localStorage.getItem('zoom') ?? '1'),
     },
 
-    showItemInFolder: (fullPath: string) => invoke('show_item_in_folder', {path: fullPath}).catch(console.error),
+    showItemInFolder: (fullPath: string) => invoke<void>('show_item_in_folder', {path: fullPath}),
 
     openExternal: (url: string): Promise<void> => openUrl(url),
 
@@ -198,8 +212,6 @@ async function buildBridge() {
       argv: [],
     } as unknown as NodeJS.Process,
   };
-
-  return bridge;
 }
 
 // Maps notify's EventKind debug strings (lowercased) to chokidar event names.

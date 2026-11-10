@@ -32,7 +32,18 @@ interface PathApi {
 
 export interface WatchOptions {
   recursive?: boolean;
-  ignored?: unknown[];
+  // Directory names skipped anywhere below the watched root, or only right below it when starting with '/'
+  ignoredDirs?: string[];
+  // Also skips what the repository's ignore rules exclude (.gitignore, info/exclude, global excludes), read when the watch starts
+  respectGitIgnore?: boolean;
+}
+
+// Why a watch failed (watcher.rs). 'watch-limit': the OS limit of watched directories is reached (Linux inotify's
+// fs.inotify.max_user_watches, shared by every app of the user), watchLimit being its value when known
+export interface WatchError {
+  kind: 'watch-limit' | 'other';
+  message: string;
+  watchLimit?: number | null;
 }
 
 interface ChokidarApi {
@@ -81,7 +92,7 @@ interface TauriApi {
     setFactor: (factor: number) => void | Promise<void>;
     getFactor: () => number;
   };
-  showItemInFolder: (fullPath: string) => void;
+  showItemInFolder: (fullPath: string) => Promise<void>;
   openExternal: (url: string) => Promise<void>;
   /** Opens a file with the system's default application. Only paths under the temp dir's gitgud/ folder are allowed */
   openPath: (fullPath: string) => Promise<void>;

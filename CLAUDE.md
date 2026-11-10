@@ -66,20 +66,23 @@ Reader services (`git/`) each wrap one git command and parse its output into typ
 
 ### File watcher
 
-`watcher.rs` uses `notify` directly with its own debounce: a flush thread emits one batch of deduplicated paths after 600 ms of quiet, or at most 2 s after the first pending event. Events are filtered by path component — ignored dirs: `.git`, `node_modules`, `dist`, `build`, `cache`, `tmp`, `target`, `.angular`. Emitted paths use `/` on every platform, as git reports them, so they compare to `gitDirs()` paths.
+`watcher.rs` uses `notify` directly with its own debounce: a flush thread emits one batch of deduplicated paths after 600 ms of quiet, or at most 2 s after the first pending event. Events are filtered by path component below the watched root, skipping the `ignoredDirs` watch option (names at any depth, or right below the root when starting with `/`; none by default; `FileWatcherService` passes `.git` and `node_modules` for the working tree, the rest left to the ignore rules). With `respectGitIgnore` (the working-tree watch), paths the repository's ignore rules exclude are skipped too: the `ignore` crate walks the tree and `GitIgnoreRules` matches events against its `.gitignore` files, `info/exclude` and the global excludes file, all read when the watch starts. Emitted paths use `/` on every platform, as git reports them, so they compare to `gitDirs()` paths.
 
-On Linux, recursive watches are not delegated to inotify: `watch_tree` walks the repo and adds a non-recursive watch per directory, skipping ignored dirs and symlinks, so no watches are registered inside `node_modules`/`target`. Directories created later are watched by the flush thread. Other platforms use a single recursive watch.
+On Linux, recursive watches are not delegated to inotify: `watch_tree` walks the repo and adds a non-recursive watch per directory, skipping ignored dirs and symlinks, so no watches are registered inside `node_modules`/`target`/`.venv`. Directories created later are watched by the flush thread. Other platforms use a single recursive watch.
 
-`FileWatcherService` (`src/app/services/file-watcher.service.ts`) wraps `window.tauri.chokidar.watch/on/close` and exposes `onWorkingDirFileChange$` via `auditTime(300)`. Git-refresh subscribes with `switchMap(() => updateWorkingDirChanges())` so a new file event cancels the previous in-flight `git status`.
+A watch that fails rejects `watch_paths` with a `WatchError` (`kind` `watch-limit` when inotify's `fs.inotify.max_user_watches` is reached, with its value, else `other`); a directory created later that hits the limit emits `watcher-error:{id}` once. The bridge hands both to the watcher's `'error'` callbacks, and `FileWatcherService` shows one sticky toast per worktree opened (`watchErrorMessage`): what is missed, and how to raise the limit.
+
+`FileWatcherService` (`src/app/services/file-watcher.service.ts`) wraps `window.tauri.chokidar.watch/on/close`. An effect watches `CurrentRepoStore.cwd`, its cleanup closing the previous worktree's watchers. It exposes `onWorkingDirFileChange$`, one emission per Rust batch (`auditTime(0)`). It also watches git's state, which the working-tree watch skips: the common dir recursively (it holds the refs and, in `worktrees/<name>`, each linked worktree's git dir), skipping `/objects`, `/logs`, `/lfs`, `/modules`, `/hooks`, lock files left out, exposed as `onGitStateChange$` (one array of paths per Rust batch). Git-refresh subscribes with `switchMap(() => updateWorkingDirChanges())` so a new file event cancels the previous in-flight `git status`.
 
 ### Refresh pipeline
 
 `GitRefreshService` orchestrates all data refreshes:
 
 1. **`refreshAll()`** — on app load, after toolbar actions, and manual trigger. Runs `updateWorkingDirChanges`, `updateLogsAndBranches`, and `updateRebaseStatus` in parallel via `forkJoin`.
-   On window focus, only the status and rebase state are refreshed, unless git's state files (`HEAD`, `index`, refs, `FETCH_HEAD`…; mtimes compared with the last focus) changed in the background, then `refreshAll()`.
+   On window focus, only the status and rebase state are refreshed.
 2. **`updateLogsAndBranches()`** — two-phase waterfall: Phase 1 fetches stashes + remote tags in parallel, Phase 2 uses those results to fetch logs + branches + tags + detached HEAD in parallel.
-3. **File-triggered refresh** — `FileWatcherService` emits via `auditTime(300)`, then `throttleTime(500, trailing)` + `switchMap(() => updateWorkingDirChanges())` in the refresh service to cancel in-flight calls.
+3. **File-triggered refresh** — `FileWatcherService` emits once per Rust batch (already debounced), then `switchMap(() => updateWorkingDirChanges())` in the refresh service cancels the in-flight call.
+4. **Git commands run outside the app** — on `onGitStateChange$`, a changed path newer (mtime) than the last log load, or deleted, runs `refreshAll()`; a changed index only refreshes the status. Older writes are the app's own actions (auto-fetch included), which load the log themselves.
 
 ### State management
 

@@ -28,7 +28,7 @@ import {GitCommandHistoryService} from '../git-command-history.service';
 import {SettingsService} from '../settings.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {type GitRunner, journalFor, runJournaled} from '../../utils/undo.utils';
-import {type GitDirs, gitPath} from '../../utils/git-path.utils';
+import {type GitDirs, gitPath, type GitStatePath} from '../../utils/git-path.utils';
 
 // Git invokes GIT_EDITOR as: `$GIT_EDITOR /path/to/msg/file` — we want a no-op that exits 0.
 // On Windows (cmd.exe): "cmd /c exit 0" — ignores extra args. On Unix: "true".
@@ -102,7 +102,7 @@ export class GitApiService {
   };
 
   /** Absolute path of `name` (e.g. 'rebase-merge', 'refs/stash') in the current repository's git directory */
-  gitPath = (name: string, cwd = this.currentRepo.cwd()!) => this.gitDirs(cwd).then(dirs => gitPath(dirs, name));
+  gitPath = (name: GitStatePath, cwd = this.currentRepo.cwd()!) => this.gitDirs(cwd).then(dirs => gitPath(dirs, name));
 
   // Raw stdout bytes, for binary content (git show of an image blob…)
   gitBytes = (args: string[]) =>

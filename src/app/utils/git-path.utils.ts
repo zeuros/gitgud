@@ -23,11 +23,17 @@ export interface GitDirs {
   commonDir: string;
 }
 
+// The paths inside `.git` the app reads or waits on
+export type GitStatePath =
+  | 'FETCH_HEAD' | 'MERGE_HEAD' | 'MERGE_MSG' | 'CHERRY_PICK_HEAD' | 'REVERT_HEAD' | 'index.lock'
+  | 'rebase-merge' | 'rebase-merge/git-rebase-todo' | 'rebase-merge/head-name' | 'rebase-merge/onto' | 'rebase-apply/rebasing'
+  | 'refs/stash';
+
 // Same split as `git rev-parse --git-path`: refs (but the per-worktree ones), packed-refs and their logs are shared
 const SHARED = /^(refs\/(?!bisect|worktree|rewritten)|packed-refs$|logs\/refs\/)/;
 
-/** Absolute path of `name` (e.g. 'rebase-merge', 'refs/stash') in the repository's git directory */
-export const gitPath = ({gitDir, commonDir}: GitDirs, name: string) => `${SHARED.test(name) ? commonDir : gitDir}/${name}`;
+/** Absolute path of `name`, a path inside `.git` as `git rev-parse --git-path` takes it: 'rebase-merge' resolves in the git dir, 'refs/stash' in the common dir */
+export const gitPath = ({gitDir, commonDir}: GitDirs, name: GitStatePath) => `${SHARED.test(name) ? commonDir : gitDir}/${name}`;
 
 const shellQuote = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`;
 

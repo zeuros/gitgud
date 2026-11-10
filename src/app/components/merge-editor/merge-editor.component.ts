@@ -32,7 +32,7 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {ThemeService} from '../../services/theme.service';
 import {short} from '../../utils/commit-utils';
 import {isBinaryContent} from '../monaco-editor-view/monaco-utils';
-import {gitPath} from '../../utils/git-path.utils';
+import {gitPath, type GitStatePath} from '../../utils/git-path.utils';
 
 const GitGudDarkColors = {
   added:            'rgba(155, 185, 85,  0.20)',
@@ -214,8 +214,8 @@ export class MergeEditorComponent {
 
     const dirs = await this.gitApi.gitDirs(cwd).catch(() => undefined);
     if (!dirs) return UNKNOWN_CTX;
-    const read = async (name: string) => { try { return (await window.tauri.fs.readFile(gitPath(dirs, name))).trim(); } catch { return ''; } };
-    const exists = (name: string) => window.tauri.fs.exists(gitPath(dirs, name));
+    const read = async (name: GitStatePath) => { try { return (await window.tauri.fs.readFile(gitPath(dirs, name))).trim(); } catch { return ''; } };
+    const exists = (name: GitStatePath) => window.tauri.fs.exists(gitPath(dirs, name));
     const head = this.currentRepo.headBranch()?.name ?? 'HEAD';
 
     // Rebase replays our commits on top of the upstream: HEAD (left) is the upstream, the commit being replayed is on the right
