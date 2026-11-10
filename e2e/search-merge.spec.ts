@@ -32,7 +32,7 @@ describe('graph search, git command log & merge editor', () => {
     await pressKey('Escape');
 
     // ── Git command log ───────────────────────────────────────────────────────
-    await jsClick(await $('button:has(span.fa-terminal)'));
+    await jsClick(await $('button:has(i.fa-terminal)'));
     await expect($('//*[contains(text(),"Git Command History")]')).toBeDisplayed();
     await pressKey('Escape');
 

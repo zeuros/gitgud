@@ -29,8 +29,8 @@ Driving it from a spec (WebdriverIO, helpers in `e2e/utils/helpers.ts`):
 - Toasts: wait with `waitForExist`; `waitForDisplayed` times out while they animate.
 - The log only renders rows near the viewport (`renderWindow`): find a commit through the search (Ctrl+F, type, Enter selects the match) rather than by its row.
 - A second repo: the `+` tab button opens a "New tab" page; stub `window.tauri.dialog.showOpenDialog` then click its `Open` button.
-
-As of Oct 2026 these specs fail on steps unrelated to recent changes (out of date selectors or flows): `search-merge` (no `.conflicted-section` after opening the conflict repo, also failing on 617e0c92), `git-ops` (left panel tree selector), `diff-staging` (`p-select.settings-select`).
+- `wdio.conf.ts` points the app's `XDG_*` folders to a temp dir: otherwise it shares the user's window state (a desktop-sized window, software-rendered under Xvfb, stalls IPC) and localStorage (wiped by `initRepo`).
+- `strictSelectors: false`: the specs' `$()` take the first match.
 
 ## Stack
 

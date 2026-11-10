@@ -136,18 +136,18 @@ export async function initRepo(template: string): Promise<void> {
   );
 }
 
-/** Add a second repo through the UI (the + button) without reloading the app. */
+/** Add a second repo through the UI (the + button, then Open on the "New tab" page) without reloading the app. */
 export async function addRepoViaUI(template: string): Promise<void> {
   const repoDir = copyRepo(template);
   await browser.execute((dir: string) => {
     window.tauri.dialog.showOpenDialog = async () => [dir];
   }, repoDir);
   await jsClick(await $('//button[i[@class="pi pi-plus"]]'));
-  // Wait for the new tab to appear (more tabs than before)
-  await browser.waitUntil(
-    async () => (await $$('p-tab')).length > 1,
-    { timeout: 15_000, timeoutMsg: 'new repo tab never appeared after addRepoViaUI' },
-  );
+  const openButton = $('//gitgud-new-tab//button[normalize-space()="Open"]');
+  await openButton.waitForDisplayed({ timeout: 10_000, timeoutMsg: 'the "New tab" page never appeared after the + button' });
+  await jsClick(await openButton);
+  // The repository replaces the "New tab" page
+  await $('gitgud-new-tab').waitForExist({ reverse: true, timeout: 15_000, timeoutMsg: 'the repository never opened from the "New tab" page' });
 }
 
 export async function addRepo(template: string): Promise<void> {

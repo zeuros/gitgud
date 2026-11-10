@@ -33,8 +33,6 @@ describe('git ops — commit graph, branch nav, stash, create branch', () => {
     const input = await $('input.branch-name-input');
     await typeInto(input, 'ci/test-branch');
     await pressKey('Enter');
-    await expect(
-      $('//*[contains(@class,"p-splitterpanel")]//*[contains(@class,"p-tree-node-selectable")]//span[contains(.,"test-branch")]'),
-    ).toBeDisplayed();
+    await expect($('//*[contains(@class,"p-tree-node-selectable")]//span[contains(.,"test-branch")]')).toBeDisplayed();
   });
 });

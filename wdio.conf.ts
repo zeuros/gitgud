@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import { waitTauriDriverReady } from '@crabnebula/tauri-driver';
 import type { Options } from '@wdio/types';
+import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
@@ -23,6 +24,15 @@ process.env['WDIO_USE_NATIVE_FETCH'] = '1';
 // with "Error 71 (Protocol error) dispatching to Wayland display".
 process.env['GDK_BACKEND'] = 'x11';
 
+// The app keeps its window state and localStorage under its identifier in the user's folders: a run would restore
+// the desktop window size (software-rendered under Xvfb, slow enough to stall IPC) and wipe the user's repository list
+// The config is loaded by the launcher then by each worker, which inherit its folder
+if (os.platform() === 'linux') {
+  const appHome = process.env['GITGUD_E2E_HOME'] ??= fs.mkdtempSync(path.join(os.tmpdir(), 'gitgud-e2e-home-'));
+  for (const [variable, folder] of [['XDG_CONFIG_HOME', 'config'], ['XDG_DATA_HOME', 'data'], ['XDG_CACHE_HOME', 'cache']])
+    process.env[variable] = path.join(appHome, folder);
+}
+
 export const config: Options.Testrunner = {
   runner: 'local',
   specs: ['./e2e/**/*.spec.ts'],
@@ -41,6 +51,8 @@ export const config: Options.Testrunner = {
   logLevel: 'warn',
   bail: 0,
   waitforTimeout: 10_000,
+  // The specs rely on `$` taking the first match, as before WebdriverIO 10
+  strictSelectors: false,
   connectionRetryTimeout: 120_000,
   connectionRetryCount: 3,
 

@@ -49,16 +49,11 @@ describe('diff viewer — view modes, staging & commit', () => {
     await $('//tr[contains(@class,"commit-row") and contains(.,"add filter bar")]').waitForDisplayed({ timeout: 10_000 });
 
     // Theme toggle
-    await jsClick(await $('button:has(span.fa-cog)'));
-    await jsClick(await $('p-select.settings-select'));
-    await beat();
-    await jsClick(await $('//*[@role="option" and contains(.,"Light")]'));
-    await jsClick(await $('p-select.settings-select'));
-    await beat();
-    await jsClick(await $('//*[@role="option" and contains(.,"Dark")]'));
-    await jsClick(await $('p-select.settings-select'));
-    await beat();
-    await jsClick(await $('//*[@role="option" and contains(.,"System")]'));
+    await jsClick(await $('button:has(i.fa-cog)'));
+    for (const theme of ['light', 'dark']) {
+      await jsClick(await $(`.theme-card[data-theme="${theme}"]`));
+      await expect($(`.theme-card[data-theme="${theme}"]`)).toHaveElementClass('selected');
+    }
     await pressKey('Escape');
   });
 });

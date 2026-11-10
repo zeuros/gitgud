@@ -66,10 +66,14 @@ async function triggerRebaseMainOntoFeature(): Promise<void> {
   await clickMenuItem('Rebase main onto feature');
 }
 
+// The right-clicked branch stays selected: the conflicted files show once the working directory row is
 async function waitForConflict(): Promise<void> {
+  const conflictRow = $('//tr[contains(@class,"commit-row")][contains(.,"file conflict")]');
+  await conflictRow.waitForExist({ timeout: 20_000, timeoutMsg: 'the working directory row never showed the conflict' });
+  await jsClick(await conflictRow);
   await browser.waitUntil(
     async () => (await $$('.conflicted-section tr')).length > 0,
-    { timeout: 20_000, timeoutMsg: 'conflicted-section rows never appeared' },
+    { timeout: 10_000, timeoutMsg: 'conflicted-section rows never appeared' },
   );
 }
 
@@ -93,9 +97,9 @@ describe('rebase conflict — resolve & abort', () => {
     await waitForMerge();
     await expect($('.operation-badge.op-rebase')).toBeDisplayed();
 
-    // Accept ours (first "Accept All" button)
+    // Accept the commit being replayed (right side): taking the upstream's (left) would leave nothing to continue, only to skip
     const acceptBtns = await $$('button.accept-all-btn');
-    await jsClick(acceptBtns[0]);
+    await jsClick(acceptBtns[1]);
 
     // Save & Mark Resolved — closes the merge editor
     await jsClick(await byText('button', 'Save & Mark Resolved'));
