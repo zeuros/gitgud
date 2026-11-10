@@ -48,6 +48,28 @@
   </provides>
 
   <releases>
+    <release version="2.13.0" date="2026-11-10">
+      <description>
+        <p>What's new in GitGud 2.13.0:</p>
+        <ul>
+          <li>Add the last git commands to the issue</li>
+          <li>Add the latest console warnings and errors to the issue</li>
+          <li>Report an issue button opening a prefilled GitHub issue</li>
+          <li>Ember theme in place of One Rainbow</li>
+          <li>A quest-themed message instead of an empty log</li>
+          <li>Offer to git init a picked or dropped folder that isn't in a repository</li>
+          <li>Open a repository by dropping its folder on the window</li>
+          <li>Show the errors of watcher closing, show in folder and rebase todo writes</li>
+          <li>Pick up git commands run outside the app without refocusing</li>
+          <li>Tell the user when the files of a repository can't be watched</li>
+          <li>Skip the paths the repository ignores</li>
+          <li>Keep the worktree badge tooltip below it</li>
+          <li>Report paths with forward slashes on Windows</li>
+          <li>Update all dependencies</li>
+          <li>Keep the version tooltip on screen</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.12.0" date="2026-10-27">
       <description>
         <p>What's new in GitGud 2.12.0:</p>
