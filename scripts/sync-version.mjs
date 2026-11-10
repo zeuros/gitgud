@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Stamps the app version into the files npm doesn't manage: the Tauri config, Cargo.toml, and the
+ * Stamps the app version into the files npm doesn't manage: the Tauri config, Cargo.toml and Cargo.lock, and the
  * website's version badge and download links, and the README's download links (which embed the version in the release asset names).
  *
  * Usage: node scripts/sync-version.mjs [version]   (defaults to $npm_new_version, then package.json)
@@ -13,6 +13,7 @@ const version = process.argv[2] ?? process.env.npm_new_version ?? JSON.parse(rea
 // Each file's current version is found by a pattern, then every occurrence of it is replaced
 const FILES = [
   {file: 'src-tauri/Cargo.toml', current: /^version = "([^"]+)"/m},
+  {file: 'src-tauri/Cargo.lock', current: /name = "gitgud"\nversion = "([^"]+)"/},
   {file: 'src-tauri/tauri.conf.json', current: /"version": "([^"]+)"/},
   {file: 'docs/index.html', current: /releases\/download\/v([^/]+)\//},
   {file: 'README.md', current: /releases\/download\/v([^/]+)\//},
