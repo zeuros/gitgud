@@ -33,14 +33,16 @@ export class RebaseService {
    * ```sh
    * spawn git rebase -i
    *   └─ git calls GIT_SEQUENCE_EDITOR with path to todo file
-   *        └─ script polls for "$0.done" (i.e. git-rebase-todo.done)
-   *             └─ blocked here until .done exists
+   *        └─ script polls for "$0.done" or "$0.abort" (i.e. git-rebase-todo.done)
+   *             └─ blocked here until one exists
    *
    * finishRebase(contents)
-   *   ├─ writes new contents to git-rebase-todo   ← you had this
-   *   └─ writes git-rebase-todo.done              ← this was missing
+   *   ├─ writes new contents to git-rebase-todo
+   *   └─ writes git-rebase-todo.done
    *        └─ script sees the file, deletes it, exits
    *             └─ git proceeds with the rebase
+   *   or, if a write fails, writes git-rebase-todo.abort
+   *        └─ script exits 1: git cancels the rebase and removes its state
    * ```
    */
   startInteractiveRebase = (sha: string, autosquash = false) =>
@@ -82,19 +84,21 @@ export class RebaseService {
     // The todo is written before .done appears: git reads it as soon as the editor script exits
     this.rebaseActionsFilePath()
       .then(path => window.tauri.fs.writeFile(path, contents))
-      .then(this.cleanWaitFile);
+      .then(() => this.signalWaitScript('done'))
+      // Otherwise git waits forever: cancel the rebase, then report why
+      .catch((error: unknown) => this.signalWaitScript('abort').then(() => Promise.reject(error), () => Promise.reject(error)));
     return this.pendingRebase$.pipe(first());
   };
 
-  // terminates the waitForFileSaveScript (process waiting for .done file) script and finishes the 'git rebase ...' spawned observable
-  private cleanWaitFile = () =>
-    this.rebaseActionsFilePath().then(path => window.tauri.fs.writeFile(path + '.done', ''));
+  // Ends waitForFileSaveScript: on 'done' git runs the todo list, on 'abort' it cancels the rebase
+  private signalWaitScript = (signal: 'done' | 'abort') =>
+    this.rebaseActionsFilePath().then(path => window.tauri.fs.writeFile(`${path}.${signal}`, ''));
 
   // Git runs it as `<editor> <todo file>`, so the file is $0 of `sh -c`. On Windows, sh comes with Git for Windows (untested without it)
   private waitForFileSaveScript = () =>
     window.tauri.process.platform === 'win32'
-      ? 'sh -c "while [ ! -f \\"$0.done\\" ]; do sleep 0.3; done && rm \\"$0.done\\""'
-      : 'sh -c \'while [ ! -f "$0.done" ]; do sleep 0.3; done && rm "$0.done"\'';
+      ? 'sh -c "until [ -f \\"$0.done\\" ] || [ -f \\"$0.abort\\" ]; do sleep 0.3; done; [ -f \\"$0.done\\" ] && rm \\"$0.done\\""'
+      : 'sh -c \'until [ -f "$0.done" ] || [ -f "$0.abort" ]; do sleep 0.3; done; [ -f "$0.done" ] && rm "$0.done"\'';
 
   hasRebaseFile = () => this.gitApi.gitPath('rebase-merge').then(window.tauri.fs.exists);
 
