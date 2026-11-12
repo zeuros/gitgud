@@ -40,8 +40,9 @@ export class LordReflogComponent {
   }
 
   protected onKeydown = (event: KeyboardEvent) => {
-    const target = event.target as HTMLElement;
-    if (this.summoned() || target.matches('input, textarea, [contenteditable]') || target.closest('.monaco-editor')) return;
+    // A key event dispatched on the document itself targets no element
+    const target = event.target;
+    if (this.summoned() || (target instanceof Element && (target.matches('input, textarea, [contenteditable]') || target.closest('.monaco-editor')))) return;
     this.recentKeys = [...this.recentKeys, event.key.length == 1 ? event.key.toLowerCase() : event.key].slice(-KONAMI_CODE.length);
     if (this.recentKeys.join() == KONAMI_CODE.join()) {
       this.recentKeys = [];
