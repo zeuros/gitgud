@@ -111,7 +111,8 @@ export function copyRepo(template: string): string {
   return repoDir;
 }
 
-export async function initRepo(template: string): Promise<void> {
+/** Opens a copy of `template` in a freshly reset app, returning the copy's path */
+export async function initRepo(template: string): Promise<string> {
   const repoDir = copyRepo(template);
 
   // Clear any stale state from a previous run, then reload so Angular starts fresh.
@@ -134,6 +135,7 @@ export async function initRepo(template: string): Promise<void> {
     async () => (await $$('tr.commit-row')).length > 0,
     { timeout: 40_000, timeoutMsg: 'commit rows never appeared after initRepo' },
   );
+  return repoDir;
 }
 
 /** Add a second repo through the UI (the + button, then Open on the "New tab" page) without reloading the app. */
