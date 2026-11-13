@@ -20,6 +20,10 @@ import {inject, Injectable} from '@angular/core';
 import {catchError, defer, EMPTY, finalize, first, from, map, type Observable, retry, Subject, switchMap, throwError} from 'rxjs';
 import {GitApiService, noopEditor} from './git/git-api.service';
 
+// The app rewrites the todo list within a second of git writing it: past this delay, it is gone or can't write
+const WAIT_SCRIPT_TIMEOUT_SECONDS = 60;
+const WAIT_SCRIPT_POLL_SECONDS = 0.3;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -43,6 +47,8 @@ export class RebaseService {
    *             └─ git proceeds with the rebase
    *   or, if a write fails, writes git-rebase-todo.abort
    *        └─ script exits 1: git cancels the rebase and removes its state
+   *
+   * Without either file (the app closed, the disk is read-only…), the script exits 1 after WAIT_SCRIPT_TIMEOUT_SECONDS
    * ```
    */
   startInteractiveRebase = (sha: string, autosquash = false) =>
@@ -77,8 +83,6 @@ export class RebaseService {
       catchError(e => this.abortRebase().pipe(switchMap(() => throwError(() => e)))),
     );
 
-  // FIXME: if the app dies while git rebase waits for the todo list, git can keep its lock file:
-  //  writing the .done file and removing the lock on error would let the rebase finish in a clean state
   finishRebase = (contents: string) => {
     // Fire-and-forget writes; the pending rebase observable waits for the .done signal
     // The todo is written before .done appears: git reads it as soon as the editor script exits
@@ -94,11 +98,12 @@ export class RebaseService {
   private signalWaitScript = (signal: 'done' | 'abort') =>
     this.rebaseActionsFilePath().then(path => window.tauri.fs.writeFile(`${path}.${signal}`, ''));
 
-  // Git runs it as `<editor> <todo file>`, so the file is $0 of `sh -c`. On Windows, sh comes with Git for Windows (untested without it)
-  private waitForFileSaveScript = () =>
-    window.tauri.process.platform === 'win32'
-      ? 'sh -c "until [ -f \\"$0.done\\" ] || [ -f \\"$0.abort\\" ]; do sleep 0.3; done; [ -f \\"$0.done\\" ] && rm \\"$0.done\\""'
-      : 'sh -c \'until [ -f "$0.done" ] || [ -f "$0.abort" ]; do sleep 0.3; done; [ -f "$0.done" ] && rm "$0.done"\'';
+  // Git runs it through sh as `<editor> <todo file>`, Git for Windows too with its own sh: the file is $0 of `sh -c`,
+  // single-quoted so that sh doesn't expand it first. Exits 1 on .abort or after the timeout, so git cancels the rebase
+  private waitForFileSaveScript = () => {
+    const maxPolls = Math.ceil(WAIT_SCRIPT_TIMEOUT_SECONDS / WAIT_SCRIPT_POLL_SECONDS);
+    return `sh -c 'polls=0; until [ -f "$0.done" ] || [ -f "$0.abort" ] || [ $polls -ge ${maxPolls} ]; do sleep ${WAIT_SCRIPT_POLL_SECONDS}; polls=$((polls + 1)); done; [ -f "$0.done" ] && rm "$0.done"'`;
+  };
 
   hasRebaseFile = () => this.gitApi.gitPath('rebase-merge').then(window.tauri.fs.exists);
 
