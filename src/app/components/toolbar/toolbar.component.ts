@@ -35,7 +35,7 @@ import {workingDirHasChanges} from '../../utils/utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {UndoService} from '../../services/undo.service';
 import {DialogService} from 'primeng/dynamicdialog';
-import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
+import {openSetUpstreamDialog, type SetUpstreamResult} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
 import {type BehindRemoteAction, openBehindRemoteDialog} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
@@ -178,14 +178,18 @@ export class ToolbarComponent implements OnInit {
       ),
     );
 
-  private openBehindRemoteDialog = (diverged: boolean) => {
+  private openBehindRemoteDialog = (
+    diverged: boolean,
+    remoteRef = `refs/remotes/${this.currentRepo.headBranch()!.upstream}`,
+    forcePushArgs = ['push', '--force-with-lease'],
+  ) => {
     const branch = this.currentRepo.headBranch()!;
-    return openBehindRemoteDialog(this.dialog, branch.ref, `refs/remotes/${branch.upstream}`, diverged).pipe(
+    return openBehindRemoteDialog(this.dialog, branch.ref, remoteRef, diverged).pipe(
       switchMap((action: BehindRemoteAction) => {
         if (action === 'pull') return this.gitApi.gitAction(['pull', '--ff-only']);
         if (action === 'merge') return this.gitApi.gitAction(['pull', '--no-ff']);
         if (action === 'rebase') return this.gitApi.gitAction(['pull', '--rebase']);
-        if (action === 'force-push') return this.gitApi.gitAction(['push', '--force-with-lease']);
+        if (action === 'force-push') return this.gitApi.gitAction(forcePushArgs);
         return EMPTY;
       }),
     );
@@ -203,8 +207,23 @@ export class ToolbarComponent implements OnInit {
 
   private openSetUpstreamDialog = () =>
     openSetUpstreamDialog(this.dialog, this.currentRepo.headBranch()?.name ?? '').pipe(
-      switchMap(result => result ? this.gitApi.gitAction(['push', '--set-upstream', result.remote, result.branch]) : EMPTY),
+      switchMap(result => result ? this.pushToNewUpstream(result) : EMPTY),
     );
+
+  // A remote branch the current one is behind (rewritten since pushed) goes through the behind-remote dialog,
+  // offering to force push, rather than a push git rejects
+  private pushToNewUpstream = ({remote, branch}: SetUpstreamResult) => {
+    const remoteRef = `refs/remotes/${remote}/${branch}`;
+    return this.branchAheadBehind.aheadBehind('HEAD', remoteRef).pipe(
+      catchError(() => of({ahead: 0, behind: 0, diverged: false})), // not on the remote yet
+      switchMap(({behind, diverged}) => behind === 0
+        ? this.gitApi.gitAction(['push', '--set-upstream', remote, branch])
+        : this.gitApi.gitAction(['branch', `--set-upstream-to=${remote}/${branch}`]).pipe(
+          // Named: a plain push only goes to an upstream of the same name
+          switchMap(() => this.openBehindRemoteDialog(diverged, remoteRef, ['push', '--force-with-lease', remote, `HEAD:${branch}`])),
+        )),
+    );
+  };
 
   protected donateItems: MenuItem[] = [
     {

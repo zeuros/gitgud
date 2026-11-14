@@ -46,23 +46,23 @@ export class BranchAheadBehindService {
     });
   }
 
-  /** One-shot ahead/behind for HEAD vs its upstream — used by toolbar before push. */
-  aheadBehindForHead = () =>
-    this.gitApi.git(['rev-list', '--count', '--left-right', 'HEAD...@{u}']).pipe(
+  /** Commits `ref` has that `otherRef` lacks (ahead), and the reverse (behind). Errors when either ref doesn't exist. */
+  aheadBehind = (ref: string, otherRef: string) =>
+    this.gitApi.git(['rev-list', '--count', '--left-right', `${ref}...${otherRef}`]).pipe(
       map(out => {
         const [ahead, behind] = out.trim().split('\t').map(Number);
         return {ahead, behind, diverged: ahead > 0 && behind > 0};
       }),
-      // If head branch is not present on remote, git throws an error, which can be silenced
-      catchError(() => EMPTY),
     );
 
+  /** One-shot ahead/behind for HEAD vs its upstream — used by toolbar before push. */
+  aheadBehindForHead = () =>
+    // If head branch is not present on remote, git throws an error, which can be silenced
+    this.aheadBehind('HEAD', '@{u}').pipe(catchError(() => EMPTY));
+
   private aheadBehindCountsForBranch = (branch: Branch): Observable<[string, AheadBehind]> =>
-    this.gitApi.git(['rev-list', '--count', '--left-right', `${branch.ref}...refs/remotes/${branch.upstream}`]).pipe(
-      map(out => {
-        const [ahead, behind] = out.trim().split('\t').map(Number);
-        return [branch.name, {ahead, behind}] as [string, AheadBehind];
-      }),
+    this.aheadBehind(branch.ref, `refs/remotes/${branch.upstream}`).pipe(
+      map(({ahead, behind}): [string, AheadBehind] => [branch.name, {ahead, behind}]),
       // If remote branch doesn't exist, git throws an error, which can be silenced
       catchError(() => EMPTY),
     );
