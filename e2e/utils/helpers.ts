@@ -189,6 +189,28 @@ export const waitForDiff = () =>
 export const waitForMerge = () =>
   $('gitgud-merge-editor').waitForDisplayed({ timeout: 10_000 });
 
+export const waitForMenuItem = (label: string) =>
+  $(`//li[contains(@class,"p-contextmenu-item")][contains(.,"${label}")]`)
+    .waitForDisplayed({ timeout: 5_000, timeoutMsg: `menu item "${label}" never appeared` });
+
+export const clickMenuItem = async (label: string) =>
+  browser.execute((text: string) => {
+    const target = Array.from(document.querySelectorAll('.p-contextmenu-item-content'))
+      .find(el => el.textContent?.includes(text));
+    target?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+  }, label);
+
+/** Waits for a stopped rebase or merge to show its conflicted files, clicking the working directory row */
+export async function waitForConflict(): Promise<void> {
+  const conflictRow = $('//tr[contains(@class,"commit-row")][contains(.,"file conflict")]');
+  await conflictRow.waitForExist({ timeout: 20_000, timeoutMsg: 'the working directory row never showed the conflict' });
+  await jsClick(await conflictRow);
+  await browser.waitUntil(
+    async () => (await $$('.conflicted-section tr')).length > 0,
+    { timeout: 10_000, timeoutMsg: 'conflicted-section rows never appeared' },
+  );
+}
+
 export async function initRepoWithWorktrees(
   template: string,
 ): Promise<{ repoDir: string; worktreeDir: string }> {
