@@ -9,6 +9,7 @@
  */
 
 mod commands;
+pub mod sequence_editor;
 mod shell_pool;
 
 use commands::{fs::*, process::*, util::*, watcher::*};

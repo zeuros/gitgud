@@ -20,10 +20,6 @@ import {inject, Injectable} from '@angular/core';
 import {catchError, defer, EMPTY, finalize, first, from, map, type Observable, retry, Subject, switchMap, throwError} from 'rxjs';
 import {GitApiService, NOOP_EDITOR} from './git/git-api.service';
 
-// The app rewrites the todo list within a second of git writing it: past this delay, it is gone or can't write
-const WAIT_SCRIPT_TIMEOUT_SECONDS = 60;
-const WAIT_SCRIPT_POLL_SECONDS = 0.3;
-
 @Injectable({
   providedIn: 'root',
 })
@@ -36,19 +32,19 @@ export class RebaseService {
    * The flow is:
    * ```sh
    * spawn git rebase -i
-   *   └─ git calls GIT_SEQUENCE_EDITOR with path to todo file
-   *        └─ script polls for "$0.done" or "$0.abort" (i.e. git-rebase-todo.done)
+   *   └─ git calls GIT_SEQUENCE_EDITOR with path to todo file: GitGud's own binary (src-tauri/src/sequence_editor.rs)
+   *        └─ polls for git-rebase-todo.done or git-rebase-todo.abort
    *             └─ blocked here until one exists
    *
    * finishRebase(contents)
    *   ├─ writes new contents to git-rebase-todo
    *   └─ writes git-rebase-todo.done
-   *        └─ script sees the file, deletes it, exits
+   *        └─ the editor sees the file, deletes it, exits
    *             └─ git proceeds with the rebase
    *   or, if a write fails, writes git-rebase-todo.abort
-   *        └─ script exits 1: git cancels the rebase and removes its state
+   *        └─ the editor exits 1: git cancels the rebase and removes its state
    *
-   * Without either file (the app closed, the disk is read-only…), the script exits 1 after WAIT_SCRIPT_TIMEOUT_SECONDS
+   * Without either file (the app closed, the disk is read-only…), the editor exits 1 after a minute
    * ```
    */
   startInteractiveRebase = (sha: string, autosquash = false) =>
@@ -64,9 +60,7 @@ export class RebaseService {
   // Once rebase actions file is created, we next pendingRebase$ finishRebase can change actions and ... finish the rebase
   private spawnRebaseProcess = (sha: string, autosquash: boolean) => {
     // --empty=drop: a commit emptied by the rebase would otherwise stop it. GIT_EDITOR: squash keeps both messages as is
-    this.gitApi.spawn('git', ['rebase', '-i', '--empty=drop', ...(autosquash ? ['--autosquash'] : []), sha], {
-      env: {GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript(), GIT_EDITOR: NOOP_EDITOR},
-    }).pipe(
+    this.gitApi.spawn('git', ['rebase', '-i', '--empty=drop', ...(autosquash ? ['--autosquash'] : []), sha], {env: {GIT_EDITOR: NOOP_EDITOR}}).pipe(
       catchError(e => {
         this.pendingRebase$.error(e);
         return throwError(() => e);
@@ -85,25 +79,18 @@ export class RebaseService {
 
   finishRebase = (contents: string) => {
     // Fire-and-forget writes; the pending rebase observable waits for the .done signal
-    // The todo is written before .done appears: git reads it as soon as the editor script exits
+    // The todo is written before .done appears: git reads it as soon as the editor exits
     this.rebaseActionsFilePath()
       .then(path => window.tauri.fs.writeFile(path, contents))
-      .then(() => this.signalWaitScript('done'))
+      .then(() => this.signalSequenceEditor('done'))
       // Otherwise git waits forever: cancel the rebase, then report why
-      .catch((error: unknown) => this.signalWaitScript('abort').then(() => Promise.reject(error), () => Promise.reject(error)));
+      .catch((error: unknown) => this.signalSequenceEditor('abort').then(() => Promise.reject(error), () => Promise.reject(error)));
     return this.pendingRebase$.pipe(first());
   };
 
-  // Ends waitForFileSaveScript: on 'done' git runs the todo list, on 'abort' it cancels the rebase
-  private signalWaitScript = (signal: 'done' | 'abort') =>
+  // Ends the sequence editor's polling: on 'done' git runs the todo list, on 'abort' it cancels the rebase
+  private signalSequenceEditor = (signal: 'done' | 'abort') =>
     this.rebaseActionsFilePath().then(path => window.tauri.fs.writeFile(`${path}.${signal}`, ''));
-
-  // Git runs it through sh as `<editor> <todo file>`, Git for Windows too with its own sh: the file is $0 of `sh -c`,
-  // single-quoted so that sh doesn't expand it first. Exits 1 on .abort or after the timeout, so git cancels the rebase
-  private waitForFileSaveScript = () => {
-    const maxPolls = Math.ceil(WAIT_SCRIPT_TIMEOUT_SECONDS / WAIT_SCRIPT_POLL_SECONDS);
-    return `sh -c 'polls=0; until [ -f "$0.done" ] || [ -f "$0.abort" ] || [ $polls -ge ${maxPolls} ]; do sleep ${WAIT_SCRIPT_POLL_SECONDS}; polls=$((polls + 1)); done; [ -f "$0.done" ] && rm "$0.done"'`;
-  };
 
   hasRebaseFile = () => this.gitApi.gitPath('rebase-merge').then(window.tauri.fs.exists);
 

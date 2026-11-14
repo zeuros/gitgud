@@ -7,6 +7,14 @@ use tokio::process::Command;
 use serde::{Deserialize, Serialize};
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
+/// The environment a command runs with: the caller's, over GitGud's sequence editor when the command is git
+fn command_env(cmd: &str, env: Option<HashMap<String, String>>) -> HashMap<String, String> {
+    let is_git = Path::new(cmd).file_stem().is_some_and(|stem| stem == "git");
+    let mut command_env = if is_git { crate::sequence_editor::env().clone() } else { HashMap::new() };
+    command_env.extend(env.unwrap_or_default());
+    command_env
+}
+
 #[derive(Deserialize)]
 pub struct ExecOptions {
     pub cwd: Option<String>,
@@ -54,7 +62,7 @@ pub async fn exec_file(
     #[cfg(unix)]
     if let Some(cwd) = &options.cwd {
         if !cwd.is_empty() {
-            let env = options.env.clone().unwrap_or_default();
+            let env = command_env(&cmd, options.env.clone());
             let stdout = _pool.exec(&cmd, &args, cwd, &env).await?;
             return Ok(ExecResult { stdout, stderr: String::new() });
         }
@@ -76,9 +84,7 @@ async fn exec_file_direct(
     if let Some(cwd) = &options.cwd {
         command.current_dir(cwd);
     }
-    if let Some(env) = &options.env {
-        command.envs(env);
-    }
+    command.envs(command_env(&cmd, options.env));
 
     let output = command.output().await.map_err(|e| e.to_string())?;
     Ok(ExecResult {
@@ -102,9 +108,7 @@ pub async fn exec_file_bytes(
     if let Some(cwd) = &options.cwd {
         command.current_dir(cwd);
     }
-    if let Some(env) = &options.env {
-        command.envs(env);
-    }
+    command.envs(command_env(&cmd, options.env));
 
     let output = command.output().await.map_err(|e| e.to_string())?;
     if !output.status.success() {
@@ -136,9 +140,7 @@ pub async fn spawn_sync_cmd(
     if let Some(cwd) = &options.cwd {
         command.current_dir(cwd);
     }
-    if let Some(env) = &options.env {
-        command.envs(env);
-    }
+    command.envs(command_env(&cmd, options.env));
 
     let mut child = match command.spawn() {
         Ok(c) => c,
@@ -177,9 +179,7 @@ pub async fn spawn_cmd(
     if let Some(cwd) = &options.cwd {
         command.current_dir(cwd);
     }
-    if let Some(env) = &options.env {
-        command.envs(env);
-    }
+    command.envs(command_env(&cmd, options.env));
 
     let output = command.output().await.map_err(|e| e.to_string())?;
 
