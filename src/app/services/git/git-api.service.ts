@@ -30,10 +30,8 @@ import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {type GitRunner, journalFor, runJournaled} from '../../utils/undo.utils';
 import {type GitDirs, gitPath, type GitStatePath} from '../../utils/git-path.utils';
 
-// Git invokes GIT_EDITOR as: `$GIT_EDITOR /path/to/msg/file` — we want a no-op that exits 0.
-// On Windows (cmd.exe): "cmd /c exit 0" — ignores extra args. On Unix: "true".
-export const noopEditor = () =>
-  window.tauri.process.platform === 'win32' ? 'cmd /c exit 0' : 'true';
+// GIT_EDITOR for the app's git calls: git runs no editor for ':', keeping the message (commit, merge, squash…) as it wrote it
+export const NOOP_EDITOR = ':';
 
 // Subcommands that never write the index: they don't need to wait for .git/index.lock,
 // which saves an fs_exists IPC round trip per call on the hot refresh path.
@@ -81,7 +79,7 @@ export class GitApiService {
   git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
     // env is overlaid on the backend's own environment, so only send what differs
-    const run = () => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {GIT_EDITOR: noopEditor()}, ...options});
+    const run = () => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {GIT_EDITOR: NOOP_EDITOR}, ...options});
     return needsLock(filteredArgs) ? this.waitForLock().pipe(switchMap(run)) : defer(run);
   };
 

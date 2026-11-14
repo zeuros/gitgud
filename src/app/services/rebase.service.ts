@@ -18,7 +18,7 @@
 
 import {inject, Injectable} from '@angular/core';
 import {catchError, defer, EMPTY, finalize, first, from, map, type Observable, retry, Subject, switchMap, throwError} from 'rxjs';
-import {GitApiService, noopEditor} from './git/git-api.service';
+import {GitApiService, NOOP_EDITOR} from './git/git-api.service';
 
 // The app rewrites the todo list within a second of git writing it: past this delay, it is gone or can't write
 const WAIT_SCRIPT_TIMEOUT_SECONDS = 60;
@@ -65,7 +65,7 @@ export class RebaseService {
   private spawnRebaseProcess = (sha: string, autosquash: boolean) => {
     // --empty=drop: a commit emptied by the rebase would otherwise stop it. GIT_EDITOR: squash keeps both messages as is
     this.gitApi.spawn('git', ['rebase', '-i', '--empty=drop', ...(autosquash ? ['--autosquash'] : []), sha], {
-      env: {GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript(), GIT_EDITOR: noopEditor()},
+      env: {GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript(), GIT_EDITOR: NOOP_EDITOR},
     }).pipe(
       catchError(e => {
         this.pendingRebase$.error(e);
