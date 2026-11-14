@@ -32,6 +32,20 @@ Driving it from a spec (WebdriverIO, helpers in `e2e/utils/helpers.ts`):
 - `wdio.conf.ts` points the app's `XDG_*` folders to a temp dir: otherwise it shares the user's window state (a desktop-sized window, software-rendered under Xvfb, stalls IPC) and localStorage (wiped by `initRepo`).
 - `strictSelectors: false`: the specs' `$()` take the first match.
 
+### Running the unit tests on Windows (Wine)
+
+The specs that run real git (`undo`) then use Git for Windows. Setup, in a worktree:
+- A prefix with the Node win-x64 zip unpacked to `C:\node` and PortableGit to `C:\git`; `7z x -o<prefix>/drive_c/git PortableGit-*.7z.exe` unpacks it without running it.
+- `npm ci --prefix <worktree> --os=win32 --cpu=x64 --ignore-scripts` installs the win32 bindings (rolldown, esbuild) from Linux.
+- Run from the worktree, output to a file (Node under Wine fails with `open EBADF` when stdout/stderr is a pipe):
+
+```bash
+WINEPREFIX=<prefix> WINEDEBUG=-all WINEPATH='C:\git\cmd;C:\node' NO_COLOR=1 \
+  wine 'C:\node\node.exe' node_modules/vitest/vitest.mjs run --testTimeout=60000 > out.log 2>&1 </dev/null
+```
+
+`WINEPATH` holds only `C:\git\cmd`, as the Git for Windows installer puts on `PATH`. Git is several times slower under Wine: the undo specs time out with the default 5 s.
+
 ## Stack
 
 Tauri 2 + Angular 22 + Monaco Editor. All development is in `src-tauri/` (Rust backend) and `src/app/api/tauri-bridge.ts` (JS bridge). UI uses PrimeNG components and Angular Signals throughout.
@@ -63,6 +77,8 @@ On startup `installTauriBridge()` calls `buildBridge()`, which kills any stale w
 - `gitDirs()` / `gitPath(name)` — the repo's git dir and common dir (`git rev-parse --absolute-git-dir --git-common-dir`, memoized per cwd). In a linked worktree `.git` is a file and per-worktree state (`index.lock`, `rebase-merge`, `COMMIT_EDIT_MSG`, `HEAD`…) lives in `<main>/.git/worktrees/<name>`, while refs are shared: never build `${cwd}/.git/...` paths, use `gitPath()`
 
 Reader services (`git/`) each wrap one git command and parse its output into typed models. They only call `gitApi.git()`.
+
+Git's editors: `GIT_EDITOR` is `:`, which git takes as no editor, keeping messages as it wrote them. For `git rebase -i`, `RebaseService` names GitGud's own binary as `GIT_SEQUENCE_EDITOR` (`GITGUD_BINARY_NAME`, set at startup by `src-tauri/src/sequence_editor.rs`, which also makes `PATH` find this binary first) and runs git twice. Seeing its own name in `GIT_SEQUENCE_EDITOR` and a `git-rebase-todo` argument, `main()` edits the todo file instead of starting the app: the first run copies git's sequence to `GITGUD_COPY_REBASE_TODO_TO` and exits 1, cancelling the rebase; the second moves the app's sequence from `GITGUD_MOVE_REBASE_TODO_FROM` over it and exits 0. No git process waits on the app.
 
 ### File watcher
 
