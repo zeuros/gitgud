@@ -26,8 +26,8 @@ export interface GitDirs {
 // The paths inside `.git` the app reads or waits on
 export type GitStatePath =
   | 'FETCH_HEAD' | 'MERGE_HEAD' | 'MERGE_MSG' | 'CHERRY_PICK_HEAD' | 'REVERT_HEAD' | 'index.lock'
-  | 'rebase-merge' | 'rebase-merge/git-rebase-todo' | 'rebase-merge/head-name' | 'rebase-merge/onto' | 'rebase-apply/rebasing'
-  | 'refs/stash';
+  | 'rebase-merge' | 'rebase-merge/head-name' | 'rebase-merge/onto' | 'rebase-apply/rebasing'
+  | 'refs/stash' | 'gitgud-rebase-todo';
 
 // Same split as `git rev-parse --git-path`: refs (but the per-worktree ones), packed-refs and their logs are shared
 const SHARED = /^(refs\/(?!bisect|worktree|rewritten)|packed-refs$|logs\/refs\/)/;

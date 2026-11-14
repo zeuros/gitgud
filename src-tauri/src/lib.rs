@@ -9,6 +9,7 @@
  */
 
 mod commands;
+pub mod sequence_editor;
 mod shell_pool;
 
 use commands::{fs::*, process::*, util::*, watcher::*};
@@ -100,6 +101,7 @@ pub fn run() {
     #[cfg(unix)]
     patch_path_from_login_shell();
     patch_path();
+    sequence_editor::expose_binary_name();
     #[cfg(target_os = "linux")]
     patch_nvidia_wayland();
 

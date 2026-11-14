@@ -17,12 +17,12 @@
  */
 
 import {inject, Injectable} from '@angular/core';
-import {catchError, defer, EMPTY, finalize, first, from, map, type Observable, retry, Subject, switchMap, throwError} from 'rxjs';
+import {catchError, defer, EMPTY, from, map, of, switchMap, throwError} from 'rxjs';
 import {GitApiService, NOOP_EDITOR} from './git/git-api.service';
 
-// The app rewrites the todo list within a second of git writing it: past this delay, it is gone or can't write
-const WAIT_SCRIPT_TIMEOUT_SECONDS = 60;
-const WAIT_SCRIPT_POLL_SECONDS = 0.3;
+// What GitGud's sequence editor does with git's todo file (src-tauri/src/sequence_editor.rs)
+const COPY_REBASE_TODO_TO = 'GITGUD_COPY_REBASE_TODO_TO';
+const MOVE_REBASE_TODO_FROM = 'GITGUD_MOVE_REBASE_TODO_FROM';
 
 @Injectable({
   providedIn: 'root',
@@ -30,84 +30,68 @@ const WAIT_SCRIPT_POLL_SECONDS = 0.3;
 export class RebaseService {
 
   private gitApi = inject(GitApiService);
-  private pendingRebase$ = new Subject<void>();
 
   /**
    * The flow is:
-   * ```sh
-   * spawn git rebase -i
-   *   └─ git calls GIT_SEQUENCE_EDITOR with path to todo file
-   *        └─ script polls for "$0.done" or "$0.abort" (i.e. git-rebase-todo.done)
-   *             └─ blocked here until one exists
+   * ```text
+   * readRebaseActionsSequenceThenCancel():
+   *   main GitGud spawns git rebase -i,
+   *   GitGud's own binary as GIT_SEQUENCE_EDITOR (src-tauri/src/sequence_editor.rs)
+   *   └─ git writes git-rebase-todo, calls GIT_SEQUENCE_EDITOR with its path
+   *      └─ GitGud's sequence editor copies the sequence
+   *         to GITGUD_COPY_REBASE_TODO_TO and exits 1
+   *         └─ git cancels the rebase (exit 0 would run git's sequence),
+   *            main GitGud reads the sequence from the copy
    *
-   * finishRebase(contents)
-   *   ├─ writes new contents to git-rebase-todo
-   *   └─ writes git-rebase-todo.done
-   *        └─ script sees the file, deletes it, exits
-   *             └─ git proceeds with the rebase
-   *   or, if a write fails, writes git-rebase-todo.abort
-   *        └─ script exits 1: git cancels the rebase and removes its state
+   * editSequence(sequence):
+   *   main GitGud edits the sequence
    *
-   * Without either file (the app closed, the disk is read-only…), the script exits 1 after WAIT_SCRIPT_TIMEOUT_SECONDS
+   * runRebaseTodo():
+   *   main GitGud writes the sequence to GITGUD_MOVE_REBASE_TODO_FROM,
+   *   spawns git rebase -i again
+   *   └─ git writes git-rebase-todo, calls GIT_SEQUENCE_EDITOR with its path
+   *      └─ GitGud's sequence editor moves the new sequence
+   *         over git-rebase-todo and exits 0
+   *         └─ git finishes the rebase with the new sequence
    * ```
    */
-  startInteractiveRebase = (sha: string, autosquash = false) =>
+  interactiveRebase = (sha: string, editSequence: (sequence: string[]) => string[], autosquash = false) =>
     defer(() => from(this.hasRebaseFile())).pipe(
       switchMap(isRebasing => {
         if (isRebasing) throw new Error('Rebase is already in progress');
-        this.spawnRebaseProcess(sha, autosquash);
-        return this.readRebaseActionsFile();
+        return this.readRebaseActionsSequenceThenCancel(sha, autosquash);
       }),
+      switchMap(sequence => this.runRebaseTodo(sha, autosquash, editSequence(sequence).join('\n'))),
     );
 
-  // Spawn a git rebase process, it should create a file with all rebase actions and wait for user input
-  // Once rebase actions file is created, we next pendingRebase$ finishRebase can change actions and ... finish the rebase
-  private spawnRebaseProcess = (sha: string, autosquash: boolean) => {
-    // --empty=drop: a commit emptied by the rebase would otherwise stop it. GIT_EDITOR: squash keeps both messages as is
+  // Get git's todo list (sequence), from a rebase cancelled before it replays any commit.
+  // Asks git for its sequence (keeping --autosquash's order); the editor exits 1, as exit 0 would run it: git failing is expected.
+  // GITGUD_COPY_REBASE_TODO_TO (.git/gitgud-rebase-todo) is emptied first: if it stays empty, the editor never ran, and git's error (or unexpected success) is reported
+  private readRebaseActionsSequenceThenCancel = (sha: string, autosquash: boolean) =>
+    defer(() => from(this.rebaseTodoCopyPath().then(path => window.tauri.fs.writeFile(path, '').then(() => path)))).pipe(
+      switchMap(path => this.spawnRebase(sha, autosquash, {[COPY_REBASE_TODO_TO]: path}).pipe(
+        map((): unknown => new Error('git rebase ran without calling the sequence editor')),
+        catchError((error: unknown) => of(error)),
+        switchMap(error => from(window.tauri.fs.readFile(path)).pipe(
+          switchMap(contents => contents.trim() ? of(this.parseRebaseTodo(contents)) : throwError(() => error)),
+        )),
+      )),
+    );
+
+  private runRebaseTodo = (sha: string, autosquash: boolean, sequence: string) =>
+    defer(() => from(this.rebaseTodoCopyPath().then(path => window.tauri.fs.writeFile(path, sequence).then(() => path)))).pipe(
+      switchMap(path => this.spawnRebase(sha, autosquash, {[MOVE_REBASE_TODO_FROM]: path})),
+    );
+
+  // --empty=drop: a commit emptied by the rebase would otherwise stop it. GIT_EDITOR: squash keeps both messages as is
+  private spawnRebase = (sha: string, autosquash: boolean, env: Record<string, string>) =>
     this.gitApi.spawn('git', ['rebase', '-i', '--empty=drop', ...(autosquash ? ['--autosquash'] : []), sha], {
-      env: {GIT_SEQUENCE_EDITOR: this.waitForFileSaveScript(), GIT_EDITOR: NOOP_EDITOR},
-    }).pipe(
-      catchError(e => {
-        this.pendingRebase$.error(e);
-        return throwError(() => e);
-      }),
-      finalize(() => this.pendingRebase$.next()),
-    ).subscribe();
-  };
+      env: {GIT_EDITOR: NOOP_EDITOR, GIT_SEQUENCE_EDITOR: window.tauri.process.env['GITGUD_BINARY_NAME'], ...env},
+    });
 
-  private readRebaseActionsFile = (): Observable<string[]> =>
-    defer(() => from(this.rebaseActionsFilePath().then(window.tauri.fs.readFile)).pipe(
-      map(contents => this.parseInteractiveRebaseOutput(contents)),
-    )).pipe(
-      retry({count: 10, delay: 150}),
-      catchError(e => this.abortRebase().pipe(switchMap(() => throwError(() => e)))),
-    );
-
-  finishRebase = (contents: string) => {
-    // Fire-and-forget writes; the pending rebase observable waits for the .done signal
-    // The todo is written before .done appears: git reads it as soon as the editor script exits
-    this.rebaseActionsFilePath()
-      .then(path => window.tauri.fs.writeFile(path, contents))
-      .then(() => this.signalWaitScript('done'))
-      // Otherwise git waits forever: cancel the rebase, then report why
-      .catch((error: unknown) => this.signalWaitScript('abort').then(() => Promise.reject(error), () => Promise.reject(error)));
-    return this.pendingRebase$.pipe(first());
-  };
-
-  // Ends waitForFileSaveScript: on 'done' git runs the todo list, on 'abort' it cancels the rebase
-  private signalWaitScript = (signal: 'done' | 'abort') =>
-    this.rebaseActionsFilePath().then(path => window.tauri.fs.writeFile(`${path}.${signal}`, ''));
-
-  // Git runs it through sh as `<editor> <todo file>`, Git for Windows too with its own sh: the file is $0 of `sh -c`,
-  // single-quoted so that sh doesn't expand it first. Exits 1 on .abort or after the timeout, so git cancels the rebase
-  private waitForFileSaveScript = () => {
-    const maxPolls = Math.ceil(WAIT_SCRIPT_TIMEOUT_SECONDS / WAIT_SCRIPT_POLL_SECONDS);
-    return `sh -c 'polls=0; until [ -f "$0.done" ] || [ -f "$0.abort" ] || [ $polls -ge ${maxPolls} ]; do sleep ${WAIT_SCRIPT_POLL_SECONDS}; polls=$((polls + 1)); done; [ -f "$0.done" ] && rm "$0.done"'`;
-  };
+  private rebaseTodoCopyPath = () => this.gitApi.gitPath('gitgud-rebase-todo');
 
   hasRebaseFile = () => this.gitApi.gitPath('rebase-merge').then(window.tauri.fs.exists);
-
-  private rebaseActionsFilePath = () => this.gitApi.gitPath('rebase-merge/git-rebase-todo');
 
   abortRebase = () =>
     this.gitApi.gitAction(['rebase', '--abort']).pipe(
@@ -117,7 +101,7 @@ export class RebaseService {
       }),
     );
 
-  private parseInteractiveRebaseOutput = (contents: string): string[] =>
+  private parseRebaseTodo = (contents: string): string[] =>
     contents.split('\n')
       .map(line => line.trim())
       .filter(line => !line.startsWith('#'));
