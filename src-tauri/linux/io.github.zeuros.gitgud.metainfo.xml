@@ -67,6 +67,22 @@
   </provides>
 
   <releases>
+    <release version="2.14.0" date="2026-11-17">
+      <description>
+        <p>What's new in GitGud 2.14.0:</p>
+        <ul>
+          <li>Sign in button on the auto-fetch toast</li>
+          <li>Sign-in dialog links the host's token page and SSH guide, and explains a 403</li>
+          <li>Sign-in dialog when git fails to authenticate</li>
+          <li>GitGud's binary as git's credential helper, backed by the keyring</li>
+          <li>Compact commits more: a merge commit frees the lane ending on it for its merged branch</li>
+          <li>Quests section, replacing the demo video</li>
+          <li>Record the website's quests, one spec per quest</li>
+          <li>Always run the bundled git</li>
+          <li>Don't share the terminal the app was started from</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.13.2" date="2026-11-17">
       <description>
         <p>What's new in GitGud 2.13.2:</p>
