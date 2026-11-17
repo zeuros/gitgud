@@ -69,8 +69,9 @@ jobs:
       - name: Build frontend
         run: npm run build:angular
 
+      # custom-protocol serves the built frontend, as `tauri build` does; without it the app loads the dev server URL
       - name: Build Tauri binary
-        run: cargo build --release
+        run: cargo build --release --features tauri/custom-protocol
         working-directory: src-tauri
 
       - name: Create tar.gz (binary + icons for Flathub manifest)
@@ -82,6 +83,8 @@ jobs:
           cp src-tauri/icons/32x32.png    staging/icons/32x32.png
           cp src-tauri/icons/64x64.png    staging/icons/64x64.png
           cp src-tauri/icons/128x128.png  staging/icons/128x128.png
+          cp src-tauri/icons/128x128@2x.png staging/icons/256x256.png
+          cp src-tauri/icons/icon.png     staging/icons/512x512.png
           tar -czf "release/GitGud-${VERSION}-Linux-x64.tar.gz" -C staging .
           SHA=$(sha256sum "release/GitGud-${VERSION}-Linux-x64.tar.gz" | cut -d' ' -f1)
           echo "sha256_x64=${SHA}" >> $GITHUB_OUTPUT
@@ -91,7 +94,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.local/share/flatpak
-          key: flatpak-sdk-gnome-50-x64
+          key: flatpak-sdk-gnome-51-x64
 
       - name: Install Flatpak build tools
         run: |
@@ -99,29 +102,26 @@ jobs:
           flatpak remote-add --user --if-not-exists flathub \
             https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user --noninteractive -y \
-            org.gnome.Platform//50 \
-            org.gnome.Sdk//50
+            org.gnome.Platform//51 \
+            org.gnome.Sdk//51
 
       - name: Write CI manifest (uses local staging dir, no remote download)
         run: |
           cat > /tmp/ci-manifest.yml << 'MANIFEST'
           app-id: io.github.zeuros.gitgud
           runtime: org.gnome.Platform
-          runtime-version: "50"
+          runtime-version: "51"
           sdk: org.gnome.Sdk
           command: gitgud
           separate-locales: false
           finish-args:
             - --share=ipc
-            - --socket=x11
+            - --socket=fallback-x11
             - --socket=wayland
             - --share=network
             - --device=dri
             - --filesystem=home
             - --socket=ssh-auth
-            - --talk-name=org.freedesktop.Notifications
-            - --talk-name=org.freedesktop.portal.OpenURI
-            - --talk-name=org.freedesktop.portal.FileChooser
           modules:
             - name: gitgud
               buildsystem: simple
@@ -137,6 +137,10 @@ jobs:
                     /app/share/icons/hicolor/64x64/apps/io.github.zeuros.gitgud.png
                 - install -Dm644 icons/128x128.png
                     /app/share/icons/hicolor/128x128/apps/io.github.zeuros.gitgud.png
+                - install -Dm644 icons/256x256.png
+                    /app/share/icons/hicolor/256x256/apps/io.github.zeuros.gitgud.png
+                - install -Dm644 icons/512x512.png
+                    /app/share/icons/hicolor/512x512/apps/io.github.zeuros.gitgud.png
               sources:
                 - type: dir
                   path: STAGING_DIR
