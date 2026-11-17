@@ -22,6 +22,14 @@ import {errorMessage} from '../utils/utils';
 
 const defaultMessageConfig: ToastMessageOptions = {styleClass: 'headLess', text: '', life: 5000};
 
+/** The toasts with a button, which the app's second `p-toast` renders */
+export const ACTION_TOAST_KEY = 'action';
+
+export interface ToastAction {
+  label: string;
+  run: () => void;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -34,6 +42,10 @@ export class ToastService {
   info = (message: Error | string) => this.message.add({...defaultMessageConfig, severity: 'info', detail: message.toString()});
 
   warn = (message: Error | string) => this.message.add({...defaultMessageConfig, severity: 'warn', detail: errorMessage(message)});
+
+  // A warning the user can act on from the toast
+  warnWithAction = (message: string, action: ToastAction) =>
+    this.message.add({...defaultMessageConfig, key: ACTION_TOAST_KEY, severity: 'warn', detail: message, life: 15000, data: action});
 
   // sticky: stays until closed, for an error the user has to act on
   err = (message: Error | string, {sticky = false} = {}) =>

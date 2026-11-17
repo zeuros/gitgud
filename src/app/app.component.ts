@@ -34,6 +34,7 @@ import {FixupService} from './services/fixup.service';
 import {MessageService} from 'primeng/api';
 import {GitRepositoryService} from './services/git-repository.service';
 import {LordReflogComponent} from './components/lord-reflog/lord-reflog.component';
+import {ACTION_TOAST_KEY, type ToastAction} from './services/toast.service';
 
 @Component({
   standalone: true,
@@ -68,6 +69,13 @@ export class AppComponent {
     if (!isRedo || !target.matches('input, textarea') || target.closest('.monaco-editor')) return;
     event.preventDefault();
     document.execCommand('redo');
+  };
+
+  protected readonly ACTION_TOAST_KEY = ACTION_TOAST_KEY;
+
+  protected runToastAction = (action: ToastAction) => {
+    this.messageService.clear(ACTION_TOAST_KEY);
+    action.run();
   };
 
   protected dismissToastOnClick = (event: Event) => {

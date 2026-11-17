@@ -63,6 +63,12 @@ export class AutoFetchService {
   }
 
 
+  // As the toolbar's fetch: a server asking for a credential opens the sign-in dialog
+  private fetchWithSignIn = () => this.gitApi.gitAction(['fetch', '--prune']).subscribe(() => {
+    this.lastFetchedAt.set(Date.now());
+    this.gitRefresh.doUpdateLogsAndBranches();
+  });
+
   // In the background: a server asking for a credential gets a toast, the sign-in dialog waits for a fetch of the user's
   private fetch = () => {
     const cwd = this.currentRepo.cwd();
@@ -77,7 +83,7 @@ export class AutoFetchService {
         const failure = authenticationFailure(error);
         if (failure && !this.toldToSignIn.has(cwd)) {
           this.toldToSignIn.add(cwd);
-          this.toast.warn(`Auto-fetch needs a sign-in to ${new URL(failure.serverUrl).host}: fetch from the toolbar to sign in`);
+          this.toast.warnWithAction(`Auto-fetch needs a sign-in to ${new URL(failure.serverUrl).host}`, {label: 'Sign in', run: this.fetchWithSignIn});
         }
       },
     });
