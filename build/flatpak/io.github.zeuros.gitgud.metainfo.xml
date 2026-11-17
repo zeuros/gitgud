@@ -48,6 +48,23 @@
   </provides>
 
   <releases>
+    <release version="2.13.1" date="2026-11-17">
+      <description>
+        <p>What's new in GitGud 2.13.1:</p>
+        <ul>
+          <li>Offer to force push a rewritten branch already on the remote</li>
+          <li>Hide commits only reachable from hidden refs</li>
+          <li>GitGud's own binary is the sequence editor</li>
+          <li>Run no editor for git's messages</li>
+          <li>Keep the version tooltip on screen again</li>
+          <li>Cancel the rebase when the app never answers git</li>
+          <li>Ignore key events not targeting an element</li>
+          <li>Cancel the rebase when its todo list can't be written</li>
+          <li>Show the message of a Rust command's error struct</li>
+          <li>Stamp the version into Cargo.lock too</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.13.0" date="2026-11-10">
       <description>
         <p>What's new in GitGud 2.13.0:</p>
