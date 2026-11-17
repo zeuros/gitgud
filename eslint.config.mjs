@@ -6,7 +6,7 @@ import angular from 'angular-eslint';
 import sonarjs from 'eslint-plugin-sonarjs';
 
 export default defineConfig(
-  {ignores: ['dist/', 'docs/', 'src-tauri/', '.angular/', 'e2e/playwright-report/', 'e2e/test-results/']},
+  {ignores: ['.claude/', 'dist/', 'docs/', 'src-tauri/', '.angular/', 'e2e/playwright-report/', 'e2e/test-results/']},
   {
     files: ['**/*.ts'],
     extends: [eslint.configs.recommended, tseslint.configs.recommended, angular.configs.tsRecommended],
