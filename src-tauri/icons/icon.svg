@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d9572a"/>
+      <stop offset="0.55" stop-color="#b53d1c"/>
+      <stop offset="1" stop-color="#8a2914"/>
+    </linearGradient>
+    <linearGradient id="blade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5d6670"/>
+      <stop offset="0.48" stop-color="#b9c2c9"/>
+      <stop offset="0.52" stop-color="#7c8690"/>
+      <stop offset="1" stop-color="#3c434b"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6a23a"/>
+      <stop offset="1" stop-color="#b85a14"/>
+    </linearGradient>
+    <linearGradient id="grip" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5a1c12"/>
+      <stop offset="0.5" stop-color="#8e3420"/>
+      <stop offset="1" stop-color="#4a160e"/>
+    </linearGradient>
+    <radialGradient id="node" cx="0.38" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#ffc061"/>
+      <stop offset="0.6" stop-color="#f58a22"/>
+      <stop offset="1" stop-color="#c85e12"/>
+    </radialGradient>
+    <linearGradient id="gem" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f06a4a"/>
+      <stop offset="1" stop-color="#8e1f12"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="5" dy="8"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="4" seed="7"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.25  0 0 0 0 0.06  0 0 0 0 0.02  0 0 0 1.6 -0.55"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="brush" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9 0.02" numOctaves="2" seed="3"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 -0.35"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <radialGradient id="vignette" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#2a0804" stop-opacity="0.45"/>
+    </radialGradient>
+    <linearGradient id="guard" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd27a"/>
+      <stop offset="0.3" stop-color="#f7a136"/>
+      <stop offset="0.7" stop-color="#c8661a"/>
+      <stop offset="1" stop-color="#8a3c10"/>
+    </linearGradient>
+    <linearGradient id="facet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff4c4"/>
+      <stop offset="0.45" stop-color="#ffc14a"/>
+      <stop offset="1" stop-color="#d06c14"/>
+    </linearGradient>
+    <radialGradient id="well" cx="0.5" cy="0.55" r="0.55">
+      <stop offset="0" stop-color="#050101"/>
+      <stop offset="0.55" stop-color="#1c0503"/>
+      <stop offset="1" stop-color="#5a1a0c"/>
+    </radialGradient>
+    <linearGradient id="sink" x1="0" y1="262" x2="0" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#050101" stop-opacity="0"/>
+      <stop offset="1" stop-color="#050101" stop-opacity="0.95"/>
+    </linearGradient>
+    <filter id="rim" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+    <filter id="wellBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+    <mask id="wellMask" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <path d="M250 252 Q258 252 264 258 L318 312 Q324 318 318 324 L262 380 Q250 392 238 380 L186 328 Q180 322 186 316 L236 258 Q242 252 250 252 Z" fill="#fff" filter="url(#wellBlur)"/>
+    </mask>
+    <clipPath id="bladeClip"><path d="M214 158 L286 158 L284 318 L250 372 L216 318 Z"/></clipPath>
+  </defs>
+
+  <!-- Plate: a rounded diamond -->
+  <g transform="rotate(45 251 301)">
+    <rect x="113" y="163" width="276" height="276" rx="38" fill="#4a140c"/>
+    <rect x="123" y="173" width="256" height="256" rx="30" fill="url(#plate)"/>
+    <rect x="123" y="173" width="256" height="256" rx="30" fill="#000" filter="url(#grain)"/>
+    <rect x="123" y="173" width="256" height="256" rx="30" fill="url(#vignette)"/>
+    <rect x="143" y="193" width="216" height="216" rx="18" fill="none" stroke="#e8774a" stroke-opacity="0.45" stroke-width="4"/>
+  </g>
+
+  <!-- The well between the dots the sword plunges into -->
+  <path d="M250 252 Q258 252 264 258 L318 312 Q324 318 318 324 L262 380 Q250 392 238 380 L186 328 Q180 322 186 316 L236 258 Q242 252 250 252 Z" fill="#ff9a5a" fill-opacity="0.35" transform="translate(2 4)" filter="url(#rim)"/>
+  <path d="M250 252 Q258 252 264 258 L318 312 Q324 318 318 324 L262 380 Q250 392 238 380 L186 328 Q180 322 186 316 L236 258 Q242 252 250 252 Z" fill="url(#well)" filter="url(#wellBlur)"/>
+
+  <!-- Git graph -->
+  <g filter="url(#shadow)">
+  <g stroke-linecap="round" fill="none">
+    <path d="M338 318 L194 190 M168 322 L250 402 L338 318" stroke="#4a140c" stroke-width="20"/>
+    <path d="M338 318 L194 190 M168 322 L250 402 L338 318" stroke="url(#gold)" stroke-width="11"/>
+  </g>
+  <g stroke="#4a140c" stroke-width="7" fill="url(#node)">
+    <circle cx="168" cy="322" r="24"/>
+    <circle cx="338" cy="318" r="24"/>
+    <circle cx="250" cy="402" r="24"/>
+  </g>
+  <g fill="#fff3d6" opacity="0.7">
+    <ellipse cx="160" cy="313" rx="8" ry="5"/>
+    <ellipse cx="330" cy="309" rx="8" ry="5"/>
+    <ellipse cx="242" cy="393" rx="8" ry="5"/>
+  </g>
+
+  </g>
+
+  <!-- Sword -->
+  <g filter="url(#shadow)">
+  <path d="M214 158 L286 158 L284 318 L250 372 L216 318 Z" fill="url(#blade)" stroke="#262b31" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M214 158 L286 158 L284 318 L250 372 L216 318 Z" fill="#000" filter="url(#brush)" opacity="0.35"/>
+  <path d="M250 166 L250 352" stroke="#e3e8ec" stroke-opacity="0.55" stroke-width="3"/>
+  <g mask="url(#wellMask)" clip-path="url(#bladeClip)">
+    <path d="M210 250 L290 250 L290 380 L210 380 Z" fill="url(#sink)"/>
+  </g>
+  <!-- Crossguard: two bevelled quillons and the quillon block -->
+  <path d="M170 142 L226 128 L226 124 L276 124 L276 128 L332 142 L330 168 L278 154 L250 172 L222 154 L172 168 Z" fill="#c8661a" stroke="#4a160e" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M172 143 L226 130 L226 143 L171 156 Z M330 143 L276 130 L276 143 L331 156 Z" fill="#f7a136"/>
+  <path d="M175 144 L224 132 M327 144 L278 132" stroke="#ffe6a0" stroke-width="3" stroke-linecap="round"/>
+  <path d="M228 126 L250 126 L250 168 L226 152 Z" fill="url(#facet)"/>
+  <path d="M250 126 L274 126 L276 152 L250 168 Z" fill="#e2841e"/>
+  <path d="M229 127 L273 127 L273 133 L229 133 Z" fill="#fff1c2" opacity="0.7"/>
+  <path d="M226 128 L224 152 M276 128 L278 152 M250 132 L250 166" stroke="#8a3c10" stroke-width="2.5" stroke-linecap="round"/>
+  <rect x="232" y="68" width="40" height="68" rx="8" fill="url(#grip)" stroke="#2e0d08" stroke-width="7"/>
+  <path d="M234 84 L270 92 M234 100 L270 108 M234 116 L270 124" stroke="#2e0d08" stroke-width="4" stroke-linecap="round"/>
+  <path d="M252 14 L276 32 L270 62 L234 62 L228 32 Z" fill="url(#gem)" stroke="#2e0d08" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M240 34 L252 24 L262 34" fill="none" stroke="#ffb39a" stroke-opacity="0.8" stroke-width="3" stroke-linecap="round"/>
+
+  </g>
+
+  <!-- Sparkle -->
+  <path d="M296 8 Q299 22 312 26 Q299 30 296 44 Q293 30 280 26 Q293 22 296 8 Z" fill="#f7882a"/>
+</svg>
