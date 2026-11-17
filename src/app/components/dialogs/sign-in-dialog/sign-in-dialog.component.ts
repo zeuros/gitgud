@@ -23,13 +23,16 @@ import {InputText} from 'primeng/inputtext';
 import {Message} from 'primeng/message';
 import {DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import type {Observable} from 'rxjs';
-import type {GitCredential} from '../../../utils/git-credential.utils';
+import {type GitCredential, hostHelp} from '../../../utils/git-credential.utils';
 
 interface SignInDialogData {
   serverUrl: string;
   username?: string;
-  /** Why the dialog asks again: the server rejected the previous credential */
-  rejected: boolean;
+  /**
+   * Why the dialog asks: the server rejected the previous credential, or accepted one but refused what git asked
+   * (HTTP 403)
+   */
+  reason?: 'rejected' | 'forbidden';
 }
 
 export const openSignInDialog = (injector: Injector, data: SignInDialogData): Observable<GitCredential | null> =>
@@ -41,8 +44,12 @@ export const openSignInDialog = (injector: Injector, data: SignInDialogData): Ob
   imports: [ReactiveFormsModule, ButtonDirective, InputText, Message],
   template: `
     <form class="flex flex-column gap-3 pt-2" [formGroup]="form" (ngSubmit)="signIn()">
-      @if (data.rejected) {
+      @if (data.reason === 'rejected') {
         <p-message severity="error" size="small">The server rejected this username or password</p-message>
+      } @else if (data.reason === 'forbidden') {
+        <p-message severity="error" size="small">
+          The server refused: this account or token isn't allowed to do that here. Pushing needs a token with write access
+        </p-message>
       }
       <span>Git needs a username and password for <strong>{{ data.serverUrl }}</strong>.</span>
       <div class="flex flex-column gap-1">
@@ -52,9 +59,18 @@ export const openSignInDialog = (injector: Injector, data: SignInDialogData): Ob
       <div class="flex flex-column gap-1">
         <label for="sign-in-password">Password or token</label>
         <input pInputText id="sign-in-password" type="password" formControlName="password" autocomplete="current-password" #passwordInput/>
-        <small class="text-500">GitHub, GitLab, Bitbucket and most hosts take a personal access token here, not the account's password</small>
+        <small class="text-500">
+          GitHub, GitLab, Bitbucket and most hosts take a personal access token here, not the account's password.
+          @if (help.tokenPageUrl; as tokenPageUrl) {
+            <a href="" (click)="openExternal($event, tokenPageUrl)">Get a token</a>
+          }
+        </small>
       </div>
       <small class="text-500">Saved in the system's keyring once the server accepts it</small>
+      <small class="text-500">
+        Tip: an SSH remote (<code>git&#64;host:owner/repo.git</code>) never asks for a password once your key is set up.
+        <a href="" (click)="openExternal($event, help.sshGuideUrl)">Set up SSH</a>
+      </small>
       <div class="flex gap-2 justify-content-end">
         <button pButton type="button" text severity="secondary" (click)="cancel()">Cancel</button>
         <button pButton type="submit" [disabled]="form.invalid">Sign in</button>
@@ -65,6 +81,7 @@ export const openSignInDialog = (injector: Injector, data: SignInDialogData): Ob
 export class SignInDialogComponent {
   private ref = inject(DynamicDialogRef<GitCredential | null>);
   protected data: SignInDialogData = inject(DynamicDialogConfig).data;
+  protected help = hostHelp(this.data.serverUrl);
 
   protected form = new FormGroup({
     username: new FormControl(this.data.username ?? '', {nonNullable: true, validators: Validators.required}),
@@ -84,4 +101,9 @@ export class SignInDialogComponent {
   };
 
   protected cancel = () => this.ref.close(null);
+
+  protected openExternal = (event: Event, url: string) => {
+    event.preventDefault();
+    void window.tauri.openExternal(url);
+  };
 }

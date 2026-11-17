@@ -25,7 +25,8 @@ import {type AuthenticationFailure, authenticationFailure, credentialEnv, type G
  *
  * GitGud's credential helper (src-tauri/src/credential_helper.rs) hands git the credential of the dialog, git saves it
  * in the keyring once the server accepts it, and deletes the saved one the server rejects: a credential that stops
- * working (a token expired or revoked) makes git fail again, and the dialog asks again.
+ * working (a token expired or revoked) makes git fail again, and the dialog asks again. A server refusing a credential
+ * it accepted (HTTP 403, e.g. a read-only token used to push) asks for another one too, which replaces it once it works.
  */
 @Injectable({providedIn: 'root'})
 export class GitSignInService {
@@ -46,7 +47,8 @@ export class GitSignInService {
   private signInAndRetry = <T>(error: unknown, command: (env?: Record<string, string>) => Observable<T>, rejected?: GitCredential): Observable<T> => {
     const failure = authenticationFailure(error);
     if (!failure) return throwError(() => error);
-    return this.askCredential({...failure, username: failure.username ?? rejected?.username}, !!rejected).pipe(
+    const reason = failure.forbidden ? 'forbidden' : rejected ? 'rejected' : undefined;
+    return this.askCredential({...failure, username: failure.username ?? rejected?.username}, reason).pipe(
       switchMap(credential => {
         if (!credential) return throwError(() => new Error(`Sign-in to ${new URL(failure.serverUrl).host} cancelled`));
         return command(credentialEnv(failure.serverUrl, credential)).pipe(
@@ -56,13 +58,13 @@ export class GitSignInService {
     );
   };
 
-  private askCredential = ({serverUrl, username}: AuthenticationFailure, rejected: boolean) => {
+  private askCredential = ({serverUrl, username}: AuthenticationFailure, reason?: 'rejected' | 'forbidden') => {
     let credential$ = this.openDialogs.get(serverUrl);
     if (!credential$) {
       // onClose is a Subject that doesn't complete: take its answer, then forget the dialog
       // Loaded when needed: GitApiService, which every git call goes through, doesn't pull the dialog and PrimeNG in
       credential$ = from(import('../../components/dialogs/sign-in-dialog/sign-in-dialog.component')).pipe(
-        switchMap(({openSignInDialog}) => openSignInDialog(this.injector, {serverUrl, username, rejected})),
+        switchMap(({openSignInDialog}) => openSignInDialog(this.injector, {serverUrl, username, ...(reason ? {reason} : {})})),
         take(1),
         finalize(() => this.openDialogs.delete(serverUrl)),
         shareReplay({bufferSize: 1, refCount: false}),

@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {authenticationFailure, credentialEnv} from './git-credential.utils';
+import {authenticationFailure, credentialEnv, hostHelp} from './git-credential.utils';
 
 describe('authenticationFailure', () => {
   it('reads the server git had no credential for', () => {
@@ -19,10 +19,26 @@ describe('authenticationFailure', () => {
       .toEqual({serverUrl: 'https://github.com'});
   });
 
+  it('reads the server that refused an accepted credential', () => {
+    expect(authenticationFailure("remote: Permission to ada/repo.git denied to ada.\nfatal: unable to access 'https://github.com/ada/repo.git/': The requested URL returned error: 403"))
+      .toEqual({serverUrl: 'https://github.com', forbidden: true});
+  });
+
   it('ignores other errors', () => {
     expect(authenticationFailure("fatal: unable to access 'https://github.com/ada/repo.git/': Could not resolve host: github.com")).toBeUndefined();
     expect(authenticationFailure('git@github.com: Permission denied (publickey).')).toBeUndefined();
     expect(authenticationFailure(undefined)).toBeUndefined();
+  });
+});
+
+describe('hostHelp', () => {
+  it("links known hosts' token pages and SSH guides", () => {
+    expect(hostHelp('https://github.com').tokenPageUrl).toContain('github.com/settings/tokens');
+    expect(hostHelp('https://gitlab.com').sshGuideUrl).toBe('https://docs.gitlab.com/user/ssh/');
+  });
+
+  it('only has the SSH guide for other hosts', () => {
+    expect(hostHelp('https://git.example.com:8443')).toEqual({sshGuideUrl: expect.stringContaining('git-scm.com')});
   });
 });
 
