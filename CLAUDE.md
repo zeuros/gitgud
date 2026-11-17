@@ -121,6 +121,8 @@ Two Angular Signal stores:
 `tsconfig.json` is strict (no unused code, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, Angular `strictTemplates`…) and `npm run lint` must pass:
 - No explicit `any`: use `unknown`, a precise type or a generic.
 
+Class layout, groups separated by a blank line: injected services (private, then the template's), state (form, signals, saved values), constants, template helpers, constructor, then methods. Inside a function, a blank line separates its steps: an early return from the main path, two effects, saving from resetting.
+
 ### Naming conventions
 
 - A name says what the value is, including its kind or unit: `mainWorktreePath`, not `mainWorktree`; `pollMs`, `branchName`, `repoId`.

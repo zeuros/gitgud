@@ -66,6 +66,7 @@ export class MakeACommitComponent {
   protected workingDirectory = inject(WorkingDirectoryService);
   protected currentRepo = inject(CurrentRepoStore);
   protected workingDirSelection = inject(WorkingDirFileSelectionService);
+  protected fixup = inject(FixupService);
   protected commitForm = inject(FormBuilder).nonNullable.group(EMPTY_COMMIT_MESSAGE);
   protected amend = signal(false);
   protected summaryLength = toSignal(this.commitForm.controls.summary.valueChanges.pipe(map(summary => summary.length)), {initialValue: 0});
@@ -73,21 +74,14 @@ export class MakeACommitComponent {
   protected readonly SUMMARY_LENGTH_SHOWN_FROM = 40;
   protected readonly SUMMARY_LENGTH_ADVISED = 50;
   protected readonly SUMMARY_LENGTH_MAX = 72;
-  private theme = inject(ThemeService);
   protected FileStatusesIcons = FileStatusesIcons;
   protected keys = Object.keys;
-
-  protected iconDropShadow(kind: AppFileStatusKind): string {
-    const alpha = this.theme.isDark() ? '' : '80';
-    return `drop-shadow(0 0 5px ${FileStatusesIcons[kind].color}${alpha})`;
-  }
-
   protected directory = directory;
   protected fileName = fileName;
   private commitService = inject(CommitService);
-  protected fixup = inject(FixupService);
-  private savedFormState?: typeof this.commitForm.value;
   private gitApi = inject(GitApiService);
+  private theme = inject(ThemeService);
+  private savedFormState?: typeof this.commitForm.value;
   private formBeforeOperation?: typeof this.commitForm.value;
 
   constructor() {
@@ -98,6 +92,7 @@ export class MakeACommitComponent {
         this.formBeforeOperation = undefined;
         return;
       }
+
       this.gitApi.gitPath('MERGE_MSG').then(window.tauri.fs.readFile).then(message => {
         // backup commit's summary & description fields to restore after resolving the conflict
         this.formBeforeOperation ??= this.commitForm.value;
@@ -105,6 +100,7 @@ export class MakeACommitComponent {
         this.commitForm.patchValue({summary, description: body.join('\n').trim()});
       }, () => undefined);
     });
+
     effect(onCleanup => {
       const repoId = this.currentRepo.id()!;
       this.commitForm.setValue(commitMessageDrafts.get(repoId) ?? EMPTY_COMMIT_MESSAGE);
@@ -113,6 +109,7 @@ export class MakeACommitComponent {
       onCleanup(() => {
         const typedMessage = this.formBeforeOperation ?? (this.amend() ? this.savedFormState : this.commitForm.getRawValue());
         commitMessageDrafts.set(repoId, {...EMPTY_COMMIT_MESSAGE, ...typedMessage});
+
         this.amend.set(false);
         this.savedFormState = undefined;
         this.formBeforeOperation = undefined;
@@ -120,9 +117,15 @@ export class MakeACommitComponent {
     });
   }
 
+  protected iconDropShadow(kind: AppFileStatusKind): string {
+    const alpha = this.theme.isDark() ? '' : '80';
+    return `drop-shadow(0 0 5px ${FileStatusesIcons[kind].color}${alpha})`;
+  }
+
   protected commit() {
     const {summary, description} = this.commitForm.value;
     const amend = this.amend();
+
     this.commitService.commit(summary!, description?.length ? description : undefined, amend)
       .subscribe(() => {
         if (amend) this.toggleAmendMode(false);
