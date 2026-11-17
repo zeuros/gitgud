@@ -6,6 +6,7 @@ The scripts are in `package.json`; what they don't tell:
 - Single test file: `npx vitest run src/path/to/file.spec.ts`. `npx eslint --fix <files>` fixes what `npm run lint` reports, e.g. type imports.
 - Release: `npm version <x.y.z>`. Its hook (`scripts/version.sh`) stamps the version into Cargo, tauri.conf, the AppStream metainfo, the flatpak manifest and the website, and stages them into the version commit.
 - `npm run video` records `docs/show.mp4` + `.webm` on its own Xvfb, rebuilding the release binary first if sources are newer.
+- `bash e2e/videos/quests/record.sh [quest…]` records the website's Quests videos (`docs/quests/<quest>.mp4`, `.webm`, `.jpg` poster) the same way, one spec per quest, cut to the scene each spec marks.
 - Cargo, from `src-tauri/`: `cargo check`, `cargo clippy`.
 
 CI (`.github/workflows/ci.yml`) runs `npm run lint` and `npm test` on pushes to main and pull requests, and `cargo clippy -- -D warnings` when `src-tauri/` or the workflow changed; `release.yml`, `flatpak.yml` and `pages.yml` build the packages and the website.
