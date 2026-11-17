@@ -32,16 +32,19 @@ export class CommitService {
   private currentRepo = inject(CurrentRepoStore);
   private fileDiffPanel = inject(FileDiffPanelService);
 
-  commit = (summary: string, description?: string, amend = false) =>
-    this.gitApi.gitAction(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])])
+  // Commits in the worktree whose work in progress the right panel shows, then selects the new commit once that worktree is clean
+  commit = (summary: string, description?: string, amend = false) => {
+    const worktreePath = this.currentRepo.wipWorktree();
+    return this.gitApi.gitAction(['commit', ...(amend ? ['--amend'] : []), '-m', summary, ...(description ? ['-m', description] : [])], {cwd: worktreePath})
       .pipe(
         switchMap(this.gitRefresh.refreshAll),
-        tap(({workDirStatus}) => {
+        tap(() => {
           this.fileDiffPanel.closeViews();
-          if (!workingDirHasChanges(workDirStatus))
-            this.headSha().subscribe(sha => this.currentRepo.update({selectedCommitsShas: [sha]}));
+          if (!workingDirHasChanges(this.currentRepo.wipStatus()))
+            this.headSha(worktreePath).subscribe(sha => this.currentRepo.update({selectedCommitsShas: [sha]}));
         }),
       );
+  };
 
-  private headSha = () => this.gitApi.git(['rev-parse', 'HEAD']).pipe(map(sha => sha.trim()));
+  private headSha = (worktreePath?: string) => this.gitApi.git(['rev-parse', 'HEAD'], {cwd: worktreePath}).pipe(map(sha => sha.trim()));
 }

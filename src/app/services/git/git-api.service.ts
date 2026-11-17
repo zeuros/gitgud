@@ -80,13 +80,13 @@ export class GitApiService {
    */
   git = (args: (string | undefined)[] | undefined, options?: ExecOptions, {signIn = true} = {}) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
-    // env is overlaid on the backend's own environment, so only send what differs
-    const run = () => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {GIT_EDITOR: NOOP_EDITOR}, ...options});
-    const command$ = needsLock(filteredArgs) ? this.waitForLock().pipe(switchMap(run)) : defer(run);
-    if (!signIn) return command$;
-    // The repository of the first attempt, which the user may have switched from while signing in
+    // The worktree is read when the call runs, not when it is built; a sign-in retries in the worktree of the first attempt
     return defer(() => {
-      const cwd = options?.cwd ?? this.currentRepo.cwd();
+      const cwd = (options?.cwd as string | undefined) ?? this.currentRepo.cwd();
+      // env is overlaid on the backend's own environment, so only send what differs
+      const run = () => this.exec(this.settings.gitBin, filteredArgs, {env: {GIT_EDITOR: NOOP_EDITOR}, ...options, cwd});
+      const command$ = needsLock(filteredArgs) ? this.waitForLock(cwd).pipe(switchMap(run)) : defer(run);
+      if (!signIn) return command$;
       return this.gitSignIn.withSignIn(credentialEnv => credentialEnv
         ? this.gitWithEnv(filteredArgs, cwd, {...options?.env, ...credentialEnv})
         : command$);
@@ -95,7 +95,7 @@ export class GitApiService {
 
   // Spawned on its own: the shell pool keeps the environment its shells started with
   private gitWithEnv = (args: string[], cwd: string | undefined, env: Record<string, string>) =>
-    this.waitForLock().pipe(
+    this.waitForLock(cwd).pipe(
       switchMap(() => from(window.tauri.spawnSync(this.settings.gitBin, args, {cwd, env: {GIT_EDITOR: NOOP_EDITOR, ...env}}))),
       map(({status, stdout, stderr}) => {
         if (status !== 0) throw new Error(stderr.trim() || `Git exited ${status}`);
@@ -123,13 +123,13 @@ export class GitApiService {
   gitPath = (name: GitStatePath, cwd = this.currentRepo.cwd()!) => this.gitDirs(cwd).then(dirs => gitPath(dirs, name));
 
   // Raw stdout bytes, for binary content (git show of an image blob…)
-  gitBytes = (args: string[]) =>
-    defer(() => from(window.tauri.execFileBytes(this.settings.gitBin, args, {cwd: this.currentRepo.cwd() ?? undefined})));
+  gitBytes = (args: string[], cwd = this.currentRepo.cwd()) =>
+    defer(() => from(window.tauri.execFileBytes(this.settings.gitBin, args, {cwd: cwd ?? undefined})));
 
   // User git calls
   gitAction = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
-    const cwd = this.currentRepo.cwd();
+    const cwd = (options?.cwd as string | undefined) ?? this.currentRepo.cwd();
     const action$ = this.git(args, options).pipe(
       tap({
         next: () => this.history.record(filteredArgs, cwd, true),
@@ -157,11 +157,11 @@ export class GitApiService {
         }),
       ));
 
-  gitWithInput = (args: string[], input: string) =>
-    this.waitForLock().pipe(
+  gitWithInput = (args: string[], input: string, cwd = this.currentRepo.cwd()) =>
+    this.waitForLock(cwd).pipe(
       switchMap(() => from(window.tauri.spawnSync(
         this.settings.gitBin, args,
-        {cwd: this.currentRepo.cwd(), input},
+        {cwd, input},
       ))),
       map(result => {
         if (result.status !== 0) throw new Error(`Git exited ${result.status}\n${result.stderr}`);
@@ -197,11 +197,11 @@ export class GitApiService {
         .catch(e => observer.error(e));
     })));
 
-  // Waits for another git process (a terminal, an IDE…) to release index.lock, checking every intervalMs, for at most maxWaitMs
-  waitForLock = (maxWaitMs = 2000, intervalMs = 100): Observable<void> => {
+  // Waits for another git process (a terminal, an IDE…) to release the index.lock of the worktree at cwd, checking every intervalMs, for at most maxWaitMs
+  waitForLock = (cwd = this.currentRepo.cwd(), maxWaitMs = 2000, intervalMs = 100): Observable<void> => {
     // No repository yet (clone, init…): nothing can hold its lock
-    const lockExists = () => this.currentRepo.cwd()
-      ? this.gitPath('index.lock').then(window.tauri.fs.exists).catch(() => false)
+    const lockExists = () => cwd
+      ? this.gitPath('index.lock', cwd).then(window.tauri.fs.exists).catch(() => false)
       : Promise.resolve(false);
 
     return defer(() => {

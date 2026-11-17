@@ -109,6 +109,10 @@ export class MergeEditorComponent {
 
   protected file = computed(() => this.fileDiffPanel.conflictedFile());
 
+  // The conflict is in the worktree whose work in progress the right panel shows
+  private git = (args: string[]) => this.gitApi.git(args, {cwd: this.currentRepo.wipWorktree()});
+  private gitAction = (args: string[]) => this.gitApi.gitAction(args, {cwd: this.currentRepo.wipWorktree()});
+
   private highlighter: Highlighter | null = null;
 
   constructor() {
@@ -117,9 +121,9 @@ export class MergeEditorComponent {
       if (!file) return;
 
       const path = file.path;
-      const base$ = this.gitApi.git(['show', `:1:${path}`]).pipe(catchError(() => of('')));
-      const ours$ = this.gitApi.git(['show', `:2:${path}`]).pipe(catchError(() => of('')));
-      const theirs$ = this.gitApi.git(['show', `:3:${path}`]).pipe(catchError(() => of('')));
+      const base$ = this.git(['show', `:1:${path}`]).pipe(catchError(() => of('')));
+      const ours$ = this.git(['show', `:2:${path}`]).pipe(catchError(() => of('')));
+      const theirs$ = this.git(['show', `:3:${path}`]).pipe(catchError(() => of('')));
 
       this.detectConflictContext().then(ctx => {
         this.conflictCtx.set(ctx);
@@ -165,14 +169,14 @@ export class MergeEditorComponent {
     this.saving.set(true);
 
     const merged = this.mergeEl()?.nativeElement?.ctr ?? this.ctr();
-    const absPath = window.tauri.path.resolve(this.currentRepo.cwd()!, file.path);
+    const absPath = window.tauri.path.resolve(this.currentRepo.wipWorktree()!, file.path);
 
     window.tauri.fs.writeFile(absPath, merged).then(() =>
-      this.gitApi.gitAction(['add', '--', file.path])
+      this.gitAction(['add', '--', file.path])
         .pipe(finalize(() => {
           this.saving.set(false);
           this.fileDiffPanel.closeViews();
-          this.gitRefresh.doUpdateWorkingDirChanges();
+          this.gitRefresh.doUpdateWipChanges();
         }))
         .subscribe(),
     );
@@ -184,13 +188,13 @@ export class MergeEditorComponent {
     if (!file) return;
     this.saving.set(true);
 
-    this.gitApi.gitAction(['checkout', column === 'left' ? '--ours' : '--theirs', '--', file.path])
+    this.gitAction(['checkout', column === 'left' ? '--ours' : '--theirs', '--', file.path])
       .pipe(
-        switchMap(() => this.gitApi.gitAction(['add', '--', file.path])),
+        switchMap(() => this.gitAction(['add', '--', file.path])),
         finalize(() => {
           this.saving.set(false);
           this.fileDiffPanel.closeViews();
-          this.gitRefresh.doUpdateWorkingDirChanges();
+          this.gitRefresh.doUpdateWipChanges();
         }),
       )
       .subscribe();
@@ -210,17 +214,19 @@ export class MergeEditorComponent {
   }
 
   private async detectConflictContext(): Promise<ConflictCtx> {
-    const cwd = this.currentRepo.cwd();
+    const cwd = this.currentRepo.wipWorktree();
     if (!cwd) return UNKNOWN_CTX;
 
     const dirs = await this.gitApi.gitDirs(cwd).catch(() => undefined);
     if (!dirs) return UNKNOWN_CTX;
     const read = async (name: GitStatePath) => { try { return (await window.tauri.fs.readFile(gitPath(dirs, name))).trim(); } catch { return ''; } };
     const exists = (name: GitStatePath) => window.tauri.fs.exists(gitPath(dirs, name));
-    const head = this.currentRepo.headBranch()?.name ?? 'HEAD';
+    const head = (cwd === this.currentRepo.cwd()
+      ? this.currentRepo.headBranch()?.name
+      : this.currentRepo.worktrees().find(w => w.path === cwd)?.branch) ?? 'HEAD';
 
     // Rebase replays our commits on top of the upstream: HEAD (left) is the upstream, the commit being replayed is on the right
-    if (this.currentRepo.isRebasing()) {
+    if (await exists('rebase-merge')) {
       const branch = (await read('rebase-merge/head-name')).replace('refs/heads/', '') || 'your branch';
       const onto = short(await read('rebase-merge/onto')) || 'upstream';
       return {
@@ -267,14 +273,14 @@ export class MergeEditorComponent {
 
   // Branch name of the merged commit when it has one, its sha otherwise
   private mergedName = (mergeHead: string) =>
-    firstValueFrom(this.gitApi.git(['name-rev', '--name-only', mergeHead]).pipe(catchError(() => of(''))))
+    firstValueFrom(this.git(['name-rev', '--name-only', mergeHead]).pipe(catchError(() => of(''))))
       .then(name => name.trim().replace(/[~^]\d*$/g, ''))
       .then(name => name && !name.includes('undefined') ? name : short(mergeHead));
 
   private describeCommit(ref: string | undefined, target: WritableSignal<string>) {
     target.set('');
     if (!ref) return;
-    this.gitApi.git(['log', '-1', '--format=%h %s', ref]).pipe(catchError(() => of(''))).subscribe(line => target.set(line.trim()));
+    this.git(['log', '-1', '--format=%h %s', ref]).pipe(catchError(() => of(''))).subscribe(line => target.set(line.trim()));
   }
 
   private async initHighlight(path: string) {

@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import type {Commit} from '../lib/github-desktop/model/commit';
-import {commitCount, countCommitsNotIn, followSelection} from './log-utils';
+import {commitCount, countCommitsNotIn, createIndexCommit, followSelection, isWipSha, wipSha, worktreeOfWipSha} from './log-utils';
+import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
 import type {LogObject} from '../models/log-object';
 
 const commit = (sha: string, ...parentSHAs: string[]) => ({sha, parentSHAs} as unknown as Commit);
@@ -59,4 +60,29 @@ describe('followSelection', () => {
     expect(followSelection(['index'], [indexRow('d'), ...previousLog], previousLog)).toEqual(['d']);
   });
   it('leaves the selection alone while the log is empty', () => expect(followSelection(['c'], previousLog, [])).toEqual(['c']));
+});
+
+describe('work in progress shas', () => {
+  it('is index for the worktree the tab works in, and names another worktree', () => {
+    expect(wipSha()).toBe('index');
+    expect(wipSha('/repo/.claude/worktrees/wip')).toBe('index:/repo/.claude/worktrees/wip');
+  });
+
+  it('tells a work in progress from a commit', () => {
+    expect(isWipSha('index')).toBe(true);
+    expect(isWipSha('index:/repo/wt')).toBe(true);
+    expect(isWipSha('indexa1b2')).toBe(false);
+    expect(isWipSha(undefined)).toBe(false);
+  });
+
+  it('gives the worktree of another worktree\'s work in progress only', () => {
+    expect(worktreeOfWipSha('index:C:/repo/wt')).toBe('C:/repo/wt');
+    expect(worktreeOfWipSha('index')).toBeUndefined();
+    expect(worktreeOfWipSha('a1b2')).toBeUndefined();
+  });
+
+  it('builds a WIP row on the worktree\'s HEAD commit', () => {
+    const wip = createIndexCommit({sha: 'h', ref: 'r'} as DisplayRef, '/repo/wt');
+    expect(wip).toMatchObject({sha: 'index:/repo/wt', parentSHAs: ['h'], worktreePath: '/repo/wt', summary: 'WIP'});
+  });
 });

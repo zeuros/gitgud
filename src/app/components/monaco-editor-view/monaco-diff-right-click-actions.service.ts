@@ -109,7 +109,8 @@ export class MonacoDiffRightClickActionsService {
       return {file: currentFile, path, isOriginal, start: selection.startLineNumber, end: selection.endLineNumber};
     };
     const lines = (start: number, end: number) => start === end ? `${start}` : `${start}-${end}`;
-    const absolutePath = (path: string) => window.tauri.path.resolve(this.currentRepo.cwd()!, path);
+    // The worktree whose files are shown: the selected work in progress's
+    const absolutePath = (path: string) => window.tauri.path.resolve(this.currentRepo.wipWorktree()!, path);
 
     // '/repo/src/file.ts:12', or '/repo/src/file.ts:12-18' for several lines
     const copyReference = (ed: IStandaloneCodeEditor) => {
@@ -146,7 +147,7 @@ export class MonacoDiffRightClickActionsService {
       const file = absolutePath(at.path);
       if (!await window.tauri.fs.exists(file)) return this.toast.warn(`${at.path} doesn't exist in the working directory`);
       const [cmd, ...args] = editorCommandArgs(this.settings.editorCommand.trim() || DEFAULT_EDITOR_COMMAND, file, at.start);
-      window.tauri.spawn(cmd, args, {cwd: this.currentRepo.cwd()})
+      window.tauri.spawn(cmd, args, {cwd: this.currentRepo.wipWorktree()})
         .catch(e => this.toast.err(`Couldn't run the editor command (set it in Settings): ${e}`));
     };
 

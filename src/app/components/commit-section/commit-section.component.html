@@ -1,7 +1,10 @@
 @let selectedCommitsShas = currentRepo.selectedCommitsShas();
 @if (selectedCommitsShas && selectedCommitsShas?.length) {
     @if (isWipSha(selectedCommitsShas[0])) {
-        <gitgud-make-a-commit class="p-2 h-full"/>
+        <!-- One commit form per worktree: a message typed for one isn't committed in another -->
+        @for (worktreePath of [currentRepo.wipWorktree()]; track worktreePath) {
+            <gitgud-make-a-commit class="p-2 h-full"/>
+        }
     } @else if (selectedCommitsShas.length === 1){
         <!-- Show one commit diffs -->
         <gitgud-commit-infos class="p-2 h-full"/>

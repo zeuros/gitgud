@@ -109,15 +109,15 @@ export class FileDiffService {
    */
   /** Full content of a file at a given git revision. Returns empty string if the file didn't exist. */
   getFileAtRevision = (path: string, revision = 'HEAD') =>
-    this.gitApi.git(['show', `${revision}:${path}`]).pipe(catchError(() => of('')));
+    this.gitApi.git(['show', `${revision}:${path}`], this.wipCwd()).pipe(catchError(() => of('')));
 
   /** Raw bytes of a file at a given git revision ('' = index). Empty buffer if the file didn't exist. */
   getFileBytesAtRevision = (path: string, revision = 'HEAD') =>
-    this.gitApi.gitBytes(['show', `${revision}:${path}`]).pipe(catchError(() => of(new ArrayBuffer(0))));
+    this.gitApi.gitBytes(['show', `${revision}:${path}`], this.currentRepo.wipWorktree()).pipe(catchError(() => of(new ArrayBuffer(0))));
 
   /** Size in bytes of a file at a given git revision ('' = index), without reading it. 0 if the file didn't exist. */
   getFileSizeAtRevision = (path: string, revision = 'HEAD') =>
-    this.gitApi.git(['cat-file', '-s', `${revision}:${path}`]).pipe(map(Number), catchError(() => of(0)));
+    this.gitApi.git(['cat-file', '-s', `${revision}:${path}`], this.wipCwd()).pipe(map(Number), catchError(() => of(0)));
 
   // A missing file (added / deleted side) reads as empty
   getFileSize = (path: string, side: DiffSide) =>
@@ -142,7 +142,10 @@ export class FileDiffService {
       ? this.getFileBytes(path, side).pipe(map(bytes => utf8Decoder.decode(bytes)))
       : this.getFileAtRevision(path, side);
 
-  private workDirPath = (path: string) => window.tauri.path.resolve(this.currentRepo.cwd()!, path);
+  // HEAD, the index and the files are those of the worktree whose work in progress is shown; commits are the same in every worktree
+  private wipCwd = () => ({cwd: this.currentRepo.wipWorktree()});
+
+  private workDirPath = (path: string) => window.tauri.path.resolve(this.currentRepo.wipWorktree()!, path);
 
   getChangedFilesForGivenCommit = (sha: string) =>
     this.gitApi.git(['log', sha, '-C', '-M', '-m', '-1', '--no-show-signature', '--first-parent', '--raw', '--format=format:', '--numstat', '-z', '--'])
