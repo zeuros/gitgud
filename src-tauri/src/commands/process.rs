@@ -7,6 +7,21 @@ use tokio::process::Command;
 use serde::{Deserialize, Serialize};
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
+/// Starts the command in a session of its own, without a controlling terminal. In an app started from a terminal, git
+/// or ssh asking there (credentials, a passphrase, a host key) would otherwise be stopped by the kernel (SIGTTIN),
+/// stopping the app with it; without a terminal they fail, as when the app is started from the desktop
+pub(crate) fn detach_from_terminal(command: &mut Command) -> &mut Command {
+    #[cfg(unix)]
+    // SAFETY: setsid is async-signal-safe and touches no memory
+    unsafe {
+        command.pre_exec(|| {
+            libc::setsid();
+            Ok(())
+        });
+    }
+    command
+}
+
 #[derive(Deserialize)]
 pub struct ExecOptions {
     pub cwd: Option<String>,
@@ -69,6 +84,7 @@ async fn exec_file_direct(
     options: ExecOptions,
 ) -> Result<ExecResult, String> {
     let mut command = Command::new(&cmd);
+    detach_from_terminal(&mut command);
     command.args(&args);
     command.stdout(Stdio::piped());
     command.stderr(Stdio::piped());
@@ -96,6 +112,7 @@ pub async fn exec_file_bytes(
     options: ExecOptions,
 ) -> Result<tauri::ipc::Response, String> {
     let mut command = Command::new(&cmd);
+    detach_from_terminal(&mut command);
     command.args(&args);
     command.stdin(Stdio::null());
 
@@ -123,6 +140,7 @@ pub async fn spawn_sync_cmd(
     options: SpawnSyncOptions,
 ) -> SpawnSyncResult {
     let mut command = Command::new(&cmd);
+    detach_from_terminal(&mut command);
     command.args(&args);
     command.stdout(Stdio::piped());
     command.stderr(Stdio::piped());
@@ -170,6 +188,7 @@ pub async fn spawn_cmd(
     options: SpawnOptions,
 ) -> Result<String, String> {
     let mut command = Command::new(&cmd);
+    detach_from_terminal(&mut command);
     command.args(&args);
     command.stdout(Stdio::piped());
     command.stderr(Stdio::piped());

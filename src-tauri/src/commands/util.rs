@@ -32,13 +32,17 @@ pub fn get_build_commit() -> Option<&'static str> {
     option_env!("GITGUD_BUILD_COMMIT")
 }
 
-/// Returns how the running Linux binary was packaged (AppImage / rpm / deb), or None when unknown
+/// Returns how the running Linux binary was packaged (Flatpak / AppImage / rpm / deb), or None when unknown
 /// (dev build, tarball, non-Linux). Asks the package managers which one owns the executable, since
 /// an installed .deb and .rpm both live at the same path.
 #[tauri::command]
 pub async fn get_package_format() -> Option<&'static str> {
     if !cfg!(target_os = "linux") {
         return None;
+    }
+    // Flatpak puts this file at the root of every sandbox
+    if std::path::Path::new("/.flatpak-info").exists() {
+        return Some("Flatpak");
     }
     if std::env::var_os("APPIMAGE").is_some() {
         return Some("AppImage");

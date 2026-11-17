@@ -32,7 +32,10 @@ export class SettingsService {
     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
   );
   readonly themeSignal = this._theme.asReadonly();
-  private _gitBin = signal(localStorage.getItem('git-binary-path') ?? 'git');
+  // The Flatpak runs the git it bundles: a binary picked on the host reaches the sandbox alone, without the helpers git
+  // runs (git-remote-https…)
+  readonly bundlesGit = window.tauri.packageFormat === 'Flatpak';
+  private _gitBin = signal(this.bundlesGit ? 'git' : localStorage.getItem('git-binary-path') ?? 'git');
   private _editorCommand = signal(localStorage.getItem('editor-command') ?? DEFAULT_EDITOR_COMMAND);
 
   get zoom() { return this._zoom(); }

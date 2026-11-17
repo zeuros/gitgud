@@ -46,7 +46,7 @@ struct Shell {
 
 impl Shell {
     async fn spawn(cwd: &str, env: &HashMap<String, String>) -> Result<Self, String> {
-        let mut child = tokio::process::Command::new("bash")
+        let mut child = crate::commands::process::detach_from_terminal(&mut tokio::process::Command::new("bash"))
             .args(["--norc", "--noprofile"])
             .current_dir(cwd)
             .envs(env)

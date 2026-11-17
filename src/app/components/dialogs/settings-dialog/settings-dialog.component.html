@@ -40,22 +40,26 @@
     <div class="settings-section-title">Git</div>
 
     <div>
-        <label>Git binary path <span class="git-version">— {{ gitVersion() }}</span></label>
-        <div class="row-with-browse">
-            <input
-                    type="text"
-                    pInputText
-                    [ngModel]="pendingGitPath()"
-                    (ngModelChange)="pendingGitPath.set($event)"
-                    (blur)="gitPathDirty() && validateGitPath()"
-                    placeholder="git"
-                    style="flex: 1"
-            />
-            @if (gitPathDirty()) {
-                <button pButton text severity="success" pTooltip="Validate & apply" (click)="validateGitPath()" iconOnly><i class="fa fa-check"></i></button>
-            }
-            <button pButton text pTooltip="Browse" (click)="pickGitBinaryPath()" iconOnly><i class="fa fa-folder-open"></i></button>
-        </div>
+        @if (settings.bundlesGit) {
+            <label>Git <span class="git-version">— {{ gitVersion() }}, bundled with the Flatpak</span></label>
+        } @else {
+            <label>Git binary path <span class="git-version">— {{ gitVersion() }}</span></label>
+            <div class="row-with-browse">
+                <input
+                        type="text"
+                        pInputText
+                        [ngModel]="pendingGitPath()"
+                        (ngModelChange)="pendingGitPath.set($event)"
+                        (blur)="gitPathDirty() && validateGitPath()"
+                        placeholder="git"
+                        style="flex: 1"
+                />
+                @if (gitPathDirty()) {
+                    <button pButton text severity="success" pTooltip="Validate & apply" (click)="validateGitPath()" iconOnly><i class="fa fa-check"></i></button>
+                }
+                <button pButton text pTooltip="Browse" (click)="pickGitBinaryPath()" iconOnly><i class="fa fa-folder-open"></i></button>
+            </div>
+        }
     </div>
 
     <div>
