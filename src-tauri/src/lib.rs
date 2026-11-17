@@ -66,22 +66,13 @@ fn patch_path_from_login_shell() {
 // Wayland display" because of the driver's explicit sync. Disabling it keeps native Wayland and GPU rendering
 // (XWayland + WEBKIT_DISABLE_DMABUF_RENDERER=1 also avoids the crash, but renders the page on the CPU: ~23 fps instead
 // of 60 when scrolling the log; XWayland with DMA-BUF fails to allocate GBM buffers on NVIDIA).
-// Only on that combo, and never over a value the user set themselves.
 #[cfg(target_os = "linux")]
 fn patch_nvidia_wayland() {
-    let wayland = std::env::var_os("WAYLAND_DISPLAY").is_some()
-        || std::env::var("XDG_SESSION_TYPE").is_ok_and(|t| t == "wayland");
-    let nvidia = std::path::Path::new("/sys/module/nvidia").exists();
-    if !wayland || !nvidia {
-        return;
-    }
-    if std::env::var_os("__NV_DISABLE_EXPLICIT_SYNC").is_none() {
-        std::env::set_var("__NV_DISABLE_EXPLICIT_SYNC", "1");
-    }
+    std::env::set_var("__NV_DISABLE_EXPLICIT_SYNC", "1");
     raise_open_files_limit();
 }
 
-// On that combo the web process leaks GPU sync fences (anon_inode:sync_file, ~2 fds per frame drawn) and dies with
+// With NVIDIA the web process leaks GPU sync fences (anon_inode:sync_file, ~2 fds per frame drawn) and dies with
 // "Too many open files" once it reaches the soft limit (1024 for apps launched from GNOME). Raise it to the hard limit
 // (inherited by the web process): frames are only drawn while something moves, so a session doesn't get there.
 #[cfg(target_os = "linux")]
