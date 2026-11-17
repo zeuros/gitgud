@@ -28,6 +28,7 @@ export interface LogObjectDisplayInfo {
   isPointedByLocalHead: boolean, // If commit is pointed by HEAD, preselect the commit line, and add the 💻 icon
   highlight?: 'not-matched' | 'conflict',
   branchesDetails: Branch[],
+  worktreePath?: string, // Work in progress of another worktree than the one the tab works in
 }
 
 // DisplayRef = LogObject (shared with Commit & Stash) = display data

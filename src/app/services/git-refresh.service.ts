@@ -17,7 +17,7 @@
  */
 
 import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
-import {concatMap, defer, EMPTY, finalize, forkJoin, from, map, type Observable, of, ReplaySubject, switchMap, tap} from 'rxjs';
+import {catchError, concatMap, defer, EMPTY, finalize, forkJoin, from, map, type Observable, of, ReplaySubject, switchMap, tap} from 'rxjs';
 import {LogReaderService} from './git/log-reader.service';
 import {BranchReaderService} from './git/branch-reader.service';
 import {StashReaderService} from './git/stash-reader.service';
@@ -25,6 +25,7 @@ import {TagReaderService} from './git/tag-reader.service';
 import {WorktreeReaderService} from './git/worktree-reader.service';
 import {GitApiService} from './git/git-api.service';
 import {filterOutStashes} from '../utils/repository-utils';
+import {notUndefined} from '../utils/utils';
 import {detectOperationInProgress} from '../utils/operation-in-progress.utils';
 import type {GitRepository} from '../models/git-repository';
 import type {GitTag} from '../models/git-tag';
@@ -85,19 +86,37 @@ export class GitRefreshService {
     // Each batch's refresh completes: logLoadedAt is set when a load starts, it must not be cancelled
     this.fileWatcher.onGitStateChange$.pipe(
       concatMap(paths => from(this.changedSinceLogLoad(paths.filter(path => !isIndex(path)))).pipe(
-        concatMap(changed => changed ? this.refreshAll() : paths.some(isIndex) ? this.updateWorkingDirChanges() : EMPTY),
+        concatMap(changed => changed ? this.refreshAll() : this.updateChangedIndexes(paths.filter(isIndex))),
       )),
     ).subscribe();
     this.fileWatcher.onWorkingDirFileChange$.pipe(
       switchMap(() => this.updateWorkingDirChanges()),
     ).subscribe();
+    // One status per worktree changed, a new batch cancelling the statuses still running
+    this.fileWatcher.onOtherWorktreeFileChange$.pipe(
+      switchMap(worktreePaths => forkJoin(worktreePaths.map(this.updateWorktreeChanges))),
+    ).subscribe();
   }
+
+  // Refreshes the status of the worktrees whose index changed (staging elsewhere)
+  private updateChangedIndexes = (indexPaths: string[]) => {
+    if (!indexPaths.length) return EMPTY;
+    const cwd = this.currentRepo.cwd();
+    const worktreePaths = [cwd, ...this.currentRepo.otherWorktrees().map(w => w.path)].filter(notUndefined);
+    return from(Promise.all(worktreePaths.map(path => this.gitApi.gitDirs(path).then(dirs => dirs.gitDir, () => undefined)))).pipe(
+      // An index no worktree is known for: the worktree list is outdated, the tab's worktree is refreshed as before
+      map(gitDirs => worktreePaths.filter((_path, i) => indexPaths.includes(`${gitDirs[i]}/index`))),
+      concatMap(changedWorktreePaths => changedWorktreePaths.length
+        ? forkJoin(changedWorktreePaths.map(path => path === cwd ? this.updateWorkingDirChanges() : this.updateWorktreeChanges(path)))
+        : this.updateWorkingDirChanges()),
+    );
+  };
 
   refreshAll = () => this.track(this.leaveRemovedWorktree().pipe(switchMap(() => forkJoin({
     workDirStatus: this.updateWorkingDirChanges(),
     logsAndBranches: this.updateLogsAndBranches(), // refresh log and wait for it so that selected commit sha can be updated
     operationInProgress: this.updateOperationInProgress(),
-  }))));
+  })), switchMap(results => this.updateOtherWorktreesChanges().pipe(map(() => results)))));
 
   // Back to the main worktree when the active worktree's folder no longer exists
   private leaveRemovedWorktree = () => {
@@ -117,8 +136,11 @@ export class GitRefreshService {
     Promise.all(paths.map(path => window.tauri.fs.mtime(path).then(mtime => mtime > this.logLoadedAt, () => true)))
       .then(changed => changed.some(Boolean));
 
-  private refreshStatus = () =>
-    this.track(forkJoin({workDirStatus: this.updateWorkingDirChanges(), operationInProgress: this.updateOperationInProgress()}));
+  private refreshStatus = () => this.track(forkJoin({
+    workDirStatus: this.updateWorkingDirChanges(),
+    otherWorktrees: this.updateOtherWorktreesChanges(),
+    operationInProgress: this.updateOperationInProgress(),
+  }));
 
   // An editor may have changed files while in the background; git commands run elsewhere are seen by the git state watcher
   private onWindowFocus = () => {
@@ -175,17 +197,41 @@ export class GitRefreshService {
       .pipe(tap(operationInProgress => save({operationInProgress}))));
 
 
+  private readWorkDirStatus = (worktreePath?: string) =>
+    this.gitApi.git(['--no-optional-locks', 'status', '--porcelain', '-z', '--untracked-files=all', '--'], {cwd: worktreePath ?? this.currentRepo.cwd()})
+      .pipe(map(parseWorkingDirChanges));
+
   /**
    * Get a list of files which have recorded changes in the index as compared to
    * HEAD along with the type of change.
    */
   updateWorkingDirChanges = () => this.track(this.forSelectedRepository(save =>
-    this.gitApi.git(['--no-optional-locks', 'status', '--porcelain', '-z', '--untracked-files=all', '--'])
+    this.readWorkDirStatus()
       .pipe(
-        map(parseWorkingDirChanges),
         tap(workDirStatus => save({workDirStatus})),
-        tap(this.fileDiffPanel.refreshWorkingDirView),
+        tap(() => this.currentRepo.wipWorktree() === this.currentRepo.cwd() && this.fileDiffPanel.refreshWorkingDirView()),
       )));
+
+  // The work in progress of another worktree; the worktree the tab works in uses updateWorkingDirChanges
+  updateWorktreeChanges = (worktreePath: string) => this.track(this.forSelectedRepository(save =>
+    this.readWorkDirStatus(worktreePath).pipe(
+      tap(workDirStatus => save({worktreeStatuses: {...this.currentRepo.worktreeStatuses(), [worktreePath]: workDirStatus}})),
+      tap(() => this.currentRepo.wipWorktree() === worktreePath && this.fileDiffPanel.refreshWorkingDirView()),
+    )));
+
+  // Reads every other worktree's work in progress, forgetting removed worktrees'
+  updateOtherWorktreesChanges = () => this.track(this.forSelectedRepository(save => {
+    const worktreePaths = this.currentRepo.otherWorktrees().map(w => w.path);
+    if (!worktreePaths.length) {
+      save({worktreeStatuses: {}});
+      return of({});
+    }
+    return forkJoin(worktreePaths.map(path => this.readWorkDirStatus(path).pipe(catchError(() => of(undefined))))).pipe(
+      map(statuses => Object.fromEntries(worktreePaths.flatMap((path, i) => statuses[i] ? [[path, statuses[i]]] : []))),
+      tap(worktreeStatuses => save({worktreeStatuses})),
+      tap(() => this.currentRepo.wipWorktree() !== this.currentRepo.cwd() && this.fileDiffPanel.refreshWorkingDirView()),
+    );
+  }));
 
   /**
    * Get a list of files which have recorded changes in the index as compared to

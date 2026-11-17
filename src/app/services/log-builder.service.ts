@@ -28,6 +28,7 @@ import {IntervalTree} from 'node-interval-tree';
 import type {Edge} from '../models/edge';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {layoutGraph} from './graph-layout';
+import type {GitWorktree} from '../models/git-worktree';
 
 export interface LogBuildResult {
   displayLog: DisplayRef[];
@@ -43,12 +44,22 @@ export class LogBuilderService {
 
   private branches = inject(CurrentRepoStore).branches;
 
-  buildDisplayLog(logs: Commit[], stashChildren: Commit[], indexParent?: DisplayRef): LogBuildResult {
+  /**
+   * @param indexParent the commit the work in progress of the tab's worktree is drawn on, if it has some
+   * @param otherWorktreesWip the other worktrees with work in progress, each drawn on its HEAD commit
+   */
+  buildDisplayLog(logs: Commit[], stashChildren: Commit[], indexParent?: DisplayRef, otherWorktreesWip: GitWorktree[] = []): LogBuildResult {
     const stashMap = buildStashMap(stashChildren);
     const untrackedStashes = stashUntrackedChildren(stashChildren);
 
     const commits = logs.filter(l => !untrackedStashes.includes(l.sha)).map(c => this.commitToDisplayRef(c, stashMap[c.sha]));
     // "Index" commit = working directory changes
+    const commitsBySha = new Map(commits.map(c => [c.sha, c]));
+    const otherWorktreesIndexCommits = otherWorktreesWip.flatMap(worktree => {
+      const parent = commitsBySha.get(worktree.sha);
+      return parent ? [createIndexCommit(parent, worktree.path)] : [];
+    });
+    commits.unshift(...otherWorktreesIndexCommits);
     if (indexParent) commits.unshift(createIndexCommit(indexParent));
 
     const displayLog = this.saveRowIndexIntoDisplayRef(commits);

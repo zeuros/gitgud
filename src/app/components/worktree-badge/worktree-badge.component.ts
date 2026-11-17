@@ -20,7 +20,7 @@ import {ChangeDetectionStrategy, Component, computed, input} from '@angular/core
 import {Tooltip} from 'primeng/tooltip';
 import {worktreeName} from '../../utils/worktree-utils';
 
-/** The linked worktree a repository works in (toolbar), outlined to stand apart from the branch badge */
+/** A worktree's name, outlined to stand apart from the branch badge: the one a repository works in (toolbar), or another worktree's work in progress (log) */
 @Component({
   selector: 'gitgud-worktree-badge',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,9 +51,11 @@ export class WorktreeBadgeComponent {
 
   repoId = input.required<string>();
   path = input.required<string>();
+  // Replaces the default tooltip, which is about the worktree the repository works in
+  description = input<string>();
 
   protected name = computed(() => worktreeName(this.path()));
 
-  protected tooltip = computed(() =>
-    `Working in the linked worktree ${this.path()} of ${this.repoId()}. Double-click a worktree, or check out its branch, to switch`);
+  protected tooltip = computed(() => this.description()
+    ?? `Working in the linked worktree ${this.path()} of ${this.repoId()}. Double-click a worktree, or check out its branch, to switch`);
 }
