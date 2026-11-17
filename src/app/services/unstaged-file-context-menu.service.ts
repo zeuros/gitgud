@@ -81,20 +81,20 @@ export class UnstagedFileContextMenuService {
 
     const tracked = files.filter(f => f.status.kind !== AppFileStatusKind.Untracked);
     const untracked = files.filter(f => f.status.kind === AppFileStatusKind.Untracked);
-    if (tracked.length) this.gitApi.gitAction(['checkout', '--', ...tracked.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
-    if (untracked.length) this.gitApi.gitAction(['clean', '-f', '--', ...untracked.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    if (tracked.length) this.gitApi.gitAction(['checkout', '--', ...tracked.map(f => f.path)], {cwd: this.currentRepo.wipWorktree()}).subscribe(this.gitRefresh.doUpdateWipChanges);
+    if (untracked.length) this.gitApi.gitAction(['clean', '-f', '--', ...untracked.map(f => f.path)], {cwd: this.currentRepo.wipWorktree()}).subscribe(this.gitRefresh.doUpdateWipChanges);
   };
 
   private copyPath = () => {
     const file = this.selectedFiles()[0];
-    const fullPath = window.tauri.path.resolve(this.currentRepo.cwd()!, file.path);
+    const fullPath = window.tauri.path.resolve(this.currentRepo.wipWorktree()!, file.path);
     navigator.clipboard.writeText(fullPath);
     this.toast.success('Path copied');
   };
 
   private showInFolder = () => {
     const file = this.selectedFiles()[0];
-    const fullPath = window.tauri.path.resolve(this.currentRepo.cwd()!, file.path);
+    const fullPath = window.tauri.path.resolve(this.currentRepo.wipWorktree()!, file.path);
     window.tauri.showItemInFolder(fullPath);
   };
 }

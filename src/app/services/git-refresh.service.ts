@@ -238,4 +238,12 @@ export class GitRefreshService {
    * HEAD along with the type of change.
    */
   doUpdateWorkingDirChanges = () => this.updateWorkingDirChanges().subscribe();
+
+  // The status of the worktree whose work in progress the right panel shows
+  updateWipChanges = () => defer(() => {
+    const worktreePath = this.currentRepo.wipWorktree();
+    return worktreePath && worktreePath !== this.currentRepo.cwd() ? this.updateWorktreeChanges(worktreePath) : this.updateWorkingDirChanges();
+  });
+
+  doUpdateWipChanges = () => this.updateWipChanges().subscribe();
 }

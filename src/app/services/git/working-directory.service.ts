@@ -20,6 +20,7 @@ import {inject, Injectable} from '@angular/core';
 import {GitApiService} from './git-api.service';
 import {GitRefreshService} from '../git-refresh.service';
 import type {WorkingDirectoryFileChange} from '../../lib/github-desktop/model/workdir';
+import {CurrentRepoStore} from '../../stores/current-repo.store';
 
 @Injectable({
   providedIn: 'root',
@@ -28,27 +29,32 @@ export class WorkingDirectoryService {
 
   private gitApi = inject(GitApiService);
   private gitRefresh = inject(GitRefreshService);
+  private currentRepo = inject(CurrentRepoStore);
 
-  stageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.gitAction(['add', '--', path]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+  // Runs in the worktree whose work in progress the right panel shows
+  private gitAction = (args: string[]) => this.gitApi.gitAction(args, {cwd: this.currentRepo.wipWorktree()});
+  private gitWithInput = (args: string[], patch: string) => this.gitApi.gitWithInput(args, patch, this.currentRepo.wipWorktree());
+
+  stageFile = ({path}: WorkingDirectoryFileChange) => this.gitAction(['add', '--', path]).subscribe(this.gitRefresh.doUpdateWipChanges);
 
   stageFiles = (files: WorkingDirectoryFileChange[]) =>
-    this.gitApi.gitAction(['add', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    this.gitAction(['add', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWipChanges);
 
   unstageFiles = (files: WorkingDirectoryFileChange[]) =>
-    this.gitApi.gitAction(['reset', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    this.gitAction(['reset', '--', ...files.map(f => f.path)]).subscribe(this.gitRefresh.doUpdateWipChanges);
 
   /** Stage (or unstage) a patch via stdin, then refresh */
   stageChangesWithPatch = (patch: string, stage: boolean) =>
-    this.gitApi.gitWithInput(['apply', ...(stage ? [] : ['-R']), '--cached', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    this.gitWithInput(['apply', ...(stage ? [] : ['-R']), '--cached', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.gitRefresh.doUpdateWipChanges);
 
   /** Revert a patch in the working directory (no --cached), discarding the change */
   discardChangesWithPatch = (patch: string) =>
-    this.gitApi.gitWithInput(['apply', '-R', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+    this.gitWithInput(['apply', '-R', '--unidiff-zero', '--allow-overlap', '-'], patch).subscribe(this.gitRefresh.doUpdateWipChanges);
 
-  unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitApi.gitAction(['reset', '--', path]).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+  unstageFile = ({path}: WorkingDirectoryFileChange) => this.gitAction(['reset', '--', path]).subscribe(this.gitRefresh.doUpdateWipChanges);
 
-  stageAll = () => this.gitApi.gitAction(['add', '--all']).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+  stageAll = () => this.gitAction(['add', '--all']).subscribe(this.gitRefresh.doUpdateWipChanges);
 
-  unstageAll = () => this.gitApi.gitAction(['reset', 'HEAD', '--', '.']).subscribe(this.gitRefresh.doUpdateWorkingDirChanges);
+  unstageAll = () => this.gitAction(['reset', 'HEAD', '--', '.']).subscribe(this.gitRefresh.doUpdateWipChanges);
 
 }

@@ -116,4 +116,19 @@ describe('layoutGraph', () => {
     expect(columns(commits)).toEqual({c: 0, b: 0});
     expect(edges).toHaveLength(1);
   });
+
+  it('draws another worktree\'s work in progress dashed in its own lane', () => {
+    //  w       the tab's work in progress, on HEAD
+    //  | o     another worktree's, on its branch
+    //  m |     HEAD
+    //  | f     the other worktree's HEAD
+    //  |/
+    //  b
+    const commits = log('w:m', 'o:f', 'm:b', 'f:b', 'b');
+    commits[0].refType = RefType.INDEX;
+    commits[1].refType = RefType.INDEX;
+    const {edges} = layoutGraph(commits, commits[0]);
+    expect(columns(commits)).toEqual({w: 0, o: 1, m: 0, f: 1, b: 0});
+    expect(edges.find(e => e.childRow == 1)!.type).toBe(RefType.INDEX);
+  });
 });

@@ -119,7 +119,10 @@ export class MakeACommitComponent {
       this.savedFormState = this.commitForm.value;
 
       // Prefill with last commit message
-      const lastCommit = headCommit(this.currentRepo.branches(), this.currentRepo.logs());
+      const otherWorktree = this.currentRepo.otherWorktrees().find(w => w.path === this.currentRepo.wipWorktree());
+      const lastCommit = otherWorktree
+        ? this.currentRepo.logs().find(c => c.sha === otherWorktree.sha)
+        : headCommit(this.currentRepo.branches(), this.currentRepo.logs());
       if (lastCommit) this.commitForm.patchValue({summary: lastCommit.summary, description: lastCommit.body ?? ''});
     } else {
       this.restoreBeforeAmendSummary();

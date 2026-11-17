@@ -1,4 +1,4 @@
-@let workDirStatus = currentRepo.workDirStatus();
+@let workDirStatus = currentRepo.wipStatus();
 @let conflicted = workDirStatus?.conflicted ?? [];
 @let hasConflicts = conflicted.length > 0;
 
