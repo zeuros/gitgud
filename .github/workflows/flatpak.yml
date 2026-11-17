@@ -79,9 +79,13 @@ jobs:
           echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   # ── Build the manifest into the release's .flatpak bundle ─────────────────────
+  # Flathub's image comes with the GNOME SDK installed; flatpak-builder needs the privileges for its FUSE mounts.
   bundle:
     runs-on: ubuntu-latest
     needs: [update-flathub]
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
 
     steps:
       - name: Checkout Flathub manifest repo
@@ -91,21 +95,26 @@ jobs:
           token: ${{ secrets.FLATHUB_REPO_TOKEN }}
           ref: ${{ needs.update-flathub.outputs.manifest-commit }}
 
-      - name: Cache Flatpak SDK
-        uses: actions/cache@v6
-        with:
-          path: ~/.local/share/flatpak
-          key: flatpak-sdk-gnome-51-x64
+      - name: Set the bundle name
+        run: echo "BUNDLE=GitGud-${TAG#v}-Linux-x64.flatpak" >> "$GITHUB_ENV"
 
-      # flathub-build installs the SDK and its extensions, then builds as Flathub does, into ./repo
-      - name: Build
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak
-          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y --noninteractive flathub org.flatpak.Builder
-          flatpak run --command=flathub-build org.flatpak.Builder "${{ env.APP_ID }}.yml"
-          flatpak build-bundle repo "GitGud-${TAG#v}-Linux-x64.flatpak" "${{ env.APP_ID }}"
+      # Builds into the bundle and uploads it as the artifact named after it
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6.8
+        with:
+          manifest-path: ${{ env.APP_ID }}.yml
+          bundle: ${{ env.BUNDLE }}
+          artifact-name: flatpak-bundle
+          mirror-screenshots-url: https://dl.flathub.org/media
+
+  # ── Attach the bundle to the release (the build image has no gh) ──────────────
+  release:
+    runs-on: ubuntu-latest
+    needs: [bundle]
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: flatpak-bundle
 
       - name: Upload to release
         run: |
@@ -117,10 +126,3 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: flatpak-bundle
-          path: GitGud-*-Linux-x64.flatpak
-          retention-days: 7
