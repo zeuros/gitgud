@@ -11,8 +11,6 @@
  *  29–36  s  click unstaged file → diff, annotate hunk staging
  *  36–38  s  fade out
  */
-import * as fs from 'fs';
-import * as path from 'path';
 import {
   DEMO_BASE,
   allByText,
@@ -23,85 +21,10 @@ import {
   see,
   waitForDiff,
 } from '../utils/helpers.js';
-
-// ── Annotation helpers ────────────────────────────────────────────────────────
-
-async function injectAnnotations(): Promise<void> {
-  const roughSrc = fs.readFileSync(
-    path.resolve(__dirname, '../../node_modules/roughjs/bundled/rough.js'), 'utf8',
-  );
-  const engineSrc = fs.readFileSync(
-    path.resolve(__dirname, '../utils/annotation-engine.js'), 'utf8',
-  );
-  // Inject via <script> tag so the UMD bundle sets window.rough in page scope.
-  const inject = (code: string) =>
-    browser.execute((src: string) => {
-      const s = document.createElement('script');
-      s.textContent = src;
-      document.head.appendChild(s);
-    }, code);
-  await inject(roughSrc);
-  await inject(engineSrc);
-}
-
-type Point = { x: number; y: number };
-
-/** Draw the annotation with its arrow tipping at `pt`, hold it, then clear it. */
-async function annotateAt(
-  pt: Point | null,
-  text: string,
-  side: 'right' | 'left' | 'bottom' = 'right',
-  ms = 3000,
-): Promise<void> {
-  if (!pt) return;
-  await browser.execute(
-    (t: string, x: number, y: number, s: string) => window.__annDraw?.(t, x, y, s),
-    text, pt.x, pt.y, side,
-  );
-  await browser.pause(ms);
-  await browser.execute(() => window.__annClear?.());
-}
-
-/** Centre of the first element matching `selector`, or null if it's absent / not laid out. */
-async function centerOf(selector: string): Promise<Point | null> {
-  return browser.execute((sel: string) => {
-    const r = document.querySelector(sel)?.getBoundingClientRect();
-    if (!r?.width || !r.height) return null;
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  }, selector);
-}
+import { annotate, annotateAt, annotateFirst, centerOf, injectAnnotations } from '../utils/annotations.js';
 
 /** First row of the "Staged files" list — panel 1 of the commit section's vertical splitter. */
 const targetFirstStagedFile = () => centerOf('gitgud-make-a-commit [data-index="1"] tbody tr');
-
-async function annotate(
-  selector: string,
-  text: string,
-  side: 'right' | 'left' | 'bottom' = 'right',
-  ms = 3000,
-): Promise<void> {
-  await annotateAt(await centerOf(selector), text, side, ms);
-}
-
-/** Annotate pointing at the first element matching any of `selectors` (first that exists wins). */
-async function annotateFirst(
-  selectors: string[],
-  text: string,
-  side: 'right' | 'left' | 'bottom' = 'right',
-  ms = 3000,
-): Promise<void> {
-  const pt = await browser.execute((sels: string[]) => {
-    for (const sel of sels) {
-      const el = document.querySelector(sel);
-      if (el) {
-        const r = el.getBoundingClientRect();
-        if (r.width && r.height) return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-      }
-    }
-    return null;
-  }, selectors);
-  await annotateAt(pt, text, side, ms);
-}
 
 // ── Spec ──────────────────────────────────────────────────────────────────────
 
