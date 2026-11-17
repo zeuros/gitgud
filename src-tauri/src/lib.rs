@@ -9,6 +9,7 @@
  */
 
 mod commands;
+pub mod credential_helper;
 pub mod sequence_editor;
 mod shell_pool;
 
@@ -93,6 +94,7 @@ pub fn run() {
     patch_path_from_login_shell();
     patch_path();
     sequence_editor::expose_binary_name();
+    credential_helper::configure_git();
     #[cfg(target_os = "linux")]
     patch_nvidia_wayland();
 
