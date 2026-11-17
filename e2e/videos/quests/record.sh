@@ -15,7 +15,8 @@ OUTPUT_DIR="$REPO_ROOT/docs/quests"
 DISPLAY_NUM=98
 XDISPLAY=":$DISPLAY_NUM"
 RESOLUTION="1920x1080"
-OUTPUT_SIZE="1280:720"
+# Native size: the app is already zoomed, a downscale blurs its text
+OUTPUT_SIZE="1920:1080"
 WORK_DIR="$(mktemp -d /tmp/gitgud-quests-record-XXXXXX)"
 
 cd "$REPO_ROOT"
