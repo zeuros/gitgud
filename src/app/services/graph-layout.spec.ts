@@ -63,17 +63,17 @@ describe('layoutGraph', () => {
     expect(edges.find(e => e.childRow == 0 && e.parentRow == 1)!.laneCol).toBe(1);
   });
 
-  it("doesn't reuse a lane on the row it was freed", () => {
+  it('lets a merge take the lane ending on it', () => {
     //  x         tip (lane 1)
     //  | m       HEAD (lane 0)
     //  |/
-    //  b         ends lane 1, merges z: z can't take lane 1 or x's line would look like it goes on to z
+    //  b         ends lane 1 and merges z into it
     //  |\
     //  | z
     //  a
     const commits = log('x:b', 'm:b', 'b:a,z', 'z:a', 'a');
     layoutGraph(commits, commits[1]);
-    expect(columns(commits)).toEqual({x: 1, m: 0, b: 0, z: 2, a: 0});
+    expect(columns(commits)).toEqual({x: 1, m: 0, b: 0, z: 1, a: 0});
   });
 
   it('shifts the tip of another tree drawn right below a root', () => {

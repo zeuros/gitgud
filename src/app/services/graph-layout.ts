@@ -43,7 +43,8 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
 
   // Lanes, top to bottom: each lane waits for one commit (the parent of the commit drawn above in it)
   const lanes: (string | undefined)[] = [];
-  const freedOnRow: number[] = [];
+  // Row from which a lane freed by a root can be taken again
+  const laneFreeFromRow: number[] = [];
 
   // Lane 0 is kept, from the top, for the first-parent chain of mainTip (HEAD / work in progress), which is always
   // drawn straight on the left even when other branches have newer commits
@@ -56,14 +57,8 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
     return !!current;
   };
 
-  const freeLane = (lane: number, row: number) => {
-    lanes[lane] = undefined;
-    freedOnRow[lane] = row;
-  };
-
-  // A lane freed on a row isn't reused on that same row, so two edges never look connected through it
   const takeFreeLane = (row: number, sha: string) => {
-    let lane = lanes.findIndex((awaited, i) => awaited == undefined && freedOnRow[i] < row);
+    let lane = lanes.findIndex((awaited, i) => awaited == undefined && (laneFreeFromRow[i] ?? 0) <= row);
     if (lane == -1) lane = lanes.length;
     lanes[lane] = sha;
     return lane;
@@ -81,7 +76,7 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
     const lane = extendsMain ? 0 : lanesWaitingForCommit[0] ?? takeFreeLane(row, commit.sha);
     if (lane == 0) mainLaneUntouched = false;
     // The other lanes waiting for it end here (branching point)
-    lanesWaitingForCommit.slice(1).forEach(lane => freeLane(lane, row));
+    lanesWaitingForCommit.slice(1).forEach(lane => lanes[lane] = undefined);
     commit.lane = lane;
 
     // The lane then waits for the commit's first parent, so a first-parent chain stays in one lane
@@ -90,11 +85,12 @@ export const layoutGraph = (log: DisplayRef[], mainTip?: DisplayRef): GraphLayou
       lanes[lane] = firstParent;
       edgeLanes.set(`${commit.sha} ${firstParent}`, lane);
     } else if (firstParent) {
-      freeLane(lane, row);
+      lanes[lane] = undefined;
       otherParents.unshift(firstParent); // First parent is out of the log: every parent is a merged one
     } else {
       // A root's lane isn't reused on the next row, so the tip of another tree drawn right below doesn't look like it continues it
-      freeLane(lane, row + 1);
+      lanes[lane] = undefined;
+      laneFreeFromRow[lane] = row + 2;
     }
 
     // Other parents (merges) wait in the lane already waiting for them, or in a new one
