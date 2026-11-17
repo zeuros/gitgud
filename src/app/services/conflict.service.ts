@@ -26,13 +26,18 @@ export class ConflictService {
 
   private currentRepo = inject(CurrentRepoStore);
 
-  /** Annotates the WIP commit in-place when a merge conflict is in progress. */
-  markWorkDirCommitConflicted(displayLog: DisplayRef[]) {
-    const conflictCount = this.currentRepo.workDirStatus()?.conflicted.length ?? 0;
-    if (conflictCount === 0 || displayLog[0]?.refType !== RefType.INDEX) return;
+  /** Annotates the WIP commits in-place when a merge conflict is in progress in their worktree. */
+  markWorkDirCommitConflicted(displayLog: DisplayRef[]): void {
+    displayLog.filter(ref => ref.refType === RefType.INDEX).forEach(indexCommit => {
+      const status = indexCommit.worktreePath ? this.currentRepo.worktreeStatuses()[indexCommit.worktreePath] : this.currentRepo.workDirStatus();
+      const conflictCount = status?.conflicted.length ?? 0;
+      if (conflictCount === 0) return;
 
-    const branch = this.currentRepo.headBranch()?.name ?? 'HEAD';
-    displayLog[0].summary = `${conflictCount} file${conflictCount > 1 ? 's' : ''} conflict${conflictCount > 1 ? 's' : ''} — attempting to merge into ${branch}`;
-    displayLog[0].highlight = 'conflict';
+      const branch = (indexCommit.worktreePath
+        ? this.currentRepo.worktrees().find(w => w.path === indexCommit.worktreePath)?.branch
+        : this.currentRepo.headBranch()?.name) ?? 'HEAD';
+      indexCommit.summary = `${conflictCount} file${conflictCount > 1 ? 's' : ''} conflict${conflictCount > 1 ? 's' : ''} — attempting to merge into ${branch}`;
+      indexCommit.highlight = 'conflict';
+    });
   }
 }

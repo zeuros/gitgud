@@ -178,7 +178,13 @@
             <td class="graph">
                 <div class="commit-highlight-background" [style.left.px]="CANVAS_MARGIN.left + xPosition(commit.lane)"></div>
             </td>
-            <td class="summary ellipsis" [gitgudTitleIfOverflow]="commit.summary">{{ commit.summary }}</td>
+            <td class="summary ellipsis" [gitgudTitleIfOverflow]="commit.summary">
+                @if (commit.worktreePath) {
+                    <gitgud-worktree-badge class="mr-2" [repoId]="currentRepo.id()!" [path]="commit.worktreePath"
+                                           [description]="'Uncommitted changes of the worktree ' + commit.worktreePath"/>
+                }
+                {{ commit.summary }}
+            </td>
             <td class="author text-gray ellipsis">{{ commit.author.name }}</td>
             <td class="date text-gray">{{ commit.author.date | date: DATE_FORMAT }}</td>
         </tr>

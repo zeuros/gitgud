@@ -22,6 +22,7 @@ import type {WorkDirStatus} from '../lib/github-desktop/model/workdir';
 import type {GitTag} from './git-tag';
 import type {GitWorktree} from './git-worktree';
 import type {GitOperation} from '../utils/operation-in-progress.utils';
+import {INDEX_SHA} from '../utils/log-utils';
 
 export type ViewType = 'hunk' | 'inline' | 'split';
 
@@ -36,7 +37,7 @@ export class GitRepository {
     public remoteTags: GitTag[] = [],
     public branches: Branch[] = [],
     public detachedHeadSha?: string,
-    public selectedCommitsShas = ['index'],
+    public selectedCommitsShas: string[] = [INDEX_SHA],
     public startCommit = 0,
     public remotes: { remote: string; url: string }[] = [],
     // Editor config
@@ -46,6 +47,8 @@ export class GitRepository {
     public worktrees: GitWorktree[] = [],
     // The linked worktree this tab works in (git runs there), undefined for the main worktree (`id`)
     public activeWorktree?: string,
+    // The work in progress of the other worktrees, by worktree path
+    public worktreeStatuses: Record<string, WorkDirStatus> = {},
   ) {
   }
 }

@@ -22,6 +22,7 @@ import {CommitInfosComponent} from './commit-infos/commit-infos.component';
 import {MakeACommitComponent} from './make-a-commit/make-a-commit.component';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {CommitsFileListInfoComponent} from './commits-file-list-info/commits-file-list-info.component';
+import {isWipSha} from '../../utils/log-utils';
 
 
 @Component({
@@ -43,5 +44,6 @@ import {CommitsFileListInfoComponent} from './commits-file-list-info/commits-fil
 export class CommitSectionComponent {
 
   protected currentRepo = inject(CurrentRepoStore);
+  protected isWipSha = isWipSha;
 
 }

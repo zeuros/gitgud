@@ -16,8 +16,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {effect, type EffectCleanupFn, inject, Injectable} from '@angular/core';
-import {auditTime, buffer, Subject} from 'rxjs';
+import {computed, effect, type EffectCleanupFn, inject, Injectable} from '@angular/core';
+import {auditTime, buffer, map, Subject} from 'rxjs';
+import {isEqual, uniq} from 'lodash-es';
 import {createWatcher, watchErrorMessage} from '../utils/file-watcher.utils';
 import type {GitDirs} from '../utils/git-path.utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -40,10 +41,17 @@ export class FileWatcherService {
   private currentRepo = inject(CurrentRepoStore);
   private toast = inject(ToastService);
   private fileChangeSubject$ = new Subject<string>();
+  private otherWorktreeChangeSubject$ = new Subject<string>();
   private gitStateChangeSubject$ = new Subject<string>();
 
   // Debouncing is handled in Rust (watcher.rs)
   onWorkingDirFileChange$ = this.fileChangeSubject$.pipe(auditTime(0)); // Paths are batched and emitted once
+
+  // The other worktrees whose files changed in one Rust batch
+  onOtherWorktreeFileChange$ = this.otherWorktreeChangeSubject$.pipe(
+    buffer(this.otherWorktreeChangeSubject$.pipe(auditTime(0))),
+    map(worktreePaths => uniq(worktreePaths)),
+  );
 
   // The paths of git's state (HEAD, index, refs…) changed in one Rust batch
   onGitStateChange$ = this.gitStateChangeSubject$.pipe(buffer(this.gitStateChangeSubject$.pipe(auditTime(0))));
@@ -54,7 +62,26 @@ export class FileWatcherService {
       const cwd = this.currentRepo.cwd();
       if (cwd) onCleanup(this.watchProjectFilesChanges(cwd));
     });
+    // Watches the other worktrees' files, whose work in progress the log shows too
+    effect(onCleanup => {
+      const watchers = this.otherWorktreePaths().map(this.watchOtherWorktreeFiles);
+      onCleanup(() => watchers.forEach(watcher => watcher.close()));
+    });
   }
+
+  private otherWorktreePaths = computed(() => this.currentRepo.otherWorktrees().map(w => w.path), {equal: isEqual});
+
+  private watchOtherWorktreeFiles = (worktreePath: string) => {
+    let errorShown = false;
+    return createWatcher(`${worktreePath}:other-worktree`, worktreePath, {ignoredDirs: WORKING_TREE_IGNORED_DIRS, respectGitIgnore: true})
+      .on('all', () => this.otherWorktreeChangeSubject$.next(worktreePath))
+      .on('error', error => {
+        console.error(error);
+        if (errorShown) return;
+        errorShown = true;
+        this.toast.err(watchErrorMessage(worktreePath, error as WatchError), {sticky: true});
+      });
+  };
 
   // Watches a project's files, then git's state once its git dirs are known; the cleanup closes what this call opened
   private watchProjectFilesChanges = (projectPath: string): EffectCleanupFn => {

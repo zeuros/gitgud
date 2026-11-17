@@ -24,6 +24,7 @@ import {logsComparison, shallowArrayEqual} from '../utils/utils';
 import {type LocalAndRemoteBranch, toLocalAndRemotePairs} from '../utils/branch-utils';
 import {groupTagsByShaAndName, localAndDistantTagPairsByName} from '../utils/tag-utils';
 import {branchesCheckedOutElsewhere} from '../utils/worktree-utils';
+import {worktreeOfWipSha} from '../utils/log-utils';
 
 /**
  * Exposes reactive state for the currently selected repository.
@@ -55,6 +56,7 @@ export class CurrentRepoStore {
 
   startCommit = computed(() => this.reposStore.selectedRepository()?.startCommit ?? 0);
   workDirStatus = computed(() => this.reposStore.selectedRepository()?.workDirStatus, {equal: isEqual});
+  worktreeStatuses = computed(() => this.reposStore.selectedRepository()?.worktreeStatuses ?? {}, {equal: isEqual});
   editorConfig = computed(() => this.reposStore.selectedRepository()?.editorConfig);
   detachedHeadSha = computed(() => this.reposStore.selectedRepository()?.detachedHeadSha);
   name = computed(() => this.reposStore.selectedRepository()?.name);
@@ -86,6 +88,14 @@ export class CurrentRepoStore {
   private branchesInOtherWorktrees = computed(() => branchesCheckedOutElsewhere(this.worktrees(), this.cwd()), {equal: isEqual});
   // Path of the other worktree a local branch is checked out in: checking it out switches there
   otherWorktreeOf = (localBranchName?: string) => localBranchName ? this.branchesInOtherWorktrees().get(localBranchName) : undefined;
+  // The other worktrees, whose work in progress the log shows too
+  otherWorktrees = computed(() => this.worktrees().filter(w => w.path !== this.cwd()), {equal: isEqual});
+  // The worktree whose work in progress the right panel shows: the selected WIP row's
+  wipWorktree = computed(() => worktreeOfWipSha(this.selectedCommitsShas()?.[0]) ?? this.cwd());
+  wipStatus = computed(() => {
+    const worktreePath = worktreeOfWipSha(this.selectedCommitsShas()?.[0]);
+    return worktreePath ? this.worktreeStatuses()[worktreePath] : this.workDirStatus();
+  }, {equal: isEqual});
   operationInProgress = computed(() => this.reposStore.selectedRepository()?.operationInProgress);
   isRebasing = computed(() => this.operationInProgress() === 'rebase');
   headBranch = computed(() => this.branches().find(b => b.isHeadPointed));

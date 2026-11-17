@@ -31,7 +31,7 @@ export class FileDiffPanelService {
 
   private currentRepo = inject(CurrentRepoStore);
   private fileToDiffSubject$ = new Subject<FileChange | null>();
-  private workDirStatus$ = toObservable(this.currentRepo.workDirStatus);
+  private workDirStatus$ = toObservable(this.currentRepo.wipStatus);
 
   selectedFile = signal<FileChange | null>(null);
   conflictedFile = signal<WorkingDirectoryFileChange | null>(null);

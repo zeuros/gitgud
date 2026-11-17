@@ -64,10 +64,18 @@ export const commitCount = (n: number) => n === 1 ? '1 commit' : `${n} commits`;
 
 export const bySha = (sha: string) => (c: DisplayRef) => c.sha === sha;
 
-export const createIndexCommit = (parentCommit: DisplayRef) => ({
+// The work in progress row of the worktree the tab works in has this sha; another worktree's has `index:<worktree path>`
+export const INDEX_SHA = 'index';
+export const wipSha = (worktreePath?: string) => worktreePath ? `${INDEX_SHA}:${worktreePath}` : INDEX_SHA;
+export const isWipSha = (sha?: string) => !!sha && (sha === INDEX_SHA || sha.startsWith(`${INDEX_SHA}:`));
+// The worktree whose work in progress `sha` is, undefined for the tab's own worktree or a commit
+export const worktreeOfWipSha = (sha?: string) => sha?.startsWith(`${INDEX_SHA}:`) ? sha.slice(INDEX_SHA.length + 1) : undefined;
+
+export const createIndexCommit = (parentCommit: DisplayRef, worktreePath?: string) => ({
   summary: 'WIP',
   ref: parentCommit.ref,
-  sha: 'index',
+  sha: wipSha(worktreePath),
+  worktreePath,
   parentSHAs: [parentCommit.sha] as string[],
   branchesDetails: [] as Branch[],
   refType: RefType.INDEX,

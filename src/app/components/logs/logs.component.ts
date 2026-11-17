@@ -25,6 +25,8 @@ import {isEqual, once} from 'lodash-es';
 import {commitColor, findCurrentHeadCommit, hasName, isCommit, isStash} from '../../utils/commit-utils';
 import {IntervalTree} from 'node-interval-tree';
 import type {Edge} from '../../models/edge';
+import type {GitWorktree} from '../../models/git-worktree';
+import {WorktreeBadgeComponent} from '../worktree-badge/worktree-badge.component';
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import {afterNextRender, ChangeDetectionStrategy, Component, computed, effect, type ElementRef, HostListener, inject, Injector, signal, untracked, viewChild} from '@angular/core';
 import {loadStashImage} from './log-draw-utils';
@@ -83,6 +85,7 @@ const RENDER_CHUNK = 20;
     TitleIfOverflowDirective,
     SearchLogsComponent,
     LogColumnsDirective,
+    WorktreeBadgeComponent,
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -171,10 +174,12 @@ export class LogsComponent {
       // Rows hold Branch objects (context menu, drag & drop): rebuild when one changes without moving, e.g. its upstream
       this.currentRepo.branches();
       const workDirStatus = this.currentRepo.workDirStatus();
+      const worktreeStatuses = this.currentRepo.worktreeStatuses();
+      const otherWorktreesWip = this.currentRepo.otherWorktrees().filter(w => workingDirHasChanges(worktreeStatuses[w.path]));
       // Wait for stash image before drawing stashes in the graph
       if (!this.stashImg() || !logs.length || !workDirStatus) return;
 
-      untracked(() => this.computeDisplayLog(workingDirHasChanges(workDirStatus), logs, stashes));
+      untracked(() => this.computeDisplayLog(workingDirHasChanges(workDirStatus), logs, stashes, otherWorktreesWip));
     });
 
     // Pre-fetch avatars for all commits in the display log
@@ -269,7 +274,7 @@ export class LogsComponent {
     this.logTableContainer()?.scrollTo({top: row * ROW_HEIGHT});
   });
 
-  private computeDisplayLog = (workingDirHasChanges: boolean, logs: Commit[], stashes: Commit[]) => {
+  private computeDisplayLog = (workingDirHasChanges: boolean, logs: Commit[], stashes: Commit[], otherWorktreesWip: GitWorktree[]) => {
     const headCommit = workingDirHasChanges
       // IF detached mode, index(WIP) commit is on top of checked out commit, else checked out branch
       ? findCurrentHeadCommit(logs)
@@ -279,7 +284,7 @@ export class LogsComponent {
       ? {...headCommit, branchesDetails: [], isPointedByLocalHead: true, refType: RefType.COMMIT} as DisplayRef
       : undefined;
 
-    const {displayLog, edges, untrackedStashes, graphColumnCount} = this.logBuilder.buildDisplayLog(logs, stashes, indexParent);
+    const {displayLog, edges, untrackedStashes, graphColumnCount} = this.logBuilder.buildDisplayLog(logs, stashes, indexParent, otherWorktreesWip);
 
     this.conflict.markWorkDirCommitConflicted(displayLog);
 
