@@ -23,6 +23,21 @@
     </ul>
   </description>
 
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/zeuros/gitgud/main/docs/img/flathub-1-log.png</image>
+      <caption>Browse the history with its branch graph</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/zeuros/gitgud/main/docs/img/flathub-2-diff.png</image>
+      <caption>Review the changes of a commit</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/zeuros/gitgud/main/docs/img/flathub-3-changes.png</image>
+      <caption>Stage the changes of the working directory</caption>
+    </screenshot>
+  </screenshots>
+
   <!-- Tauri names the desktop file and the icon after productName / the binary -->
   <launchable type="desktop-id">GitGud.desktop</launchable>
   <icon type="stock">gitgud</icon>
