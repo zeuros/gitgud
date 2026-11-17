@@ -73,7 +73,7 @@ export class LogReaderService {
     }
 
 
-    args.push('--all', ...additionalArgs);
+    args.push(...additionalArgs, 'HEAD');
     return this.readCommits(args);
   };
 
