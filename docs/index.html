@@ -332,67 +332,309 @@
       margin-bottom: 3rem;
     }
 
-    /* ── Demo ────────────────────────────────────────────────────────── */
-    .demo { padding-top: 0; }
+    /* ── Quests ─────────────────────────────────────────────────────── */
+    #quests {
+      max-width: 1240px;
+      padding-top: 1rem;
+      scroll-margin-top: 56px;
+    }
 
-    .video-wrap {
-      border-radius: 12px;
+    .quests-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .quests-head .section-sub { margin-bottom: 2rem; }
+
+    .quest-nav {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 2rem;
+    }
+
+    .quest-nav button {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, opacity .2s;
+    }
+
+    .quest-nav button:hover:not(:disabled) { border-color: var(--purple); background: rgba(167,139,250,.1); }
+    .quest-nav button:disabled { opacity: .35; cursor: default; }
+
+    .quest-track {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 100%;
+      gap: 1.5rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      overscroll-behavior-x: contain;
+    }
+
+    .quest-track::-webkit-scrollbar { display: none; }
+
+    .quest {
+      scroll-snap-align: start;
+      display: grid;
+      grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+      gap: 1.75rem;
+      padding: 1.5rem;
+      background: rgba(24, 28, 44, .82);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+    }
+
+    .quest-video {
+      position: relative;
+      align-self: start;
+      border-radius: 10px;
       overflow: hidden;
       border: 1px solid var(--border);
-      box-shadow: 0 32px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04);
+      background: #0a0c14;
+      aspect-ratio: 16 / 9;
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+    }
+
+    .quest-video video {
+      cursor: zoom-in;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .quest-info {
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+      min-width: 0;
+    }
+
+    .quest-level {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--muted);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .quest-level b {
+      display: inline-grid;
+      place-items: center;
+      min-width: 2.1rem; height: 2.1rem;
+      padding: 0 .3rem;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(167,139,250,.25), rgba(45,212,191,.2));
+      border: 1px solid rgba(167,139,250,.4);
+      color: #fff;
+      font-size: .8rem;
+    }
+
+    .quest-level .boss { color: var(--coral); }
+
+    .quest h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.45rem;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .quest p {
+      color: #b4bad0;
+      font-size: .9375rem;
+      line-height: 1.6;
+    }
+
+    .term {
+      color: var(--teal);
+      font-style: normal;
+      text-decoration: underline dotted rgba(45,212,191,.6);
+      text-underline-offset: 3px;
+      cursor: help;
       position: relative;
     }
 
-    .video-bar {
-      background: #1c2035;
-      padding: .6rem 1rem;
+    .term:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; border-radius: 2px; }
+
+    .term-tip {
+      position: fixed;
+      z-index: 200;
+      max-width: 280px;
+      padding: .6rem .75rem;
+      background: #0b0d16;
+      border: 1px solid rgba(45,212,191,.45);
+      border-radius: 8px;
+      font-size: .8125rem;
+      line-height: 1.5;
+      color: var(--text);
+      box-shadow: 0 12px 32px rgba(0,0,0,.5);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .12s;
+    }
+
+    .term-tip.shown { opacity: 1; }
+    .term-tip strong { color: var(--teal); display: block; margin-bottom: .15rem; }
+
+    /* Terminal panel with the git equivalent */
+    .bash {
+      margin-top: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0b0d16;
+      overflow: hidden;
+    }
+
+    .bash-bar {
       display: flex;
       align-items: center;
       gap: .4rem;
+      padding: .45rem .75rem;
+      background: #151929;
       border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .6875rem;
+      color: var(--muted);
     }
 
-    .dot-red   { width:10px;height:10px;border-radius:50%;background:#ff5f57; }
-    .dot-yellow{ width:10px;height:10px;border-radius:50%;background:#febc2e; }
-    .dot-green { width:10px;height:10px;border-radius:50%;background:#28c840; }
+    .dot-red    { width: 8px; height: 8px; border-radius: 50%; background: #ff5f57; }
+    .dot-yellow { width: 8px; height: 8px; border-radius: 50%; background: #febc2e; }
+    .dot-green  { width: 8px; height: 8px; border-radius: 50%; background: #28c840; }
+    .bash-bar span:last-child { margin-left: .4rem; }
 
-    .video-wrap video {
-      display: block;
-      width: 100%;
-      height: auto;
-      background: #0a0c14;
+    .bash pre {
+      margin: 0;
+      padding: .85rem 1rem;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+      line-height: 1.7;
+      color: var(--text);
     }
 
-    .play-btn {
+    .bash .p { color: var(--purple); user-select: none; }
+    .bash .g { color: var(--teal); }
+    .bash .s { color: var(--coral); }
+    .bash .c { color: #5d6587; font-style: italic; }
+    .bash .o { color: var(--muted); }
+
+    /* XP bar: the course's progress, one segment per quest */
+    .xp {
+      margin-top: 1.5rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    .xp-label { color: var(--purple); letter-spacing: .08em; }
+
+    .xp-bar {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+      height: 30px;
+    }
+
+    .xp-fill {
       position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 80px; height: 80px;
-      border-radius: 50%;
-      background: rgba(167,139,250,.18);
-      border: 2px solid rgba(167,139,250,.55);
-      backdrop-filter: blur(8px);
+      inset: 0 auto 0 0;
+      width: 10%;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--purple), var(--teal));
+      box-shadow: 0 0 18px rgba(167,139,250,.45);
+      transition: width .35s ease;
+      pointer-events: none;
+    }
+
+    .xp-bar button {
+      position: relative;
+      z-index: 1;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .6875rem;
       cursor: pointer;
+      transition: color .2s, border-color .2s, background .2s;
+    }
+
+    .xp-bar button:hover { border-color: var(--purple); color: #fff; }
+    .xp-bar button.reached { background: transparent; border-color: transparent; color: #0f111a; font-weight: 500; }
+    .xp-bar button.current { outline: 2px solid #fff; outline-offset: 1px; }
+    .xp-bar button.cleared::after { content: '✓'; margin-left: .2rem; }
+
+    .xp-cleared { min-width: 7.5rem; text-align: right; }
+
+    /* Codex: every term the quests use */
+    .codex {
+      margin-top: 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(15,17,26,.7);
+    }
+
+    .codex summary {
+      cursor: pointer;
+      padding: 1rem 1.25rem;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      color: #fff;
+      list-style: none;
       display: flex;
       align-items: center;
-      justify-content: center;
-      transition: background .2s, transform .15s, border-color .2s;
-      z-index: 10;
+      gap: .6rem;
     }
 
-    .play-btn:hover {
-      background: rgba(167,139,250,.32);
-      border-color: var(--purple);
-      transform: translate(-50%, -50%) scale(1.08);
+    .codex summary::-webkit-details-marker { display: none; }
+    .codex summary::after { content: '+'; margin-left: auto; color: var(--purple); font-size: 1.2rem; }
+    .codex[open] summary::after { content: '−'; }
+    .codex summary small { font-family: 'Manrope', sans-serif; font-weight: 500; color: var(--muted); }
+
+    .codex dl {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+      gap: 1px;
+      background: var(--border);
+      border-top: 1px solid var(--border);
     }
 
-    .play-btn svg {
-      flex-shrink: 0;
-      color: #fff;
-      margin: 0;
+    .codex dl > div { background: var(--bg); padding: .9rem 1.25rem; }
+    .codex dt { font-family: 'JetBrains Mono', monospace; font-size: .8125rem; color: var(--teal); margin-bottom: .2rem; }
+    .codex dd { font-size: .8125rem; color: var(--muted); line-height: 1.5; }
+
+    @media (max-width: 860px) {
+      .quest { grid-template-columns: 1fr; padding: 1rem; }
+      .xp { grid-template-columns: 1fr; gap: .5rem; }
+      .xp-cleared { text-align: left; }
+      .xp-bar button { font-size: 0; }
+      .xp-bar button.cleared::after { font-size: .6875rem; margin: 0; }
     }
 
-    .play-btn.hidden { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .quest-track { scroll-behavior: auto; }
+      .xp-fill { transition: none; }
+    }
 
     /* ── Features ───────────────────────────────────────────────────── */
     .features-grid {
@@ -690,6 +932,7 @@
     GitGud
   </a>
   <div class="nav-links">
+    <a href="#quests" class="nav-hidden">Quests</a>
     <a href="#features" class="nav-hidden">Features</a>
     <a href="#download" class="nav-hidden">Download</a>
     <a href="https://github.com/zeuros/gitgud" class="btn-nav" target="_blank" rel="noopener">
@@ -722,6 +965,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
         Star on GitHub ⭐
       </a>
+      <a class="btn-secondary" href="#quests">Learn git in 10 quests ↓</a>
     </div>
 
     <div class="platform-pills">
@@ -750,27 +994,203 @@
 <br>
 <br>
 
-<!-- ── Demo Video ────────────────────────────────────────────────────── -->
-<section class="demo">
-  <p class="section-label">Demo</p>
-  <h2>Every boss fight in git,<br/>made beatable.</h2>
-  <p class="section-sub">Every git move you'd learn the hard way, one click away.</p>
-
-  <div class="video-wrap">
-    <div class="video-bar">
-      <span class="dot-red"></span>
-      <span class="dot-yellow"></span>
-      <span class="dot-green"></span>
+<!-- ── Quests ────────────────────────────────────────────────────────── -->
+<section id="quests" aria-labelledby="quests-title">
+  <div class="quests-head">
+    <div>
+      <p class="section-label">Quests</p>
+      <h2 id="quests-title">Learn git in ten quests.</h2>
+      <p class="section-sub">Each quest shows the move in GitGud, then the same in the terminal. Hover the <span class="term">underlined words</span> for their meaning.</p>
     </div>
-    <video id="demo-video" muted loop playsinline preload="auto">
-      <source src="show.webm" type="video/webm" />
-      <source src="show.mp4"  type="video/mp4" />
-      <img src="img/overview.png" alt="GitGud screenshot" />
-    </video>
-    <button class="play-btn" id="play-btn" aria-label="Play demo video">
-      <svg width="52" height="52" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
-    </button>
+    <div class="quest-nav">
+      <button type="button" id="quest-prev" aria-label="Previous quest">◀</button>
+      <button type="button" id="quest-next" aria-label="Next quest">▶</button>
+    </div>
   </div>
+
+  <div class="quest-track" id="quest-track" tabindex="0" aria-label="Quests, scroll sideways">
+
+    <article class="quest" id="quest-1" aria-label="Quest 1 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/01-first-commit.jpg"><source src="quests/01-first-commit.webm" type="video/webm"/><source src="quests/01-first-commit.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 1</b> Basics</div>
+        <h3>First commit</h3>
+        <p>Your edits start in the <em class="term" data-term="working tree" tabindex="0">working tree</em>. You <em class="term" data-term="stage" tabindex="0">stage</em> what belongs together into the <em class="term" data-term="index" tabindex="0">index</em>, whole files or single <em class="term" data-term="hunk" tabindex="0">hunks</em>, then record it as a <em class="term" data-term="commit" tabindex="0">commit</em>.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> status            <span class="c"># what changed</span>
+<span class="p">$</span> <span class="g">git</span> add -p            <span class="c"># stage hunk by hunk</span>
+<span class="p">$</span> <span class="g">git</span> add recipes.md    <span class="c"># or a whole file</span>
+<span class="p">$</span> <span class="g">git</span> commit -m <span class="s">"feat: sell mana potions"</span></pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-2" aria-label="Quest 2 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/02-branch.jpg"><source src="quests/02-branch.webm" type="video/webm"/><source src="quests/02-branch.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 2</b> Basics</div>
+        <h3>Branch out</h3>
+        <p>A <em class="term" data-term="branch" tabindex="0">branch</em> is just a movable label on a commit. Create one and <em class="term" data-term="HEAD" tabindex="0">HEAD</em> follows it: new commits move that branch forward, while <code>main</code> stays where it was.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> switch -c feature/mana   <span class="c"># create + check out</span>
+<span class="p">$</span> <span class="g">git</span> add shop.js
+<span class="p">$</span> <span class="g">git</span> commit -m <span class="s">"feat: sell mana potions"</span>
+<span class="p">$</span> <span class="g">git</span> log --oneline --graph --all</pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-3" aria-label="Quest 3 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/03-fast-forward.jpg"><source src="quests/03-fast-forward.webm" type="video/webm"/><source src="quests/03-fast-forward.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 3</b> Integrate</div>
+        <h3>Fast-forward</h3>
+        <p>When <code>main</code> is an <em class="term" data-term="ancestor" tabindex="0">ancestor</em> of your branch, there is nothing to combine: git just slides the <code>main</code> label up to your branch. That's a <em class="term" data-term="fast-forward" tabindex="0">fast-forward</em>: no merge commit, the history stays a straight line.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="c"># before: A─B ← main       after: A─B─C─D ← main, feature/mana</span>
+<span class="c">#              ╲C─D ← feature/mana</span>
+<span class="p">$</span> <span class="g">git</span> switch main
+<span class="p">$</span> <span class="g">git</span> merge --ff-only feature/mana</pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-4" aria-label="Quest 4 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/04-merge.jpg"><source src="quests/04-merge.webm" type="video/webm"/><source src="quests/04-merge.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 4</b> Integrate</div>
+        <h3>True merge</h3>
+        <p>When both branches got new commits, they have <em class="term" data-term="diverged" tabindex="0">diverged</em>. Merging them creates a <em class="term" data-term="merge commit" tabindex="0">merge commit</em> with two parents, which joins both histories.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> switch main
+<span class="p">$</span> <span class="g">git</span> merge feature/mana
+<span class="o">Merge made by the 'ort' strategy.</span>
+<span class="p">$</span> <span class="g">git</span> log --oneline --graph</pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-5" aria-label="Quest 5 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/05-rebase.jpg"><source src="quests/05-rebase.webm" type="video/webm"/><source src="quests/05-rebase.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 5</b> Integrate</div>
+        <h3>Rebase onto</h3>
+        <p>Instead of merging, <em class="term" data-term="rebase" tabindex="0">rebase</em> replays your branch's commits on top of <code>main</code>. The changes are the same but the commits are new, with new <em class="term" data-term="SHA" tabindex="0">SHAs</em>, and the history is a straight line.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> switch feature/mana
+<span class="p">$</span> <span class="g">git</span> rebase main
+<span class="o">Successfully rebased and updated refs/heads/feature/mana.</span></pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-6" aria-label="Quest 6 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/06-remote.jpg"><source src="quests/06-remote.webm" type="video/webm"/><source src="quests/06-remote.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 6</b> Team play</div>
+        <h3>Sync with the remote</h3>
+        <p><em class="term" data-term="push" tabindex="0">Push</em> uploads your commits to <em class="term" data-term="origin" tabindex="0">origin</em>. <em class="term" data-term="fetch" tabindex="0">Fetch</em> downloads your teammates' commits without touching your files, and <em class="term" data-term="pull" tabindex="0">pull</em> also brings them into your branch, from its <em class="term" data-term="upstream" tabindex="0">upstream</em>.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> push -u origin main   <span class="c"># -u: remember the upstream</span>
+<span class="p">$</span> <span class="g">git</span> fetch                 <span class="c"># update origin/main only</span>
+<span class="p">$</span> <span class="g">git</span> status
+<span class="o">Your branch is behind 'origin/main' by 1 commit</span>
+<span class="p">$</span> <span class="g">git</span> pull                  <span class="c"># fetch + merge</span></pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-7" aria-label="Quest 7 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/07-reword.jpg"><source src="quests/07-reword.webm" type="video/webm"/><source src="quests/07-reword.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 7</b> Second chance</div>
+        <h3>Reword</h3>
+        <p>A typo in an old commit message? <em class="term" data-term="reword" tabindex="0">Reword</em> it. That commit and the ones after it are rewritten, so do it before you push, or force push afterwards.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> commit --amend          <span class="c"># the last commit only</span>
+<span class="p">$</span> <span class="g">git</span> rebase -i HEAD~2        <span class="c"># an older one:</span>
+<span class="c">  reword 3f2a1c9 feat: sell mana potoins</span>
+<span class="c">  pick   9be04d2 feat: mana costs more</span></pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-8" aria-label="Quest 8 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/08-fixup.jpg"><source src="quests/08-fixup.webm" type="video/webm"/><source src="quests/08-fixup.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 8</b> Second chance</div>
+        <h3>Fixup</h3>
+        <p>Forgot a file in a past commit? Stage it and make it a <em class="term" data-term="fixup" tabindex="0">fixup</em> of that commit: it melts into the commit, keeping its message. A <em class="term" data-term="squash" tabindex="0">squash</em> does the same but combines the messages.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> add recipes.md
+<span class="p">$</span> <span class="g">git</span> commit --fixup=3f2a1c9
+<span class="p">$</span> <span class="g">git</span> rebase -i --autosquash 3f2a1c9~</pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-9" aria-label="Quest 9 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/09-reorder-conflict.jpg"><source src="quests/09-reorder-conflict.webm" type="video/webm"/><source src="quests/09-reorder-conflict.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 9</b> <span class="boss">Boss fight</span></div>
+        <h3>Reorder, through a conflict</h3>
+        <p>Moving a commit runs an <em class="term" data-term="interactive rebase" tabindex="0">interactive rebase</em>. When two commits edit the same lines, it stops on a <em class="term" data-term="conflict" tabindex="0">conflict</em>. Pick a side, then continue. Careful: during a rebase, <em class="term" data-term="ours / theirs" tabindex="0">ours and theirs</em> are swapped.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> rebase -i HEAD~3   <span class="c"># swap the two pick lines</span>
+<span class="o">CONFLICT (content): Merge conflict in potions.txt</span>
+<span class="p">$</span> <span class="g">git</span> checkout --theirs potions.txt  <span class="c"># your commit</span>
+<span class="p">$</span> <span class="g">git</span> add potions.txt
+<span class="p">$</span> <span class="g">git</span> rebase --continue  <span class="c"># or --abort</span></pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-10" aria-label="Quest 10 of 10">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/10-undo.jpg"><source src="quests/10-undo.webm" type="video/webm"/><source src="quests/10-undo.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 10</b> Second chance</div>
+        <h3>Undo anything</h3>
+        <p>Dropped the wrong commit? Git's <em class="term" data-term="reflog" tabindex="0">reflog</em> remembers every place HEAD has been, so a committed change is never really lost. GitGud's undo button reads it for you.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> reflog
+<span class="o">8c41d07 HEAD@{0}: rebase (finish): returning to refs/heads/main</span>
+<span class="o">9be04d2 HEAD@{1}: commit: feat: mana costs more</span>
+<span class="p">$</span> <span class="g">git</span> reset --hard HEAD@{1}</pre></div>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="xp" aria-label="Course progress">
+    <span class="xp-label">XP</span>
+    <div class="xp-bar" id="xp-bar">
+      <div class="xp-fill" id="xp-fill"></div>
+    </div>
+    <span class="xp-cleared" id="xp-cleared">0 / 10 cleared</span>
+  </div>
+
+  <details class="codex">
+    <summary>Codex <small>every word the quests use</small></summary>
+    <dl id="codex">
+      <div><dt>working tree</dt><dd>The files as they are on your disk, edits included.</dd></div>
+      <div><dt>index</dt><dd>Also called the staging area: what the next commit will hold.</dd></div>
+      <div><dt>stage</dt><dd>Put a change into the index: <code>git add</code>.</dd></div>
+      <div><dt>hunk</dt><dd>One block of changed lines in a file's diff.</dd></div>
+      <div><dt>commit</dt><dd>A snapshot of the project, with a message, an author and its parent commits.</dd></div>
+      <div><dt>SHA</dt><dd>A commit's id, a hash of its content, e.g. <code>3f2a1c9</code>. Changing a commit gives it a new SHA.</dd></div>
+      <div><dt>branch</dt><dd>A movable label pointing to a commit. Committing moves it forward.</dd></div>
+      <div><dt>HEAD</dt><dd>Where you are: usually the branch you have checked out.</dd></div>
+      <div><dt>ancestor</dt><dd>A commit you reach by following parents back from another one.</dd></div>
+      <div><dt>fast-forward</dt><dd>Moving a branch label forward to a descendant commit. Nothing to combine, so no merge commit.</dd></div>
+      <div><dt>diverged</dt><dd>Two branches that each have commits the other lacks.</dd></div>
+      <div><dt>merge commit</dt><dd>A commit with two parents, joining two histories.</dd></div>
+      <div><dt>rebase</dt><dd>Replaying commits on top of another commit, which creates new commits.</dd></div>
+      <div><dt>interactive rebase</dt><dd>A rebase where you edit the list of commits first: reorder, reword, squash, fixup or drop them.</dd></div>
+      <div><dt>remote</dt><dd>Another copy of the repository, e.g. on GitHub.</dd></div>
+      <div><dt>origin</dt><dd>The default name of the remote you cloned from.</dd></div>
+      <div><dt>upstream</dt><dd>The remote branch your local branch tracks, e.g. <code>origin/main</code> for <code>main</code>.</dd></div>
+      <div><dt>push</dt><dd>Upload your commits to the remote.</dd></div>
+      <div><dt>fetch</dt><dd>Download the remote's new commits, updating <code>origin/*</code> only. Your branches and files don't move.</dd></div>
+      <div><dt>pull</dt><dd>Fetch, then merge (or rebase) the upstream into your branch.</dd></div>
+      <div><dt>reword</dt><dd>Change a commit's message.</dd></div>
+      <div><dt>fixup</dt><dd>Fold a commit into an earlier one, keeping the earlier one's message.</dd></div>
+      <div><dt>squash</dt><dd>Fold a commit into an earlier one, combining both messages.</dd></div>
+      <div><dt>conflict</dt><dd>Two changes to the same lines that git can't combine on its own: you choose the result.</dd></div>
+      <div><dt>ours / theirs</dt><dd>The two sides of a conflict. In a merge, ours is your branch. In a rebase it's swapped: ours is the base you replay onto, theirs is your commit.</dd></div>
+      <div><dt>reflog</dt><dd>Git's log of every place HEAD and your branches have been. The way back from any mistake.</dd></div>
+    </dl>
+  </details>
 </section>
 
 <hr class="full-divider" />
@@ -905,21 +1325,127 @@
 
 
 <script>
-  // ── Video autoplay ────────────────────────────────────────────────────
-  window.addEventListener('load', () => {
-    const v   = document.getElementById('demo-video');
-    const btn = document.getElementById('play-btn');
-    if (!v || !btn) return;
+  // ── Quests: sideways track, XP bar, videos, codex tooltips ────────────
+  (function () {
+    const track   = document.getElementById('quest-track');
+    const bar     = document.getElementById('xp-bar');
+    const fill    = document.getElementById('xp-fill');
+    const cleared = document.getElementById('xp-cleared');
+    const prev    = document.getElementById('quest-prev');
+    const next    = document.getElementById('quest-next');
+    if (!track || !bar || !fill) return;
 
-    function startVideo() {
-      v.muted = true;
-      v.play().then(() => btn.classList.add('hidden')).catch(() => {});
+    const quests = Array.from(track.querySelectorAll('.quest'));
+    const STORAGE_KEY = 'gitgud-quests-cleared';
+    let clearedQuests = new Set();
+    try { clearedQuests = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]')); } catch {}
+
+    const segments = quests.map((quest, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `Lv ${index + 1}`;
+      button.setAttribute('aria-label', `Quest ${index + 1}: ${quest.querySelector('h3').textContent}`);
+      button.addEventListener('click', () => goTo(index));
+      bar.appendChild(button);
+      return button;
+    });
+
+    let currentIndex = 0;
+    const goTo = index => {
+      const clamped = Math.max(0, Math.min(quests.length - 1, index));
+      track.scrollTo({ left: quests[clamped].offsetLeft - track.offsetLeft });
+    };
+
+    function renderProgress() {
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      const fraction = maxScroll > 0 ? track.scrollLeft / maxScroll : 0;
+      currentIndex = Math.round(fraction * (quests.length - 1));
+      fill.style.width = `${(fraction * (quests.length - 1) + 1) / quests.length * 100}%`;
+      segments.forEach((segment, index) => {
+        segment.classList.toggle('reached', index <= currentIndex);
+        segment.classList.toggle('current', index === currentIndex);
+        segment.classList.toggle('cleared', clearedQuests.has(quests[index].id));
+      });
+      if (prev) prev.disabled = currentIndex === 0;
+      if (next) next.disabled = currentIndex === quests.length - 1;
+      if (cleared) cleared.textContent = `${clearedQuests.size} / ${quests.length} cleared`;
     }
 
-    btn.addEventListener('click', startVideo);
-    v.muted = true;
-    v.play().then(() => btn.classList.add('hidden')).catch(() => {});
-  });
+    prev?.addEventListener('click', () => goTo(currentIndex - 1));
+    next?.addEventListener('click', () => goTo(currentIndex + 1));
+    track.addEventListener('keydown', event => {
+      if (event.key === 'ArrowRight') { event.preventDefault(); goTo(currentIndex + 1); }
+      if (event.key === 'ArrowLeft')  { event.preventDefault(); goTo(currentIndex - 1); }
+    });
+    let progressFrame = 0;
+    track.addEventListener('scroll', () => {
+      cancelAnimationFrame(progressFrame);
+      progressFrame = requestAnimationFrame(renderProgress);
+    }, { passive: true });
+    window.addEventListener('resize', renderProgress);
+
+    // A quest is cleared once its video played to the end
+    const markCleared = quest => {
+      if (clearedQuests.has(quest.id)) return;
+      clearedQuests.add(quest.id);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...clearedQuests])); } catch {}
+      renderProgress();
+    };
+
+    // Only the quest in view plays: the others don't even load
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        const video = entry.target.querySelector('video');
+        if (!video) continue;
+        if (entry.isIntersecting && !reducedMotion) video.play().catch(() => {});
+        else video.pause();
+      }
+    }, { threshold: 0.6 });
+    for (const quest of quests) {
+      const video = quest.querySelector('video');
+      if (!video) continue;
+      if (reducedMotion) video.controls = true;
+      // The app is small in the card: a click shows the video fullscreen
+      video.addEventListener('click', () => {
+        video.requestFullscreen?.().then(() => video.play()).catch(() => {});
+      });
+      video.addEventListener('timeupdate', () => {
+        if (video.duration && video.currentTime > video.duration - 0.6) markCleared(quest);
+      });
+      observer.observe(quest);
+    }
+
+    // Tooltips of the underlined terms, from the codex
+    const definitions = new Map(Array.from(document.querySelectorAll('#codex > div'))
+      .map(entry => [entry.querySelector('dt').textContent, entry.querySelector('dd').innerHTML]));
+    const tip = document.createElement('div');
+    tip.className = 'term-tip';
+    tip.setAttribute('role', 'tooltip');
+    document.body.appendChild(tip);
+    const showTip = term => {
+      const definition = definitions.get(term.dataset.term);
+      if (!definition) return;
+      tip.innerHTML = `<strong>${term.dataset.term}</strong>${definition}`;
+      const rect = term.getBoundingClientRect();
+      const width = Math.min(280, window.innerWidth - 32);
+      tip.style.left = `${Math.max(16, Math.min(rect.left, window.innerWidth - width - 16))}px`;
+      tip.style.top = `${rect.bottom + 8}px`;
+      tip.classList.add('shown');
+    };
+    const hideTip = () => tip.classList.remove('shown');
+    for (const term of document.querySelectorAll('.term[data-term]')) {
+      term.addEventListener('mouseenter', () => showTip(term));
+      term.addEventListener('focus', () => showTip(term));
+      term.addEventListener('click', () => showTip(term));
+      term.addEventListener('mouseleave', hideTip);
+      term.addEventListener('blur', hideTip);
+    }
+    window.addEventListener('scroll', hideTip, { passive: true });
+    track.addEventListener('scroll', hideTip, { passive: true });
+
+    renderProgress();
+  })();
 
   // ── Background scroll effect ──────────────────────────────────────────
   (function () {

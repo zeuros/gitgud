@@ -45,6 +45,7 @@
     let tailX = tipX, tailY = tipY;
     if (side === 'right')     tailX = tipX + tailMargin;
     else if (side === 'left') tailX = tipX - tailMargin;
+    else if (side === 'top')  tailY = tipY - tailMargin;
     else  /* bottom */        tailY = tipY + tailMargin;
 
     // ── Curved arrow stem ─────────────────────────────────────────────────────
@@ -101,6 +102,12 @@
       textX      = boxLeft + padding;
       textY      = boxTop + padding + lineHeight * 0.75;
       textAnchor = 'start';
+    } else if (side === 'top') {
+      boxLeft    = tailX - boxWidth / 2;
+      boxTop     = tailY - boxGap - boxHeight;
+      textX      = tailX;
+      textY      = boxTop + padding + lineHeight * 0.75;
+      textAnchor = 'middle';
     } else { // 'bottom'
       boxLeft    = tailX - boxWidth / 2;
       boxTop     = tailY + boxGap;
