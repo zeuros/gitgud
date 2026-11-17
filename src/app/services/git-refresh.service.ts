@@ -34,6 +34,7 @@ import {CurrentRepoStore} from '../stores/current-repo.store';
 import {FileWatcherService} from './file-watcher.service';
 import {parseWorkingDirChanges} from '../lib/github-desktop/commit-files-changes';
 import {FileDiffPanelService} from './file-diff-panel.service';
+import {ToastService} from './toast.service';
 
 const DEFAULT_NUMBER_OR_COMMITS_TO_SHOW = 1200;
 // A worktree's index: staging rewrites it, which only changes the status
@@ -55,6 +56,7 @@ export class GitRefreshService {
   private currentRepo = inject(CurrentRepoStore);
   private fileWatcher = inject(FileWatcherService);
   private fileDiffPanel = inject(FileDiffPanelService);
+  private toast = inject(ToastService);
   private destroyRef = inject(DestroyRef);
 
   private _active = signal(0);
@@ -77,7 +79,7 @@ export class GitRefreshService {
 
   constructor() {
     // First load of the selected repository (if any) and show main window
-    (this.currentRepo.cwd() ? this.refreshAll() : of({}))
+    this.refreshAll()
       .pipe(finalize(() => this.appReady$.next(true)))
       .subscribe();
     window.tauri.onWindowFocus(this.onWindowFocus);
@@ -88,16 +90,34 @@ export class GitRefreshService {
         concatMap(changed => changed ? this.refreshAll() : paths.some(isIndex) ? this.updateWorkingDirChanges() : EMPTY),
       )),
     ).subscribe();
+    // A worktree folder deleted (or moved): refreshAll closes its tab, or leaves the removed linked worktree
     this.fileWatcher.onWorkingDirFileChange$.pipe(
-      switchMap(() => this.updateWorkingDirChanges()),
+      switchMap(() => from(window.tauri.fs.exists(this.currentRepo.cwd()!))),
+      switchMap(exists => exists ? this.updateWorkingDirChanges() : this.refreshAll()),
     ).subscribe();
   }
 
-  refreshAll = () => this.track(this.leaveRemovedWorktree().pipe(switchMap(() => forkJoin({
-    workDirStatus: this.updateWorkingDirChanges(),
-    logsAndBranches: this.updateLogsAndBranches(), // refresh log and wait for it so that selected commit sha can be updated
-    operationInProgress: this.updateOperationInProgress(),
-  }))));
+  refreshAll = () => this.track(this.closeRemovedRepositoryAndSelectNextOne()
+    .pipe(switchMap(() => forkJoin({
+      workDirStatus: this.updateWorkingDirChanges(),
+      logsAndBranches: this.updateLogsAndBranches(), // refresh log and wait for it so that selected commit sha can be updated
+      operationInProgress: this.updateOperationInProgress(),
+    }))));
+
+  // Closes the tab when its repository folder no longer exists, the next one being selected, and leaves a removed worktree;
+  // completes without emitting when no tab is left open
+  private closeRemovedRepositoryAndSelectNextOne = () => {
+    const repoId = this.currentRepo.id();
+    if (!repoId) return EMPTY;
+    return from(window.tauri.fs.exists(repoId)).pipe(
+      tap(exists => {
+        if (exists) return;
+        this.gitRepositoryStore.removeRepository(repoId);
+        this.toast.warn(`${repoId} was removed from the disk and closed`);
+      }),
+      switchMap(() => this.currentRepo.cwd() ? this.leaveRemovedWorktree() : EMPTY),
+    );
+  };
 
   // Back to the main worktree when the active worktree's folder no longer exists
   private leaveRemovedWorktree = () => {

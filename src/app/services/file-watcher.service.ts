@@ -67,10 +67,15 @@ export class FileWatcherService {
       errorShown = true;
       this.toast.err(watchErrorMessage(projectPath, error as WatchError), {sticky: true});
     };
-    const watchers = [this.makeFilesWatcher(projectPath, showWatchError)];
-    // The cleanup may run before gitDirs answers: don't open watchers nobody would close
-    this.gitApi.gitDirs(projectPath)
-      .then(dirs => !stopped && watchers.push(this.makeGitStateWatcher(projectPath, dirs, showWatchError)));
+    const watchers: ReturnType<typeof createWatcher>[] = [];
+    // A folder removed from the disk isn't watched: GitRefreshService closes its tab, or leaves the removed worktree.
+    // The cleanup may run before an answer: don't open watchers nobody would close
+    window.tauri.fs.exists(projectPath).then(exists => {
+      if (!exists || stopped) return;
+      watchers.push(this.makeFilesWatcher(projectPath, showWatchError));
+      return this.gitApi.gitDirs(projectPath)
+        .then(dirs => !stopped && watchers.push(this.makeGitStateWatcher(projectPath, dirs, showWatchError)));
+    });
     return () => {
       stopped = true;
       watchers.forEach(watcher => watcher.close());
