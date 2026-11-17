@@ -39,6 +39,10 @@ import {Splitter, SplitterPanel} from 'primeng/splitter';
 import {WorkingDirFileSelectionService} from '../../../services/working-dir-file-selection.service';
 import {GitApiService} from '../../../services/git/git-api.service';
 
+const EMPTY_COMMIT_MESSAGE = {summary: '', description: ''};
+type CommitMessage = typeof EMPTY_COMMIT_MESSAGE;
+const commitMessageDrafts = new Map<string, CommitMessage>();
+
 @Component({
   selector: 'gitgud-make-a-commit',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,7 +66,7 @@ export class MakeACommitComponent {
   protected workingDirectory = inject(WorkingDirectoryService);
   protected currentRepo = inject(CurrentRepoStore);
   protected workingDirSelection = inject(WorkingDirFileSelectionService);
-  protected commitForm = inject(FormBuilder).nonNullable.group({summary: '', description: ''});
+  protected commitForm = inject(FormBuilder).nonNullable.group(EMPTY_COMMIT_MESSAGE);
   protected amend = signal(false);
   protected summaryLength = toSignal(this.commitForm.controls.summary.valueChanges.pipe(map(summary => summary.length)), {initialValue: 0});
   // Git's conventions for a commit summary: about 50 characters, at most 72
@@ -101,6 +105,19 @@ export class MakeACommitComponent {
         this.commitForm.patchValue({summary, description: body.join('\n').trim()});
       }, () => undefined);
     });
+    effect(onCleanup => {
+      const repoId = this.currentRepo.id()!;
+      this.commitForm.setValue(commitMessageDrafts.get(repoId) ?? EMPTY_COMMIT_MESSAGE);
+
+      // The message typed before amending or a conflict preset it, not the amended commit's or MERGE_MSG
+      onCleanup(() => {
+        const typedMessage = this.formBeforeOperation ?? (this.amend() ? this.savedFormState : this.commitForm.getRawValue());
+        commitMessageDrafts.set(repoId, {...EMPTY_COMMIT_MESSAGE, ...typedMessage});
+        this.amend.set(false);
+        this.savedFormState = undefined;
+        this.formBeforeOperation = undefined;
+      });
+    });
   }
 
   protected commit() {
@@ -136,6 +153,6 @@ export class MakeACommitComponent {
       this.commitForm.patchValue(this.savedFormState);
       this.savedFormState = undefined;
     } else
-      this.commitForm.reset({summary: '', description: ''});
+      this.commitForm.reset(EMPTY_COMMIT_MESSAGE);
   };
 }
