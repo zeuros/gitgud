@@ -1420,7 +1420,7 @@ dependencies = [
 
 [[package]]
 name = "gitgud"
-version = "2.13.1"
+version = "2.13.2"
 dependencies = [
  "ignore",
  "libc",

@@ -67,6 +67,16 @@
   </provides>
 
   <releases>
+    <release version="2.13.2" date="2026-11-17">
+      <description>
+        <p>What's new in GitGud 2.13.2:</p>
+        <ul>
+          <li>Screenshots for Flathub</li>
+          <li>Build the bundle's binary with custom-protocol</li>
+          <li>Always disable NVIDIA's explicit sync</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.13.1" date="2026-11-17">
       <description>
         <p>What's new in GitGud 2.13.1:</p>

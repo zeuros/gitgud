@@ -22,9 +22,9 @@ Every platform, no account, no price. Just git gud.
 
 | Platform | x64 | ARM64 |
 |----------|-----|-------|
-| 🐧 Linux | [.deb](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud_2.13.1_amd64.deb) · [.rpm](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud-2.13.1-1.x86_64.rpm) · [AppImage](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud_2.13.1_amd64.AppImage) · [Flatpak](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud-2.13.1-Linux-x64.flatpak) | [.deb](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud_2.13.1_arm64.deb) · [.rpm](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud-2.13.1-1.aarch64.rpm) · [AppImage](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud_2.13.1_aarch64.AppImage) |
-| 🪟 Windows | [installer](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud_2.13.1_x64-setup.exe) | [installer](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud_2.13.1_arm64-setup.exe) |
-| 🍎 macOS | [.dmg (Intel)](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud_2.13.1_x64.dmg) | [.dmg (Apple Silicon)](https://github.com/zeuros/gitgud/releases/download/v2.13.1/GitGud_2.13.1_aarch64.dmg) |
+| 🐧 Linux | [.deb](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud_2.13.2_amd64.deb) · [.rpm](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud-2.13.2-1.x86_64.rpm) · [AppImage](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud_2.13.2_amd64.AppImage) · [Flatpak](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud-2.13.2-Linux-x64.flatpak) | [.deb](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud_2.13.2_arm64.deb) · [.rpm](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud-2.13.2-1.aarch64.rpm) · [AppImage](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud_2.13.2_aarch64.AppImage) |
+| 🪟 Windows | [installer](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud_2.13.2_x64-setup.exe) | [installer](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud_2.13.2_arm64-setup.exe) |
+| 🍎 macOS | [.dmg (Intel)](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud_2.13.2_x64.dmg) | [.dmg (Apple Silicon)](https://github.com/zeuros/gitgud/releases/download/v2.13.2/GitGud_2.13.2_aarch64.dmg) |
 
 ## Spells & miracles
 
