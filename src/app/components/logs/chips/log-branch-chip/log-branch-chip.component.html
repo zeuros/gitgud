@@ -9,7 +9,10 @@
     @if (localBranch()) {
         <i class="fa fa-laptop"></i>
     }
-    @if (remoteBranch()) {
-        <i class="fa fa-github"></i>
+    @if (remoteBranch(); as remoteBranch) {
+        @if (remoteName(); as remoteName) {
+            <span class="remote-name">{{ remoteName }}</span>
+        }
+        <i class="fa fa-github" [title]="remoteBranch.name"></i>
     }
 </span>

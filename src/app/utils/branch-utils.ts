@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {groupBy, orderBy, values} from 'lodash-es';
+import {orderBy} from 'lodash-es';
 import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
 import type {TreeNode} from 'primeng/api';
 import {toPathTree} from './tree-utils';
@@ -58,10 +58,36 @@ export type LocalAndRemoteBranch = {localBranch?: Branch; remoteBranch?: Branch}
 export const isHeadPointed = ({localBranch, remoteBranch}: LocalAndRemoteBranch) =>
   localBranch?.isHeadPointed ?? remoteBranch?.isHeadPointed ?? false;
 
-export const toLocalAndRemotePairs = (branches: Branch[]): LocalAndRemoteBranch[] =>
-  orderBy(
-    values(groupBy(branches, normalizedBranchName))
-      .map((group): LocalAndRemoteBranch => ({localBranch: group.find(local), remoteBranch: group.find(remote)})),
+// The remote branch shown with a local branch: its upstream only, or without one a same-named branch on any remote, origin first
+const findRemoteBranch = (localBranch: Branch, remoteBranches: Branch[]) => {
+  if (localBranch.upstream) return remoteBranches.find(remoteBranch => remoteBranch.name === localBranch.upstream);
+
+  return remoteBranches.find(remoteBranch => remoteBranch.name === `origin/${localBranch.name}`)
+    ?? remoteBranches.find(remoteBranch => parseRemote(remoteBranch.name).branch === localBranch.name);
+};
+
+/** Pairs each local branch with its remote branch among branches at one tip; unpaired remote branches stand alone. */
+export const toLocalAndRemotePairs = (branches: Branch[]): LocalAndRemoteBranch[] => {
+  const remoteBranches = branches.filter(remote);
+  const pairedRemoteBranches = new Set<Branch>();
+  const unpairedRemoteBranches = () => remoteBranches.filter(remoteBranch => !pairedRemoteBranches.has(remoteBranch));
+
+  const pairs = branches.filter(local).map((localBranch): LocalAndRemoteBranch => {
+    const remoteBranch = findRemoteBranch(localBranch, unpairedRemoteBranches());
+    if (remoteBranch) pairedRemoteBranches.add(remoteBranch);
+    return {localBranch, remoteBranch};
+  });
+
+  return orderBy(
+    [...pairs, ...unpairedRemoteBranches().map((remoteBranch): LocalAndRemoteBranch => ({remoteBranch}))],
     isHeadPointed,
     'desc',
   );
+};
+
+/** The remote of a chip's remote branch, when it isn't origin and a local branch already gives the chip its name. */
+export const nonOriginRemoteName = ({localBranch, remoteBranch}: LocalAndRemoteBranch) => {
+  if (!localBranch || !remoteBranch) return undefined;
+  const remoteName = parseRemote(remoteBranch.name).remote;
+  return remoteName === 'origin' ? undefined : remoteName;
+};
