@@ -21,6 +21,8 @@ import {GitApiService} from './git/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {SettingsService} from './settings.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
+import {ToastService} from './toast.service';
+import {authenticationFailure} from '../utils/git-credential.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -31,6 +33,10 @@ export class AutoFetchService {
   private currentRepo = inject(CurrentRepoStore);
   private gitApi = inject(GitApiService);
   private settings = inject(SettingsService);
+  private toast = inject(ToastService);
+
+  // Repositories already told that auto-fetch needs a sign-in, once per session
+  private toldToSignIn = new Set<string>();
 
   lastFetchedAt = signal<number | undefined>(undefined);
 
@@ -57,12 +63,24 @@ export class AutoFetchService {
   }
 
 
-  private fetch = () => this.currentRepo.cwd() && this.gitApi.git(['fetch', '--prune']).subscribe({
-    next: () => {
-      this.lastFetchedAt.set(Date.now());
-      this.gitRefresh.doUpdateLogsAndBranches();
-    },
-    error: error => console.warn('Auto-fetch failed', error),
-  });
+  // In the background: a server asking for a credential gets a toast, the sign-in dialog waits for a fetch of the user's
+  private fetch = () => {
+    const cwd = this.currentRepo.cwd();
+    if (!cwd) return;
+    this.gitApi.git(['fetch', '--prune'], undefined, {signIn: false}).subscribe({
+      next: () => {
+        this.lastFetchedAt.set(Date.now());
+        this.gitRefresh.doUpdateLogsAndBranches();
+      },
+      error: error => {
+        console.warn('Auto-fetch failed', error);
+        const failure = authenticationFailure(error);
+        if (failure && !this.toldToSignIn.has(cwd)) {
+          this.toldToSignIn.add(cwd);
+          this.toast.warn(`Auto-fetch needs a sign-in to ${new URL(failure.serverUrl).host}: fetch from the toolbar to sign in`);
+        }
+      },
+    });
+  };
 
 }

@@ -29,6 +29,7 @@ import {SettingsService} from '../settings.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {type GitRunner, journalFor, runJournaled} from '../../utils/undo.utils';
 import {type GitDirs, gitPath, type GitStatePath} from '../../utils/git-path.utils';
+import {GitSignInService} from './git-sign-in.service';
 
 // GIT_EDITOR for the app's git calls: git runs no editor for ':', keeping the message (commit, merge, squash…) as it wrote it
 export const NOOP_EDITOR = ':';
@@ -59,6 +60,7 @@ export class GitApiService {
   private currentRepo = inject(CurrentRepoStore);
   private history = inject(GitCommandHistoryService);
   private settings = inject(SettingsService);
+  private gitSignIn = inject(GitSignInService);
 
   gitFound = signal(true);
 
@@ -76,12 +78,34 @@ export class GitApiService {
     ).subscribe(v => v && console.log({v}));
   }
 
-  git = (args: (string | undefined)[] | undefined, options?: ExecOptions) => {
+  /**
+   * Runs git. When it fails to authenticate to an HTTPS server, asks for a credential and runs it again, unless
+   * `signIn` is false (git running in the background, which mustn't open a dialog)
+   */
+  git = (args: (string | undefined)[] | undefined, options?: ExecOptions, {signIn = true} = {}) => {
     const filteredArgs = args?.filter(notUndefined) ?? [];
     // env is overlaid on the backend's own environment, so only send what differs
     const run = () => this.exec(this.settings.gitBin, filteredArgs, {cwd: this.currentRepo.cwd(), env: {GIT_EDITOR: NOOP_EDITOR}, ...options});
-    return needsLock(filteredArgs) ? this.waitForLock().pipe(switchMap(run)) : defer(run);
+    const command$ = needsLock(filteredArgs) ? this.waitForLock().pipe(switchMap(run)) : defer(run);
+    if (!signIn) return command$;
+    // The repository of the first attempt, which the user may have switched from while signing in
+    return defer(() => {
+      const cwd = (options?.cwd as string | undefined) ?? this.currentRepo.cwd();
+      return this.gitSignIn.withSignIn(credentialEnv => credentialEnv
+        ? this.gitWithEnv(filteredArgs, cwd, {...options?.env as Record<string, string> | undefined, ...credentialEnv})
+        : command$);
+    });
   };
+
+  // Spawned on its own: the shell pool keeps the environment its shells started with
+  private gitWithEnv = (args: string[], cwd: string | undefined, env: Record<string, string>) =>
+    this.waitForLock().pipe(
+      switchMap(() => from(window.tauri.spawnSync(this.settings.gitBin, args, {cwd, env: {GIT_EDITOR: NOOP_EDITOR, ...env}}))),
+      map(({status, stdout, stderr}) => {
+        if (status !== 0) throw new Error(stderr.trim() || `Git exited ${status}`);
+        return stdout;
+      }),
+    );
 
   // Where git keeps this repository's state, which isn't `<cwd>/.git` in a linked worktree. Asked once per repository
   gitDirs = (cwd = this.currentRepo.cwd()!): Promise<GitDirs> => {
