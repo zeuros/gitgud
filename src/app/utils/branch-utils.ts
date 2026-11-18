@@ -24,10 +24,11 @@ import {toPathTree} from './tree-utils';
 export const local = (branch: Branch) => branch.type == BranchType.Local;
 export const remote = (branch: Branch) => branch.type == BranchType.Remote;
 
-export const toBranchTree = (branches: Branch[]): TreeNode<Branch>[] =>
+/** @param isCurrent the branch checked out, or for remote branches the upstream of the one checked out */
+export const toBranchTree = (branches: Branch[], isCurrent: (branch: Branch) => boolean): TreeNode<Branch>[] =>
   toPathTree(branches, branch => branch.name, branch => ({
-    icon: branch.isHeadPointed ? 'fa fa-check checkout-icon' : 'fa fa-code-fork',
-    styleClass: branch.isHeadPointed ? 'worktree-current' : undefined,
+    icon: isCurrent(branch) ? 'fa fa-check checkout-icon' : 'fa fa-code-fork',
+    styleClass: isCurrent(branch) ? 'worktree-current' : undefined,
   }));
 
 export const parseRemote = (name: string): {remote: string; branch: string} => {
