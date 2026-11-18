@@ -8,6 +8,7 @@
         <p-tablist cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
             @for (repository of gitRepositoryStore.repositories(); track repository.id; let i = $index) {
                 <p-tab [value]="i"
+                       [title]="repository.activeWorktree ?? repository.id"
                        cdkDrag
                        cdkDragLockAxis="x"
                        cdkDragBoundary=".p-tablist"
