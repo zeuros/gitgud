@@ -25,6 +25,8 @@ import {RebaseService} from './rebase.service';
 import {GitRefreshService} from './git-refresh.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {rewordCommitAction, writeCommitMessage} from '../utils/rebase.utils';
+import {short} from '../utils/commit-utils';
+import {errorMessage} from '../utils/error-message.utils';
 
 // High-level workflows combining services
 @Injectable({
@@ -60,6 +62,23 @@ export class GitWorkflowService {
       ),
       switchMap(this.gitRefresh.refreshAll),
     );
+
+  // Cherry-picks; skips a commit already on the branch
+  cherryPick = (sha: string) =>
+    this.stash.stashAndRun(this.gitApi.gitAction(['cherry-pick', sha])
+      .pipe(
+        tap(() => this.toast.success(`Cherry picked ${short(sha)}`)),
+        catchError(error => {
+          if (errorMessage(error)?.includes('cherry-pick is now empty')) {
+            this.toast.warn(`${short(sha)} is already on ${this.currentRepo.headBranch()?.name ?? 'HEAD'}`);
+            // skips a commit already on the branch
+            return this.gitApi.gitAction(['cherry-pick', '--skip']);
+          }
+          throw error;
+        }),
+        finalize(this.gitRefresh.doRefreshAll),
+      ))
+      .subscribe();
 
   runAndRefresh = (args: (string | undefined)[], successMsg?: string, stashBefore = false, thenUnstash = true) => {
     const action$ = this.gitApi.gitAction(args)

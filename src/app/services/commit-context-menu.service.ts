@@ -123,8 +123,7 @@ export class CommitContextMenuService {
 
   protected createBranchHere = () => this.createBranch.createBranchAtSha(this.sha());
 
-  protected cherryPick = () =>
-    this.gitWorkflow.doRunAndRefresh(['cherry-pick', this.sha()], `Cherry picked ${short(this.sha())}`, true, true);
+  protected cherryPick = () => this.gitWorkflow.cherryPick(this.sha());
 
   protected reset = (mode: 'soft' | 'mixed' | 'hard') =>
     this.gitWorkflow.doRunAndRefresh(['reset', `--${mode}`, this.sha()], `Reset ${mode} to ${short(this.sha())}`, mode == 'hard', false);
