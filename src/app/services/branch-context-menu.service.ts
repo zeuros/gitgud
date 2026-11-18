@@ -198,22 +198,29 @@ export class BranchContextMenuService {
       this.gitWorkflow.doRunAndRefresh(['fetch', remote, `${remoteBranch}:${localName}`], `Pulled ${upstream} into ${localName}`);
   };
 
+  // Pushes a local branch to its upstream; without one, asks where and sets it
   private pushBranch = (branch: Branch) => {
-    const {name} = branch;
-    const ab = this.aheadBehind.aheadBehindMap()[name];
-    if (!ab?.behind) {
-      this.gitWorkflow.doRunAndRefresh(['push', 'origin', name], `Pushed ${name}`);
-      return;
-    }
-    const diverged = ab.ahead > 0;
-    openBehindRemoteDialog(this.dialog, name, `origin/${name}`, diverged, this.currentRepo.otherWorktreeOf(name))
+    if (!branch.upstream) return this.pushToNewUpstream(branch.name);
+
+    const {upstream, remote, remoteBranch, localName} = this.trackingPair(branch);
+    const refspec = `${localName}:${remoteBranch}`;
+    const ab = this.aheadBehind.aheadBehindMap()[localName];
+    if (!ab?.behind) return this.gitWorkflow.doRunAndRefresh(['push', remote, refspec], `Pushed ${localName} to ${upstream}`);
+
+    return openBehindRemoteDialog(this.dialog, localName, upstream, ab.ahead > 0, this.currentRepo.otherWorktreeOf(localName))
       .subscribe((action: BehindRemoteAction) => {
-        if (action === 'force-push') this.gitWorkflow.doRunAndRefresh(['push', '--force-with-lease', 'origin', name], `Force-pushed ${name}`);
-        if (action === 'pull')       this.gitWorkflow.doRunAndRefresh(['fetch', 'origin', `${name}:${name}`], `Pulled ${name}`);
-        if (action === 'rebase')     this.gitWorkflow.rebaseBranchOnto(name, `origin/${name}`, `Rebased ${name} onto origin/${name}`);
-        if (action === 'merge')      this.gitWorkflow.checkoutThenRun(name, ['merge', '--no-ff', `origin/${name}`], `Merged origin/${name} into ${name}`);
+        if (action === 'force-push') this.gitWorkflow.doRunAndRefresh(['push', '--force-with-lease', remote, refspec], `Force-pushed ${localName} to ${upstream}`);
+        if (action === 'pull')       this.gitWorkflow.doRunAndRefresh(['fetch', remote, `${remoteBranch}:${localName}`], `Pulled ${upstream} into ${localName}`);
+        if (action === 'rebase')     this.gitWorkflow.rebaseBranchOnto(localName, upstream, `Rebased ${localName} onto ${upstream}`);
+        if (action === 'merge')      this.gitWorkflow.checkoutThenRun(localName, ['merge', '--no-ff', upstream], `Merged ${upstream} into ${localName}`);
       });
   };
+
+  private pushToNewUpstream = (localName: string) =>
+    openSetUpstreamDialog(this.dialog, localName)
+      .pipe(first(notUndefined))
+      .subscribe(({remote, branch}) =>
+        this.gitWorkflow.doRunAndRefresh(['push', '--set-upstream', remote, `${localName}:${branch}`], `Pushed ${localName} to ${remote}/${branch}`));
 
   private setUpstream = (name: string) =>
     openSetUpstreamDialog(this.dialog, name)
