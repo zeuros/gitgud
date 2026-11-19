@@ -101,11 +101,11 @@ export class BranchContextMenuService {
     const lock = (item: MenuItem) => otherWorktree ? lockedByWorktree(item, otherWorktree) : item;
     const [pull, push] = this.remoteItems(branch);
     const deleteItem: MenuItem = {label: `Delete ${name}`, icon: 'fa fa-trash', command: () => this.deleteBranch(branch)};
+    const isLocal = local(branch);
     return [
-      // Remote
+      // Remote: a remote branch is only pushed through its local branch
       lock(pull),
-      push,
-      {label: 'Set Upstream', icon: 'fa fa-link', command: () => this.setUpstream(name)},
+      ...isLocal ? [push, {label: 'Set Upstream', icon: 'fa fa-link', command: () => this.setUpstream(name)}] : [],
       {separator: true},
       // Integration
       warn({label: `Merge ${name} into ${head}`, icon: 'fa fa-compress', command: () => this.mergeBranch(name)}),
@@ -143,8 +143,7 @@ export class BranchContextMenuService {
       },
       {separator: true},
       // Branch management
-      {label: `Rename ${name}`, icon: 'fa fa-pencil', command: () => this.renameBranch(name)},
-      local(branch) ? lock(deleteItem) : deleteItem,
+      ...isLocal ? [{label: `Rename ${name}`, icon: 'fa fa-pencil', command: () => this.renameBranch(name)}, lock(deleteItem)] : [deleteItem],
       {separator: true},
       // Copy
       {label: 'Copy branch name', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(name)},
