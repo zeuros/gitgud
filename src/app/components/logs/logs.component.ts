@@ -206,7 +206,7 @@ export class LogsComponent {
     // Position the canvas over the GRAPH column
     onResize(() => {
       const [branchTh, graphTh] = this.logTableContainer()?.querySelectorAll('th') ?? [];
-      return branchTh && graphTh ? [branchTh, graphTh] as HTMLElement[] : undefined;
+      return branchTh && graphTh ? [branchTh, graphTh] : undefined;
     }, ([branchTh, graphTh]) => {
       this._branchColumnWidth.set(branchTh.clientWidth);
       this._tableHeaderHeight.set(branchTh.clientHeight);
@@ -221,8 +221,8 @@ export class LogsComponent {
     effect((onCleanup) => {
       const logTable = this.logTableContainer();
       if (!logTable) return;
-      const onScroll = ({target}: Event) => {
-        const {scrollTop, scrollLeft} = target as HTMLElement;
+      const onScroll = () => {
+        const {scrollTop, scrollLeft} = logTable;
         this.activeContextMenu.hide();
         this.firstCommitOffsetPx.set(scrollTop % ROW_HEIGHT);
         this._tableScrollLeft.set(scrollLeft);

@@ -136,7 +136,7 @@ async function buildBridge() {
           multiple: opts.properties?.includes('multiSelections') ?? false,
         });
         if (!result) return null;
-        return Array.isArray(result) ? result : [result as string];
+        return Array.isArray(result) ? result : [result];
       },
     },
 

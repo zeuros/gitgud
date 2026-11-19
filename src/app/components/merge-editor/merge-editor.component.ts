@@ -145,7 +145,8 @@ export class MergeEditorComponent {
     effect(() => {
       // Re-build highlightFn when theme changes so syntax colors update live.
       const isDark = this.theme.isDark();
-      const lang = this.file() ? detectLang(this.file()!.path) : null;
+      const path = this.file()?.path;
+      const lang = path ? detectLang(path) : null;
       if (!lang || !this.highlighter) return;
       const h = this.highlighter;
       const theme = isDark ? 'dark-plus' : 'github-light';

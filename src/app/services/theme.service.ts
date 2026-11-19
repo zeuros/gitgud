@@ -35,7 +35,7 @@ export class ThemeService {
   }
 
   private applyTheme(mode: ThemeMode) {
-    const html = document.querySelector('html')!;
+    const html = document.documentElement;
 
     DARK_CLASSES.forEach(c => html.classList.remove(c));
     if (mode !== 'light') {

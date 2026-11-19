@@ -17,13 +17,9 @@
  */
 
 import {inject, Injectable, isDevMode, signal} from '@angular/core';
-
-// If you import a module but never use any of the imported values other than as TypeScript types,
-// the resulting JavaScript file will look as if you never imported the module at all.
-// import type {ExecOptions} from 'child_process';
 import {catchError, defer, firstValueFrom, from, map, Observable, of, retry, switchMap, tap, throwError, timer} from 'rxjs';
 import {notUndefined, omitUndefined, showPerf} from '../../utils/utils';
-import type {ExecOptions, SpawnOptionsWithoutStdio} from 'node:child_process';
+import type {ExecOptions, SpawnOptions} from '../../../typings';
 import {GitCommandHistoryService} from '../git-command-history.service';
 import {SettingsService} from '../settings.service';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
@@ -90,9 +86,9 @@ export class GitApiService {
     if (!signIn) return command$;
     // The repository of the first attempt, which the user may have switched from while signing in
     return defer(() => {
-      const cwd = (options?.cwd as string | undefined) ?? this.currentRepo.cwd();
+      const cwd = options?.cwd ?? this.currentRepo.cwd();
       return this.gitSignIn.withSignIn(credentialEnv => credentialEnv
-        ? this.gitWithEnv(filteredArgs, cwd, {...options?.env as Record<string, string> | undefined, ...credentialEnv})
+        ? this.gitWithEnv(filteredArgs, cwd, {...options?.env, ...credentialEnv})
         : command$);
     });
   };
@@ -182,8 +178,6 @@ export class GitApiService {
   exec = (cmd: string, args: string[] = [], options?: ExecOptions) =>
     from(window.tauri.execFile(`${cmd}`, args, omitUndefined({
       ...options,
-      cwd: options?.cwd as string | undefined,
-      env: options?.env as Record<string, string> | undefined,
       stdio: 'inherit',
       maxBuffer: 10000000,
     })))
@@ -192,9 +186,9 @@ export class GitApiService {
         tap(isDevMode() ? showPerf(cmd, args) : () => 0),
       );
 
-  spawn = (cmd: string, args: string[] = [], options?: SpawnOptionsWithoutStdio) =>
+  spawn = (cmd: string, args: string[] = [], options?: SpawnOptions) =>
     this.waitForLock().pipe(switchMap(() => new Observable<string>(observer => {
-      window.tauri.spawn(cmd === 'git' ? this.settings.gitBin : cmd, args, {cwd: this.currentRepo.cwd() ?? undefined, ...(options as Record<string, unknown>)})
+      window.tauri.spawn(cmd === 'git' ? this.settings.gitBin : cmd, args, {cwd: this.currentRepo.cwd() ?? undefined, ...options})
         .then(out => {
           if (isDevMode()) showPerf(cmd, args, out);
           observer.next(out);
@@ -213,7 +207,7 @@ export class GitApiService {
     return defer(() => {
       const deadline = Date.now() + maxWaitMs;
       return defer(lockExists).pipe(
-        switchMap(exists => exists ? throwError(() => new Error('index.lock exists')) : of(undefined as void)),
+        switchMap(exists => exists ? throwError(() => new Error('index.lock exists')) : of(undefined)),
         retry({
           delay: () => Date.now() < deadline
             ? timer(intervalMs)

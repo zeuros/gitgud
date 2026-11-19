@@ -84,7 +84,7 @@ export class RepositoriesViewComponent {
       this.gitRepositoryStore.activateNewTab();
       return;
     }
-    this.selectRepository(value as number);
+    if (value !== undefined) this.selectRepository(value);
   };
 
   protected selectRepository = (directoryOrIndex: string | number) => {

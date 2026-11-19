@@ -150,7 +150,7 @@ export class GitWorkflowService {
   // On any failure (conflict or otherwise): abort + remove worktree, then fall back to
   // inPlaceRebase after checking out src so conflicts can be resolved interactively.
   private worktreeRebase = (src: string, onto: string) => {
-    const env = window.tauri.process.env as Record<string, string>;
+    const env = window.tauri.process.env;
     const tmpPath = `${env['TMPDIR'] ?? env['TEMP'] ?? env['TMP'] ?? '/tmp'}/gitgud-rebase-${Date.now()}`;
     // defer() so stashAndRun's workingDirHasChanges check runs when the fallback fires, not at construction
     const fallback$ = defer(() => this.stash.stashAndRun(

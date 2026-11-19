@@ -30,7 +30,6 @@ import {disableMonacoLanguageServices, imageMimeType, isBinaryContent, maxDispla
 import {ThemeService} from '../../services/theme.service';
 import {SelectButton} from 'primeng/selectbutton';
 type IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
-type IEditorOptions = editor.IEditorOptions;
 type IDiffEditorOptions = editor.IDiffEditorOptions;
 import {fileName} from '../../utils/utils';
 import {ButtonDirective} from 'primeng/button';
@@ -236,7 +235,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
           hideUnchangedRegions: viewType === 'hunk'
             ? {enabled: true, revealLineCount: 15, minimumLineCount: 5, contextLineCount: 3}
             : {enabled: false},
-        } as IEditorOptions);
+        });
       }
     });
 

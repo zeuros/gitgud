@@ -5,6 +5,7 @@
  * Window interface for the Tauri bridge (see src/app/api/tauri-bridge.ts).
  */
 
+import type {SpawnOptionsWithoutStdio} from 'node:child_process';
 import type {editor} from 'monaco-editor';
 
 export interface FoundProcess {
@@ -58,16 +59,13 @@ interface SpawnSyncResult {
   status: number | null;
 }
 
-interface ExecOptions {
+export interface ExecOptions {
   cwd?: string;
   env?: Record<string, string>;
   maxBuffer?: number;
 }
 
-interface SpawnOptions {
-  cwd?: string;
-  env?: Record<string, string>;
-}
+export type SpawnOptions = Pick<SpawnOptionsWithoutStdio, 'cwd' | 'env'>;
 
 interface TauriApi {
   fs: FsApi;

@@ -45,9 +45,9 @@ export class RepositoryViewComponent {
   protected fileDiffPanel = inject(FileDiffPanelService);
   protected editorRightPx = signal(0);
 
-  private commitPanel = viewChild('commitPanel', {read: ElementRef});
+  private commitPanel = viewChild('commitPanel', {read: ElementRef<HTMLElement>});
 
   constructor() {
-    onResize(() => this.commitPanel()?.nativeElement as HTMLElement | undefined, panel => this.editorRightPx.set(panel.offsetWidth));
+    onResize(() => this.commitPanel()?.nativeElement, panel => this.editorRightPx.set(panel.offsetWidth));
   }
 }

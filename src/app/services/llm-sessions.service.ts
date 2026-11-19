@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, inject, Injectable} from '@angular/core';
+import {computed, inject, Injectable, type Signal} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {from, interval, startWith, switchMap} from 'rxjs';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -39,10 +39,10 @@ export class LlmSessionsService {
     return `${configDir}/sessions`;
   })();
 
-  private sessions = toSignal(interval(POLL_MS).pipe(
+  private sessions: Signal<LlmSession[]> = toSignal(interval(POLL_MS).pipe(
     startWith(0),
     switchMap(() => from(this.readSessions().catch(() => []))),
-  ), {initialValue: [] as LlmSession[]});
+  ), {initialValue: []});
 
   /** The sessions open in each worktree, by worktree path */
   byWorktree = computed(() => llmSessionsByWorktree(this.sessions(), this.currentRepo.worktrees().map(w => w.path)));
