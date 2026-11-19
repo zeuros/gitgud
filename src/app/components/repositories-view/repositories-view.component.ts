@@ -79,7 +79,7 @@ export class RepositoriesViewComponent {
     }
   }
 
-  protected onTabChange = (value: number | string | null | undefined) => {
+  protected onTabChange = (value?: number | string) => {
     if (value === 'new-tab') {
       this.gitRepositoryStore.activateNewTab();
       return;

@@ -75,13 +75,13 @@ export class LeftPanelComponent {
   protected tagTree = signal<TreeNode<LocalAndDistantTagWithName>[]>([]);
   protected selectedTagKeys = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
-    return selectionKeysOf(sha ? findNode(this.tagTree(), t => t.sha === sha) : null);
+    return selectionKeysOf(sha ? findNode(this.tagTree(), t => t.sha === sha) : undefined);
   });
   protected localBranches = signal<TreeNode<Branch>[]>([]);
   protected remoteBranches = signal<TreeNode<Branch>[]>([]);
   protected selectedBranchKeys = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
-    return selectionKeysOf(sha ? findNode([...this.localBranches(), ...this.remoteBranches()], b => b.tip.sha === sha) : null);
+    return selectionKeysOf(sha ? findNode([...this.localBranches(), ...this.remoteBranches()], b => b.tip.sha === sha) : undefined);
   });
   protected branchContextMenu = inject(BranchContextMenuService);
   protected branchDragDrop = inject(BranchDragDropService);

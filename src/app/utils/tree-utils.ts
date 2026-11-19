@@ -12,7 +12,7 @@ function toggle<T>(nodes: TreeNode<T>[], target: TreeNode<T>): TreeNode<T>[] {
     });
   }
 
-export const findNode = <T>(nodes: TreeNode<T>[], predicate: (data: T) => boolean): TreeNode<T> | null => {
+export const findNode = <T>(nodes: TreeNode<T>[], predicate: (data: T) => boolean): TreeNode<T> | undefined => {
   for (const node of nodes) {
     if (node.data && predicate(node.data)) return node;
     if (node.children) {
@@ -20,11 +20,11 @@ export const findNode = <T>(nodes: TreeNode<T>[], predicate: (data: T) => boolea
       if (found) return found;
     }
   }
-  return null;
+  return undefined;
 };
 
 /** The `selectionKeys` of a single-selection p-tree with this node selected (null would leave the tree's selection as it is) */
-export const selectionKeysOf = (node: TreeNode | null | undefined): Record<string, boolean> =>
+export const selectionKeysOf = (node?: TreeNode): Record<string, boolean> =>
   node?.key ? {[node.key]: true} : {};
 
 // 'a/b/c' => ['a', 'a/b', 'a/b/c']
