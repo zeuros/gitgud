@@ -85,10 +85,3 @@ export const toLocalAndRemotePairs = (branches: Branch[]): LocalAndRemoteBranch[
     'desc',
   );
 };
-
-/** The remote of a chip's remote branch, when it isn't origin and a local branch already gives the chip its name. */
-export const nonOriginRemoteName = ({localBranch, remoteBranch}: LocalAndRemoteBranch) => {
-  if (!localBranch || !remoteBranch) return undefined;
-  const remoteName = parseRemote(remoteBranch.name).remote;
-  return remoteName === 'origin' ? undefined : remoteName;
-};

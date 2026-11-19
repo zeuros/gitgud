@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, computed, inject, input} from '@angular/core';
 import type {Branch} from '../../../../lib/github-desktop/model/branch';
-import {nonOriginRemoteName, normalizedBranchName} from '../../../../utils/branch-utils';
+import {normalizedBranchName} from '../../../../utils/branch-utils';
 import {CurrentRepoStore} from '../../../../stores/current-repo.store';
 import {otherWorktreeTooltip} from '../../../../utils/worktree-utils';
 
@@ -21,8 +21,6 @@ export class LogBranchChip {
     const path = this.currentRepo.otherWorktreeOf(this.localBranch()?.name);
     return path && otherWorktreeTooltip(path);
   });
-
-  protected remoteName = computed(() => nonOriginRemoteName({localBranch: this.localBranch(), remoteBranch: this.remoteBranch()}));
 
   protected normalizedBranchName = normalizedBranchName;
 }
