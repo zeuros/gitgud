@@ -106,20 +106,21 @@ export class GitWorkflowService {
 
   // Merges tgt into src as a merge commit without touching the working tree or index.
   // Uses git plumbing: merge-tree → commit-tree → update-ref (requires git 2.38+).
-  mergeBranchInto = (source: string, target: string, msg: string) => {
+  // sourceRef: a full ref, so a remote branch merges too
+  mergeBranchInto = (sourceRef: string, target: string, msg: string) => {
     const isTargetCheckedOut = this.currentRepo.headBranch()?.name === target;
 
-    const merge$ = this.gitApi.gitAction(['merge-tree', '--write-tree', `refs/heads/${target}`, `refs/heads/${source}`]).pipe(
+    const merge$ = this.gitApi.gitAction(['merge-tree', '--write-tree', `refs/heads/${target}`, sourceRef]).pipe(
       map(out => {
         const lines = out.trim().split('\n');
         const hasConflicts = lines.length > 1 && lines[1] !== '0';
-        if (hasConflicts) throw new Error(`Merge conflict between ${source} and ${target}`);
+        if (hasConflicts) throw new Error(`Merge conflict between ${sourceRef} and ${target}`);
         return lines[0];
       }),
       switchMap(treeSha => this.gitApi.gitAction([
         'commit-tree', treeSha,
         '-p', `refs/heads/${target}`,
-        '-p', `refs/heads/${source}`,
+        '-p', sourceRef,
         '-m', msg,
       ])),
       switchMap(commitSha => this.gitApi.gitAction(['update-ref', `refs/heads/${target}`, commitSha.trim()])),

@@ -65,8 +65,7 @@ export class BranchDragDropService {
   target = signal<Branch | undefined>(undefined);
   private tagTarget = signal<LocalAndDistantTagWithName | undefined>(undefined);
 
-  // True when the given branch would be a meaningful drop target for the current drag.
-  // Only remote→remote produces no actions, so that's the only excluded pair.
+  // A remote branch is updated by pushing: dropped, it only merges into a local branch
   isValidTagDropTarget = (tag: LocalAndDistantTagWithName | null) => {
     const dragging = this.draggingBranch();
     if (!tag || !dragging) return false;
@@ -76,7 +75,7 @@ export class BranchDragDropService {
   isValidDropTarget = (target: Branch | null) => {
     const dragging = this.draggingBranch();
     if (!target || !dragging || target.tip.sha === dragging.tip.sha) return false;
-    return local(dragging) || local(target);
+    return local(dragging) || (local(target) && !isAncestor(dragging.tip.sha, target.tip.sha, this.currentRepo.logs()));
   };
 
   private menu = computed<MenuItem[]>(() => {
@@ -127,9 +126,8 @@ export class BranchDragDropService {
     if (!behind) add(source.name, warn({label: `Interactive Rebase ${source.name} onto ${target.name} (${sourceOnly})`, icon: 'fa fa-list-ol', command: this.interactiveRebase}));
   };
 
-  private addRemoteSourceItems = ({source, target, behind, targetOnly, add}: BranchDrop) => {
-    if (behind) add(source.name, {label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForwardRemote});
-    add(source.name, {label: `Merge ${target.name} into ${source.name}`, icon: 'fa fa-compress', command: this.mergeLocalIntoRemote});
+  private addRemoteSourceItems = ({source, target, behind, sourceOnly, add, warn}: BranchDrop) => {
+    if (!behind) add(target.name, warn({label: `Merge ${source.name} into ${target.name} (${sourceOnly})`, icon: 'fa fa-compress', command: this.merge}));
   };
 
   // Pushing a branch that's only behind its upstream has nothing to send
@@ -187,11 +185,7 @@ export class BranchDragDropService {
   };
 
   onMouseEnter = (branch: Branch | null) => {
-    if (!branch) return;
-    const dragging = this.draggingBranch();
-    if (!dragging || branch.tip.sha === dragging.tip.sha) return;
-    if (remote(dragging) && remote(branch)) return;
-    this.hoveredBranch.set(branch);
+    if (this.isValidDropTarget(branch)) this.hoveredBranch.set(branch);
   };
 
   onMouseLeave = () => this.hoveredBranch.set(null);
@@ -224,9 +218,9 @@ export class BranchDragDropService {
   };
 
   private merge = () => {
-    const {name: src} = this.source()!;
+    const source = this.source()!;
     const {name: tgt} = this.target()!;
-    this.gitWorkflow.mergeBranchInto(src, tgt, `Merge branch '${src}' into '${tgt}'`);
+    this.gitWorkflow.mergeBranchInto(source.ref, tgt, `Merge ${remote(source) ? 'remote-tracking ' : ''}branch '${source.name}' into '${tgt}'`);
   };
 
   private rebase = () => {
@@ -240,22 +234,6 @@ export class BranchDragDropService {
     const {name: tgt} = this.target()!;
     if (this.currentRepo.headBranch()?.name == src) this.interactiveRebaseService.open(tgt);
     else this.gitWorkflow.runAndRefresh(['checkout', src]).subscribe(() => this.interactiveRebaseService.open(tgt));
-  };
-
-  // Remote → Local: push the local target branch to the remote source ref (FF only)
-  private fastForwardRemote = () => {
-    const src = this.source()!;
-    const {name: tgt} = this.target()!;
-    const {remote, branch} = parseRemote(src.name);
-    this.gitWorkflow.doRunAndRefresh(['push', remote, `${tgt}:${branch}`, '--ff-only'], `Fast-forwarded ${src.name} to ${tgt}`);
-  };
-
-  // Remote → Local: push the local target branch to the remote source ref
-  private mergeLocalIntoRemote = () => {
-    const src = this.source()!;
-    const {name: tgt} = this.target()!;
-    const {remote, branch} = parseRemote(src.name);
-    this.gitWorkflow.doRunAndRefresh(['push', remote, `${tgt}:${branch}`], `Merged ${tgt} into ${src.name}`);
   };
 
   private resetOnTag = () => {
