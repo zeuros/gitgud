@@ -14,7 +14,7 @@
                     <p-tree
                             selectionMode="single"
                             [value]="localBranches()"
-                            [selectionKeys]="selectedBranchKeys()"
+                            [selectionKeys]="selectedLocalBranchKeys()"
                             (onNodeUnselect)="selectBranchCommit($branchNode($event.node), localBranches)"
                             (onNodeSelect)="selectBranchCommit($branchNode($event.node), localBranches)"
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
@@ -62,7 +62,7 @@
                     <p-tree
                             selectionMode="single"
                             [value]="remoteBranches()"
-                            [selectionKeys]="selectedBranchKeys()"
+                            [selectionKeys]="selectedRemoteBranchKeys()"
                             (onNodeUnselect)="selectBranchCommit($branchNode($event.node), remoteBranches)"
                             (onNodeSelect)="selectBranchCommit($branchNode($event.node), remoteBranches)"
                             (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"

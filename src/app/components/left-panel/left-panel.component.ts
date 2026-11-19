@@ -79,10 +79,13 @@ export class LeftPanelComponent {
   });
   protected localBranches = signal<TreeNode<Branch>[]>([]);
   protected remoteBranches = signal<TreeNode<Branch>[]>([]);
-  protected selectedBranchKeys = computed(() => {
+  // The selected commit's first chip: its local branch, and the remote branch paired with it
+  private selectedChip = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
-    return selectionKeysOf(sha ? findNode([...this.localBranches(), ...this.remoteBranches()], b => b.tip.sha === sha) : undefined);
+    return sha ? this.currentRepo.mergedBranchesByTip()[sha]?.[0] : undefined;
   });
+  protected selectedLocalBranchKeys = computed(() => this.selectionKeysOfBranch(this.localBranches(), this.selectedChip()?.localBranch));
+  protected selectedRemoteBranchKeys = computed(() => this.selectionKeysOfBranch(this.remoteBranches(), this.selectedChip()?.remoteBranch));
   protected branchContextMenu = inject(BranchContextMenuService);
   protected branchDragDrop = inject(BranchDragDropService);
   protected activeContextMenu = inject(ActiveContextMenuService);
@@ -102,6 +105,9 @@ export class LeftPanelComponent {
     });
     effect(() => this.tagTree.set(toTagTree(this.currentRepo.allTagsByName())));
   }
+
+  private selectionKeysOfBranch = (tree: TreeNode<Branch>[], branch?: Branch) =>
+    selectionKeysOf(branch ? findNode(tree, b => b.name === branch.name) : undefined);
 
   protected selectBranchCommit = (node: TreeNode<Branch>, nodes: WritableSignal<TreeNode<Branch>[]>) => {
     if (node.data) this.currentRepo.update({selectedCommitsShas: [node.data.tip.sha]});
