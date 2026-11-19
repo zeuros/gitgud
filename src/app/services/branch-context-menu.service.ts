@@ -70,7 +70,6 @@ export class BranchContextMenuService {
     });
   }
 
-  private name = computed(() => this.selectedNode()?.data?.name ?? '…');
   private head = computed(() => this.currentRepo.headBranch()?.name ?? 'HEAD');
 
   private countLeaves = (node: TreeNode<Branch>): number =>
@@ -91,66 +90,68 @@ export class BranchContextMenuService {
       return [{label: `Remove ${count} branches in ${label}`, icon: 'fa fa-trash', command: () => this.toast.info(`Remove ${count} branches in ${label}`)}];
     }
 
-    const name = this.name();
+    const branch = node.data;
+    if (!branch) return [];
+
+    const {name} = branch;
     const head = this.head();
-    const warn = (item: MenuItem) => withConflictWarning(item, this.conflictPrediction.conflictsBetween(this.currentRepo.headSha(), node.data?.tip.sha));
+    const warn = (item: MenuItem) => withConflictWarning(item, this.conflictPrediction.conflictsBetween(this.currentRepo.headSha(), branch.tip.sha));
     // Checked out in another worktree: checking it out switches there, and git refuses to pull into it or delete it from here
-    const isLocal = !!node.data && local(node.data);
-    const otherWorktree = node.data && this.currentRepo.otherWorktreeOf(this.trackingPair(node.data).localName);
+    const otherWorktree = this.currentRepo.otherWorktreeOf(this.trackingPair(branch).localName);
     const lock = (item: MenuItem) => otherWorktree ? lockedByWorktree(item, otherWorktree) : item;
-    const [pull, push] = this.remoteItems(node.data);
-    const deleteItem: MenuItem = {label: `Delete ${name}`, icon: 'fa fa-trash', command: this.deleteBranch};
+    const [pull, push] = this.remoteItems(branch);
+    const deleteItem: MenuItem = {label: `Delete ${name}`, icon: 'fa fa-trash', command: () => this.deleteBranch(branch)};
     return [
       // Remote
       lock(pull),
       push,
-      {label: 'Set Upstream', icon: 'fa fa-link', command: this.setUpstream},
+      {label: 'Set Upstream', icon: 'fa fa-link', command: () => this.setUpstream(name)},
       {separator: true},
       // Integration
-      warn({label: `Merge ${name} into ${head}`, icon: 'fa fa-compress', command: this.mergeBranch}),
-      warn({label: `Rebase ${head} onto ${name}`, icon: 'fa fa-code-fork', command: this.rebaseBranch}),
+      warn({label: `Merge ${name} into ${head}`, icon: 'fa fa-compress', command: () => this.mergeBranch(name)}),
+      warn({label: `Rebase ${head} onto ${name}`, icon: 'fa fa-code-fork', command: () => this.rebaseBranch(name)}),
       warn({label: `Interactive Rebase ${head} onto ${name}`, icon: 'fa fa-list-ol', command: () => this.interactiveRebase.open(name)}),
       {separator: true},
       // Checkout
       {
         ...otherWorktree ? {label: `Switch to worktree ${worktreeName(otherWorktree)}`, icon: 'fa fa-tree'} : {label: `Checkout ${name}`, icon: 'fa fa-sign-in'},
-        command: () => node.data && this.branch.checkoutBranch(node.data),
+        command: () => this.branch.checkoutBranch(branch),
       },
       {separator: true},
       // Commit ops
-      {label: 'Create branch here', icon: 'fa fa-plus', command: this.createBranchHere},
+      {label: 'Create branch here', icon: 'fa fa-plus', command: () => this.createBranch.createBranchAtSha(branch.tip.sha)},
       {
         label: `Reset ${head} to this commit`,
         icon: 'fa fa-history',
         items: [
           {
             label: 'Soft — Undo commits, keep changes staged',
-            command: () => this.resetBranch('soft'),
+            command: () => this.resetBranch(name, 'soft'),
             tooltipOptions: {tooltipLabel: 'All commits between this commit and HEAD are uncommitted, their changes are put staged in working directory', tooltipPosition: 'right'},
           },
           {
             label: 'Mixed — Undo commits, keep changes in files',
-            command: () => this.resetBranch('mixed'),
+            command: () => this.resetBranch(name, 'mixed'),
             tooltipOptions: {tooltipLabel: 'All commits between this commit and HEAD are uncommitted, their changes are put unstaged in working directory', tooltipPosition: 'right'},
           },
           {
             label: 'Hard — discard commits changes',
-            command: () => this.resetBranch('hard'),
+            command: () => this.resetBranch(name, 'hard'),
             tooltipOptions: {tooltipLabel: 'All commits between this commit and HEAD are discarded', tooltipPosition: 'right'},
           },
         ],
       },
       {separator: true},
       // Branch management
-      {label: `Rename ${name}`, icon: 'fa fa-pencil', command: this.renameBranch},
-      isLocal ? lock(deleteItem) : deleteItem,
+      {label: `Rename ${name}`, icon: 'fa fa-pencil', command: () => this.renameBranch(name)},
+      local(branch) ? lock(deleteItem) : deleteItem,
       {separator: true},
       // Copy
       {label: 'Copy branch name', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(name)},
-      {label: 'Copy commit SHA', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(node.data?.tip.sha ?? '')},
+      {label: 'Copy commit SHA', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(branch.tip.sha)},
       {separator: true},
       // Tags
-      {label: 'Create tag here', icon: 'fa fa-tag', command: this.createTagHere},
+      {label: 'Create tag here', icon: 'fa fa-tag', command: () => this.createTag.createTag(name)},
     ];
   });
 
@@ -164,10 +165,10 @@ export class BranchContextMenuService {
 
   // Pull / Push items saying how many commits they move, disabled when there's nothing to move.
   // Without a tracked upstream the counts are unknown, so the items stay generic.
-  private remoteItems = (branch: Branch | undefined): MenuItem[] => {
-    const pull: MenuItem = {label: 'Pull (fast-forward if possible)', icon: 'fa fa-cloud-download', command: this.pullBranch};
-    const push: MenuItem = {label: 'Push', icon: 'fa fa-cloud-upload', command: this.pushBranch};
-    const {upstream, localName} = branch ? this.trackingPair(branch) : {upstream: '', localName: ''};
+  private remoteItems = (branch: Branch): MenuItem[] => {
+    const pull: MenuItem = {label: 'Pull (fast-forward if possible)', icon: 'fa fa-cloud-download', command: () => this.pullBranch(branch)};
+    const push: MenuItem = {label: 'Push', icon: 'fa fa-cloud-upload', command: () => this.pushBranch(branch)};
+    const {upstream, localName} = this.trackingPair(branch);
     const ab = this.aheadBehind.aheadBehindMap()[localName];
     if (!ab) return [pull, push];
 
@@ -187,9 +188,7 @@ export class BranchContextMenuService {
   };
 
   // Fast-forwards the local branch to its remote, whichever of the two was right-clicked
-  private pullBranch = () => {
-    const branch = this.selectedNode()?.data;
-    if (!branch) return;
+  private pullBranch = (branch: Branch) => {
 
     const {upstream, remote, remoteBranch, localName} = this.trackingPair(branch);
 
@@ -200,8 +199,8 @@ export class BranchContextMenuService {
       this.gitWorkflow.doRunAndRefresh(['fetch', remote, `${remoteBranch}:${localName}`], `Pulled ${upstream} into ${localName}`);
   };
 
-  private pushBranch = () => {
-    const name = this.name();
+  private pushBranch = (branch: Branch) => {
+    const {name} = branch;
     const ab = this.aheadBehind.aheadBehindMap()[name];
     if (!ab?.behind) {
       this.gitWorkflow.doRunAndRefresh(['push', 'origin', name], `Pushed ${name}`);
@@ -217,30 +216,27 @@ export class BranchContextMenuService {
       });
   };
 
-  private setUpstream = () =>
-    openSetUpstreamDialog(this.dialog, this.name())
+  private setUpstream = (name: string) =>
+    openSetUpstreamDialog(this.dialog, name)
       .pipe(first(notUndefined))
-      .subscribe(({remote, branch}) => this.gitWorkflow.doRunAndRefresh(['branch', `--set-upstream-to=${remote}/${branch}`, this.name()], `Upstream set to ${remote}/${branch}`));
+      .subscribe(({remote, branch}) => this.gitWorkflow.doRunAndRefresh(['branch', `--set-upstream-to=${remote}/${branch}`, name], `Upstream set to ${remote}/${branch}`));
 
 
-  private mergeBranch = () =>
-    this.gitWorkflow.doRunAndRefresh(['merge', this.name()], `Merged ${this.name()} into ${this.head()}`, true, true);
+  private mergeBranch = (name: string) =>
+    this.gitWorkflow.doRunAndRefresh(['merge', name], `Merged ${name} into ${this.head()}`, true, true);
 
-  private rebaseBranch = () =>
-    this.gitWorkflow.rebaseBranchOnto(this.head(), this.name(), `Rebased ${this.head()} onto ${this.name()}`);
+  private rebaseBranch = (name: string) =>
+    this.gitWorkflow.rebaseBranchOnto(this.head(), name, `Rebased ${this.head()} onto ${name}`);
 
-  private createBranchHere = () => this.createBranch.createBranchAtSha(this.selectedNode()!.data!.tip!.sha!);
+  private resetBranch = (name: string, mode: 'soft' | 'mixed' | 'hard') =>
+    this.gitWorkflow.doRunAndRefresh(['reset', `--${mode}`, name], `Reset ${mode} to ${name}`, mode === 'hard', false);
 
-  private resetBranch = (mode: 'soft' | 'mixed' | 'hard') =>
-    this.gitWorkflow.doRunAndRefresh(['reset', `--${mode}`, this.name()], `Reset ${mode} to ${this.name()}`, mode === 'hard', false);
+  private renameBranch = (name: string) =>
+    this.prompt.open(`New name for ${name}:`, true, name)
+      .pipe(first(notUndefined), filter(newName => newName != name))
+      .subscribe(newName => this.gitWorkflow.doRunAndRefresh(['branch', '-m', name, newName], `Renamed ${name} to ${newName}`));
 
-  private renameBranch = () =>
-    this.prompt.open(`New name for ${this.name()}:`, true, this.name())
-      .pipe(first(notUndefined), filter(newName => newName != this.name()))
-      .subscribe(newName => this.gitWorkflow.doRunAndRefresh(['branch', '-m', this.name(), newName], `Renamed ${this.name()} to ${newName}`));
-
-  private deleteBranch = () => {
-    const branch = this.selectedNode()!.data!;
+  private deleteBranch = (branch: Branch) => {
 
     if (remote(branch)) {
       const {remote: remoteName, branch: name} = parseRemote(branch.name);
@@ -272,8 +268,6 @@ export class BranchContextMenuService {
       )
       .subscribe();
   };
-
-  private createTagHere = () => this.createTag.createTag(this.name());
 
   private editRemote = (remoteName: string) =>
     this.dialog.open(EditRemoteComponent, {header: `Edit remote: ${remoteName}`, width: '450px', data: {remoteName}})!
