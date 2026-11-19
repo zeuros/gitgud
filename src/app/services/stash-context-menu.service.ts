@@ -22,7 +22,8 @@ import {GitApiService} from './git/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {ToastService} from './toast.service';
 import {finalize} from 'rxjs';
-import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
+import type {Commit} from '../lib/github-desktop/model/commit';
+import {CurrentRepoStore} from '../stores/current-repo.store';
 
 @Injectable({providedIn: 'root'})
 export class StashContextMenuService {
@@ -30,15 +31,13 @@ export class StashContextMenuService {
   private gitApi = inject(GitApiService);
   private gitRefresh = inject(GitRefreshService);
   private toast = inject(ToastService);
+  private currentRepo = inject(CurrentRepoStore);
 
-  selectedCommit = signal<DisplayRef | undefined>(undefined);
-  private sha = computed(() => this.selectedCommit()!.sha);
+  selectedStash = signal<Commit | undefined>(undefined);
+  private sha = computed(() => this.selectedStash()!.sha);
 
-  // Stash index derived from the stash ref name e.g. "stash@{2}"
-  private stashRef = computed(() => {
-    const ref = this.selectedCommit()?.branchesDetails?.find(b => b.name?.startsWith('stash@'));
-    return ref?.name ?? 'stash@{0}';
-  });
+  // Its position in the stash list, e.g. "stash@{2}"
+  private stashRef = computed(() => `stash@{${this.currentRepo.stashes().findIndex(s => s.sha === this.sha())}}`);
 
   stashContextMenu = computed<MenuItem[]>(() => [
     {label: 'Apply stash', icon: 'fa fa-download', command: this.applyStash},
@@ -54,7 +53,7 @@ export class StashContextMenuService {
       .pipe(finalize(this.gitRefresh.doRefreshAll))
       .subscribe(() => successMsg && this.toast.success(successMsg));
 
-  private stashSummary = computed(() => this.selectedCommit()?.summary ?? this.stashRef());
+  private stashSummary = computed(() => this.selectedStash()?.summary ?? this.stashRef());
 
   private applyStash = () =>
     this.run(['stash', 'apply', this.stashRef()], `Applied stash "${this.stashSummary()}"`);

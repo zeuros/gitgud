@@ -387,7 +387,8 @@ export class LogsComponent {
       this.commitContextMenu.selectedCommit.set(commit);
       this.activeContextMenu.show(this.commitContextMenu.commitContextMenu(), event);
     } else if (isStash(commit)) {
-      this.stashContextMenu.selectedCommit.set(commit);
+      // The row is the stash's index commit
+      this.stashContextMenu.selectedStash.set(this.currentRepo.stashes().find(s => s.parentSHAs[1] === commit.sha));
       this.activeContextMenu.show(this.stashContextMenu.stashContextMenu(), event);
     }
   };

@@ -34,7 +34,6 @@ import {Splitter, SplitterPanel} from 'primeng/splitter';
 import {type LocalAndDistantTagWithName, toTagTree} from '../../utils/tag-utils';
 import {TagContextMenuService} from '../../services/tag-context-menu.service';
 import {StashContextMenuService} from '../../services/stash-context-menu.service';
-import type {DisplayRef} from '../../lib/github-desktop/model/display-ref';
 import {BranchContextMenuService} from '../../services/branch-context-menu.service';
 import {BranchDragDropService} from '../../services/branch-drag-drop.service';
 import {BranchService} from '../../services/branch.service';
@@ -125,7 +124,7 @@ export class LeftPanelComponent {
 
   protected openStashContextMenu = (stash: Commit, event: MouseEvent) => {
     event.preventDefault();
-    this.stashContextMenu.selectedCommit.set(stash as unknown as DisplayRef);
+    this.stashContextMenu.selectedStash.set(stash);
     this.activeContextMenu.show(this.stashContextMenu.stashContextMenu(), event);
   };
 
