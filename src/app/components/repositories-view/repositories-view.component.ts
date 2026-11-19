@@ -66,13 +66,13 @@ export class RepositoriesViewComponent {
     this.gitRepositoryStore.newTabSelected() ? 'new-tab' : this.gitRepositoryStore.selectedIndex()
   );
 
-  protected drop({previousIndex, currentIndex}: CdkDragDrop<string[]>): void {
+  protected drop({previousIndex, currentIndex}: CdkDragDrop<string[]>) {
     this.gitRepositoryStore.reorderRepositories(previousIndex, currentIndex);
     // PrimeNG only moves the active bar when the active index changes, not when the tab itself moved
     afterNextRender(() => this.tabList()?.updateInkBar(), {injector: this.injector});
   }
 
-  protected onMiddleClick(event: MouseEvent, index: number): void {
+  protected onMiddleClick(event: MouseEvent, index: number) {
     if (event.button === 1) {
       event.preventDefault();
       this.gitRepository.closeRepository(index);

@@ -21,7 +21,7 @@
  * columns that would go below their min are pinned to it and the rest is split among the others.
  * Below the sum of min widths, every column is at its min (the table overflows).
  */
-export const fitColumnWidths = (availableWidth: number, shares: number[], minWidths: number[]): number[] => {
+export const fitColumnWidths = (availableWidth: number, shares: number[], minWidths: number[]) => {
   const pinned = new Set<number>();
   for (;;) {
     const free = shares.map((_, i) => i).filter(i => !pinned.has(i));

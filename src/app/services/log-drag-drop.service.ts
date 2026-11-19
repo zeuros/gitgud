@@ -43,14 +43,14 @@ export class LogDragDropService {
   };
   onChipsLeave = () => this.deployedChipsSha.set(undefined);
 
-  isValidDropTarget = (target: ChipTarget | null): boolean => {
+  isValidDropTarget = (target: ChipTarget | null) => {
     if (!target) return false;
     return isBranch(target)
       ? this.branchDragDrop.isValidDropTarget(target) || this.tagDragDrop.isValidDropTarget(target)
       : this.branchDragDrop.isValidTagDropTarget(target);
   };
 
-  isHovered = (target: ChipTarget | null): boolean => {
+  isHovered = (target: ChipTarget | null) => {
     if (!target) return false;
     return isBranch(target)
       ? this.branchDragDrop.hoveredBranch() === target || this.tagDragDrop.hoveredBranch() === target

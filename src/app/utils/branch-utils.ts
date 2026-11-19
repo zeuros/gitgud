@@ -18,20 +18,19 @@
 
 import {orderBy} from 'lodash-es';
 import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
-import type {TreeNode} from 'primeng/api';
 import {toPathTree} from './tree-utils';
 
 export const local = (branch: Branch) => branch.type == BranchType.Local;
 export const remote = (branch: Branch) => branch.type == BranchType.Remote;
 
 /** @param isCurrent the branch checked out, or for remote branches the upstream of the one checked out */
-export const toBranchTree = (branches: Branch[], isCurrent: (branch: Branch) => boolean): TreeNode<Branch>[] =>
+export const toBranchTree = (branches: Branch[], isCurrent: (branch: Branch) => boolean) =>
   toPathTree(branches, branch => branch.name, branch => ({
     icon: isCurrent(branch) ? 'fa fa-check checkout-icon' : 'fa fa-code-fork',
     styleClass: isCurrent(branch) ? 'worktree-current' : undefined,
   }));
 
-export const parseRemote = (name: string): {remote: string; branch: string} => {
+export const parseRemote = (name: string) => {
   const slash = name.indexOf('/');
   return {remote: name.substring(0, slash), branch: name.substring(slash + 1)};
 };

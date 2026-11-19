@@ -101,7 +101,7 @@ export class RebaseService {
       }),
     );
 
-  private parseRebaseTodo = (contents: string): string[] =>
+  private parseRebaseTodo = (contents: string) =>
     contents.split('\n')
       .map(line => line.trim())
       .filter(line => !line.startsWith('#'));

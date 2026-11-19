@@ -53,7 +53,7 @@ export const selectRow = (rowKeys: string[], {keys, anchor, rangeEnd}: RowSelect
 
 // Keyboard: up / down move from the last moved end of the selection to the previous / next row, extending it from the
 // anchor with shift
-export const moveSelection = (rowKeys: string[], selection: RowSelection, delta: number, {shift}: SelectModifiers = {}): RowSelection => {
+export const moveSelection = (rowKeys: string[], selection: RowSelection, delta: number, {shift}: SelectModifiers = {}) => {
   if (!rowKeys.length) return selection;
   const from = selection.rangeEnd ?? selection.anchor ?? -1;
   const index = Math.min(rowKeys.length - 1, Math.max(0, from + delta));

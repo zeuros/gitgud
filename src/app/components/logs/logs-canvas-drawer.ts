@@ -221,10 +221,10 @@ const prepareNodeStyle = (canvas: CanvasRenderingContext2D, lane: number, colors
   canvas.shadowBlur = colors.nodeShadowBlur;
 };
 
-export const xPosition = (col?: number): number => {
+export const xPosition = (col?: number) => {
   return NODE_RADIUS + (col ?? 0) * NODE_DIAMETER;
 };
 
-export const yPosition = (row?: number): number => {
+export const yPosition = (row?: number) => {
   return NODE_RADIUS + (row ?? 0) * ROW_HEIGHT;
 };

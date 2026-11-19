@@ -248,7 +248,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  ngAfterViewInit(): void {
+  ngAfterViewInit() {
     if (this.diffEditorContainer) {
       const diffEditorEditor = editor.createDiffEditor(this.diffEditorContainer.nativeElement, this.editorOptions);
       this.diffEditor.set({editor: diffEditorEditor, contextMenuUpdater: this.hunkActions.registerEditorRightClick(diffEditorEditor)});
@@ -258,7 +258,7 @@ export class MonacoEditorViewComponent implements AfterViewInit, OnDestroy {
   }
 
 
-  ngOnDestroy(): void {
+  ngOnDestroy() {
     this.blameEditor?.getModel()?.dispose();
     this.blameEditor?.dispose();
     this.setContent({kind: 'text'});

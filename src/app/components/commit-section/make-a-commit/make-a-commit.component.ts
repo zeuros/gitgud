@@ -117,7 +117,7 @@ export class MakeACommitComponent {
     });
   }
 
-  protected iconDropShadow(kind: AppFileStatusKind): string {
+  protected iconDropShadow(kind: AppFileStatusKind) {
     const alpha = this.theme.isDark() ? '' : '80';
     return `drop-shadow(0 0 5px ${FileStatusesIcons[kind].color}${alpha})`;
   }

@@ -41,7 +41,7 @@ export const rewordCommitAction = (gitDir: string, selectedCommitSha: string) =>
  * The commits of `shas` newest first, when they form one unbroken line of history that a rebase can squash:
  * each one's parent is the next one, none is a merge, and the oldest has a parent to rebase from. Otherwise undefined.
  */
-export const squashableChain = (shas: string[], logs: Commit[]): Commit[] | undefined => {
+export const squashableChain = (shas: string[], logs: Commit[]) => {
   if (shas.length < 2) return undefined;
   const commits = new Map(logs.filter(c => shas.includes(c.sha)).map(c => [c.sha, c]));
   if (commits.size !== shas.length || [...commits.values()].some(c => c.parentSHAs.length !== 1)) return undefined;

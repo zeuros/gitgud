@@ -195,7 +195,7 @@ export class MergeEditorComponent {
       .subscribe();
   }
 
-  protected async acceptAll(column: 'left' | 'right'): Promise<void> {
+  protected async acceptAll(column: 'left' | 'right') {
     const mismerge = this.mergeEl()?.nativeElement;
     if (!mismerge) return;
     // mismerge puts the lhs merge buttons in its "right" side panel and the rhs ones in its "left" one

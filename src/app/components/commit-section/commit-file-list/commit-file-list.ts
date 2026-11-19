@@ -83,7 +83,7 @@ export class CommitFileListComponent {
     if (file) this.contextMenu.open(file, event);
   }
 
-  protected iconDropShadow(kind: AppFileStatusKind): string {
+  protected iconDropShadow(kind: AppFileStatusKind) {
     const alpha = this.theme.isDark() ? '' : '80';
     return `drop-shadow(0 0 5px ${FileStatusesIcons[kind].color}${alpha})`;
   }

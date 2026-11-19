@@ -36,7 +36,7 @@ export class GitRepository {
     public remoteTags: GitTag[] = [],
     public branches: Branch[] = [],
     public detachedHeadSha?: string,
-    public selectedCommitsShas: string[] = ['index'],
+    public selectedCommitsShas = ['index'],
     public startCommit = 0,
     public remotes: { remote: string; url: string }[] = [],
     // Editor config

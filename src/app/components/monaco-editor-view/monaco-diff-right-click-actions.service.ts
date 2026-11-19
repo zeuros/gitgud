@@ -174,7 +174,7 @@ export class MonacoDiffRightClickActionsService {
     diffEditor.getModifiedEditor().addAction({id: 'blame-line', label: 'Blame This Line', contextMenuGroupId: 'navigation', contextMenuOrder: 2, run: blameLine});
 
     // Returned updater — call whenever the selected file changes
-    return (file: FileChange): void => {
+    return (file: FileChange) => {
       currentFile = file;
       isWorkingDirOrig.set(isWorkingDirectoryFileChange(file));
       isWorkingDirMod.set(isWorkingDirectoryFileChange(file));
@@ -203,7 +203,7 @@ export class MonacoDiffRightClickActionsService {
     contextmenu._getMenuActions = (...args) => realMethod(...args).filter(item => !idsToHide.has(item.id));
   };
 
-  private attachGutterSelectionHighlight(modified: IStandaloneCodeEditor, original: IStandaloneCodeEditor): void {
+  private attachGutterSelectionHighlight(modified: IStandaloneCodeEditor, original: IStandaloneCodeEditor) {
     const modDec = modified.createDecorationsCollection([]);
     const origDec = original.createDecorationsCollection([]);
     const opts = {marginClassName: 'gutter-selection-highlight'};

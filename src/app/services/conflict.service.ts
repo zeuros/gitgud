@@ -27,7 +27,7 @@ export class ConflictService {
   private currentRepo = inject(CurrentRepoStore);
 
   /** Annotates the WIP commit in-place when a merge conflict is in progress. */
-  markWorkDirCommitConflicted(displayLog: DisplayRef[]): void {
+  markWorkDirCommitConflicted(displayLog: DisplayRef[]) {
     const conflictCount = this.currentRepo.workDirStatus()?.conflicted.length ?? 0;
     if (conflictCount === 0 || displayLog[0]?.refType !== RefType.INDEX) return;
 

@@ -5,7 +5,7 @@ import {memoize} from 'lodash-es';
  * Memoized — same (color, degrees) pair is computed only once.
  */
 export const hueRotateColor = memoize(
-  (primaryRgba: string, degrees: number): string => {
+  (primaryRgba: string, degrees: number) => {
     const nums = primaryRgba.match(/[\d.]+/g)!.map(Number);
     const r0 = nums[0] / 255, g0 = nums[1] / 255, b0 = nums[2] / 255, a0 = nums[3] ?? 1;
 

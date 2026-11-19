@@ -3,12 +3,12 @@
 
 const SEP = '/';
 
-function normalize(p: string): string {
+function normalize(p: string) {
   // Normalise Windows backslashes
   return p.replace(/\\/g, SEP);
 }
 
-function resolve(...parts: string[]): string {
+function resolve(...parts: string[]) {
   let resolved = '';
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = normalize(parts[i]);
@@ -18,7 +18,7 @@ function resolve(...parts: string[]): string {
   return resolved || SEP;
 }
 
-function dirname(p: string): string {
+function dirname(p: string) {
   const norm = normalize(p);
   const idx = norm.lastIndexOf(SEP);
   if (idx <= 0) return idx === 0 ? SEP : '.';

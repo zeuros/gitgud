@@ -78,7 +78,7 @@ export function stageHunk(
   startLine: number,
   endLine: number,
   countSuffix: (n: number) => string,
-): string | null {
+) {
   const {
     originalStartLineNumber: origStart, originalEndLineNumber: origEnd,
     modifiedStartLineNumber: modStart, modifiedEndLineNumber: modEnd,
@@ -128,7 +128,7 @@ export function unstageHunk(
   endLine: number,
   countSuffix: (n: number) => string,
   inOriginalEditor: boolean,
-): string | null {
+) {
   const {
     originalStartLineNumber: origStart, originalEndLineNumber: origEnd,
     modifiedStartLineNumber: modStart, modifiedEndLineNumber: modEnd,
@@ -190,7 +190,7 @@ export function buildZeroContextPatch(
   filePath: string,
   stage: boolean,
   inOriginalEditor = true,
-): string | null {
+) {
   const countSuffix = (n: number) => n === 1 ? '' : `,${n}`;
 
   const hunkFn = (change: ILineChange) => stage

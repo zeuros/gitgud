@@ -38,7 +38,7 @@ export class TagDragDropService {
   private source = signal<LocalAndDistantTagWithName | undefined>(undefined);
   private target = signal<Branch | undefined>(undefined);
 
-  isValidDropTarget = (branch: Branch | null): boolean => {
+  isValidDropTarget = (branch: Branch | null) => {
     const dragging = this.draggingTag();
     if (!dragging || !branch) return false;
     return local(branch) && branch.tip.sha !== dragging.sha;

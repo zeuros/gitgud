@@ -67,13 +67,13 @@ export class BranchDragDropService {
 
   // True when the given branch would be a meaningful drop target for the current drag.
   // Only remote→remote produces no actions, so that's the only excluded pair.
-  isValidTagDropTarget = (tag: LocalAndDistantTagWithName | null): boolean => {
+  isValidTagDropTarget = (tag: LocalAndDistantTagWithName | null) => {
     const dragging = this.draggingBranch();
     if (!tag || !dragging) return false;
     return local(dragging) && tag.sha !== dragging.tip.sha;
   };
 
-  isValidDropTarget = (target: Branch | null): boolean => {
+  isValidDropTarget = (target: Branch | null) => {
     const dragging = this.draggingBranch();
     if (!target || !dragging || target.tip.sha === dragging.tip.sha) return false;
     return local(dragging) || local(target);

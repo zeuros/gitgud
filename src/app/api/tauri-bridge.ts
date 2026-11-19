@@ -96,7 +96,7 @@ async function buildBridge() {
         }
         listen<{ kind: string; paths: string[] }>(`watcher-event:${safeId}`, (tauriEvent) => {
           const payload = tauriEvent.payload;
-          const paths: string[] = payload.paths ?? [];
+          const paths = payload.paths ?? [];
           const kind = payload.kind?.toLowerCase() ?? '';
 
           if (event === 'all') {
@@ -165,7 +165,7 @@ async function buildBridge() {
 
     showItemInFolder: (fullPath: string) => invoke<void>('show_item_in_folder', {path: fullPath}),
 
-    openExternal: (url: string): Promise<void> => openUrl(url),
+    openExternal: (url: string) => openUrl(url),
 
     openPath: (fullPath: string): Promise<void> => openPath(fullPath),
 
@@ -231,7 +231,7 @@ function kindToChokidar(kind: string): string {
   return 'change';
 }
 
-export async function installTauriBridge(): Promise<void> {
+export async function installTauriBridge() {
   try {
     const bridge = await buildBridge();
     (window as unknown as { tauri: typeof bridge }).tauri = bridge;

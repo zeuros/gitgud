@@ -17,7 +17,7 @@
  */
 
 /** What to tell the user about an error, if anything */
-export const errorMessage = (error: unknown): string | undefined => {
+export const errorMessage = (error: unknown) => {
   if (error instanceof Error) return error.message;
   // Tauri IPC errors arrive as "exited N\n<stderr>" — strip the status prefix
   if (typeof error === 'string') return error.replace(/^exited \d+\n/, '').trim();

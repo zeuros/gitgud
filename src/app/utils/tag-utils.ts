@@ -1,6 +1,5 @@
 import type {GitTag} from '../models/git-tag';
 import {groupBy} from 'lodash-es';
-import type {TreeNode} from 'primeng/api';
 import {toPathTree} from './tree-utils';
 
 export type LocalAndDistantTagWithName = { local: GitTag | null, distant: GitTag | null, name: string, sha: string };
@@ -17,7 +16,7 @@ export const localAndDistantTagPairsByName = (localTags: GitTag[], remoteTags: G
   });
 };
 
-export const toTagTree = (tags: LocalAndDistantTagWithName[]): TreeNode<LocalAndDistantTagWithName>[] =>
+export const toTagTree = (tags: LocalAndDistantTagWithName[]) =>
   toPathTree(
     [...tags].sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true})),
     tag => tag.name,

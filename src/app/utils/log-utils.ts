@@ -27,7 +27,7 @@ import type {LogObject} from '../models/log-object';
 export const byName = (branchName: string) => (branch: Branch) => branch.name == branchName;
 
 /** BFS from descendantSha toward root — returns true if ancestorSha is reachable. */
-export const isAncestor = (ancestorSha: string, descendantSha: string, logs: Commit[]): boolean => {
+export const isAncestor = (ancestorSha: string, descendantSha: string, logs: Commit[]) => {
   if (ancestorSha === descendantSha) return false;
   const parentMap = new Map(logs.map(c => [c.sha, c.parentSHAs]));
   const visited = new Set<string>();
@@ -43,7 +43,7 @@ export const isAncestor = (ancestorSha: string, descendantSha: string, logs: Com
 };
 
 /** Number of commits reachable from `sha` but not from `exceptSha` (like `git rev-list --count exceptSha..sha`), within the loaded logs. */
-export const countCommitsNotIn = (sha: string, exceptSha: string, logs: Commit[]): number => {
+export const countCommitsNotIn = (sha: string, exceptSha: string, logs: Commit[]) => {
   const parentMap = new Map(logs.map(c => [c.sha, c.parentSHAs]));
   const reachable = (from: string) => {
     const visited = new Set<string>();
@@ -99,7 +99,7 @@ const replacementOf = (sha: string, previousBySha: Map<string, LogObject>, shown
  * a dropped commit gives its parent, a deleted branch its start commit, a reworded or rebased commit its new version.
  * Outside the loaded log, the commit now on the same row; with nothing selected, the top row.
  */
-export const followSelection = (selectedShas: string[], previousLog: LogObject[], log: LogObject[]): string[] => {
+export const followSelection = (selectedShas: string[], previousLog: LogObject[], log: LogObject[]) => {
   if (!log.length) return selectedShas;
   const shownShas = new Set(log.map(c => c.sha));
   if (selectedShas.length && selectedShas.every(sha => shownShas.has(sha))) return selectedShas;

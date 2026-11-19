@@ -35,7 +35,7 @@ export class AvatarService {
   private missingAvatars: Record<string, number> = this.readMissingAvatars();
 
   // Resolves all emails in parallel, emits the full image map once all settle.
-  loadAvatarImages(emails: Set<string>): Observable<Map<string, HTMLImageElement>> {
+  loadAvatarImages(emails: Set<string>) {
     return forkJoin([...emails].map(this.convertEmailToBlob)).pipe(
       map(r => r
         .filter(notUndefined)
@@ -109,7 +109,7 @@ export class AvatarService {
     return id ? `https://avatars.githubusercontent.com/u/${id}?v=4` : `https://avatars.githubusercontent.com/${username}`;
   }
 
-  private async gravatarUrl(email: string): Promise<string> {
+  private async gravatarUrl(email: string) {
     const hash = await window.tauri.crypto.md5(email.trim().toLowerCase());
     return `https://www.gravatar.com/avatar/${hash}?d=404`;
   }

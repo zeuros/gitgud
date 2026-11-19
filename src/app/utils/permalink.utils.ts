@@ -1,5 +1,5 @@
 // 'git@github.com:user/repo.git', 'ssh://git@host:22/user/repo', 'https://token@host/user/repo.git' => 'https://host/user/repo'
-export const remoteWebUrl = (remoteUrl: string): string | undefined => {
+export const remoteWebUrl = (remoteUrl: string) => {
   const url = remoteUrl.trim().replace(/\.git\/?$/, '').replace(/\/$/, '');
   const scp = url.match(/^(?:[^@/]+@)?([^:/]+):(?!\/\/)(.+)$/); // user@host:path
   if (scp) return `https://${scp[1]}/${scp[2]}`;
