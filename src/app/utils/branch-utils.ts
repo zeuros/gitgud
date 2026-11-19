@@ -48,20 +48,20 @@ export const localBranchOf = (remoteBranch: Branch, branches: Branch[]) => {
     ?? localBranches.find(branch => branch.name === parseRemote(remoteBranch.name).branch);
 };
 
-// For any name (local / distant) => filter out the origin part to keep branch name only
+// For any name (local or remote) => filter out the origin part to keep branch name only
 export const normalizedBranchName = (b: {name: string} | null) => b?.name.replace(/^origin\//, '');
 
-/** A pair of branches sharing the same normalized name. local is index 0, distant is index 1. */
-export type LocalAndDistant = [local: Branch | null, distant: Branch | null];
+/** A local branch and the remote branch shown with it, in one chip */
+export type LocalAndRemoteBranch = {localBranch?: Branch; remoteBranch?: Branch};
 
-// Used to sort LocalAndDistant pairs by putting the head-pointed group first
-export const isHeadPointed = ([local, distant]: LocalAndDistant) =>
-  local?.isHeadPointed ?? distant?.isHeadPointed ?? false;
+// Used to sort the pairs by putting the head-pointed one first
+export const isHeadPointed = ({localBranch, remoteBranch}: LocalAndRemoteBranch) =>
+  localBranch?.isHeadPointed ?? remoteBranch?.isHeadPointed ?? false;
 
-export const toLocalAndDistantPairs = (branches: Branch[]): LocalAndDistant[] =>
+export const toLocalAndRemotePairs = (branches: Branch[]): LocalAndRemoteBranch[] =>
   orderBy(
     values(groupBy(branches, normalizedBranchName))
-      .map(group => [group.find(local) ?? null, group.find(remote) ?? null] as LocalAndDistant),
+      .map((group): LocalAndRemoteBranch => ({localBranch: group.find(local), remoteBranch: group.find(remote)})),
     isHeadPointed,
     'desc',
   );

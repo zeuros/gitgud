@@ -105,39 +105,38 @@
                         </div>
                     </div>
                 }
-                @for (branchLocalAndDistant of branchesGrouped; track (branchLocalAndDistant[0] ?? branchLocalAndDistant[1])!.ref; let i = $index) {
-                    @let local = branchLocalAndDistant[0];
-                    @let distant = branchLocalAndDistant[1];
+                @for (pair of branchesGrouped; track (pair.localBranch ?? pair.remoteBranch)!.ref; let i = $index) {
+                    @let branch = (pair.localBranch ?? pair.remoteBranch)!;
                     <div class="log-chip-parent">
                         <!-- cdkDropList creates a ghost on destinations when dragging -->
                         <div class="log-chip-drop-zone"
                              cdkDropList
                              cdkDropListSortingDisabled
-                             (pointerenter)="logDragDrop.onChipMouseEnter(local ?? distant)"
+                             (pointerenter)="logDragDrop.onChipMouseEnter(branch)"
                              (pointerleave)="logDragDrop.onChipMouseLeave()"
-                             [class.drop-target-active]="logDragDrop.isValidDropTarget(local ?? distant)"
-                             [class.drop-target-hover]="logDragDrop.isHovered(local ?? distant)"
+                             [class.drop-target-active]="logDragDrop.isValidDropTarget(branch)"
+                             [class.drop-target-hover]="logDragDrop.isHovered(branch)"
 
                              [class.checked-out]="commit.isPointedByLocalHead"
                              [style.--offset.px]="(isDetachedHead ? i + 1 : i) * 30"
                              [style.z-index]="420 - (isDetachedHead ? i + 1 : i)"
                              [style.filter]="commitColor(commit.lane!)"
-                             (contextmenu)="openBranchContextMenu((local ?? distant)!, $event)"
+                             (contextmenu)="openBranchContextMenu(branch, $event)"
                         >
                             <div class="draggable-chip"
                                  cdkDrag
-                                 [cdkDragData]="local ?? distant"
-                                 (cdkDragStarted)="logDragDrop.onBranchDragStarted(local ?? distant)"
+                                 [cdkDragData]="branch"
+                                 (cdkDragStarted)="logDragDrop.onBranchDragStarted(branch)"
                                  (cdkDragEnded)="logDragDrop.onBranchDragEnded($event)"
-                                 (dblclick)="checkoutBranch(local ?? distant, $event)">
+                                 (dblclick)="checkoutBranch(branch, $event)">
                                 <!-- ghost clone shown while dragging -->
                                 <ng-template cdkDragPreview>
                                     <div class="draggable-chip dragging-clone">
-                                        <gitgud-log-branch-chip [local]="local" [distant]="distant"/>
+                                        <gitgud-log-branch-chip [localBranch]="pair.localBranch" [remoteBranch]="pair.remoteBranch"/>
                                     </div>
                                 </ng-template>
 
-                                <gitgud-log-branch-chip [local]="local" [distant]="distant"/>
+                                <gitgud-log-branch-chip [localBranch]="pair.localBranch" [remoteBranch]="pair.remoteBranch"/>
                                 @if (extraCount > 0 && i === 0) {
                                     <p-badge [value]="'+'+extraCount" size="small" class="extra-count-badge"/>
                                 }

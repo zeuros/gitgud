@@ -21,7 +21,7 @@ import {GitRepositoryStore} from './git-repos.store';
 import type {GitRepository} from '../models/git-repository';
 import {groupBy, isEqual, mapValues} from 'lodash-es';
 import {logsComparison, shallowArrayEqual} from '../utils/utils';
-import {type LocalAndDistant, toLocalAndDistantPairs} from '../utils/branch-utils';
+import {type LocalAndRemoteBranch, toLocalAndRemotePairs} from '../utils/branch-utils';
 import {groupTagsByShaAndName, localAndDistantTagPairsByName} from '../utils/tag-utils';
 import {branchesCheckedOutElsewhere} from '../utils/worktree-utils';
 
@@ -50,8 +50,8 @@ export class CurrentRepoStore {
   allTagsByShaAndName = computed(() => groupTagsByShaAndName(this.tags(), this.remoteTags()), {equal: isEqual});
   branches = computed(() => this.reposStore.selectedRepository()?.branches ?? [], {equal: isEqual});
   branchesByTip = computed(() => groupBy(this.branches(), b => b.tip.sha));
-  // Group branches by commit SHA, then pair local/remote branches by normalized name into [local, distant] tuples
-  mergedBranchesByTip = computed<Record<string, LocalAndDistant[] | undefined>>(() => mapValues(this.branchesByTip(), toLocalAndDistantPairs));
+  // Group branches by commit SHA, then pair each local branch with its remote branch
+  mergedBranchesByTip = computed<Record<string, LocalAndRemoteBranch[] | undefined>>(() => mapValues(this.branchesByTip(), toLocalAndRemotePairs));
 
   startCommit = computed(() => this.reposStore.selectedRepository()?.startCommit ?? 0);
   workDirStatus = computed(() => this.reposStore.selectedRepository()?.workDirStatus, {equal: isEqual});

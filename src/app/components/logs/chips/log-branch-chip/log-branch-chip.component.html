@@ -1,15 +1,15 @@
-@if (local()?.isHeadPointed) {
+@if (localBranch()?.isHeadPointed) {
     <i class="fa fa-check mr-2 with-padding"></i>
 }
-<span class="ellipsis branch-name">{{ normalizedBranchName(local() ?? distant()) }}</span>
+<span class="ellipsis branch-name">{{ normalizedBranchName(localBranch() ?? remoteBranch() ?? null) }}</span>
 <span class="float-icons">
     @if (otherWorktreeTooltip(); as title) {
         <i class="fa fa-tree" [title]="title"></i>
     }
-    @if (local()) {
+    @if (localBranch()) {
         <i class="fa fa-laptop"></i>
     }
-    @if (distant()) {
+    @if (remoteBranch()) {
         <i class="fa fa-github"></i>
     }
 </span>

@@ -13,12 +13,12 @@ import {otherWorktreeTooltip} from '../../../../utils/worktree-utils';
 })
 export class LogBranchChip {
 
-  local = input<Branch | null>(null);
-  distant = input<Branch | null>(null);
+  localBranch = input<Branch>();
+  remoteBranch = input<Branch>();
 
   private currentRepo = inject(CurrentRepoStore);
   protected otherWorktreeTooltip = computed(() => {
-    const path = this.currentRepo.otherWorktreeOf(this.local()?.name);
+    const path = this.currentRepo.otherWorktreeOf(this.localBranch()?.name);
     return path && otherWorktreeTooltip(path);
   });
 
