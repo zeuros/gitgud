@@ -1,7 +1,7 @@
 import {inject, Injectable} from '@angular/core';
-import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
-import {catchError, EMPTY, finalize, switchMap} from 'rxjs';
-import {normalizedBranchName} from '../utils/branch-utils';
+import type {Branch} from '../lib/github-desktop/model/branch';
+import {EMPTY, finalize, switchMap} from 'rxjs';
+import {localBranchOf, parseRemote, remote} from '../utils/branch-utils';
 import {StashService} from './stash.service';
 import {GitRefreshService} from './git-refresh.service';
 import {GitApiService} from './git/git-api.service';
@@ -25,7 +25,8 @@ export class BranchService {
   private gitRepository = inject(GitRepositoryService);
 
   checkoutBranch = (branch: Branch) => {
-    const branchName = normalizedBranchName(branch);
+    const localBranch = remote(branch) ? localBranchOf(branch, this.currentRepo.branches()) : branch;
+    const branchName = localBranch?.name ?? parseRemote(branch.name).branch;
 
     // Checked out in another worktree (git refuses to check it out twice): work there instead
     const worktree = this.currentRepo.otherWorktreeOf(branchName);
@@ -35,8 +36,8 @@ export class BranchService {
     }
 
     // If local branch diverged from remote, let user choose reset, merge or cancel
-    const aheadBehind = this.aheadBehind.aheadBehindMap()[normalizedBranchName(branch)!];
-    if (branch.type === BranchType.Remote && aheadBehind && aheadBehind.ahead + aheadBehind.behind > 0) {
+    const aheadBehind = this.aheadBehind.aheadBehindMap()[branchName];
+    if (remote(branch) && localBranch?.upstream === branch.name && aheadBehind && aheadBehind.ahead + aheadBehind.behind > 0) {
       this.dialog.open(DivergedBranchDialogComponent, {
         header: 'Branches have diverged',
         width: '480px',
@@ -46,14 +47,14 @@ export class BranchService {
           if (action === 'reset') {
             return this.stash.stashAndRun(
               this.gitApi.gitAction(['checkout', branchName]).pipe(
-                switchMap(() => this.gitApi.gitAction(['reset', '--hard', `origin/${branchName}`])),
+                switchMap(() => this.gitApi.gitAction(['reset', '--hard', branch.name])),
               ), false,
             );
           }
           if (action === 'merge') {
             return this.stash.stashAndRun(
               this.gitApi.gitAction(['checkout', branchName]).pipe(
-                switchMap(() => this.gitApi.gitAction(['merge', `origin/${branchName}`])),
+                switchMap(() => this.gitApi.gitAction(['merge', branch.name])),
               ),
             );
           }
@@ -64,11 +65,10 @@ export class BranchService {
       return;
     }
 
-    // If the branch exists remotely only, check it out and track it
-    this.gitApi.gitAction(['checkout', branchName]).pipe(
-      catchError(() => this.gitApi.gitAction(['checkout', '-b', branchName, '--track', `origin/${branchName}`])),
+    // A remote branch with no local one: create it, tracking the remote branch
+    const checkoutArgs = localBranch ? ['checkout', branchName] : ['checkout', '-b', branchName, '--track', branch.name];
+    this.gitApi.gitAction(checkoutArgs).pipe(
       finalize(this.gitRefresh.doUpdateLogsAndBranches),
     ).subscribe();
   };
-
 }
