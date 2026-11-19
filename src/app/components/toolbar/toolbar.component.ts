@@ -35,7 +35,7 @@ import {workingDirHasChanges} from '../../utils/utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {UndoService} from '../../services/undo.service';
 import {DialogService} from 'primeng/dynamicdialog';
-import {openSetUpstreamDialog, type SetUpstreamResult} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
+import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
 import {type BehindRemoteAction, openBehindRemoteDialog} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
@@ -44,7 +44,7 @@ import {UpdateCheckService} from '../../services/update-check.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 import {recentConsoleMessages, reportIssueUrl} from '../../utils/report-issue.utils';
-import {parseRemote} from '../../utils/branch-utils';
+import {parseRemote, type RemoteAndBranch} from '../../utils/branch-utils';
 import {type GitCommandRecord, GitCommandHistoryService} from '../../services/git-command-history.service';
 
 const REPORTED_GIT_COMMANDS = 10;
@@ -213,7 +213,7 @@ export class ToolbarComponent implements OnInit {
 
   // A remote branch the current one is behind (rewritten since pushed) goes through the behind-remote dialog,
   // offering to force push, rather than a push git rejects
-  private pushToNewUpstream = ({remote, branch}: SetUpstreamResult) => {
+  private pushToNewUpstream = ({remote, branch}: RemoteAndBranch) => {
     const remoteRef = `refs/remotes/${remote}/${branch}`;
     return this.branchAheadBehind.aheadBehind('HEAD', remoteRef).pipe(
       catchError(() => of({ahead: 0, behind: 0, diverged: false})), // not on the remote yet

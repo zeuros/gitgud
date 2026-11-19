@@ -30,7 +30,12 @@ export const toBranchTree = (branches: Branch[], isCurrent: (branch: Branch) => 
     styleClass: isCurrent(branch) ? 'worktree-current' : undefined,
   }));
 
-export const parseRemote = (name: string) => {
+export interface RemoteAndBranch {
+  remote: string;
+  branch: string;
+}
+
+export const parseRemote = (name: string): RemoteAndBranch => {
   const slash = name.indexOf('/');
   return {remote: name.substring(0, slash), branch: name.substring(slash + 1)};
 };

@@ -24,13 +24,9 @@ import {InputText} from 'primeng/inputtext';
 import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {GitApiService} from '../../../services/git/git-api.service';
 import type {Observable} from 'rxjs';
+import type {RemoteAndBranch} from '../../../utils/branch-utils';
 
-export interface SetUpstreamResult {
-  remote: string;
-  branch: string;
-}
-
-export const openSetUpstreamDialog = (dialog: DialogService, branchName: string): Observable<SetUpstreamResult | null> =>
+export const openSetUpstreamDialog = (dialog: DialogService, branchName: string): Observable<RemoteAndBranch | null> =>
   dialog.open(SetUpstreamDialogComponent, {header: `Set upstream for "${branchName}"`, width: '500px', data: {branchName}})!.onClose
 
 @Component({
@@ -59,7 +55,7 @@ export const openSetUpstreamDialog = (dialog: DialogService, branchName: string)
   `,
 })
 export class SetUpstreamDialogComponent implements OnInit {
-  private ref = inject(DynamicDialogRef<SetUpstreamResult>);
+  private ref = inject(DynamicDialogRef<RemoteAndBranch>);
   private config = inject(DynamicDialogConfig);
   private gitApi = inject(GitApiService);
 
@@ -76,6 +72,6 @@ export class SetUpstreamDialogComponent implements OnInit {
     });
   }
 
-  confirm = () => this.ref.close({remote: this.remoteControl.value, branch: this.branchControl.value} satisfies SetUpstreamResult);
+  confirm = () => this.ref.close({remote: this.remoteControl.value, branch: this.branchControl.value} satisfies RemoteAndBranch);
   cancel = () => this.ref.close(null);
 }
