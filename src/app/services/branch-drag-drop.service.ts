@@ -19,9 +19,9 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import type {CdkDragEnd} from '@angular/cdk/drag-drop';
 import type {MenuItem} from 'primeng/api';
-import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
+import type {Branch} from '../lib/github-desktop/model/branch';
 import type {LocalAndDistantTagWithName} from '../utils/tag-utils';
-import {parseRemote} from '../utils/branch-utils';
+import {local, parseRemote, remote, remoteRefOf} from '../utils/branch-utils';
 import {commitCount, countCommitsNotIn, isAncestor} from '../utils/log-utils';
 import {ActiveContextMenuService} from './active-context-menu.service';
 import {GitWorkflowService} from './git-workflow.service';
@@ -70,13 +70,13 @@ export class BranchDragDropService {
   isValidTagDropTarget = (tag: LocalAndDistantTagWithName | null): boolean => {
     const dragging = this.draggingBranch();
     if (!tag || !dragging) return false;
-    return dragging.type === BranchType.Local && tag.sha !== dragging.tip.sha;
+    return local(dragging) && tag.sha !== dragging.tip.sha;
   };
 
   isValidDropTarget = (target: Branch | null): boolean => {
     const dragging = this.draggingBranch();
     if (!target || !dragging || target.tip.sha === dragging.tip.sha) return false;
-    return dragging.type === BranchType.Local || target.type === BranchType.Local;
+    return local(dragging) || local(target);
   };
 
   private menu = computed<MenuItem[]>(() => {
@@ -84,7 +84,7 @@ export class BranchDragDropService {
     const target = this.target();
     if (!source || !target) return [];
 
-    const remoteRef = target.type === BranchType.Local ? (target.upstream ?? `origin/${target.name}`) : target.name;
+    const remoteRef = remoteRefOf(target);
     // Items grouped by the branch they move, so the menu tells which side changes
     const groups = new Map<string, MenuItem[]>([[source.name, []]]);
     const add = (moved: string, item: MenuItem) => groups.set(moved, [...groups.get(moved) ?? [], item]);
@@ -101,8 +101,8 @@ export class BranchDragDropService {
       warn: item => withConflictWarning(item, conflicts),
     };
 
-    if (source.type === BranchType.Local) this.addLocalSourceItems(drop);
-    else if (target.type === BranchType.Local) this.addRemoteSourceItems(drop);
+    if (local(source)) this.addLocalSourceItems(drop);
+    else if (local(target)) this.addRemoteSourceItems(drop);
 
     const push = this.pushItem(source, remoteRef);
     if (push) add(remoteRef, push);
@@ -114,7 +114,7 @@ export class BranchDragDropService {
   });
 
   private addLocalSourceItems = ({source, target, behind, ahead, sourceOnly, targetOnly, add, warn}: BranchDrop) => {
-    const isLocalTarget = target.type === BranchType.Local;
+    const isLocalTarget = local(target);
     // Rebase is a no-op unless the branches diverged; merging an ahead branch still makes a merge commit
     if (behind) add(source.name, {label: `Fast-forward ${source.name} to ${target.name} (${targetOnly})`, icon: 'fa fa-forward', command: this.fastForward});
     if (ahead && isLocalTarget) add(target.name, {label: `Fast-forward ${target.name} to ${source.name} (${sourceOnly})`, icon: 'fa fa-forward', command: this.fastForwardTarget});
@@ -134,7 +134,7 @@ export class BranchDragDropService {
 
   // Pushing a branch that's only behind its upstream has nothing to send
   private pushItem = (source: Branch, remoteRef: string): MenuItem | undefined => {
-    if (source.type !== BranchType.Local || !remoteRef || source.upstream !== remoteRef) return undefined;
+    if (!local(source) || !remoteRef || source.upstream !== remoteRef) return undefined;
     const logs = this.currentRepo.logs();
     const remoteTip = this.currentRepo.branches().find(b => b.name === remoteRef)?.tip.sha;
     if (!remoteTip || remoteTip === source.tip.sha || isAncestor(source.tip.sha, remoteTip, logs)) return undefined;
@@ -190,25 +190,19 @@ export class BranchDragDropService {
     if (!branch) return;
     const dragging = this.draggingBranch();
     if (!dragging || branch.tip.sha === dragging.tip.sha) return;
-    if (dragging.type === BranchType.Remote && branch.type === BranchType.Remote) return;
+    if (remote(dragging) && remote(branch)) return;
     this.hoveredBranch.set(branch);
   };
 
   onMouseLeave = () => this.hoveredBranch.set(null);
 
   onTagMouseEnter = (tag: LocalAndDistantTagWithName | null) => {
-    if (!tag || this.draggingBranch()?.type !== BranchType.Local) return;
+    const dragging = this.draggingBranch();
+    if (!tag || !dragging || !local(dragging)) return;
     this.hoveredTag.set(tag);
   };
 
   onTagMouseLeave = () => this.hoveredTag.set(null);
-
-  private remoteRef = () => {
-    const target = this.target()!;
-    return target.type === BranchType.Local
-      ? (target.upstream ?? `origin/${target.name}`)
-      : target.name;
-  };
 
   private fastForward = () => this.fastForwardRef(this.source()!.name, this.target()!.name);
 
@@ -272,7 +266,7 @@ export class BranchDragDropService {
 
   private push = () => {
     const {name: src} = this.source()!;
-    const ref = this.remoteRef();
+    const ref = remoteRefOf(this.target()!);
     const {remote, branch} = parseRemote(ref);
     const ab = this.aheadBehind.aheadBehindMap()[src];
     if (!ab?.behind) {

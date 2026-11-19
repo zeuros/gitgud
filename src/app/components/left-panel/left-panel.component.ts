@@ -94,8 +94,8 @@ export class LeftPanelComponent {
   private gitRepositoryService = inject(GitRepositoryService);
 
   constructor() {
-    effect(() => this.localBranches.set(toBranchTree(this.currentRepo.branches().filter(local) ?? [])));
-    effect(() => this.remoteBranches.set(toBranchTree(this.currentRepo.branches().filter(remote) ?? []).map(node => ({...node, type: 'remote-root'}))));
+    effect(() => this.localBranches.set(toBranchTree(this.currentRepo.branches().filter(local))));
+    effect(() => this.remoteBranches.set(toBranchTree(this.currentRepo.branches().filter(remote)).map(node => ({...node, type: 'remote-root'}))));
     effect(() => this.tagTree.set(toTagTree(this.currentRepo.allTagsByName())));
   }
 

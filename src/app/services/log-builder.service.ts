@@ -19,7 +19,8 @@
 import {inject, Injectable} from '@angular/core';
 import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
 import type {Commit} from '../lib/github-desktop/model/commit';
-import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
+import type {Branch} from '../lib/github-desktop/model/branch';
+import {local, remote} from '../utils/branch-utils';
 import {RefType} from '../enums/ref-type.enum';
 import {notUndefined, removeDuplicates} from '../utils/utils';
 import {byName, createIndexCommit} from '../utils/log-utils';
@@ -74,7 +75,7 @@ export class LogBuilderService {
       ...commit,
       summary: stashChild?.summary ?? commit.summary,
       refType: stashChild ? RefType.STASH : RefType.COMMIT,
-      isPointedByLocalHead: !!commitBranches.find(b => !b.name.includes('origin/') && b.isHeadPointed),
+      isPointedByLocalHead: !!commitBranches.find(b => local(b) && b.isHeadPointed),
       branchesDetails: commitBranches,
     };
   }
@@ -92,7 +93,7 @@ export class LogBuilderService {
 
   private findBranchByRef = (branchRef: string) => {
     if (branchRef.includes('origin/HEAD')) // Commit is pointed by remote head (usually origin/main)
-      return this.branches().find(b => b.type == BranchType.Remote && b.isHeadPointed);
+      return this.branches().find(b => remote(b) && b.isHeadPointed);
     else if (branchRef.includes('HEAD -> ')) // This commit is pointed by local HEAD, git tells which branch is pointed at. e.g: (HEAD -> branchPointedAt)
       return this.branches().find(byName(branchRef.replace('HEAD -> ', '')));
 

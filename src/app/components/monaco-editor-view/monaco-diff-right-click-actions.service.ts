@@ -29,7 +29,7 @@ import {SettingsService} from '../../services/settings.service';
 import {FileDiffPanelService} from '../../services/file-diff-panel.service';
 import {permalink, remoteWebUrl} from '../../utils/permalink.utils';
 import {DEFAULT_EDITOR_COMMAND, editorCommandArgs} from '../../utils/editor-command.utils';
-import {parseRemote} from '../../utils/branch-utils';
+import {parseRemote, upstreamOf} from '../../utils/branch-utils';
 import {firstValueFrom} from 'rxjs';
 type IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 type IStandaloneDiffEditor = editor.IStandaloneDiffEditor;
@@ -128,8 +128,8 @@ export class MonacoDiffRightClickActionsService {
       if (!at || !isCommittedFileChange(at.file)) return;
       const git = (args: string[]) => firstValueFrom(this.gitApi.git(args)).then(out => out.trim()).catch(() => '');
 
-      const upstream = this.currentRepo.headBranch()?.upstream;
-      const remote = upstream ? parseRemote(upstream).remote : 'origin';
+      const headBranch = this.currentRepo.headBranch();
+      const remote = headBranch ? parseRemote(upstreamOf(headBranch)).remote : 'origin';
       const webUrl = remoteWebUrl(await git(['remote', 'get-url', remote]));
       if (!webUrl) return this.toast.warn(`${remote} has no web page to link to`);
 

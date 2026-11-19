@@ -18,7 +18,8 @@
 
 import {effect, inject, Injectable, signal} from '@angular/core';
 import {catchError, EMPTY, from, map, mergeMap, type Observable, toArray} from 'rxjs';
-import {type AheadBehind, type Branch, BranchType} from '../lib/github-desktop/model/branch';
+import type {AheadBehind, Branch} from '../lib/github-desktop/model/branch';
+import {local} from '../utils/branch-utils';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {GitApiService} from './git/git-api.service';
 import {AutoFetchService} from './auto-fetch.service';
@@ -36,7 +37,7 @@ export class BranchAheadBehindService {
     effect((onCleanup) => {
       this.autoFetch.lastFetchedAt(); // Update every branch up / down diff count after every fetch
 
-      const localTrackedBranches = this.currentRepo.branches().filter(b => b.type === BranchType.Local && b.upstream);
+      const localTrackedBranches = this.currentRepo.branches().filter(b => local(b) && b.upstream);
 
       // Replaces the whole map: branches of the previously selected repository, or gone, keep no count
       const sub = from(localTrackedBranches)

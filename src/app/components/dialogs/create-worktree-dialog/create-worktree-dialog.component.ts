@@ -23,7 +23,7 @@ import {InputText} from 'primeng/inputtext';
 import {Select} from 'primeng/select';
 import {CurrentRepoStore} from '../../../stores/current-repo.store';
 import {GitWorkflowService} from '../../../services/git-workflow.service';
-import {BranchType} from '../../../lib/github-desktop/model/branch';
+import {local, remote} from '../../../utils/branch-utils';
 import {finalize} from 'rxjs';
 import {DynamicDialogRef} from 'primeng/dynamicdialog';
 
@@ -56,7 +56,7 @@ export class CreateWorktreeDialogComponent {
     this.currentRepo.branches().map(b => ({
       label: b.name,
       value: b.name,
-      isRemote: b.type === BranchType.Remote,
+      isRemote: remote(b),
     }))
   );
 
@@ -97,7 +97,7 @@ export class CreateWorktreeDialogComponent {
     // If the target branch already exists locally, check it out directly.
     // Using -b on an existing branch causes git to exit with an error.
     const branchAlreadyExists = this.currentRepo.branches()
-      .some(b => b.type === BranchType.Local && b.name === branch);
+      .some(b => local(b) && b.name === branch);
 
     const args = branchAlreadyExists
       ? ['worktree', 'add', path, branch]

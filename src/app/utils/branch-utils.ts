@@ -19,69 +19,37 @@
 import {groupBy, orderBy, values} from 'lodash-es';
 import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
 import type {TreeNode} from 'primeng/api';
+import {toPathTree} from './tree-utils';
 
 export const local = (branch: Branch) => branch.type == BranchType.Local;
 export const remote = (branch: Branch) => branch.type == BranchType.Remote;
 
-// 'a/b/c' => ['a', 'a/b', 'a/b/c']
-const toSubPaths = (path: string) => path.split('/').map((_, i, parts) => parts.slice(0, i + 1).join('/'));
-
-export const toBranchTree = (branches: Branch[], branchNameTransform = (n: string) => n): TreeNode<Branch>[] => {
-  const nodeMap = new Map<string, TreeNode<Branch>>();
-  const roots: TreeNode<Branch>[] = [];
-
-  branches.forEach(branch => {
-    const parts = toSubPaths(branchNameTransform(branch.name));
-
-    parts.forEach((key, i) => {
-      if (nodeMap.has(key)) return;
-
-      const isLeaf = i === parts.length - 1;
-      const node: TreeNode<Branch> = isLeaf
-        ? {
-          key,
-          icon: branch.isHeadPointed ? 'fa fa-check checkout-icon' : 'fa fa-code-fork',
-          label: key.split('/').pop(),
-          data: branch,
-          leaf: true,
-          expanded: true,
-          selectable: true,
-          styleClass: branch.isHeadPointed ? 'worktree-current' : undefined,
-        }
-        : {
-          key,
-          icon: 'pi pi-folder',
-          label: key.split('/').pop(),
-          leaf: false,
-          expanded: true,
-          selectable: true,
-          children: [],
-        };
-
-      nodeMap.set(key, node);
-
-      if (i === 0) {
-        roots.push(node);
-      } else {
-        const parentKey = parts[i - 1];
-        const parent = nodeMap.get(parentKey)!;
-        parent.children = [...(parent.children ?? []), node];
-      }
-    });
-  });
-
-  return roots;
-};
+export const toBranchTree = (branches: Branch[]): TreeNode<Branch>[] =>
+  toPathTree(branches, branch => branch.name, branch => ({
+    icon: branch.isHeadPointed ? 'fa fa-check checkout-icon' : 'fa fa-code-fork',
+    styleClass: branch.isHeadPointed ? 'worktree-current' : undefined,
+  }));
 
 export const parseRemote = (name: string): {remote: string; branch: string} => {
   const slash = name.indexOf('/');
   return {remote: name.substring(0, slash), branch: name.substring(slash + 1)};
 };
 
+/** A local branch's upstream, else its name on origin */
+export const upstreamOf = (localBranch: Branch) => localBranch.upstream ?? `origin/${localBranch.name}`;
 
+/** A remote branch itself, or a local branch's upstream */
+export const remoteRefOf = (branch: Branch) => remote(branch) ? branch.name : upstreamOf(branch);
+
+/** The local branch tracking a remote branch, else the one with its name */
+export const localBranchOf = (remoteBranch: Branch, branches: Branch[]) => {
+  const localBranches = branches.filter(local);
+  return localBranches.find(branch => branch.upstream === remoteBranch.name)
+    ?? localBranches.find(branch => branch.name === parseRemote(remoteBranch.name).branch);
+};
 
 // For any name (local / distant) => filter out the origin part to keep branch name only
-export const normalizedBranchName = (b: {name: string} | null) => b?.name.replace('origin/', '')
+export const normalizedBranchName = (b: {name: string} | null) => b?.name.replace(/^origin\//, '');
 
 /** A pair of branches sharing the same normalized name. local is index 0, distant is index 1. */
 export type LocalAndDistant = [local: Branch | null, distant: Branch | null];

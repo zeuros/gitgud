@@ -44,6 +44,7 @@ import {UpdateCheckService} from '../../services/update-check.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 import {recentConsoleMessages, reportIssueUrl} from '../../utils/report-issue.utils';
+import {parseRemote} from '../../utils/branch-utils';
 import {type GitCommandRecord, GitCommandHistoryService} from '../../services/git-command-history.service';
 
 const REPORTED_GIT_COMMANDS = 10;
@@ -200,7 +201,7 @@ export class ToolbarComponent implements OnInit {
     const localBranch = this.currentRepo.headBranch()?.name;
     if (!localBranch) return of(true); // detached HEAD — let git decide
     return this.gitApi.git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']).pipe(
-      map(out => out.trim().split('/').slice(1).join('/') === localBranch),
+      map(out => parseRemote(out.trim()).branch === localBranch),
       catchError(() => of(false)), // @{u} fails when no upstream is configured
     );
   };

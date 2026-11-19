@@ -20,7 +20,7 @@ import {computed, effect, inject, Injectable, signal, untracked} from '@angular/
 import {ConfirmationService, type MenuItem, type TreeNode} from 'primeng/api';
 import {catchError, EMPTY, filter, first, switchMap, throwError} from 'rxjs';
 import {GitApiService} from './git/git-api.service';
-import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
+import type {Branch} from '../lib/github-desktop/model/branch';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {notUndefined} from '../utils/utils';
 import {GitWorkflowService} from './git-workflow.service';
@@ -30,7 +30,7 @@ import {DialogService} from 'primeng/dynamicdialog';
 import {EditRemoteComponent} from '../components/dialogs/edit-remote/edit-remote.component';
 import {openSetUpstreamDialog} from '../components/dialogs/set-upstream-dialog/set-upstream-dialog.component';
 import {CreateBranchService} from './create-branch.service';
-import {parseRemote} from '../utils/branch-utils';
+import {local, localBranchOf, parseRemote, remote, remoteRefOf} from '../utils/branch-utils';
 import {commitCount} from '../utils/log-utils';
 import {BranchService} from './branch.service';
 import {CreateTagService} from './create-tag.service';
@@ -95,7 +95,7 @@ export class BranchContextMenuService {
     const head = this.head();
     const warn = (item: MenuItem) => withConflictWarning(item, this.conflictPrediction.conflictsBetween(this.currentRepo.headSha(), node.data?.tip.sha));
     // Checked out in another worktree: checking it out switches there, and git refuses to pull into it or delete it from here
-    const isLocal = node.data?.type === BranchType.Local;
+    const isLocal = !!node.data && local(node.data);
     const otherWorktree = node.data && this.currentRepo.otherWorktreeOf(this.trackingPair(node.data).localName);
     const lock = (item: MenuItem) => otherWorktree ? lockedByWorktree(item, otherWorktree) : item;
     const [pull, push] = this.remoteItems(node.data);
@@ -156,11 +156,9 @@ export class BranchContextMenuService {
 
   // The local branch and its upstream, whichever of the two is given
   private trackingPair = (branch: Branch) => {
-    const upstream = branch.type === BranchType.Remote ? branch.name : branch.upstream ?? `origin/${branch.name}`;
+    const upstream = remoteRefOf(branch);
     const {remote, branch: remoteBranch} = parseRemote(upstream);
-    const localName = branch.type === BranchType.Local
-      ? branch.name
-      : this.currentRepo.branches().find(b => b.type === BranchType.Local && b.upstream === upstream)?.name ?? remoteBranch;
+    const localName = local(branch) ? branch.name : localBranchOf(branch, this.currentRepo.branches())?.name ?? remoteBranch;
     return {upstream, remote, remoteBranch, localName};
   };
 
@@ -244,15 +242,15 @@ export class BranchContextMenuService {
   private deleteBranch = () => {
     const branch = this.selectedNode()!.data!;
 
-    if (branch.type === BranchType.Remote) {
-      const {remote, branch: name} = parseRemote(branch.name);
-      this.gitWorkflow.runAndRefresh(['push', remote, '--delete', name], `Deleted remote branch ${branch.name}`, false, false)
+    if (remote(branch)) {
+      const {remote: remoteName, branch: name} = parseRemote(branch.name);
+      this.gitWorkflow.runAndRefresh(['push', remoteName, '--delete', name], `Deleted remote branch ${branch.name}`, false, false)
         // Failed because it's already deleted on the remote? Then only our stale copy of it is left to remove
-        .pipe(catchError(e => this.gitApi.git(['ls-remote', '--heads', remote, `refs/heads/${name}`]).pipe(
+        .pipe(catchError(e => this.gitApi.git(['ls-remote', '--heads', remoteName, `refs/heads/${name}`]).pipe(
           catchError(() => throwError(() => e)),
           switchMap(found => found.trim()
             ? throwError(() => e)
-            : this.gitWorkflow.runAndRefresh(['branch', '-d', '-r', branch.name], `Removed ${branch.name}, already deleted on ${remote}`, false, false)),
+            : this.gitWorkflow.runAndRefresh(['branch', '-d', '-r', branch.name], `Removed ${branch.name}, already deleted on ${remoteName}`, false, false)),
         )))
         .subscribe();
       return;

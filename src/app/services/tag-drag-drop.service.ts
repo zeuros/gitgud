@@ -19,7 +19,8 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import type {CdkDragEnd} from '@angular/cdk/drag-drop';
 import type {MenuItem} from 'primeng/api';
-import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
+import type {Branch} from '../lib/github-desktop/model/branch';
+import {local} from '../utils/branch-utils';
 import {isAncestor} from '../utils/log-utils';
 import {ActiveContextMenuService} from './active-context-menu.service';
 import {GitWorkflowService} from './git-workflow.service';
@@ -40,7 +41,7 @@ export class TagDragDropService {
   isValidDropTarget = (branch: Branch | null): boolean => {
     const dragging = this.draggingTag();
     if (!dragging || !branch) return false;
-    return branch.type === BranchType.Local && branch.tip.sha !== dragging.sha;
+    return local(branch) && branch.tip.sha !== dragging.sha;
   };
 
   private menu = computed<MenuItem[]>(() => {
@@ -73,7 +74,7 @@ export class TagDragDropService {
 
   onMouseEnter = (branch: Branch | null) => {
     if (!branch || !this.draggingTag()) return;
-    if (branch.type !== BranchType.Local) return;
+    if (!local(branch)) return;
     this.hoveredBranch.set(branch);
   };
 
