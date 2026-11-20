@@ -67,6 +67,25 @@
   </provides>
 
   <releases>
+    <release version="2.14.1" date="2026-11-20">
+      <description>
+        <p>What's new in GitGud 2.14.1:</p>
+        <ul>
+          <li>Selecting a chip also selects its paired remote branch</li>
+          <li>Mark the checked-out branch's upstream in the remote tree</li>
+          <li>Show the repository's path on hover</li>
+          <li>Keep the commit message per repository when leaving WIP</li>
+          <li>A dropped remote branch only merges into a local branch</li>
+          <li>The stash menu acts on the stash clicked, not always stash@{0}</li>
+          <li>Push to the branch's upstream, not always origin</li>
+          <li>No push, set upstream or rename on a remote branch</li>
+          <li>Checking out a remote branch of any remote creates a local branch</li>
+          <li>Merge a branch's chip with its upstream on any remote</li>
+          <li>Warn and skip a commit the branch already has</li>
+          <li>Close the tab of a repository removed from the disk</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.14.0" date="2026-11-17">
       <description>
         <p>What's new in GitGud 2.14.0:</p>
