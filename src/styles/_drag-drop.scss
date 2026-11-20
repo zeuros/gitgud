@@ -1,17 +1,51 @@
-.drop-target-active {
-  transition: all 120ms ease;
-  outline: 2px dashed var(--p-primary-color);
-  border-radius: 3px;
+// While dragging, what can't take the drop fades out: the drop targets stand out by contrast.
+// The hovered one fills with the primary color. In the left panel the whole tree row is styled, as the selection is.
+
+$drop-ease: 160ms ease;
+$faded-opacity: 0.35;
+
+// Left panel: the label span is the drop list, the row around it is styled.
+// Rows fade through their text color, not opacity, and without transitions: WebKitGTK leaves pixels of
+// the composited layers opacity animates behind
+.p-tree:has(.drop-target-active) .p-tree-node-content:not(:has(.drop-target-active)) {
+  color: color-mix(in srgb, var(--p-text-color) 30%, transparent);
+
+  .p-tree-node-icon, .ahead-behind, i {
+    color: inherit;
+  }
 }
 
-.drop-target-hover {
-  box-shadow: 0 0 12px var(--p-primary-color);
-  outline: 2px solid var(--p-primary-color);
-  border-radius: 3px;
+// Outranks PrimeNG's hover rule (.p-tree-node-content.p-tree-node-selectable:not(.p-tree-node-selected):hover)
+.p-tree .p-tree-node-content.p-tree-node-selectable:has(.drop-target-hover):hover,
+.p-tree .p-tree-node-content:has(.drop-target-hover) {
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+
+  .p-tree-node-icon, .ahead-behind, i {
+    color: inherit;
+  }
 }
 
-// Ensures outline isn't clipped inside tree node label containers
-.branch-drop-target {
-  overflow: visible;
-  border-radius: 3px;
+// Log chips: the rows' chips that can't take the drop fade out too
+.log-chip-drop-zone {
+  transition: opacity $drop-ease;
+}
+
+table:has(.drop-target-active) .log-chip-drop-zone:not(.drop-target-active) {
+  opacity: $faded-opacity;
+}
+
+.log-chip-drop-zone > .draggable-chip {
+  transition: background-color $drop-ease, color $drop-ease, transform $drop-ease;
+}
+
+.log-chip-drop-zone.drop-target-hover > .draggable-chip {
+  background: var(--p-primary-color);
+  border-color: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+  transform: scale(1.06);
+
+  i, span {
+    color: inherit;
+  }
 }
