@@ -45,6 +45,7 @@ import {ACTION_TOAST_KEY, type ToastAction} from './services/toast.service';
   styleUrls: ['./app.component.scss'],
   host: {
     '(document:keydown)': 'gitRepository.handleTabShortcut($event); redoInTextField($event)', // Here: the tabs view is gone once the last tab is closed
+    '(window:mouseup)': 'ignoreBackForwardButtons($event)',
   },
 })
 export class AppComponent {
@@ -60,6 +61,11 @@ export class AppComponent {
   private router = inject(Router);
 
   private globalMenu = viewChild.required<ContextMenu>('globalMenu');
+
+  // The mouse's back and forward buttons would navigate the webview's history
+  protected ignoreBackForwardButtons = (event: MouseEvent) => {
+    if (event.button == 3 || event.button == 4) event.preventDefault();
+  };
 
   // WebKitGTK undoes text fields with Ctrl+Z but has no redo shortcut: bind Ctrl+Shift+Z and Ctrl+Y. Monaco handles its own
   protected redoInTextField = (event: KeyboardEvent) => {
@@ -87,7 +93,7 @@ export class AppComponent {
     inject(ThemeService);     // Applies theme from config
 
     effect(() => this.activeContextMenu.register(this.globalMenu()));
-    effect(() => this.router.navigate([this.gitRepositoryStore.hasRepositories() ? 'repo' : 'welcome-screen']));
+    effect(() => this.router.navigate([this.gitRepositoryStore.hasRepositories() ? 'repo' : 'welcome-screen'], {replaceUrl: true}));
 
     console.log('Process env: ', window.tauri.process.env);
   }
