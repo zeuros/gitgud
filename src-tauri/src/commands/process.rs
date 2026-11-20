@@ -9,7 +9,8 @@ use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
 /// Starts the command in a session of its own, without a controlling terminal. In an app started from a terminal, git
 /// or ssh asking there (credentials, a passphrase, a host key) would otherwise be stopped by the kernel (SIGTTIN),
-/// stopping the app with it; without a terminal they fail, as when the app is started from the desktop
+/// stopping the app with it; without a terminal they fail, as when the app is started from the desktop.
+/// On Windows, starts it without a console window, which a console program (git.exe) started by a GUI app would get
 pub(crate) fn detach_from_terminal(command: &mut Command) -> &mut Command {
     #[cfg(unix)]
     // SAFETY: setsid is async-signal-safe and touches no memory
@@ -18,6 +19,11 @@ pub(crate) fn detach_from_terminal(command: &mut Command) -> &mut Command {
             libc::setsid();
             Ok(())
         });
+    }
+    #[cfg(windows)]
+    {
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
     }
     command
 }
