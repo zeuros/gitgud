@@ -20,9 +20,7 @@
 //! - `erase`: deletes the credential the server rejected, so the next attempt asks again
 //!
 //! Credentials are kept per protocol and host (plus the path when git sends it) in the keyring:
-//! - Linux: Secret Service, as git's own libsecret helper keeps them, so a terminal git using that helper and GitGud
-//!   share their credentials. A Flatpak reaches it when allowed to talk to `org.freedesktop.secrets`, else it keeps
-//!   them in the Secret portal's encrypted file of the app's
+//! - Linux: Secret Service, or in a Flatpak the Secret portal's encrypted file of the app's
 //! - macOS: the Keychain; Windows: the Credential Manager
 
 use std::collections::HashMap;
@@ -166,74 +164,21 @@ pub fn configure_git() {
 
 #[cfg(target_os = "linux")]
 mod keyring {
-    use super::{credential_url, matches_password, Credential, Request};
+    use super::{credential_url, matches_password, matches_username, Credential, Request};
     use std::collections::HashMap;
 
-    /// Git's libsecret helper's (git's contrib/credential/libsecret): items it saved are found here, and the other way
-    /// around. Like it, searches don't match the schema name
-    const SCHEMA: &str = "org.git.Password";
+    const SERVICE: &str = "GitGud";
 
-    /// The item attributes for a request, as git's libsecret helper names them; `user` only when a username is known
-    fn attributes(request: &Request, username: Option<&String>) -> HashMap<&'static str, String> {
-        let mut attributes = HashMap::new();
-        if let Some(protocol) = request.get("protocol") {
-            attributes.insert("protocol", protocol.clone());
-        }
-        if let Some(host) = request.get("host") {
-            // `host:port`: what follows the last colon is the port
-            let (server, port) = host.rsplit_once(':').map_or((host.as_str(), None), |(server, port)| (server, Some(port)));
-            attributes.insert("server", server.to_string());
-            if let Some(port) = port.and_then(|port| port.parse::<u16>().ok()).filter(|port| *port != 0) {
-                attributes.insert("port", port.to_string());
-            }
-        }
-        if let Some(path) = request.get("path").filter(|path| !path.is_empty()) {
-            attributes.insert("object", path.clone());
-        }
-        if let Some(username) = username {
-            attributes.insert("user", username.clone());
-        }
-        attributes
+    // One item per URL, holding the username with the password
+    fn attributes(request: &Request) -> Option<HashMap<&'static str, String>> {
+        Some(HashMap::from([("service", SERVICE.to_string()), ("url", credential_url(request)?)]))
     }
 
-    /// The password, then git's extra fields on their own lines, as git's libsecret helper writes the secret
-    fn secret_text(credential: &Credential) -> String {
-        let mut text = credential.password.clone();
-        if let Some(expiry) = &credential.password_expiry_utc {
-            text.push_str(&format!("\npassword_expiry_utc={expiry}"));
-        }
-        if let Some(token) = &credential.oauth_refresh_token {
-            text.push_str(&format!("\noauth_refresh_token={token}"));
-        }
-        text
-    }
-
-    fn parse_secret(username: String, text: &str) -> Credential {
-        let mut lines = text.split('\n');
-        let mut credential = Credential::new(username, lines.next().unwrap_or_default().to_string());
-        for line in lines {
-            if let Some(expiry) = line.strip_prefix("password_expiry_utc=") {
-                credential.password_expiry_utc = Some(expiry.to_string());
-            } else if let Some(token) = line.strip_prefix("oauth_refresh_token=") {
-                credential.oauth_refresh_token = Some(token.to_string());
-            }
-        }
-        credential
-    }
-
-    /// Secret Service, the user's keyring. A Flatpak not allowed to reach it gets the Secret portal's file instead
-    async fn open_keyring() -> oo7::Result<oo7::Keyring> {
-        match oo7::Keyring::host().await {
-            Ok(keyring) => Ok(keyring),
-            Err(_) if std::path::Path::new("/.flatpak-info").exists() => oo7::Keyring::sandboxed().await,
-            Err(error) => Err(error),
-        }
-    }
-
+    /// Secret Service, or the Secret portal's file in a Flatpak
     fn with_keyring<T>(operation: impl AsyncFnOnce(&oo7::Keyring) -> oo7::Result<T>) -> Option<T> {
         let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().ok()?;
         let result = runtime.block_on(async {
-            let keyring = open_keyring().await?;
+            let keyring = oo7::Keyring::new().await?;
             if keyring.is_locked().await? {
                 keyring.unlock().await?;
             }
@@ -242,80 +187,26 @@ mod keyring {
         result.map_err(|error| eprintln!("GitGud's credential helper: keyring: {error}")).ok()
     }
 
-    async fn credentials(keyring: &oo7::Keyring, request: &Request) -> oo7::Result<Vec<(oo7::Item, Credential)>> {
-        let mut credentials = Vec::new();
-        for item in keyring.search_items(&attributes(request, request.get("username"))).await? {
-            let Some(username) = item.attributes().await?.remove("user") else { continue };
-            let secret = item.secret().await?;
-            let Some(text) = secret.as_str() else { continue };
-            credentials.push((item, parse_secret(username, text)));
-        }
-        Ok(credentials)
-    }
-
     pub fn load(request: &Request) -> Option<Credential> {
-        with_keyring(async |keyring| Ok(credentials(keyring, request).await?.into_iter().next()))
-            .flatten()
-            .map(|(_, credential)| credential)
+        let attributes = attributes(request)?;
+        let secret = with_keyring(async |keyring| match keyring.search_items(&attributes).await?.first() {
+            Some(item) => Ok(Some(item.secret().await?)),
+            None => Ok(None),
+        })??;
+        let credential: Credential = serde_json::from_slice(secret.as_bytes()).ok()?;
+        matches_username(request, &credential).then_some(credential)
     }
 
     pub fn save(request: &Request, credential: &Credential) {
-        let mut attributes = attributes(request, Some(&credential.username));
-        attributes.insert(oo7::XDG_SCHEMA_ATTRIBUTE, SCHEMA.to_string());
-        let label = format!("Git: {}", credential_url(request).unwrap_or_default());
-        with_keyring(async |keyring| keyring.create_item(&label, &attributes, secret_text(credential), true).await);
+        let (Some(attributes), Ok(secret)) = (attributes(request), serde_json::to_string(credential)) else { return };
+        let label = format!("GitGud: {}", attributes["url"]);
+        with_keyring(async |keyring| keyring.create_item(&label, &attributes, secret, true).await);
     }
 
     pub fn erase(request: &Request) {
-        with_keyring(async |keyring| {
-            for (item, credential) in credentials(keyring, request).await? {
-                if matches_password(request, &credential) {
-                    item.delete().await?;
-                }
-            }
-            Ok(())
-        });
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        fn request(lines: &str) -> Request {
-            super::super::parse_request(lines.as_bytes())
-        }
-
-        #[test]
-        fn attributes_are_git_libsecret_helpers() {
-            let attributes = attributes(&request("protocol=https\nhost=example.com:8443\npath=team/repo.git\n"), None);
-            let expected: HashMap<&str, String> = [
-                ("protocol", "https"),
-                ("server", "example.com"),
-                ("port", "8443"),
-                ("object", "team/repo.git"),
-            ]
-            .into_iter()
-            .map(|(key, value)| (key, value.to_string()))
-            .collect();
-            assert_eq!(attributes, expected);
-
-            let ada = "ada".to_string();
-            let attributes = super::attributes(&request("protocol=https\nhost=github.com\n"), Some(&ada));
-            assert_eq!(attributes.get("user"), Some(&ada));
-            assert!(!attributes.contains_key("port") && !attributes.contains_key("object"));
-        }
-
-        #[test]
-        fn secret_text_round_trips_git_extra_fields() {
-            let credential = Credential {
-                password_expiry_utc: Some("1684189401".into()),
-                oauth_refresh_token: Some("xyzzy".into()),
-                ..Credential::new("ada".into(), "hunter2".into())
-            };
-            let text = secret_text(&credential);
-            assert_eq!(text, "hunter2\npassword_expiry_utc=1684189401\noauth_refresh_token=xyzzy");
-            assert_eq!(parse_secret("ada".into(), &text), credential);
-            assert_eq!(parse_secret("ada".into(), "hunter2"), Credential::new("ada".into(), "hunter2".into()));
+        let Some(attributes) = attributes(request) else { return };
+        if load(request).is_some_and(|saved| matches_password(request, &saved)) {
+            with_keyring(async |keyring| keyring.delete(&attributes).await);
         }
     }
 }
