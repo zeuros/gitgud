@@ -16,6 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {AgentWorktreeService} from './services/agent-worktree.service';
 import {ChangeDetectionStrategy, Component, effect, inject, viewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ToastModule} from 'primeng/toast';
@@ -97,6 +98,7 @@ export class AppComponent {
   constructor() {
     inject(AutoFetchService); // Starts auto-fetch
     inject(ThemeService);     // Applies theme from config
+    inject(AgentWorktreeService); // Offers agents in the main worktree a worktree of their own
 
     effect(() => this.activeContextMenu.register(this.globalMenu()));
     effect(() => this.router.navigate([this.gitRepositoryStore.hasRepositories() ? 'repo' : 'welcome-screen'], {replaceUrl: true}));

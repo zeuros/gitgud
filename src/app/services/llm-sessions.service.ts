@@ -17,7 +17,7 @@
  */
 
 import {computed, effect, inject, Injectable, linkedSignal, type Signal, signal, untracked} from '@angular/core';
-import {from, interval, startWith, switchMap} from 'rxjs';
+import {from, interval, startWith, switchMap, tap} from 'rxjs';
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {type GitgudClaudeAgent, gitgudClaudeAgents, isSameSession, llmConsoles, type LlmSession, llmSessionsByWorktree, parseClaudeStatus} from '../utils/llm-session-utils';
@@ -50,10 +50,13 @@ export class LlmSessionsService {
   })();
   private claudeSessionsDir = `${this.claudeConfigDir}/sessions`;
 
+  /** Whether sessions holds a first reading, rather than its initial empty list */
+  hasReadSessions = signal(false);
   /** The LLM consoles running, the oldest started first */
   sessions: Signal<LlmSession[]> = toSignal(interval(POLL_MS).pipe(
     startWith(0),
     switchMap(() => from(this.readSessions().catch(() => []))),
+    tap(() => this.hasReadSessions.set(true)),
   ), {initialValue: []});
 
   /** The sessions open in each worktree, by worktree path */

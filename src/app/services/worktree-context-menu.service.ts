@@ -78,10 +78,11 @@ export class WorktreeContextMenuService {
     },
   ]);
 
+  private leaveAndRemove = (successMsg?: string) => this.removeWorktree(this.path()!, successMsg);
+
   // Removing the active worktree switches back to the main worktree first, so git doesn't run from the folder being removed
-  private leaveAndRemove = (successMsg?: string) => {
-    const path = this.path()!;
-    const leave: Observable<unknown> = this.isCurrent() ? this.gitRepository.switchWorktree(this.currentRepo.id()!) : of(undefined);
+  removeWorktree = (path: string, successMsg?: string) => {
+    const leave: Observable<unknown> = this.currentRepo.isCurrentWorktree(path) ? this.gitRepository.switchWorktree(this.currentRepo.id()!) : of(undefined);
     return leave.pipe(
       switchMap(() => this.removeOrForce(['worktree', 'remove', path], successMsg)),
     );
