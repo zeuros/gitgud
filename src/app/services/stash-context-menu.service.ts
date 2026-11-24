@@ -17,7 +17,7 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import type {MenuItem} from 'primeng/api';
+import type {ShortcutMenuItem} from '../utils/menu-shortcuts';
 import {GitApiService} from './git/git-api.service';
 import {GitRefreshService} from './git-refresh.service';
 import {ToastService} from './toast.service';
@@ -39,13 +39,13 @@ export class StashContextMenuService {
   // Its position in the stash list, e.g. "stash@{2}"
   private stashRef = computed(() => `stash@{${this.currentRepo.stashes().findIndex(s => s.sha === this.sha())}}`);
 
-  stashContextMenu = computed<MenuItem[]>(() => [
-    {label: 'Apply stash', icon: 'fa fa-download', command: this.applyStash},
-    {label: 'Pop stash', icon: 'fa fa-level-down', command: this.popStash},
+  stashContextMenu = computed<ShortcutMenuItem[]>(() => [
+    {label: 'Apply stash', icon: 'fa fa-download', command: this.applyStash, shortcut: 'A'},
+    {label: 'Pop stash', icon: 'fa fa-level-down', command: this.popStash, shortcut: 'P'},
     {separator: true},
     {label: 'Drop stash', icon: 'fa fa-trash', command: this.dropStash},
     {separator: true},
-    {label: 'Copy stash sha', icon: 'fa fa-copy', command: this.copyCommitSha},
+    {label: 'Copy stash sha', icon: 'fa fa-copy', command: this.copyCommitSha, shortcut: 'Ctrl+C'},
   ]);
 
   private run = (args: (string | undefined)[], successMsg?: string) =>

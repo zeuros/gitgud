@@ -30,6 +30,7 @@ import {AutoFetchService} from './services/auto-fetch.service';
 import {Router, RouterOutlet} from '@angular/router';
 import {ThemeService} from './services/theme.service'; // bootstraps theme reactivity
 import {ActiveContextMenuService} from './services/active-context-menu.service';
+import {type ShortcutMenuItem, shortcutLabel} from './utils/menu-shortcuts';
 import {FixupService} from './services/fixup.service';
 import {MessageService} from 'primeng/api';
 import {GitRepositoryService} from './services/git-repository.service';
@@ -78,6 +79,10 @@ export class AppComponent {
   };
 
   protected readonly ACTION_TOAST_KEY = ACTION_TOAST_KEY;
+
+  protected shortcutLabel = shortcutLabel;
+
+  protected $menuItem = (item: ShortcutMenuItem) => item;
 
   protected runToastAction = (action: ToastAction) => {
     this.messageService.clear(ACTION_TOAST_KEY);

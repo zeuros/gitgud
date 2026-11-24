@@ -45,6 +45,8 @@
             class="sober"
             text
             (click)="push()"
+            [pTooltip]="withShortcut('Push', TOOLBAR_SHORTCUTS.push)"
+            tooltipPosition="bottom"
             [disabled]="!!loading()"
     >
         <i [class]="loading() === 'push' ? 'pi pi-spin pi-spinner' : 'fa fa-arrow-up'"></i>
@@ -55,6 +57,8 @@
             class="sober"
             text
             (click)="pull()"
+            [pTooltip]="withShortcut('Pull', TOOLBAR_SHORTCUTS.pull)"
+            tooltipPosition="bottom"
             [disabled]="!!loading()"
     >
         <i [class]="loading() === 'pull' ? 'pi pi-spin pi-spinner' : 'fa fa-arrow-down'"></i>
@@ -67,6 +71,8 @@
             class="sober"
             text
             (click)="stash()"
+            [pTooltip]="withShortcut('Stash all changes', TOOLBAR_SHORTCUTS.stash)"
+            tooltipPosition="bottom"
             [disabled]="!!loading() || !hasWorkDirChanges()"
     >
         <i [class]="loading() === 'stash' ? 'pi pi-spin pi-spinner' : 'fa fa-archive'"></i>
@@ -77,6 +83,8 @@
             class="sober"
             text
             (click)="pop()"
+            [pTooltip]="withShortcut('Pop the latest stash', TOOLBAR_SHORTCUTS.pop)"
+            tooltipPosition="bottom"
             [disabled]="!!loading() || !hasStashes()"
     >
         <i [class]="loading() === 'pop' ? 'pi pi-spin pi-spinner' : 'fa fa-inbox'"></i>
@@ -89,6 +97,8 @@
             class="sober"
             text
             (click)="createBranch.createBranchAtSha(currentRepo.headSha()!)"
+            [pTooltip]="withShortcut('Create a branch at HEAD', TOOLBAR_SHORTCUTS.createBranch)"
+            tooltipPosition="bottom"
     >
         <i class="fa fa-code-fork"></i>
         <span>Branch</span>
@@ -98,6 +108,8 @@
             class="sober"
             text
             (click)="fetch()"
+            [pTooltip]="withShortcut('Fetch', TOOLBAR_SHORTCUTS.fetch)"
+            tooltipPosition="bottom"
             [disabled]="!!loading()"
     >
         <i [class]="loading() === 'fetch' ? 'pi pi-spin pi-spinner' : 'fa fa-refresh'"></i>
@@ -113,7 +125,7 @@
             class="sober"
             text
             rounded
-            [pTooltip]="undo.undoTooltip()"
+            [pTooltip]="withShortcut(undo.undoTooltip(), TOOLBAR_SHORTCUTS.undo)"
             tooltipPosition="bottom"
             (click)="undo.undo()"
             [disabled]="!undo.undoAvailable()"
@@ -123,13 +135,13 @@
             class="sober"
             text
             rounded
-            [pTooltip]="undo.redoTooltip()"
+            [pTooltip]="withShortcut(undo.redoTooltip(), TOOLBAR_SHORTCUTS.redo)"
             tooltipPosition="bottom"
             (click)="undo.redo()"
             [disabled]="!undo.redoAvailable()"
             iconOnly
     ><i class="fa fa-repeat"></i></button>
-    <button pButton class="sober" text rounded pTooltip="Git command history" tooltipPosition="bottom" (click)="openShellHistoryDialog()" iconOnly><i class="fa fa-terminal"></i></button>
+    <button pButton class="sober" text rounded [pTooltip]="withShortcut('Git command history', TOOLBAR_SHORTCUTS.gitCommandHistory)" tooltipPosition="bottom" (click)="openShellHistoryDialog()" iconOnly><i class="fa fa-terminal"></i></button>
     @if (updateCheck.availableRelease(); as release) {
         <button pButton
                 class="sober update-btn"
@@ -141,7 +153,7 @@
                 iconOnly
         ><i class="fa fa-arrow-circle-up"></i></button>
     }
-    <button pButton class="sober" text rounded pTooltip="Settings" tooltipPosition="bottom" (click)="openSettingsDialog()" iconOnly><i class="fa fa-cog"></i></button>
+    <button pButton class="sober" text rounded [pTooltip]="withShortcut('Settings', TOOLBAR_SHORTCUTS.settings)" tooltipPosition="bottom" (click)="openSettingsDialog()" iconOnly><i class="fa fa-cog"></i></button>
 </div>
 
 <div class="toolbar-end">

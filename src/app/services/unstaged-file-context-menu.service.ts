@@ -17,7 +17,7 @@
  */
 
 import {computed, inject, Injectable, signal, type WritableSignal} from '@angular/core';
-import type {MenuItem} from 'primeng/api';
+import type {ShortcutMenuItem} from '../utils/menu-shortcuts';
 import type {WorkingDirectoryFileChange} from '../lib/github-desktop/model/workdir';
 import {WorkingDirectoryService} from './git/working-directory.service';
 import {GitApiService} from './git/git-api.service';
@@ -39,7 +39,7 @@ export class UnstagedFileContextMenuService {
   selectedFiles = signal<WorkingDirectoryFileChange[]>([]);
   staged = signal(false);
 
-  contextMenu = computed<MenuItem[]>(() => {
+  contextMenu = computed<ShortcutMenuItem[]>(() => {
     const files = this.selectedFiles();
     const count = files.length;
     const multi = count > 1;
@@ -47,17 +47,17 @@ export class UnstagedFileContextMenuService {
 
     return [
       this.staged()
-        ? {label: label('Unstage'), icon: 'fa fa-minus', command: this.unstage}
-        : {label: label('Stage'), icon: 'fa fa-plus', command: this.stage},
+        ? {label: label('Unstage'), icon: 'fa fa-minus', command: this.unstage, shortcut: 'U'}
+        : {label: label('Stage'), icon: 'fa fa-plus', command: this.stage, shortcut: 'S'},
       {separator: true},
       ...(this.staged() ? [] : [{label: label('Discard changes'), icon: 'fa fa-trash', styleClass: 'danger-menuitem', command: this.discard}]),
       ...(!multi && files[0]?.status.kind !== AppFileStatusKind.Untracked ? [
-        {label: 'File history', icon: 'fa fa-history', command: () => this.openTool(this.fileDiffPanel.historyOpen)},
-        {label: 'Blame', icon: 'fa fa-user', command: () => this.openTool(this.fileDiffPanel.blameOpen)},
+        {label: 'File history', icon: 'fa fa-history', command: () => this.openTool(this.fileDiffPanel.historyOpen), shortcut: 'H'},
+        {label: 'Blame', icon: 'fa fa-user', command: () => this.openTool(this.fileDiffPanel.blameOpen), shortcut: 'B'},
         {separator: true},
       ] : []),
       ...(!multi ? [
-        {label: 'Copy file path', icon: 'fa fa-copy', command: this.copyPath},
+        {label: 'Copy file path', icon: 'fa fa-copy', command: this.copyPath, shortcut: 'Ctrl+C'},
         {label: 'Show in folder', icon: 'fa fa-folder-open', command: this.showInFolder},
       ] : []),
     ];

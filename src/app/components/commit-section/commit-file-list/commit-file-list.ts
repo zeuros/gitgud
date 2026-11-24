@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, inject, input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, ElementRef, inject, input} from '@angular/core';
 import {directory, fileName} from '../../../utils/utils';
 import {FormsModule} from '@angular/forms';
 import {Listbox} from 'primeng/listbox';
@@ -24,6 +24,7 @@ import {type AppFileStatusKind, type CommittedFileChange, FileStatusesIcons} fro
 import {FileDiffPanelService} from '../../../services/file-diff-panel.service';
 import {ThemeService} from '../../../services/theme.service';
 import {CommittedFileContextMenuService} from '../../../services/committed-file-context-menu.service';
+import {ActiveContextMenuService} from '../../../services/active-context-menu.service';
 
 @Component({
   selector: 'gitgud-commit-file-list',
@@ -38,6 +39,7 @@ import {CommittedFileContextMenuService} from '../../../services/committed-file-
                scrollHeight="auto"
                optionLabel="path"
                (contextmenu)="openContextMenu($event)"
+               (keydown)="onKeydown($event)"
                class="fill-height">
       <ng-template #item let-f>
         @let file = file$(f);
@@ -73,6 +75,8 @@ export class CommitFileListComponent {
   protected fileDiffPanel = inject(FileDiffPanelService);
   private theme = inject(ThemeService);
   private contextMenu = inject(CommittedFileContextMenuService);
+  private activeContextMenu = inject(ActiveContextMenuService);
+  private element = inject<ElementRef<HTMLElement>>(ElementRef);
 
   // Listened on the listbox rather than in the item template, so the row's padding opens the menu too
   protected openContextMenu(event: MouseEvent) {
@@ -81,6 +85,18 @@ export class CommitFileListComponent {
     const index = Array.from(option.parentElement!.querySelectorAll(':scope > .p-listbox-option')).indexOf(option);
     const file = this.files()[index];
     if (file) this.contextMenu.open(file, event);
+  }
+
+  // The shown file's menu: see onMenuOwnerKeydown
+  protected onKeydown(event: KeyboardEvent) {
+    const shownFile = this.fileDiffPanel.selectedFile();
+    const file = this.files().find(f => f.path === shownFile?.path);
+    if (!file) return;
+    this.activeContextMenu.onMenuOwnerKeydown(
+      event,
+      () => this.contextMenu.contextMenu(file),
+      () => this.element.nativeElement.querySelector('.p-listbox-option[aria-selected="true"]'),
+    );
   }
 
   protected iconDropShadow(kind: AppFileStatusKind) {

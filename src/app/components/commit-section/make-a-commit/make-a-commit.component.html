@@ -68,6 +68,7 @@
                 <p-table
                         [value]="workDirStatus.unstaged"
                         [selection]="workingDirSelection.selectedUnstagedFiles()"
+                        (keydown)="workingDirSelection.onFileListKeydown(false, $event)"
                         (selectionChange)="workingDirSelection.onStagingFileSelectionChange($event, false)"
                         dataKey="path"
                         selectionMode="multiple"
@@ -121,6 +122,7 @@
                 <p-table
                         [value]="workDirStatus.staged"
                         [selection]="workingDirSelection.selectedStagedFiles()"
+                        (keydown)="workingDirSelection.onFileListKeydown(true, $event)"
                         (selectionChange)="workingDirSelection.onStagingFileSelectionChange($event, true)"
                         dataKey="path"
                         selectionMode="multiple"

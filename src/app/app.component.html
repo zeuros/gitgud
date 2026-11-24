@@ -15,7 +15,29 @@
   </ng-template>
 </p-toast>
 <p-confirm-dialog [style]="{width: '32rem', minWidth: '24rem', maxWidth: '60vw'}"/>
-<p-context-menu #globalMenu [model]="activeContextMenu.contextMenu()" appendTo="body"/>
+<p-context-menu #globalMenu [model]="activeContextMenu.shownContextMenu()" appendTo="body">
+  <ng-template #item let-menuItem>
+    @let item = $menuItem(menuItem);
+    <a class="p-contextmenu-item-link" tabindex="-1">
+      @if (item.icon) {
+        <span class="p-contextmenu-item-icon" [class]="item.icon" aria-hidden="true"></span>
+      }
+      <span class="p-contextmenu-item-label">
+        @if (item.labelParts; as parts) {
+          <span>{{ parts[0] }}</span><u class="menu-mnemonic">{{ parts[1] }}</u><span>{{ parts[2] }}</span>
+        } @else {
+          <span>{{ item.label }}</span>
+        }
+      </span>
+      @if (item.shortcut) {
+        <kbd class="menu-shortcut">{{ shortcutLabel(item.shortcut) }}</kbd>
+      }
+      @if (item.items?.length) {
+        <i class="p-contextmenu-submenu-icon fa fa-angle-right" aria-hidden="true"></i>
+      }
+    </a>
+  </ng-template>
+</p-context-menu>
 
 <p-dialog header="Git not found" [visible]="!gitApi.gitFound()" [modal]="true" [closable]="false" [style]="{width: '28rem'}">
   <p>Git is not installed or not in PATH.</p>

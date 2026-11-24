@@ -46,11 +46,35 @@ import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell
 import {recentConsoleMessages, reportIssueUrl} from '../../utils/report-issue.utils';
 import {parseRemote, type RemoteAndBranch} from '../../utils/branch-utils';
 import {type GitCommandRecord, GitCommandHistoryService} from '../../services/git-command-history.service';
+import {isTextInput, shortcutLabel, shortcutMatches} from '../../utils/menu-shortcuts';
 
 const REPORTED_GIT_COMMANDS = 10;
 
 const gitCommandLine = ({args, timestamp, success}: GitCommandRecord) =>
   `[${timestamp.toISOString()}] ${success ? 'ok' : 'failed'}: git ${args.join(' ')}`;
+
+export const TOOLBAR_SHORTCUTS = {
+  push: 'Ctrl+P',
+  pull: 'Ctrl+Shift+P',
+  fetch: 'Ctrl+Shift+F',
+  stash: 'Ctrl+Shift+S',
+  pop: 'Ctrl+Shift+U',
+  createBranch: 'Ctrl+Shift+N',
+  undo: 'Ctrl+Z',
+  redo: 'Ctrl+Shift+Z',
+  redoAlternative: 'Ctrl+Y',
+  refresh: 'F5',
+  gitCommandHistory: 'Ctrl+Shift+H',
+  settings: 'Ctrl+,',
+} as const;
+
+const ZOOM_PERCENTS = [70, 80, 90, 100, 110, 120, 130, 140, 150];
+
+interface ShortcutAction {
+  shortcuts: string[];
+  enabled: boolean;
+  run: () => void;
+}
 
 type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'operation-continue' | 'operation-skip' | 'operation-abort';
 
@@ -62,7 +86,7 @@ type ToolbarAction = 'push' | 'pull' | 'fetch' | 'stash' | 'pop' | 'operation-co
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss',
   // Below the tab strip, its empty space moves the window too
-  host: {'data-tauri-drag-region': 'deep'},
+  host: {'data-tauri-drag-region': 'deep', '(document:keydown)': 'onKeydown($event)'},
 })
 export class ToolbarComponent implements OnInit {
 
@@ -88,7 +112,7 @@ export class ToolbarComponent implements OnInit {
   // Nothing left to commit: git refuses to continue and suggests skipping instead
   protected canContinueOperation = computed(() => !this.canSkipOperation() || this.hasWorkDirChanges());
   protected zoomPercent = computed(() => Math.round(this.settings.zoom * 100));
-  protected zoomItems = computed<MenuItem[]>(() => [70, 80, 90, 100, 110, 120, 130, 140, 150].map(percent => ({
+  protected zoomItems = computed<MenuItem[]>(() => ZOOM_PERCENTS.map(percent => ({
     label: `${percent}%`,
     icon: percent === this.zoomPercent() ? 'pi pi-check' : 'pi pi-fw',
     command: () => {
@@ -116,9 +140,52 @@ export class ToolbarComponent implements OnInit {
     return `${Math.floor(secs / 86400)}d ago`;
   });
 
+  protected readonly TOOLBAR_SHORTCUTS = TOOLBAR_SHORTCUTS;
+  protected withShortcut = (tooltip: string, shortcut: string) => `${tooltip} (${shortcutLabel(shortcut)})`;
+
   ngOnInit() {
     this.undo.refreshTooltip();
   }
+
+  // The toolbar's buttons from the keyboard, outside text fields and dialogs. A disabled button's shortcut does nothing
+  protected onKeydown = (event: KeyboardEvent) => {
+    if (event.defaultPrevented || isTextInput(event.target) || document.querySelector('.p-dialog')) return;
+    const action = this.shortcutActions().find(({shortcuts}) => shortcuts.some(shortcut => shortcutMatches(shortcut, event)))
+      ?? this.zoomShortcut(event);
+    if (!action) return;
+
+    event.preventDefault();
+    if (action.enabled) action.run();
+  };
+
+  private shortcutActions = (): ShortcutAction[] => {
+    const idle = !this.loading();
+    const headSha = this.currentRepo.headSha();
+    return [
+      {shortcuts: [TOOLBAR_SHORTCUTS.push], enabled: idle, run: this.push},
+      {shortcuts: [TOOLBAR_SHORTCUTS.pull], enabled: idle, run: this.pull},
+      {shortcuts: [TOOLBAR_SHORTCUTS.fetch], enabled: idle, run: this.fetch},
+      {shortcuts: [TOOLBAR_SHORTCUTS.stash], enabled: idle && this.hasWorkDirChanges(), run: this.stash},
+      {shortcuts: [TOOLBAR_SHORTCUTS.pop], enabled: idle && this.hasStashes(), run: this.pop},
+      {shortcuts: [TOOLBAR_SHORTCUTS.createBranch], enabled: !!headSha, run: () => this.createBranch.createBranchAtSha(headSha!)},
+      {shortcuts: [TOOLBAR_SHORTCUTS.undo], enabled: this.undo.undoAvailable(), run: this.undo.undo},
+      {shortcuts: [TOOLBAR_SHORTCUTS.redo, TOOLBAR_SHORTCUTS.redoAlternative], enabled: this.undo.redoAvailable(), run: this.undo.redo},
+      {shortcuts: [TOOLBAR_SHORTCUTS.refresh], enabled: true, run: this.gitRefresh.doRefreshAll},
+      {shortcuts: [TOOLBAR_SHORTCUTS.gitCommandHistory], enabled: true, run: this.openShellHistoryDialog},
+      {shortcuts: [TOOLBAR_SHORTCUTS.settings], enabled: true, run: this.openSettingsDialog},
+    ];
+  };
+
+  // Ctrl+= / Ctrl++ and Ctrl+- step through the zoom menu's levels, Ctrl+0 goes back to 100%
+  private zoomShortcut = (event: KeyboardEvent): ShortcutAction | undefined => {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey) return undefined;
+    const current = ZOOM_PERCENTS.indexOf(this.zoomPercent());
+    const step = {'=': 1, '+': 1, '-': -1}[event.key];
+    const percent = event.key == '0' ? 100 : step && ZOOM_PERCENTS[Math.min(ZOOM_PERCENTS.length - 1, Math.max(0, (current < 0 ? 3 : current) + step))];
+    return percent ? {shortcuts: [], enabled: true, run: () => {
+      this.settings.zoom = percent / 100;
+    }} : undefined;
+  };
 
   protected push = () => this.runAction('push', this.upstreamMatchesLocal().pipe(
     switchMap(ok => ok ? this.checkBehindThenPush() : this.openSetUpstreamDialog()),

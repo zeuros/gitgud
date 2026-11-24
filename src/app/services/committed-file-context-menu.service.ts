@@ -17,7 +17,8 @@
  */
 
 import {inject, Injectable, type WritableSignal} from '@angular/core';
-import {ConfirmationService, type MenuItem} from 'primeng/api';
+import {ConfirmationService} from 'primeng/api';
+import type {ShortcutMenuItem} from '../utils/menu-shortcuts';
 import {AppFileStatusKind, type CommittedFileChange} from '../lib/github-desktop/model/status';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {ToastService} from './toast.service';
@@ -43,21 +44,21 @@ export class CommittedFileContextMenuService {
     this.activeContextMenu.show(this.contextMenu(file), event);
   };
 
-  private contextMenu = (file: CommittedFileChange): MenuItem[] => {
+  contextMenu = (file: CommittedFileChange): ShortcutMenuItem[] => {
     // A file the commit deleted has no content at that commit
     const existsAtCommit = file.status.kind !== AppFileStatusKind.Deleted;
 
     return [
-      {label: 'File history', icon: 'fa fa-history', command: () => this.openTool(file, this.fileDiffPanel.historyOpen)},
-      {label: 'Blame', icon: 'fa fa-user', command: () => this.openTool(file, this.fileDiffPanel.blameOpen)},
+      {label: 'File history', icon: 'fa fa-history', command: () => this.openTool(file, this.fileDiffPanel.historyOpen), shortcut: 'H'},
+      {label: 'Blame', icon: 'fa fa-user', command: () => this.openTool(file, this.fileDiffPanel.blameOpen), shortcut: 'B'},
       {separator: true},
       ...(existsAtCommit ? [
         {label: 'Open file at this commit', icon: 'fa fa-external-link', command: () => this.openAtCommit(file)},
         {label: 'Restore file from this commit', icon: 'fa fa-undo', command: () => this.restore(file)},
         {separator: true},
       ] : []),
-      {label: 'Copy file path', icon: 'fa fa-copy', command: () => this.copy(this.fullPath(file))},
-      {label: 'Copy relative path', icon: 'fa fa-copy', command: () => this.copy(file.path)},
+      {label: 'Copy file path', icon: 'fa fa-copy', command: () => this.copy(this.fullPath(file)), shortcut: 'Ctrl+Shift+C'},
+      {label: 'Copy relative path', icon: 'fa fa-copy', command: () => this.copy(file.path), shortcut: 'Ctrl+C'},
       {label: 'Show in folder', icon: 'fa fa-folder-open', command: () => this.showInFolder(file)},
     ];
   };

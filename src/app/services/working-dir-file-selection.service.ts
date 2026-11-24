@@ -63,8 +63,21 @@ export class WorkingDirFileSelectionService {
     const currentSelection = staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles();
     if (!currentSelection.some(f => f.path === file.path))
       (staged ? this.selectedStagedFiles : this.selectedUnstagedFiles).set([file]);
-    this.unstagedContextMenu.selectedFiles.set(staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles());
+    this.activeContextMenu.show(this.selectionContextMenu(staged)!, event);
+  };
+
+  // The selected files' menu, on keys pressed in their list: see onMenuOwnerKeydown
+  onFileListKeydown = (staged: boolean, event: KeyboardEvent) => this.activeContextMenu.onMenuOwnerKeydown(
+    event,
+    () => this.selectionContextMenu(staged),
+    () => (event.target as Element).closest('tr'),
+  );
+
+  private selectionContextMenu = (staged: boolean) => {
+    const selection = staged ? this.selectedStagedFiles() : this.selectedUnstagedFiles();
+    if (!selection.length) return undefined;
+    this.unstagedContextMenu.selectedFiles.set(selection);
     this.unstagedContextMenu.staged.set(staged);
-    this.activeContextMenu.show(this.unstagedContextMenu.contextMenu(), event);
+    return this.unstagedContextMenu.contextMenu();
   };
 }

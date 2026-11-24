@@ -17,7 +17,7 @@
  */
 
 import {computed, inject, Injectable, signal} from '@angular/core';
-import type {MenuItem} from 'primeng/api';
+import type {ShortcutMenuItem} from '../utils/menu-shortcuts';
 import {ToastService} from './toast.service';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import type {DisplayRef} from '../lib/github-desktop/model/display-ref';
@@ -66,16 +66,16 @@ export class CommitContextMenuService {
     return chain && this.onHeadHistory(chain[0].sha) ? chain : undefined;
   });
 
-  commitContextMenu = computed<MenuItem[]>(() => [
+  commitContextMenu = computed<ShortcutMenuItem[]>(() => [
     {label: 'Checkout this commit', icon: 'fa fa-code-branch', command: this.checkoutCommit},
     {separator: true},
-    {label: 'Create branch here', icon: 'fa fa-plus', command: this.createBranchHere},
+    {label: 'Create branch here', icon: 'fa fa-plus', command: this.createBranchHere, shortcut: 'B'},
     {label: 'Cherry pick commit', icon: 'fa fa-hand-grab-o', command: this.cherryPick},
     {
       label: `Reset ${this.currentRepo.headBranch()?.name} to this commit`,
       icon: 'fa fa-history',
       items: [{
-        label: 'Soft — Undo commits, keep changes stage',
+        label: 'Soft — Undo commits, keep changes staged',
         command: () => this.reset('soft'),
         tooltipOptions: {
           tooltipLabel: 'All commits between this commit and HEAD are uncommitted, their changes are put staged in working directory',
@@ -102,20 +102,27 @@ export class CommitContextMenuService {
     },
     {label: 'Revert commit', icon: 'fa fa-undo', command: this.revertCommit},
     {separator: true},
-    {label: 'Interactive rebase from this commit', icon: 'fa fa-list-ol', command: () => this.interactiveRebase.open(this.parentSha(), this.parentSha() && short(this.parentSha())), visible: this.isOnHeadHistory()},
+    {
+      label: 'Interactive rebase from this commit',
+      icon: 'fa fa-list-ol',
+      command: () => this.interactiveRebase.open(this.parentSha(), this.parentSha() && short(this.parentSha())),
+      visible: this.isOnHeadHistory(),
+      shortcut: 'I',
+    },
     {
       label: this.squashesSelection() ? `Squash ${this.squashChain()?.length} commits` : 'Squash into previous commit',
       icon: 'fa fa-compress',
       command: () => this.squashService.squash(this.squashChain()!),
       visible: !!this.squashChain(),
+      shortcut: 'S',
     },
     {label: 'Drop commit', icon: 'fa fa-trash', command: this.dropCommit},
     {label: 'Move commit up', icon: 'fa fa-arrow-up', command: () => this.moveCommit('up'), visible: !!this.childCommitSha()},
     {label: 'Move commit down', icon: 'fa fa-arrow-down', command: () => this.moveCommit('down'), visible: !!this.parentSha()},
     {separator: true},
-    {label: 'Copy commit sha', icon: 'fa fa-copy', command: this.copyCommitSha},
+    {label: 'Copy commit sha', icon: 'fa fa-copy', command: this.copyCommitSha, shortcut: 'Ctrl+C'},
     {separator: true},
-    {label: 'Create tag here', icon: 'fa fa-tag', command: this.createTagHere},
+    {label: 'Create tag here', icon: 'fa fa-tag', command: this.createTagHere, shortcut: 'T'},
   ]);
 
   protected checkoutCommit = () =>

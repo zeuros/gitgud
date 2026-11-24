@@ -18,6 +18,7 @@
 
 import {computed, effect, inject, Injectable, signal, untracked} from '@angular/core';
 import {ConfirmationService, type MenuItem, type TreeNode} from 'primeng/api';
+import type {ShortcutMenuItem} from '../utils/menu-shortcuts';
 import {catchError, EMPTY, filter, first, switchMap, throwError} from 'rxjs';
 import {GitApiService} from './git/git-api.service';
 import type {Branch} from '../lib/github-desktop/model/branch';
@@ -75,7 +76,7 @@ export class BranchContextMenuService {
   private countLeaves = (node: TreeNode<Branch>): number =>
     node.children?.length ? node.children.reduce((n, c) => n + this.countLeaves(c), 0) : 1;
 
-  branchContextMenu = computed<MenuItem[]>(() => {
+  branchContextMenu = computed<ShortcutMenuItem[]>(() => {
     const node = this.selectedNode();
     if (!node) return [];
 
@@ -119,7 +120,7 @@ export class BranchContextMenuService {
       },
       {separator: true},
       // Commit ops
-      {label: 'Create branch here', icon: 'fa fa-plus', command: () => this.createBranch.createBranchAtSha(branch.tip.sha)},
+      {label: 'Create branch here', icon: 'fa fa-plus', command: () => this.createBranch.createBranchAtSha(branch.tip.sha), shortcut: 'B'},
       {
         label: `Reset ${head} to this commit`,
         icon: 'fa fa-history',
@@ -143,14 +144,14 @@ export class BranchContextMenuService {
       },
       {separator: true},
       // Branch management
-      ...isLocal ? [{label: `Rename ${name}`, icon: 'fa fa-pencil', command: () => this.renameBranch(name)}, lock(deleteItem)] : [deleteItem],
+      ...isLocal ? [{label: `Rename ${name}`, icon: 'fa fa-pencil', command: () => this.renameBranch(name), shortcut: 'F2'}, lock(deleteItem)] : [deleteItem],
       {separator: true},
       // Copy
-      {label: 'Copy branch name', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(name)},
+      {label: 'Copy branch name', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(name), shortcut: 'Ctrl+C'},
       {label: 'Copy commit SHA', icon: 'fa fa-copy', command: () => navigator.clipboard.writeText(branch.tip.sha)},
       {separator: true},
       // Tags
-      {label: 'Create tag here', icon: 'fa fa-tag', command: () => this.createTag.createTag(name)},
+      {label: 'Create tag here', icon: 'fa fa-tag', command: () => this.createTag.createTag(name), shortcut: 'T'},
     ];
   });
 

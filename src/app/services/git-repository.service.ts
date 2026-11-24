@@ -126,14 +126,20 @@ export class GitRepositoryService {
     this.gitRefresh.doRefreshAll();
   };
 
-  /** Ctrl+T: new tab, Ctrl+W: close the current tab, Ctrl+Shift+T: reopen the last closed one */
+  /**
+   * Ctrl+T: new tab, Ctrl+W: close the current tab, Ctrl+Shift+T: reopen the last closed one, Ctrl+Tab / Ctrl+PageDown:
+   * next tab, Ctrl+Shift+Tab / Ctrl+PageUp: previous tab, Ctrl+1…8: that tab, Ctrl+9: the last one
+   */
   handleTabShortcut = (event: KeyboardEvent) => {
     const {ctrlKey, shiftKey, altKey} = event;
     const key = event.key.toLowerCase(); // The typed letter, not the physical key (code): Ctrl+W is Ctrl+Z's key on AZERTY
     const store = this.gitRepositoryStore;
     if (!ctrlKey || altKey) return;
 
-    if (key == 't' && shiftKey) {
+    const switchedTo = this.switchedTabIndex(event);
+    if (switchedTo !== undefined) {
+      this.selectTab(switchedTo);
+    } else if (key == 't' && shiftKey) {
       this.reopenClosedRepository();
     } else if (key == 't') {
       if (store.hasRepositories()) store.openNewTab(); // Without repositories, the welcome screen already is the new tab
@@ -144,6 +150,38 @@ export class GitRepositoryService {
       return;
     }
     event.preventDefault();
+  };
+
+  // The tab Ctrl+Tab, Ctrl+PageUp / PageDown or Ctrl+digit switch to
+  private switchedTabIndex = ({key, code, shiftKey}: KeyboardEvent) => {
+    if (key == 'Tab') return this.selectedTabIndex() + (shiftKey ? -1 : 1);
+    if (key == 'PageDown' || key == 'PageUp') return this.selectedTabIndex() + (key == 'PageUp' ? -1 : 1);
+
+    const digit = /^Digit[1-9]$/.test(code) && !shiftKey ? Number(code.at(-1)) : undefined; // The key: digits are shifted on AZERTY
+    if (!digit) return undefined;
+    return digit == 9 ? this.tabCount() - 1 : Math.min(digit - 1, this.tabCount() - 1);
+  };
+
+  // Repositories' tabs, then the new tab when open
+  private tabCount = () => this.gitRepositoryStore.repositories().length + (this.gitRepositoryStore.newTabOpen() ? 1 : 0);
+
+  private selectedTabIndex = () => this.gitRepositoryStore.newTabSelected()
+    ? this.gitRepositoryStore.repositories().length
+    : this.gitRepositoryStore.selectedIndex();
+
+  // Wraps around
+  private selectTab = (index: number) => {
+    const count = this.tabCount();
+    if (!count) return;
+    const tabIndex = (index + count) % count;
+    if (tabIndex == this.selectedTabIndex()) return;
+
+    if (tabIndex == this.gitRepositoryStore.repositories().length) {
+      this.gitRepositoryStore.activateNewTab();
+    } else {
+      this.gitRepositoryStore.selectRepository(tabIndex);
+      this.gitRefresh.doRefreshAll();
+    }
   };
 
   initRepository = () => {

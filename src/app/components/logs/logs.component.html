@@ -62,6 +62,7 @@
         @let isDetachedHead = currentRepo.detachedHeadSha() === commit.sha;
         @let selected = selectedShas.has(commit.sha);
         <tr class="commit-row {{ commit.highlight }}"
+            [attr.data-sha]="commit.sha"
             [class.selected]="selected"
             [attr.aria-selected]="selected"
             [style.padding-bottom.px]="NODES_VERTICAL_SPACING / 2"

@@ -238,8 +238,8 @@ export class LogsComponent {
 
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    const {ctrlKey, code} = event;
-    if (ctrlKey && code == 'KeyF') {
+    const {ctrlKey, shiftKey, code} = event;
+    if (ctrlKey && !shiftKey && code == 'KeyF') {
       event.preventDefault();
       this.showSearchBar.set(true);
       this.searchFocusRequest.update(n => n + 1);
@@ -338,9 +338,44 @@ export class LogsComponent {
     } else if (event.code === 'KeyA' && (event.ctrlKey || event.metaKey)) {
       this.setSelection(selectAll(rowKeys));
     } else {
+      this.onFocusedRowKeydown(event);
       return;
     }
     event.preventDefault();
+  };
+
+  // The focused row's menu: see onMenuOwnerKeydown
+  private onFocusedRowKeydown = (event: KeyboardEvent) => {
+    const commit = this.focusedRow();
+    if (!commit) return;
+    this.activeContextMenu.onMenuOwnerKeydown(
+      event,
+      () => this.rowContextMenu(commit),
+      () => this.logTableContainer()?.querySelector(`tr[data-sha="${commit.sha}"]`),
+    );
+  };
+
+  // The row moved to last by the keyboard or clicked, when selected
+  private focusedRow = () => {
+    const selectedShas = this.currentRepo.selectedCommitsShas() ?? [];
+    const displayLog = this.computedDisplayLog();
+    const rangeEndSha = this.selectionAnchor.rangeEnd !== undefined ? displayLog[this.selectionAnchor.rangeEnd]?.sha : undefined;
+    const focusedSha = rangeEndSha && selectedShas.includes(rangeEndSha) ? rangeEndSha : selectedShas.at(-1);
+    return focusedSha ? displayLog.find(bySha(focusedSha)) : undefined;
+  };
+
+  // The commit or stash menu of the row, its service set to act on it
+  private rowContextMenu = (commit: DisplayRef) => {
+    if (isCommit(commit)) {
+      this.commitContextMenu.selectedCommit.set(commit);
+      return this.commitContextMenu.commitContextMenu();
+    }
+    if (isStash(commit)) {
+      // The row is the stash's index commit
+      this.stashContextMenu.selectedStash.set(this.currentRepo.stashes().find(s => s.parentSHAs[1] === commit.sha));
+      return this.stashContextMenu.stashContextMenu();
+    }
+    return undefined;
   };
 
   private rowKeys = () => this.computedDisplayLog().map(c => c.sha);
@@ -382,15 +417,8 @@ export class LogsComponent {
 
   protected openCommitContextMenu = (commit: DisplayRef, event: PointerEvent) => {
     event.stopPropagation();
-
-    if (isCommit(commit)) {
-      this.commitContextMenu.selectedCommit.set(commit);
-      this.activeContextMenu.show(this.commitContextMenu.commitContextMenu(), event);
-    } else if (isStash(commit)) {
-      // The row is the stash's index commit
-      this.stashContextMenu.selectedStash.set(this.currentRepo.stashes().find(s => s.parentSHAs[1] === commit.sha));
-      this.activeContextMenu.show(this.stashContextMenu.stashContextMenu(), event);
-    }
+    const items = this.rowContextMenu(commit);
+    if (items) this.activeContextMenu.show(items, event);
   };
 
   protected openTagContextMenu = (tagPair: LocalAndDistantTagWithName, event: MouseEvent) => {

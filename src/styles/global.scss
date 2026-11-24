@@ -182,6 +182,28 @@ p-tree.text-overflow-ellipsis span.p-tree-node-label {
   gap: 0.5rem;
 }
 
+// Context menus: the letter running an item, and its shortcut
+.menu-mnemonic {
+  text-decoration-color: var(--p-primary-color);
+  text-underline-offset: 0.15em;
+}
+
+.menu-shortcut {
+  margin-left: auto;
+  padding-left: 1.5rem;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+
+  + .p-contextmenu-submenu-icon {
+    margin-left: 0.5rem;
+  }
+}
+
+.p-contextmenu-item-label + .p-contextmenu-submenu-icon {
+  margin-left: auto;
+}
+
 // Merge / rebase predicted to conflict
 .menu-group-header {
   .p-contextmenu-item-content {

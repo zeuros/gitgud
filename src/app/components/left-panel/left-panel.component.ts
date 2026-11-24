@@ -76,6 +76,7 @@ export class LeftPanelComponent {
     const sha = this.currentRepo.selectedCommitSha();
     return selectionKeysOf(sha ? findNode(this.tagTree(), t => t.sha === sha) : undefined);
   });
+  private lastSelectedBranchNode?: TreeNode<Branch>;
   protected localBranches = signal<TreeNode<Branch>[]>([]);
   protected remoteBranches = signal<TreeNode<Branch>[]>([]);
   // The selected commit's first chip: its local branch, and the remote branch paired with it
@@ -109,8 +110,23 @@ export class LeftPanelComponent {
     selectionKeysOf(branch ? findNode(tree, b => b.name === branch.name) : undefined);
 
   protected selectBranchCommit = (node: TreeNode<Branch>, nodes: WritableSignal<TreeNode<Branch>[]>) => {
+    this.lastSelectedBranchNode = node;
     if (node.data) this.currentRepo.update({selectedCommitsShas: [node.data.tip.sha]});
     else toggleNode(nodes, node);
+  };
+
+  // The branch last selected in a tree, while its commit stays selected: see onMenuOwnerKeydown
+  protected onBranchTreeKeydown = (event: KeyboardEvent) => {
+    const node = this.lastSelectedBranchNode;
+    if (!node?.data || node.data.tip.sha != this.currentRepo.selectedCommitSha()) return;
+    this.activeContextMenu.onMenuOwnerKeydown(
+      event,
+      () => {
+        this.prepareBranchContextMenu(node);
+        return this.branchContextMenu.branchContextMenu();
+      },
+      () => (event.target as Element).closest('.p-tree-node')?.querySelector('.p-tree-node-content'),
+    );
   };
 
   protected selectStash = (stash?: Commit) => {
