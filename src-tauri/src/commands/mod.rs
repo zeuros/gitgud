@@ -1,3 +1,4 @@
+pub mod agent;
 pub mod fs;
 pub mod process;
 pub mod util;

@@ -86,6 +86,10 @@ interface TauriApi {
   spawn: (cmd: string, args: string[], options: SpawnOptions) => Promise<string>;
   /** Running processes started as one of `names` (the program, or the script an interpreter runs), with their working directory */
   findProcesses: (names: string[]) => Promise<FoundProcess[]>;
+  /** The `names` found on PATH, in the given order */
+  findPrograms: (names: string[]) => Promise<string[]>;
+  /** Opens the user's terminal in `cwd`, running `program` */
+  openInTerminal: (cwd: string, program: string) => Promise<void>;
   zoom: {
     setFactor: (factor: number) => void | Promise<void>;
     getFactor: () => number;

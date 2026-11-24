@@ -165,6 +165,10 @@ async function buildBridge() {
 
     showItemInFolder: (fullPath: string) => invoke<void>('show_item_in_folder', {path: fullPath}),
 
+    findPrograms: (names: string[]) => invoke<string[]>('find_programs', {names}),
+
+    openInTerminal: (cwd: string, program: string) => invoke<void>('open_in_terminal', {cwd, program}),
+
     openExternal: (url: string) => openUrl(url),
 
     openPath: (fullPath: string): Promise<void> => openPath(fullPath),

@@ -13,7 +13,7 @@ pub mod credential_helper;
 pub mod sequence_editor;
 mod shell_pool;
 
-use commands::{fs::*, process::*, util::*, watcher::*};
+use commands::{agent::*, fs::*, process::*, util::*, watcher::*};
 use tauri_plugin_window_state::StateFlags;
 
 const FALLBACK_PATHS: &[&str] = &["/usr/local/bin", "/usr/bin", "/bin", "/opt/homebrew/bin"];
@@ -132,6 +132,9 @@ pub fn run() {
             show_item_in_folder,
             show_main_window,
             close_splashscreen,
+            // agent
+            find_programs,
+            open_in_terminal,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
