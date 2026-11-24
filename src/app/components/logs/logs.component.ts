@@ -226,7 +226,8 @@ export class LogsComponent {
         this.activeContextMenu.hide();
         this.firstCommitOffsetPx.set(scrollTop % ROW_HEIGHT);
         this._tableScrollLeft.set(scrollLeft);
-        this.currentRepo.update({startCommit: Math.floor(scrollTop / ROW_HEIGHT)});
+        const startCommit = Math.floor(scrollTop / ROW_HEIGHT);
+        if (startCommit !== this.currentRepo.startCommit()) this.currentRepo.update({startCommit});
       };
       logTable.addEventListener('scroll', onScroll, {passive: true});
       onCleanup(() => logTable.removeEventListener('scroll', onScroll));
