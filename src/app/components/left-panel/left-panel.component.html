@@ -208,9 +208,10 @@
                     >
                         <ng-template #item let-item>
                             @let agent = $agent(item);
-                            <div class="flex align-items-center gap-2 ellipsis"
+                            <div class="flex align-items-center gap-2 ellipsis agent-entry"
                                  [title]="agent.worktree.path"
-                                 (click)="openAgent(agent)"
+                                 [class.closed-agent]="llmSessions.isClosedSession(agent.session)"
+                                 (click)="openAgent(agent, $event)"
                                  (dblclick)="switchToWorktree(agent.worktree)">
                                 <span class="llm-session-icon" [class.run-in-gitgud]="llmSessions.isRunInGitgud(agent.session)">
                                     <i [class]="agent.session.isBusy ? 'fa fa-spinner fa-spin' : 'fa fa-terminal'" class="small-icon"></i>
@@ -229,8 +230,8 @@
                             <div class="ended-agents">
                                 <div class="ended-agents-list">
                                     @for (agent of ended; track agent.session.sessionId) {
-                                        <div class="ended-agent" [title]="agent.worktree.path"
-                                             (click)="openAgent(agent)" (dblclick)="switchToWorktree(agent.worktree)">
+                                        <div class="ended-agent agent-entry" [title]="agent.worktree.path" [class.closed-agent]="llmSessions.isClosedSession(agent.session)"
+                                             (click)="openAgent(agent, $event)" (dblclick)="switchToWorktree(agent.worktree)">
                                             <i class="fa fa-history"></i>
                                             <span class="ellipsis flex-1">{{ llmSessionLabel(agent.session) }}</span>
                                             <span class="ellipsis">{{ agent.worktree.branch ?? 'HEAD' }}</span>

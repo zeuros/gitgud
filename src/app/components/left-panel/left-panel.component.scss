@@ -155,6 +155,24 @@
   font-weight: normal;
 }
 
+// The agent whose view just closed: two flashes, then a slow dim, to tell which one it was
+@keyframes closed-agent-highlight {
+  0%, 6%, 12% {
+    background: var(--p-highlight-background);
+  }
+  3%, 9% {
+    background: transparent;
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+::ng-deep .p-listbox-option:has(.closed-agent),
+.ended-agents .ended-agent.closed-agent {
+  animation: closed-agent-highlight 4s ease-out;
+}
+
 // The running agents then the ended ones, in one scrolling list
 .agents-list {
   flex: 1;

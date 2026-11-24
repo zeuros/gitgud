@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, effect, inject, Injectable, linkedSignal, type Signal, signal} from '@angular/core';
+import {computed, effect, inject, Injectable, linkedSignal, type Signal, signal, untracked} from '@angular/core';
 import {from, interval, startWith, switchMap} from 'rxjs';
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {CurrentRepoStore} from '../stores/current-repo.store';
@@ -26,6 +26,8 @@ import {ToastService} from './toast.service';
 import {AgentTerminalsService} from './agent-terminals.service';
 
 const POLL_MS = 3000;
+// As long as the closed session's line flashes then dims, in left-panel.component.scss
+const CLOSED_SESSION_HIGHLIGHT_MS = 4000;
 const SELECTED_LLM_CLI_KEY = 'llm-cli';
 // The Claude sessions GitGud runs, resumed when it starts again
 const GITGUD_CLAUDE_AGENTS_KEY = 'gitgud-claude-agents';
@@ -77,6 +79,9 @@ export class LlmSessionsService {
 
   /** The session shown in the agent view */
   openedSession = signal<LlmSession | undefined>(undefined);
+  /** The session whose view just closed: its line in the Agents section flashes, then slowly dims */
+  closedSession = signal<LlmSession | undefined>(undefined);
+  private clearClosedSessionTimeout?: ReturnType<typeof setTimeout>;
   /** The opened session as last seen: its name, whether it works, or that it ended */
   openedSessionNow = linkedSignal<{opened?: LlmSession; running: LlmSession[]}, LlmSession | undefined>({
     source: () => ({opened: this.openedSession(), running: this.sessions()}),
@@ -101,11 +106,31 @@ export class LlmSessionsService {
       const agents = gitgudClaudeAgents([...this.agentTerminals.terminals().values()], this.sessions());
       localStorage.setItem(GITGUD_CLAUDE_AGENTS_KEY, JSON.stringify(agents));
     });
+    // Opening a session ends the highlight, so closing it again replays it
+    effect(() => {
+      if (this.openedSession()) untracked(() => this.closedSession.set(undefined));
+    });
     effect(() => {
       const cli = this.selectedCli();
       if (cli) localStorage.setItem(SELECTED_LLM_CLI_KEY, cli);
     });
   }
+
+  closeSession = () => {
+    const session = this.openedSession();
+    this.openedSession.set(undefined);
+    if (!session) return;
+
+    this.closedSession.set(session);
+    clearTimeout(this.clearClosedSessionTimeout);
+    this.clearClosedSessionTimeout = setTimeout(() => this.closedSession.set(undefined), CLOSED_SESSION_HIGHLIGHT_MS);
+  };
+
+  /** Whether the session's view just closed */
+  isClosedSession = (session: LlmSession) => {
+    const closed = this.closedSession();
+    return !!closed && isSameSession(closed, session);
+  };
 
   /** Runs the selected CLI in the current worktree, in a terminal in GitGud, and shows it */
   startAgent = () => {

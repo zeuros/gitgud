@@ -46,7 +46,7 @@ import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.direc
 import {TreeListComponent, type TreeNodeContextMenuEvent} from '../tree-list/tree-list.component';
 import {otherWorktreeTooltip} from '../../utils/worktree-utils';
 import {LlmSessionsService} from '../../services/llm-sessions.service';
-import {type LlmSession, llmSessionLabel} from '../../utils/llm-session-utils';
+import {isSameSession, type LlmSession, llmSessionLabel} from '../../utils/llm-session-utils';
 import {Button} from 'primeng/button';
 import {Select} from 'primeng/select';
 
@@ -187,7 +187,13 @@ export class LeftPanelComponent {
 
   protected addWorktree = () => this.dialog.open(CreateWorktreeDialogComponent, {header: 'Create Worktree', width: '520px'});
 
-  protected openAgent = ({session, worktree}: {session: LlmSession; worktree: GitWorktree}) => {
+  // Clicking the opened agent again closes its view; a double click's second click keeps it
+  protected openAgent = ({session, worktree}: {session: LlmSession; worktree: GitWorktree}, {detail}: MouseEvent) => {
+    if (detail > 1) return;
+
+    const opened = this.llmSessions.openedSession();
+    if (opened && isSameSession(opened, session)) return this.llmSessions.closeSession();
+
     this.selectWorktree(worktree);
     this.llmSessions.openedSession.set(session);
   };

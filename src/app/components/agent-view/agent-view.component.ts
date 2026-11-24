@@ -40,6 +40,7 @@ const STICK_TO_BOTTOM_PX = 40;
   imports: [Dialog, Button],
   templateUrl: './agent-view.component.html',
   styleUrl: './agent-view.component.scss',
+  host: {'(document:pointerdown)': 'closeOnPointerDownOutside($event)'},
 })
 export class AgentViewComponent {
 
@@ -98,11 +99,16 @@ export class AgentViewComponent {
 
   protected close = (visible: boolean) => {
     if (visible) return;
-    this.session.set(undefined);
+    this.llmSessions.closeSession();
     this.isAtBottom = true;
   };
 
   protected stop = (pid: number) => window.tauri.pty.kill(pid);
+
+  // Clicking elsewhere in GitGud closes the view, like a popover; an agent's row toggles it itself
+  protected closeOnPointerDownOutside = ({target}: PointerEvent) => {
+    if (this.session() && target instanceof Element && !target.closest('.agent-view-dialog, .agent-entry')) this.close(false);
+  };
 
   protected onScroll = ({scrollTop, scrollHeight, clientHeight}: HTMLElement) =>
     this.isAtBottom = scrollHeight - scrollTop - clientHeight < STICK_TO_BOTTOM_PX;
