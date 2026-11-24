@@ -184,6 +184,64 @@
   }
 }
 
+.agents-panel {
+  outline: none;
+
+  .agents-list.hidden {
+    display: none;
+  }
+}
+
+// Searching the transcripts: the field, then the sessions found with the words around them
+.transcript-search {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px 0;
+
+  .transcript-search-field {
+    position: relative;
+
+    input {
+      padding-right: 2rem;
+    }
+
+    i {
+      position: absolute;
+      right: 0.6rem;
+      top: 50%;
+      margin-top: -0.5em;
+    }
+  }
+
+  .transcript-match {
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--p-highlight-focus-background);
+    }
+  }
+
+  .snippet {
+    font-size: 0.75rem;
+    color: var(--hmmmmmmGray);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
+    mark {
+      background: none;
+      color: var(--p-primary-color);
+      font-weight: bold;
+    }
+  }
+}
+
 // Ended agents: small rows, the first ones and a hint. Hovering shows them all, the hovered row back to its normal size
 .ended-agents {
   padding: 2px 0 4px;

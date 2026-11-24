@@ -15,7 +15,7 @@ import {open as openDialog} from '@tauri-apps/plugin-dialog';
 import {tempDir} from '@tauri-apps/api/path';
 import {openPath, openUrl} from '@tauri-apps/plugin-opener';
 import posixPath from './path-utils';
-import type {FoundProcess, PtyList, TranscriptChunk, WatchError, WatchOptions} from '../../typings';
+import type {FoundProcess, PtyList, TranscriptChunk, TranscriptMatch, WatchError, WatchOptions} from '../../typings';
 
 // ---------------------------------------------------------------------------
 // Watcher registry — maps caller IDs to Tauri event unlisten functions
@@ -168,6 +168,9 @@ async function buildBridge() {
     findPrograms: (names: string[]) => invoke<string[]>('find_programs', {names}),
 
     openInTerminal: (cwd: string, program: string) => invoke<void>('open_in_terminal', {cwd, program}),
+
+    searchTranscripts: (dirs: string[], query: string, onMatch: (found: TranscriptMatch) => void) =>
+      invoke<number>('search_transcripts', {dirs, query, onMatch: new Channel<TranscriptMatch>(onMatch)}),
 
     readTranscript: (path: string, fromByte: number) => invoke<TranscriptChunk>('read_transcript', {path, fromByte}),
 

@@ -189,17 +189,48 @@
         </p-splitter-panel>
 
         <p-splitter-panel [minSize]="10">
-            <div class="panel">
+            <!-- Focusable, so Ctrl+F in it searches the transcripts rather than the log -->
+            <div class="panel agents-panel" tabindex="-1" (keydown)="onAgentsKeydown($event)">
                 <div class="title flex align-items-center gap-2">
                     <span><i class="fa fa-terminal mr-2"></i>Agents</span>
+                    <p-button icon="fa fa-search" size="small" [text]="true" (onClick)="openTranscriptSearch()"
+                              title="Find a session by the words in its transcript (Ctrl+F)"/>
                     @if (llmSessions.installedClis().length) {
                         <p-select [options]="llmSessions.installedClis()" [(ngModel)]="llmSessions.selectedCli" size="small" class="agent-cli-select"/>
                         <p-button icon="fa fa-play" size="small" [text]="true" (onClick)="llmSessions.startAgent()"
                                   title="Run the agent in this worktree, in GitGud"/>
                     }
                 </div>
+                @if (transcriptQuery() !== undefined) {
+                    <div class="transcript-search">
+                        <div class="transcript-search-field">
+                            <input #transcriptSearchInput pInputText type="text" class="w-full p-inputtext-sm" placeholder="Words in a transcript"
+                                   [ngModel]="transcriptQuery()" (ngModelChange)="transcriptQuery.set($event)"/>
+                            @if (transcriptSearch().isSearching) {
+                                <i class="fa fa-spinner fa-spin text-gray" title="Searching the transcripts"></i>
+                            }
+                        </div>
+                        <div class="agents-list">
+                            @for (result of transcriptSearch().results; track result.found.path) {
+                                <div class="transcript-match agent-entry" [title]="result.worktree.path" (click)="openAgent(result, $event)"
+                                     (dblclick)="switchToWorktree(result.worktree)">
+                                    <div class="flex align-items-center gap-2">
+                                        <i [class]="result.session.endedAt === undefined ? 'fa fa-terminal' : 'fa fa-history'" class="small-icon"></i>
+                                        <span class="ellipsis flex-1">{{ result.found.title ?? llmSessionLabel(result.session) }}</span>
+                                        <span class="ellipsis text-gray small-icon">{{ result.worktree.branch ?? 'HEAD' }}</span>
+                                    </div>
+                                    <div class="snippet">{{ result.found.before }}<mark>{{ result.found.matched }}</mark>{{ result.found.after }}</div>
+                                </div>
+                            } @empty {
+                                @if (transcriptQuery()?.trim() && !transcriptSearch().isSearching) {
+                                    <div class="p-2 text-gray">No transcript holds these words</div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
                 <!-- The running agents, then the ended ones, scrolling together -->
-                <div class="agents-list">
+                <div class="agents-list" [class.hidden]="transcriptQuery() !== undefined">
                     <p-listbox
                             [options]="runningAgents()"
                             scrollHeight="auto"

@@ -17,10 +17,11 @@
  */
 
 import {computed, effect, inject, Injectable, linkedSignal, type Signal, signal, untracked} from '@angular/core';
-import {from, interval, startWith, switchMap, tap} from 'rxjs';
+import {from, interval, Observable, startWith, switchMap, tap} from 'rxjs';
+import type {TranscriptMatch} from '../../typings';
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {type GitgudClaudeAgent, gitgudClaudeAgents, isSameSession, llmConsoles, type LlmSession, llmSessionsByWorktree, parseClaudeStatus} from '../utils/llm-session-utils';
+import {gitgudClaudeAgents, type GitgudClaudeAgent, isSameSession, type LlmSession, llmConsoles, llmSessionsByWorktree, parseClaudeStatus} from '../utils/llm-session-utils';
 import {claudeProjectDirName} from '../utils/claude-transcript-utils';
 import {ToastService} from './toast.service';
 import {AgentTerminalsService} from './agent-terminals.service';
@@ -36,6 +37,11 @@ const ENDED_SESSIONS_PER_WORKTREE = 10;
 
 // LLM CLIs, by the name of their program or script
 const LLM_CLIS = ['claude', 'codex', 'gemini', 'qwen', 'aider', 'opencode', 'crush', 'goose', 'cursor-agent', 'copilot', 'amp'];
+
+export interface TranscriptSearch {
+  results: {session: LlmSession; worktreePath: string; found: TranscriptMatch}[];
+  isSearching: boolean;
+}
 
 @Injectable({providedIn: 'root'})
 export class LlmSessionsService {
@@ -105,7 +111,7 @@ export class LlmSessionsService {
       this.hasResumedAgents.set(true);
     });
     effect(() => {
-      if (!this.hasResumedAgents()) return;
+      if (!this.hasResumedAgents() || !this.hasReadSessions()) return;
       const agents = gitgudClaudeAgents([...this.agentTerminals.terminals().values()], this.sessions());
       localStorage.setItem(GITGUD_CLAUDE_AGENTS_KEY, JSON.stringify(agents));
     });
@@ -170,13 +176,42 @@ export class LlmSessionsService {
 
   /** Claude Code's transcript of the session, undefined for other CLIs */
   transcriptPath = ({cwd, sessionId}: LlmSession) =>
-    sessionId ? `${this.claudeConfigDir}/projects/${claudeProjectDirName(cwd)}/${sessionId}.jsonl` : undefined;
+    sessionId ? `${this.projectDir(cwd)}/${sessionId}.jsonl` : undefined;
+
+  /** The Claude sessions of the repo's worktrees whose prompts or answers hold `query`, the most recent first,
+   * growing as they're found; `isSearching` until all were */
+  searchTranscripts = (query: string) => new Observable<TranscriptSearch>(subscriber => {
+    const worktreePathOfDir = new Map(this.currentRepo.worktrees().map(({path}) => [this.projectDir(path), path]));
+    let results: TranscriptSearch['results'] = [];
+    let sentCount: number | undefined = undefined;
+    // Matches may come after the count: done once all came
+    const emit = () => {
+      const isSearching = sentCount === undefined || results.length < sentCount;
+      subscriber.next({results, isSearching});
+      if (!isSearching) subscriber.complete();
+    };
+    emit();
+    window.tauri.searchTranscripts([...worktreePathOfDir.keys()], query, found => {
+      const dir = found.path.slice(0, found.path.lastIndexOf('/'));
+      const sessionId = found.path.slice(dir.length + 1, -'.jsonl'.length);
+      const worktreePath = worktreePathOfDir.get(dir)!;
+      const running = this.sessions().find(session => session.sessionId === sessionId);
+      const session: LlmSession = running ?? {tool: 'claude', cwd: worktreePath, sessionId, isBusy: false, endedAt: found.modifiedMs};
+      results = [...results, {session, worktreePath, found}].sort((a, b) => b.found.modifiedMs - a.found.modifiedMs);
+      emit();
+    }).catch(() => 0).then(count => {
+      sentCount = count;
+      emit();
+    });
+  });
+
+  private projectDir = (cwd: string) => `${this.claudeConfigDir}/projects/${claudeProjectDirName(cwd)}`;
 
   private async readEndedSessions() {
     const runningSessionIds = new Set(this.sessions().map(session => session.sessionId));
     const endedByWorktree = new Map<string, LlmSession[]>();
     for (const {path} of this.currentRepo.worktrees()) {
-      const projectDir = `${this.claudeConfigDir}/projects/${claudeProjectDirName(path)}`;
+      const projectDir = this.projectDir(path);
       const sessionIds = (await window.tauri.fs.readdir(projectDir).catch((): string[] => []))
         .filter(file => file.endsWith('.jsonl'))
         .map(file => file.slice(0, -'.jsonl'.length))

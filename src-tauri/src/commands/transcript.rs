@@ -1,10 +1,104 @@
+use memchr::memmem;
 use serde::Serialize;
 use serde_json::Value;
 use std::fs;
 use std::io::{Read, Seek, SeekFrom};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::Mutex;
+use std::time::UNIX_EPOCH;
+use tauri::ipc::Channel;
 
+const SNIPPET_CHARS_BEFORE: usize = 30;
+const SNIPPET_CHARS_AFTER: usize = 80;
+const MAX_MATCHES: usize = 50;
 // Of a tool's output, the agent view shows the start
 const MAX_RESULT_CHARS: usize = 2000;
+
+/// Bumped by each search: a running search stops once a newer one starts
+static SEARCH_GENERATION: AtomicU64 = AtomicU64::new(0);
+
+/// A Claude Code transcript with the words searched, around their first occurrence
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TranscriptMatch {
+    path: String,
+    modified_ms: u64,
+    title: Option<String>,
+    before: String,
+    matched: String,
+    after: String,
+}
+
+/// Searches the prompts and answers of the transcripts (`*.jsonl`) in `dirs`, ignoring case, the most recently
+/// modified first, sending each match to `on_match` as found. Resolves with the number of matches sent, once done
+/// or cancelled by a newer search.
+#[tauri::command]
+pub async fn search_transcripts(dirs: Vec<String>, query: String, on_match: Channel<TranscriptMatch>) -> Result<usize, String> {
+    let generation = SEARCH_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+    let is_current = move || SEARCH_GENERATION.load(Ordering::SeqCst) == generation;
+    tauri::async_runtime::spawn_blocking(move || search(&dirs, &query, &is_current, &|found| on_match.send(found).is_ok()))
+    .await
+    .map_err(|e| e.to_string())
+}
+
+/// Calls `on_match` with each match until it returns false, `keep_going` does, or `MAX_MATCHES` were found.
+/// Returns the number of matches sent.
+fn search(
+    dirs: &[String],
+    query: &str,
+    keep_going: &(dyn Fn() -> bool + Sync),
+    on_match: &(dyn Fn(TranscriptMatch) -> bool + Sync),
+) -> usize {
+    let query = query.trim().to_lowercase();
+    if query.is_empty() {
+        return 0;
+    }
+
+    let mut files: Vec<(String, u64)> = dirs
+        .iter()
+        .flat_map(|dir| fs::read_dir(dir).into_iter().flatten().flatten().map(move |entry| (dir, entry)))
+        .filter(|(_, entry)| entry.file_name().to_string_lossy().ends_with(".jsonl"))
+        .map(|(dir, entry)| {
+            let modified_ms = entry
+                .metadata()
+                .and_then(|metadata| metadata.modified())
+                .ok()
+                .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
+                .map_or(0, |duration| duration.as_millis() as u64);
+            (format!("{dir}/{}", entry.file_name().to_string_lossy()), modified_ms)
+        })
+        .collect();
+    files.sort_by_key(|(_, modified_ms)| std::cmp::Reverse(*modified_ms));
+
+    // Threads take the next file, the newest first
+    let next_file = AtomicUsize::new(0);
+    let match_count = Mutex::new(0);
+    let sent_count = AtomicUsize::new(0);
+    let threads = std::thread::available_parallelism().map_or(4, |count| count.get()).min(8);
+    std::thread::scope(|scope| {
+        for _ in 0..threads {
+            scope.spawn(|| loop {
+                let Some((path, modified_ms)) = files.get(next_file.fetch_add(1, Ordering::Relaxed)) else { return };
+                if !keep_going() || *match_count.lock().unwrap() >= MAX_MATCHES {
+                    return;
+                }
+                let Some((title, (before, matched, after))) = search_file(path, &query) else { continue };
+                let mut count = match_count.lock().unwrap();
+                if *count >= MAX_MATCHES || !keep_going() {
+                    return;
+                }
+                *count += 1;
+                let found = TranscriptMatch { path: path.clone(), modified_ms: *modified_ms, title, before, matched, after };
+                if on_match(found) {
+                    sent_count.fetch_add(1, Ordering::Relaxed);
+                } else {
+                    *count = MAX_MATCHES;
+                }
+            });
+        }
+    });
+    sent_count.into_inner()
+}
 
 /// What the agent view shows of a transcript line. A tool's result comes in a later line than the tool.
 #[derive(Serialize, Debug, PartialEq)]
@@ -127,9 +221,132 @@ fn result_text(content: &Value) -> String {
     }
 }
 
+/// The transcript's title and the first prompt or answer holding `query` (lowercase), split around it
+fn search_file(path: &str, query: &str) -> Option<(Option<String>, (String, String, String))> {
+    let bytes = fs::read(path).ok()?;
+    let query_chars: Vec<char> = query.chars().collect();
+    let found = lines_holding(&bytes, query)
+        .filter_map(|line| serde_json::from_slice::<Value>(line).ok())
+        .find_map(|entry| texts(&entry).into_iter().find_map(|text| split_around(&text, &query_chars)))?;
+    Some((title(&bytes), found))
+}
+
+/// The lines of `bytes` holding `query` (lowercase), ignoring case. An ASCII query is found in the bytes directly,
+/// without decoding the lines that don't hold it.
+fn lines_holding<'a>(bytes: &'a [u8], query: &str) -> Box<dyn Iterator<Item = &'a [u8]> + 'a> {
+    if !query.is_ascii() {
+        let query = query.to_string();
+        return Box::new(
+            bytes
+                .split(|byte| *byte == b'\n')
+                .filter(move |line| String::from_utf8_lossy(line).to_lowercase().contains(&query)),
+        );
+    }
+
+    let lowered = bytes.to_ascii_lowercase();
+    let finder = memmem::Finder::new(query.as_bytes()).into_owned();
+    let mut searched_to = 0;
+    Box::new(std::iter::from_fn(move || {
+        let hit = searched_to + finder.find(&lowered[searched_to..])?;
+        let (start, end) = line_bounds(bytes, hit);
+        searched_to = (end + 1).min(bytes.len());
+        Some(&bytes[start..end])
+    }))
+}
+
+fn line_bounds(bytes: &[u8], position: usize) -> (usize, usize) {
+    let start = memchr::memrchr(b'\n', &bytes[..position]).map_or(0, |index| index + 1);
+    let end = memchr::memchr(b'\n', &bytes[position..]).map_or(bytes.len(), |index| position + index);
+    (start, end)
+}
+
+/// The last title Claude Code gave the session
+fn title(bytes: &[u8]) -> Option<String> {
+    let position = memmem::rfind(bytes, b"\"ai-title\"")?;
+    let (start, end) = line_bounds(bytes, position);
+    let entry: Value = serde_json::from_slice(&bytes[start..end]).ok()?;
+    entry["aiTitle"].as_str().map(String::from)
+}
+
+/// The prompt or answer texts of a transcript line, as the agent view shows them
+fn texts(entry: &Value) -> Vec<String> {
+    let is_message = matches!(entry["type"].as_str(), Some("user" | "assistant"));
+    if !is_message || entry["isSidechain"].as_bool() == Some(true) {
+        return Vec::new();
+    }
+    let content = &entry["message"]["content"];
+    let texts = match content.as_str() {
+        Some(text) => vec![text.to_string()],
+        None => content
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|block| block["type"] == "text")
+            .filter_map(|block| block["text"].as_str().map(String::from))
+            .collect(),
+    };
+    // Tag-prefixed user texts are what Claude Code adds (command output, reminders)
+    texts.into_iter().filter(|text| !text.trim_start().starts_with('<')).collect()
+}
+
+fn split_around(text: &str, query: &[char]) -> Option<(String, String, String)> {
+    let chars: Vec<char> = text.split_whitespace().collect::<Vec<_>>().join(" ").chars().collect();
+    let lowered: Vec<char> = chars.iter().map(|c| c.to_lowercase().next().unwrap_or(*c)).collect();
+    let start = lowered.windows(query.len()).position(|window| window == query)?;
+    let end = start + query.len();
+    let before_start = start.saturating_sub(SNIPPET_CHARS_BEFORE);
+    let after_end = (end + SNIPPET_CHARS_AFTER).min(chars.len());
+    let before = format!("{}{}", if before_start > 0 { "…" } else { "" }, chars[before_start..start].iter().collect::<String>());
+    let after = format!("{}{}", chars[end..after_end].iter().collect::<String>(), if after_end < chars.len() { "…" } else { "" });
+    Some((before, chars[start..end].iter().collect(), after))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn query(text: &str) -> Vec<char> {
+        text.chars().flat_map(char::to_lowercase).collect()
+    }
+
+    fn found_lines<'a>(bytes: &'a [u8], query: &str) -> Vec<&'a str> {
+        lines_holding(bytes, query).map(|line| std::str::from_utf8(line).unwrap()).collect()
+    }
+
+    #[test]
+    fn splits_around_the_words_ignoring_case() {
+        let (before, matched, after) = split_around("Fix the\n  Watcher limit", &query("watcher")).unwrap();
+        assert_eq!((before.as_str(), matched.as_str(), after.as_str()), ("Fix the ", "Watcher", " limit"));
+    }
+
+    #[test]
+    fn finds_each_line_holding_the_words_once_ignoring_case() {
+        let bytes = b"one Tauri tauri\ntwo\nthree TAURI";
+        assert_eq!(found_lines(bytes, "tauri"), ["one Tauri tauri", "three TAURI"]);
+    }
+
+    #[test]
+    fn finds_words_with_accents_ignoring_case() {
+        assert_eq!(found_lines("un Été\ndeux".as_bytes(), "été"), ["un Été"]);
+    }
+
+    #[test]
+    fn reads_the_last_title() {
+        let bytes = b"{\"type\":\"ai-title\",\"aiTitle\":\"Old\"}\n{\"type\":\"user\"}\n{\"type\":\"ai-title\",\"aiTitle\":\"New\"}";
+        assert_eq!(title(bytes).as_deref(), Some("New"));
+    }
+
+    #[test]
+    fn reads_prompts_and_answers_not_tags_nor_sidechains() {
+        let prompt = serde_json::json!({"type": "user", "message": {"content": "hello"}});
+        let tag = serde_json::json!({"type": "user", "message": {"content": "<command-name>/x</command-name>"}});
+        let answer = serde_json::json!({"type": "assistant", "message": {"content": [{"type": "text", "text": "hi"}, {"type": "tool_use"}]}});
+        let sidechain = serde_json::json!({"type": "assistant", "isSidechain": true, "message": {"content": "no"}});
+        assert_eq!(texts(&prompt), ["hello"]);
+        assert!(texts(&tag).is_empty());
+        assert_eq!(texts(&answer), ["hi"]);
+        assert!(texts(&sidechain).is_empty());
+    }
 
     #[test]
     fn reads_prompts_answers_tools_and_their_results() {
@@ -184,6 +401,18 @@ mod tests {
         assert_eq!(chunk.entries.len(), 2);
         assert!(chunk.restarted);
         fs::remove_file(&path).unwrap();
+    }
+
+    #[test]
+    #[ignore = "times a search of this machine's transcripts"]
+    fn time_real_search() {
+        let dir = format!("{}/.claude/projects/-home-zeuros-Documents-gitgud", std::env::var("HOME").unwrap());
+        for query in ["tauri", "flamingo", "Rebase"] {
+            let start = std::time::Instant::now();
+            let count = AtomicUsize::new(0);
+            search(std::slice::from_ref(&dir), query, &|| true, &|_| count.fetch_add(1, Ordering::Relaxed) < usize::MAX);
+            eprintln!("TIMING {query}: {count:?} matches in {:?}", start.elapsed());
+        }
     }
 
     #[test]

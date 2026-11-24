@@ -143,6 +143,7 @@ pub fn run() {
             pty_list,
             pty_attach,
             // transcript
+            search_transcripts,
             read_transcript,
         ])
         .run(tauri::generate_context!())

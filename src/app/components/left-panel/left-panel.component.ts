@@ -16,7 +16,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, effect, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, effect, type ElementRef, inject, signal, viewChild} from '@angular/core';
+import {toObservable, toSignal} from '@angular/core/rxjs-interop';
+import {concat, map, of, scan, switchMap, timer} from 'rxjs';
+import {InputText} from 'primeng/inputtext';
 import {TerminalService} from 'primeng/terminal';
 import {CdkDropList} from '@angular/cdk/drag-drop';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
@@ -45,10 +48,14 @@ import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/c
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 import {TreeListComponent, type TreeNodeContextMenuEvent} from '../tree-list/tree-list.component';
 import {otherWorktreeTooltip} from '../../utils/worktree-utils';
-import {LlmSessionsService} from '../../services/llm-sessions.service';
+import {LlmSessionsService, type TranscriptSearch} from '../../services/llm-sessions.service';
 import {isSameSession, type LlmSession, llmSessionLabel} from '../../utils/llm-session-utils';
 import {Button} from 'primeng/button';
 import {Select} from 'primeng/select';
+
+const TRANSCRIPT_SEARCH_DEBOUNCE_MS = 250;
+const STARTING_SEARCH: TranscriptSearch = {results: [], isSearching: true};
+const NO_SEARCH: TranscriptSearch = {results: [], isSearching: false};
 
 @Component({
   selector: 'gitgud-left-panel',
@@ -65,6 +72,7 @@ import {Select} from 'primeng/select';
     TitleIfOverflowDirective,
     Button,
     Select,
+    InputText,
   ],
   providers: [TerminalService],
   templateUrl: './left-panel.component.html',
@@ -186,6 +194,38 @@ export class LeftPanelComponent {
   };
 
   protected addWorktree = () => this.dialog.open(CreateWorktreeDialogComponent, {header: 'Create Worktree', width: '520px'});
+
+  /** Words searched in the transcripts; undefined while the search is closed */
+  protected transcriptQuery = signal<string | undefined>(undefined);
+  protected transcriptSearch = toSignal(toObservable(this.transcriptQuery).pipe(
+    switchMap(query => query?.trim()
+      ? concat(of(STARTING_SEARCH), timer(TRANSCRIPT_SEARCH_DEBOUNCE_MS).pipe(switchMap(() => this.llmSessions.searchTranscripts(query))))
+      : of(NO_SEARCH)),
+    // The previous results stay until the new search finds one, or finds none
+    scan((previous, search) => search.isSearching && !search.results.length ? {...search, results: previous.results} : search),
+    map(({results, isSearching}) => ({
+      isSearching,
+      results: results.flatMap(result => {
+        const worktree = this.currentRepo.worktrees().find(({path}) => path === result.worktreePath);
+        return worktree ? [{...result, worktree}] : [];
+      }),
+    })),
+  ), {initialValue: {results: [], isSearching: false}});
+  private transcriptSearchInput = viewChild<ElementRef<HTMLInputElement>>('transcriptSearchInput');
+
+  protected openTranscriptSearch = () => {
+    this.transcriptQuery.update(query => query ?? '');
+    setTimeout(() => this.transcriptSearchInput()?.nativeElement.select());
+  };
+
+  protected onAgentsKeydown = (event: KeyboardEvent) => {
+    if (event.ctrlKey && !event.shiftKey && event.code === 'KeyF') this.openTranscriptSearch();
+    else if (event.code === 'Escape' && this.transcriptQuery() !== undefined) this.transcriptQuery.set(undefined);
+    else return;
+    // Keeps the log's own Ctrl+F and Escape out
+    event.preventDefault();
+    event.stopPropagation();
+  };
 
   // Clicking the opened agent again closes its view; a double click's second click keeps it
   protected openAgent = ({session, worktree}: {session: LlmSession; worktree: GitWorktree}, {detail}: MouseEvent) => {

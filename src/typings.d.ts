@@ -8,6 +8,16 @@
 import type {SpawnOptionsWithoutStdio} from 'node:child_process';
 import type {editor} from 'monaco-editor';
 
+/** A transcript holding the words searched: its text around their first occurrence */
+export interface TranscriptMatch {
+  path: string;
+  modifiedMs: number;
+  title: string | null;
+  before: string;
+  matched: string;
+  after: string;
+}
+
 /** What the agent view shows of a transcript line. A tool's result comes in a later line than the tool. */
 export type TranscriptLineEntry =
   | {kind: 'prompt'; text: string}
@@ -121,6 +131,9 @@ interface TauriApi {
   findPrograms: (names: string[]) => Promise<string[]>;
   /** Opens the user's terminal in `cwd`, running `program` */
   openInTerminal: (cwd: string, program: string) => Promise<void>;
+  /** Sends each Claude Code transcript in `dirs` whose prompts or answers hold `query` to `onMatch`, the most recent
+   * first; resolves with how many it sent. A newer search stops it. */
+  searchTranscripts: (dirs: string[], query: string, onMatch: (found: TranscriptMatch) => void) => Promise<number>;
   /** Claude Code's transcript at `path`, from `fromByte` on, up to its last complete line */
   readTranscript: (path: string, fromByte: number) => Promise<TranscriptChunk>;
   /** Programs running in a pseudo-terminal the page draws, by their pid */
