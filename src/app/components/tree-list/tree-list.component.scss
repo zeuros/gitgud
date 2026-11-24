@@ -1,0 +1,54 @@
+:host {
+  display: block;
+  overflow-x: hidden;
+  overflow-y: auto;
+  --tree-list-indent: 0.75rem;
+}
+
+.tree-list-spacer {
+  position: relative;
+}
+
+.tree-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.65rem 0 calc(0.65rem + var(--depth) * var(--tree-list-indent));
+  border-radius: var(--p-border-radius-sm, 4px);
+  color: var(--huaaaaaGray);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+
+  &:hover {
+    background: var(--p-content-hover-background);
+  }
+
+  &.selected {
+    background: var(--p-highlight-background);
+    color: var(--p-highlight-color);
+  }
+}
+
+.tree-list-icon {
+  flex-shrink: 0;
+  font-size: var(--small-icon-size);
+  color: var(--p-text-muted-color);
+}
+
+// Long names ellipsize instead of widening the panel
+.tree-list-label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+
+  ::ng-deep span {
+    min-width: 0;
+  }
+}
+
+.tree-list-empty {
+  padding: 0.35rem 0.65rem;
+  color: var(--p-text-muted-color);
+}

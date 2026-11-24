@@ -49,7 +49,7 @@ function createFixture(): void {
 // ── Shared steps ──────────────────────────────────────────────────────────────
 
 async function triggerRebaseMainOntoFeature(): Promise<void> {
-  const featureNode = await $('//*[contains(@class,"p-tree-node-selectable")][contains(.,"feature")]');
+  const featureNode = await $('//*[contains(@class,"tree-list-row")][contains(.,"feature")]');
   await rightClick(featureNode);
   await beat();
   await waitForMenuItem('Rebase main onto feature');

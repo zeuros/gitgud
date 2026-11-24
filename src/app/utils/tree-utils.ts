@@ -1,16 +1,10 @@
 import type {TreeNode} from 'primeng/api';
-import type {WritableSignal} from '@angular/core';
 
-export const toggleNode = <T>(nodes: WritableSignal<TreeNode<T>[]>, target: TreeNode<T>) =>
-    nodes.set(toggle(nodes(), target));
-
-function toggle<T>(nodes: TreeNode<T>[], target: TreeNode<T>): TreeNode<T>[] {
-    return nodes.map(n => {
-      if (n === target) return { ...n, expanded: !n.expanded };
-      if (n.children?.length) return { ...n, children: toggle(n.children, target) };
-      return n;
-    });
-  }
+/** A node of a tree as listed, `depth` levels below the roots */
+export interface TreeRow<T> {
+  node: TreeNode<T>;
+  depth: number;
+}
 
 export const findNode = <T>(nodes: TreeNode<T>[], predicate: (data: T) => boolean): TreeNode<T> | undefined => {
   for (const node of nodes) {
@@ -23,9 +17,18 @@ export const findNode = <T>(nodes: TreeNode<T>[], predicate: (data: T) => boolea
   return undefined;
 };
 
-/** The `selectionKeys` of a single-selection p-tree with this node selected (null would leave the tree's selection as it is) */
-export const selectionKeysOf = (node?: TreeNode): Record<string, boolean> =>
-  node?.key ? {[node.key]: true} : {};
+/** The nodes in display order, skipping the children of collapsed nodes */
+export const visibleRows = <T>(nodes: TreeNode<T>[], collapsedKeys: ReadonlySet<string>, depth = 0): TreeRow<T>[] =>
+  nodes.flatMap(node => [
+    {node, depth},
+    ...(node.children?.length && !collapsedKeys.has(node.key!) ? visibleRows(node.children, collapsedKeys, depth + 1) : []),
+  ]);
+
+/** Rows [from, to) to render for a viewport scrolled to `scrollTop`, `overscanRows` more on each side */
+export const rowsInView = (scrollTop: number, viewportHeight: number, rowHeight: number, overscanRows: number, rowCount: number) => ({
+  from: Math.max(0, Math.floor(scrollTop / rowHeight) - overscanRows),
+  to: Math.min(rowCount, Math.ceil((scrollTop + viewportHeight) / rowHeight) + overscanRows),
+});
 
 // 'a/b/c' => ['a', 'a/b', 'a/b/c']
 const toSubPaths = (path: string) => path.split('/').map((_, i, parts) => parts.slice(0, i + 1).join('/'));
@@ -43,8 +46,8 @@ export const toPathTree = <T>(items: T[], nameOf: (item: T) => string, leafNode:
 
       const label = key.split('/').pop();
       const node: TreeNode<T> = i === parts.length - 1
-        ? {key, label, data: item, leaf: true, expanded: true, selectable: true, ...leafNode(item)}
-        : {key, label, icon: 'pi pi-folder', leaf: false, expanded: true, selectable: true, children: []};
+        ? {key, label, data: item, ...leafNode(item)}
+        : {key, label, icon: 'pi pi-folder', children: []};
 
       nodeMap.set(key, node);
 

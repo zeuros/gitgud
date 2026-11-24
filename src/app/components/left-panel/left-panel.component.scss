@@ -3,20 +3,6 @@
   height: 100%;
 
   ::ng-deep {
-    .p-tree {
-      padding: 0;
-    }
-
-    .p-tree-node-icon {
-      font-size: var(--small-icon-size);
-    }
-
-    .p-tree-node-content {
-      padding: 0.35rem 0.65rem;
-      color: var(--huaaaaaGray);
-    }
-
-
     p-listbox {
       display: flex;
       flex-direction: column;
@@ -36,7 +22,7 @@
           padding: 0.35rem 0.65rem;
 
           i {
-            color: var(--p-tree-node-icon-color);
+            color: var(--p-text-muted-color);
           }
         }
       }
@@ -47,26 +33,6 @@
       min-height: 0;
       overflow: hidden;
       flex-direction: column;
-    }
-
-    .p-tree .p-tree-node-label {
-      display: flex;
-      flex: 1;
-      min-width: 0; // long branch names ellipsize instead of widening the panel
-
-      // v22 wraps the custom node template in an extra <span>
-      > span {
-        display: flex;
-        flex: 1;
-      }
-
-      span {
-        min-width: 0;
-      }
-    }
-
-    .p-tree-node-toggle-button {
-      display: none;
     }
   }
 }
@@ -104,7 +70,7 @@
   flex-shrink: 0;
   width: var(--small-icon-size);
   height: var(--small-icon-size);
-  background-color: var(--p-tree-node-icon-color);
+  background-color: var(--p-text-muted-color);
   mask: url('/assets/images/chest.svg') no-repeat center / contain;
 }
 
@@ -143,7 +109,7 @@
 }
 
 
-::ng-deep .worktree-current > .p-tree-node-content,
+::ng-deep .tree-list-row.worktree-current,
 ::ng-deep .p-listbox-option:has(.worktree-current) {
   background: var(--branch-current-bg);
   color: var(--branch-current-color);
