@@ -108,7 +108,7 @@ describe('Worktrees — list, create, remove', () => {
     expect(await browser.execute(() => document.querySelector('.worktree-entry.worktree-current')?.textContent?.trim())).toBe('feature/dark-mode');
 
     // main is checked out in the main worktree: flagged, its menu offers the switch, and double-clicking it goes back
-    const mainNode = await $('//p-tree//span[contains(@class,"branch-drop-target")][span[normalize-space()="main"]]');
+    const mainNode = await $('//gitgud-tree-list//span[contains(@class,"branch-drop-target")][span[normalize-space()="main"]]');
     await mainNode.waitForExist({ timeout: 10_000 });
     await expect(mainNode.$('i.fa-tree')).toExist();
     await browser.execute((el: Element) => el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 })), mainNode);
@@ -118,7 +118,7 @@ describe('Worktrees — list, create, remove', () => {
     await browser.execute(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true })));
     await beat();
 
-    await browser.execute((el: Element) => el.closest('.p-tree-node-content')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true })), mainNode);
+    await browser.execute((el: Element) => el.closest('.tree-list-row')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true })), mainNode);
     await browser.waitUntil(async () => !(await $('gitgud-toolbar .worktree-badge').isExisting()) && await branchBadge() === 'main',
       { timeout: 15_000, timeoutMsg: 'checking out main did not switch back to the main worktree' });
     expect((await $$('p-tab')).length).toBe(tabsBefore);

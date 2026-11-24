@@ -27,6 +27,7 @@ import {providePrimeNG} from 'primeng/config';
 import {GlobalErrorHandler} from './utils/error-management.utils';
 import {primeNGConfig} from './theme/gitgud-preset';
 import {GitGudDialogService} from './services/gitgud-dialog.service';
+import {REMOVE_STYLES_ON_COMPONENT_DESTROY} from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -40,5 +41,7 @@ export const appConfig: ApplicationConfig = {
     ConfirmationService,
     {provide: DialogService, useClass: GitGudDialogService},
     provideHttpClient(),
+    // Removing a component's <style> restyles the whole document: the log's chips come and go while scrolling
+    {provide: REMOVE_STYLES_ON_COMPONENT_DESTROY, useValue: false},
   ],
 };

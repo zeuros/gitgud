@@ -7,21 +7,20 @@ $faded-opacity: 0.35;
 // Left panel: the label span is the drop list, the row around it is styled.
 // Rows fade through their text color, not opacity, and without transitions: WebKitGTK leaves pixels of
 // the composited layers opacity animates behind
-.p-tree:has(.drop-target-active) .p-tree-node-content:not(:has(.drop-target-active)) {
+gitgud-tree-list:has(.drop-target-active) .tree-list-row:not(:has(.drop-target-active)) {
   color: color-mix(in srgb, var(--p-text-color) 30%, transparent);
 
-  .p-tree-node-icon, .ahead-behind, i {
+  .tree-list-icon, .ahead-behind, i {
     color: inherit;
   }
 }
 
-// Outranks PrimeNG's hover rule (.p-tree-node-content.p-tree-node-selectable:not(.p-tree-node-selected):hover)
-.p-tree .p-tree-node-content.p-tree-node-selectable:has(.drop-target-hover):hover,
-.p-tree .p-tree-node-content:has(.drop-target-hover) {
+// Outranks the row's hover and selected rules
+gitgud-tree-list .tree-list-row:has(.drop-target-hover) {
   background: var(--p-primary-color);
   color: var(--p-primary-contrast-color);
 
-  .p-tree-node-icon, .ahead-behind, i {
+  .tree-list-icon, .ahead-behind, i {
     color: inherit;
   }
 }

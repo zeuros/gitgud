@@ -10,47 +10,42 @@
                 <div class="title">
                     <i class="fa fa-laptop mr-2"></i>Local
                 </div>
-                <div class="content">
-                    <p-tree
-                            selectionMode="single"
-                            [value]="localBranches()"
-                            [selectionKeys]="selectedLocalBranchKeys()"
-                            (onNodeUnselect)="selectBranchCommit($branchNode($event.node), localBranches)"
-                            (onNodeSelect)="selectBranchCommit($branchNode($event.node), localBranches)"
-                            (keydown)="onBranchTreeKeydown($event)"
-                            (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
-                            [contextMenu]="activeContextMenu.menuRef"
-                            (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
-                            emptyMessage="No local branches"
-                    >
-                        <ng-template #togglericon></ng-template>
-                        <ng-template #node let-node>
-                            @if (node.data) {
-                                <span class="flex align-items-center flex-1 branch-drop-target"
-                                      cdkDropList
-                                      cdkDropListSortingDisabled
-                                      (pointerenter)="branchDragDrop.onMouseEnter(node.data)"
-                                      (pointerleave)="branchDragDrop.onMouseLeave()"
-                                      [class.drop-target-active]="branchDragDrop.isValidDropTarget(node.data)"
-                                      [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
-                                    <span class="ellipsis flex-1 gap-1" [gitgudTitleIfOverflow]="node.data.name">{{ node.label }}</span>
-                                    @let ab = aheadBehind.aheadBehindMap()[node.data.name];
-                                    @if (ab?.ahead) {
-                                        <span class="ahead-behind"><i class="fa fa-arrow-up"></i>{{ ab.ahead }}</span>
-                                    }
-                                    @if (ab?.behind) {
-                                        <span class="ahead-behind"><i class="fa fa-arrow-down"></i>{{ ab.behind }}</span>
-                                    }
-                                    @if (currentRepo.otherWorktreeOf(node.data.name); as path) {
-                                        <i class="fa fa-tree text-gray small-icon ml-1" [title]="otherWorktreeTooltip(path)"></i>
-                                    }
-                                </span>
-                            } @else {
-                                <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.label">{{ node.label }}</span>
-                            }
-                        </ng-template>
-                    </p-tree>
-                </div>
+                <gitgud-tree-list #localBranchList
+                                  class="content"
+                                  [nodes]="localBranches()"
+                                  [selectedKey]="selectedLocalBranchKey()"
+                                  (nodeSelect)="selectBranchCommit($event)"
+                                  (keydown)="onBranchTreeKeydown($event, localBranchList)"
+                                  (nodeDoubleClick)="checkoutBranch($event.data)"
+                                  (nodeContextMenu)="openBranchContextMenu($event)"
+                                  emptyMessage="No local branches"
+                >
+                    <ng-template #node let-node>
+                        @if (node.data) {
+                            <span class="flex align-items-center flex-1 branch-drop-target"
+                                  cdkDropList
+                                  cdkDropListSortingDisabled
+                                  (pointerenter)="branchDragDrop.onMouseEnter(node.data)"
+                                  (pointerleave)="branchDragDrop.onMouseLeave()"
+                                  [class.drop-target-active]="branchDragDrop.isValidDropTarget(node.data)"
+                                  [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
+                                <span class="ellipsis flex-1 gap-1" [gitgudTitleIfOverflow]="node.data.name">{{ node.label }}</span>
+                                @let ab = aheadBehind.aheadBehindMap()[node.data.name];
+                                @if (ab?.ahead) {
+                                    <span class="ahead-behind"><i class="fa fa-arrow-up"></i>{{ ab.ahead }}</span>
+                                }
+                                @if (ab?.behind) {
+                                    <span class="ahead-behind"><i class="fa fa-arrow-down"></i>{{ ab.behind }}</span>
+                                }
+                                @if (currentRepo.otherWorktreeOf(node.data.name); as path) {
+                                    <i class="fa fa-tree text-gray small-icon ml-1" [title]="otherWorktreeTooltip(path)"></i>
+                                }
+                            </span>
+                        } @else {
+                            <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.label">{{ node.label }}</span>
+                        }
+                    </ng-template>
+                </gitgud-tree-list>
             </div>
         </p-splitter-panel>
 
@@ -59,37 +54,32 @@
                 <div class="title">
                     <i class="fa fa-cloud mr-2"></i>Remote
                 </div>
-                <div class="content">
-                    <p-tree
-                            selectionMode="single"
-                            [value]="remoteBranches()"
-                            [selectionKeys]="selectedRemoteBranchKeys()"
-                            (onNodeUnselect)="selectBranchCommit($branchNode($event.node), remoteBranches)"
-                            (onNodeSelect)="selectBranchCommit($branchNode($event.node), remoteBranches)"
-                            (keydown)="onBranchTreeKeydown($event)"
-                            (onNodeDoubleClick)="checkoutBranch($branchNode($event.node).data)"
-                            [contextMenu]="activeContextMenu.menuRef"
-                            (onNodeContextMenuSelect)="prepareBranchContextMenu($branchNode($event.node))"
-                            emptyMessage="No branches on remote"
-                    >
-                        <ng-template #togglericon></ng-template>
-                        <ng-template #node let-node>
-                            @if (node.data) {
-                                <span class="flex align-items-center flex-1 branch-drop-target"
-                                      cdkDropList
-                                      cdkDropListSortingDisabled
-                                      (pointerenter)="branchDragDrop.onMouseEnter(node.data)"
-                                      (pointerleave)="branchDragDrop.onMouseLeave()"
-                                      [class.drop-target-active]="branchDragDrop.isValidDropTarget(node.data)"
-                                      [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
-                                    <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.data.name">{{ node.label }}</span>
-                                </span>
-                            } @else {
-                                <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.label">{{ node.label }}</span>
-                            }
-                        </ng-template>
-                    </p-tree>
-                </div>
+                <gitgud-tree-list #remoteBranchList
+                                  class="content"
+                                  [nodes]="remoteBranches()"
+                                  [selectedKey]="selectedRemoteBranchKey()"
+                                  (nodeSelect)="selectBranchCommit($event)"
+                                  (keydown)="onBranchTreeKeydown($event, remoteBranchList)"
+                                  (nodeDoubleClick)="checkoutBranch($event.data)"
+                                  (nodeContextMenu)="openBranchContextMenu($event)"
+                                  emptyMessage="No branches on remote"
+                >
+                    <ng-template #node let-node>
+                        @if (node.data) {
+                            <span class="flex align-items-center flex-1 branch-drop-target"
+                                  cdkDropList
+                                  cdkDropListSortingDisabled
+                                  (pointerenter)="branchDragDrop.onMouseEnter(node.data)"
+                                  (pointerleave)="branchDragDrop.onMouseLeave()"
+                                  [class.drop-target-active]="branchDragDrop.isValidDropTarget(node.data)"
+                                  [class.drop-target-hover]="branchDragDrop.hoveredBranch()?.name === node.data.name">
+                                <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.data.name">{{ node.label }}</span>
+                            </span>
+                        } @else {
+                            <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.label">{{ node.label }}</span>
+                        }
+                    </ng-template>
+                </gitgud-tree-list>
             </div>
         </p-splitter-panel>
 
@@ -122,38 +112,34 @@
                 <div class="title">
                     <i class="fa fa-tag mr-2"></i>Tags
                 </div>
-                <div class="content">
-                    <p-tree
-                            selectionMode="single"
-                            [value]="tagTree()"
-                            [selectionKeys]="selectedTagKeys()"
-                            (onNodeUnselect)="selectTag($tagNode($event.node), tagTree)"
-                            (onNodeSelect)="selectTag($tagNode($event.node), tagTree)"
-                            [contextMenu]="activeContextMenu.menuRef"
-                            (onNodeContextMenuSelect)="prepareTagContextMenu($tagNode($event.node).data)"
-                            emptyMessage="No tags"
-                    >
-                        <ng-template #togglericon></ng-template>
-                        <ng-template #node let-node>
-                            @if (node.data) {
-                                @let tag = $localAndDistantTagWithName(node.data);
-                                <span class="flex align-items-center flex-1 gap-1">
-                                    <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.key">{{ node.label }}</span>
-                                    <span class="tag-presence-icons text-gray small-icon">
-                                        @if (tag.local) {
-                                            <i class="fa fa-laptop"></i>
-                                        }
-                                        @if (tag.distant) {
-                                            <i class="fa fa-github"></i>
-                                        }
-                                    </span>
+                <gitgud-tree-list #tagList
+                                  class="content"
+                                  [nodes]="tagTree()"
+                                  [selectedKey]="selectedTagKey()"
+                                  (nodeSelect)="selectTag($event)"
+                                  (keydown)="onTagTreeKeydown($event, tagList)"
+                                  (nodeContextMenu)="openTagContextMenu($event)"
+                                  emptyMessage="No tags"
+                >
+                    <ng-template #node let-node>
+                        @if (node.data) {
+                            @let tag = $localAndDistantTagWithName(node.data);
+                            <span class="flex align-items-center flex-1 gap-1">
+                                <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.key">{{ node.label }}</span>
+                                <span class="tag-presence-icons text-gray small-icon">
+                                    @if (tag.local) {
+                                        <i class="fa fa-laptop"></i>
+                                    }
+                                    @if (tag.distant) {
+                                        <i class="fa fa-github"></i>
+                                    }
                                 </span>
-                            } @else {
-                                <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.label">{{ node.label }}</span>
-                            }
-                        </ng-template>
-                    </p-tree>
-                </div>
+                            </span>
+                        } @else {
+                            <span class="ellipsis flex-1" [gitgudTitleIfOverflow]="node.label">{{ node.label }}</span>
+                        }
+                    </ng-template>
+                </gitgud-tree-list>
             </div>
         </p-splitter-panel>
 

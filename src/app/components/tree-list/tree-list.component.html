@@ -1,0 +1,31 @@
+@let allRows = rows();
+@let rendered = renderWindow();
+@if (!allRows.length) {
+    <div class="tree-list-empty">{{ emptyMessage() }}</div>
+}
+<!-- The spacer has the height of all rows, the rendered ones are moved to where they belong in it -->
+<div class="tree-list-spacer" [style.height.px]="allRows.length * ROW_HEIGHT_PX">
+    <div class="tree-list-window" [style.transform]="'translateY(' + rendered.from * ROW_HEIGHT_PX + 'px)'">
+        @for (row of allRows.slice(rendered.from, rendered.to); track row.node.key) {
+            @let node = row.node;
+            <div class="tree-list-row {{ node.styleClass ?? '' }}"
+                 role="treeitem"
+                 [class.selected]="node.key === selectedKey()"
+                 [class.focused]="node.key === focusedKey()"
+                 [attr.aria-selected]="node.key === selectedKey()"
+                 [attr.aria-expanded]="node.children?.length ? isExpanded(node) : null"
+                 [style.height.px]="ROW_HEIGHT_PX"
+                 [style.--depth]="row.depth"
+                 (click)="onClick(node)"
+                 (dblclick)="nodeDoubleClick.emit(node)"
+                 (contextmenu)="onContextMenu(node, $event)">
+                @if (node.icon) {
+                    <i class="tree-list-icon {{ node.icon }}"></i>
+                }
+                <span class="tree-list-label">
+                    <ng-container [ngTemplateOutlet]="nodeTemplate()" [ngTemplateOutletContext]="{$implicit: node}"/>
+                </span>
+            </div>
+        }
+    </div>
+</div>

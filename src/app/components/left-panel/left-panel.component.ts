@@ -16,15 +16,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ChangeDetectionStrategy, Component, computed, effect, inject, signal, type WritableSignal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, effect, inject, signal} from '@angular/core';
 import {TerminalService} from 'primeng/terminal';
-import {Tree} from 'primeng/tree';
 import {CdkDropList} from '@angular/cdk/drag-drop';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import type {TreeNode} from 'primeng/api';
 import type {Branch} from '../../lib/github-desktop/model/branch';
 import {local, remote, toBranchTree} from '../../utils/branch-utils';
-import {findNode, selectionKeysOf, toggleNode} from '../../utils/tree-utils';
+import {findNode} from '../../utils/tree-utils';
 import type {Commit} from '../../lib/github-desktop/model/commit';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {TableModule} from 'primeng/table';
@@ -44,6 +43,7 @@ import {GitRepositoryService} from '../../services/git-repository.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
+import {TreeListComponent, type TreeNodeContextMenuEvent} from '../tree-list/tree-list.component';
 import {otherWorktreeTooltip} from '../../utils/worktree-utils';
 import {LlmSessionsService} from '../../services/llm-sessions.service';
 import {llmSessionLabel} from '../../utils/llm-session-utils';
@@ -53,7 +53,7 @@ import {llmSessionLabel} from '../../utils/llm-session-utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
-    Tree,
+    TreeListComponent,
     TableModule,
     Listbox,
     FormsModule,
@@ -72,11 +72,10 @@ export class LeftPanelComponent {
   protected tagContextMenu = inject(TagContextMenuService);
   protected stashContextMenu = inject(StashContextMenuService);
   protected tagTree = signal<TreeNode<LocalAndDistantTagWithName>[]>([]);
-  protected selectedTagKeys = computed(() => {
+  protected selectedTagKey = computed(() => {
     const sha = this.currentRepo.selectedCommitSha();
-    return selectionKeysOf(sha ? findNode(this.tagTree(), t => t.sha === sha) : undefined);
+    return sha ? findNode(this.tagTree(), tag => tag.sha === sha)?.key : undefined;
   });
-  private lastSelectedBranchNode?: TreeNode<Branch>;
   protected localBranches = signal<TreeNode<Branch>[]>([]);
   protected remoteBranches = signal<TreeNode<Branch>[]>([]);
   // The selected commit's first chip: its local branch, and the remote branch paired with it
@@ -84,8 +83,8 @@ export class LeftPanelComponent {
     const sha = this.currentRepo.selectedCommitSha();
     return sha ? this.currentRepo.mergedBranchesByTip()[sha]?.[0] : undefined;
   });
-  protected selectedLocalBranchKeys = computed(() => this.selectionKeysOfBranch(this.localBranches(), this.selectedChip()?.localBranch));
-  protected selectedRemoteBranchKeys = computed(() => this.selectionKeysOfBranch(this.remoteBranches(), this.selectedChip()?.remoteBranch));
+  protected selectedLocalBranchKey = computed(() => this.keyOfBranch(this.localBranches(), this.selectedChip()?.localBranch));
+  protected selectedRemoteBranchKey = computed(() => this.keyOfBranch(this.remoteBranches(), this.selectedChip()?.remoteBranch));
   protected branchContextMenu = inject(BranchContextMenuService);
   protected branchDragDrop = inject(BranchDragDropService);
   protected activeContextMenu = inject(ActiveContextMenuService);
@@ -106,26 +105,38 @@ export class LeftPanelComponent {
     effect(() => this.tagTree.set(toTagTree(this.currentRepo.allTagsByName())));
   }
 
-  private selectionKeysOfBranch = (tree: TreeNode<Branch>[], branch?: Branch) =>
-    selectionKeysOf(branch ? findNode(tree, b => b.name === branch.name) : undefined);
+  private keyOfBranch = (tree: TreeNode<Branch>[], branch?: Branch) =>
+    branch ? findNode(tree, b => b.name === branch.name)?.key : undefined;
 
-  protected selectBranchCommit = (node: TreeNode<Branch>, nodes: WritableSignal<TreeNode<Branch>[]>) => {
-    this.lastSelectedBranchNode = node;
-    if (node.data) this.currentRepo.update({selectedCommitsShas: [node.data.tip.sha]});
-    else toggleNode(nodes, node);
+  protected selectBranchCommit = ({data: branch}: TreeNode<Branch>) => {
+    if (branch) this.currentRepo.update({selectedCommitsShas: [branch.tip.sha]});
   };
 
-  // The branch last selected in a tree, while its commit stays selected: see onMenuOwnerKeydown
-  protected onBranchTreeKeydown = (event: KeyboardEvent) => {
-    const node = this.lastSelectedBranchNode;
-    if (!node?.data || node.data.tip.sha != this.currentRepo.selectedCommitSha()) return;
+  // The focused branch's or folder's menu: see onMenuOwnerKeydown
+  protected onBranchTreeKeydown = (event: KeyboardEvent, tree: TreeListComponent<Branch>) => {
+    const node = tree.focusedNode();
+    if (!node) return;
     this.activeContextMenu.onMenuOwnerKeydown(
       event,
       () => {
         this.prepareBranchContextMenu(node);
         return this.branchContextMenu.branchContextMenu();
       },
-      () => (event.target as Element).closest('.p-tree-node')?.querySelector('.p-tree-node-content'),
+      tree.focusedRowElement,
+    );
+  };
+
+  // The focused tag's menu: see onMenuOwnerKeydown
+  protected onTagTreeKeydown = (event: KeyboardEvent, tree: TreeListComponent<LocalAndDistantTagWithName>) => {
+    const tag = tree.focusedNode()?.data;
+    if (!tag) return;
+    this.activeContextMenu.onMenuOwnerKeydown(
+      event,
+      () => {
+        this.tagContextMenu.selectedTag.set(tag);
+        return this.tagContextMenu.tagContextMenu();
+      },
+      tree.focusedRowElement,
     );
   };
 
@@ -133,9 +144,8 @@ export class LeftPanelComponent {
     if (stash) this.currentRepo.update({selectedCommitsShas: [stash.parentSHAs[1]]});
   };
 
-  protected selectTag = (node: TreeNode<LocalAndDistantTagWithName>, nodes: WritableSignal<TreeNode<LocalAndDistantTagWithName>[]>) => {
-    if (node.data) this.currentRepo.update({selectedCommitsShas: [(node.data.local ?? node.data.distant)!.sha]});
-    else toggleNode(nodes, node);
+  protected selectTag = ({data: tag}: TreeNode<LocalAndDistantTagWithName>) => {
+    if (tag) this.currentRepo.update({selectedCommitsShas: [(tag.local ?? tag.distant)!.sha]});
   };
 
   protected openStashContextMenu = (stash: Commit, event: MouseEvent) => {
@@ -144,20 +154,22 @@ export class LeftPanelComponent {
     this.activeContextMenu.show(this.stashContextMenu.stashContextMenu(), event);
   };
 
-  protected prepareTagContextMenu = (tag?: LocalAndDistantTagWithName) => {
+  protected openTagContextMenu = ({node: {data: tag}, event}: TreeNodeContextMenuEvent<LocalAndDistantTagWithName>) => {
     if (!tag) return;
     this.tagContextMenu.selectedTag.set(tag);
-    this.activeContextMenu.contextMenu.set(this.tagContextMenu.tagContextMenu());
+    this.activeContextMenu.show(this.tagContextMenu.tagContextMenu(), event);
   };
 
   protected checkoutBranch = (branch?: Branch) => {
     if (branch) this.branch.checkoutBranch(branch);
   };
 
-  protected prepareBranchContextMenu = (node: TreeNode<Branch>) => {
-    this.branchContextMenu.selectedNode.set(node);
-    this.activeContextMenu.contextMenu.set(this.branchContextMenu.branchContextMenu());
+  protected openBranchContextMenu = ({node, event}: TreeNodeContextMenuEvent<Branch>) => {
+    this.prepareBranchContextMenu(node);
+    this.activeContextMenu.show(this.branchContextMenu.branchContextMenu(), event);
   };
+
+  private prepareBranchContextMenu = (node: TreeNode<Branch>) => this.branchContextMenu.selectedNode.set(node);
 
   protected selectWorktree = (wt: GitWorktree) => {
     if (wt.sha) this.currentRepo.update({selectedCommitsShas: [wt.sha]});
@@ -182,8 +194,6 @@ export class LeftPanelComponent {
 
   protected otherWorktreeTooltip = otherWorktreeTooltip;
 
-  protected $branchNode = (branchNode: TreeNode<Branch>) => branchNode;
-  protected $tagNode = (node: TreeNode<LocalAndDistantTagWithName>) => node;
   protected $stash = (stash: Commit) => stash;
   protected $localAndDistantTagWithName = (t: LocalAndDistantTagWithName) => t;
   protected $worktree = (wt: GitWorktree) => wt;
