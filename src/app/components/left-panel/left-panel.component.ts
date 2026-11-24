@@ -187,7 +187,10 @@ export class LeftPanelComponent {
 
   protected addWorktree = () => this.dialog.open(CreateWorktreeDialogComponent, {header: 'Create Worktree', width: '520px'});
 
-  protected openAgent = ({session}: {session: LlmSession; worktree: GitWorktree}) => this.llmSessions.openedSession.set(session);
+  protected openAgent = ({session, worktree}: {session: LlmSession; worktree: GitWorktree}) => {
+    this.selectWorktree(worktree);
+    this.llmSessions.openedSession.set(session);
+  };
 
   // Its row's click would open its view
   protected stopAgent = (event: MouseEvent, {pid}: LlmSession) => {
