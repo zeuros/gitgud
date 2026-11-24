@@ -24,9 +24,9 @@ describe('llmConsoles order', () => {
 });
 
 describe('parseClaudeStatus', () => {
-  it('reads the name and whether it works', () => {
-    expect(parseClaudeStatus('{"pid":12,"cwd":"/repo","name":"fix-it","status":"busy"}')).toEqual({name: 'fix-it', isBusy: true});
-    expect(parseClaudeStatus('{"status":"idle"}')).toEqual({name: undefined, isBusy: false});
+  it('reads the session id, the name and whether it works', () => {
+    expect(parseClaudeStatus('{"pid":12,"sessionId":"abc","cwd":"/repo","name":"fix-it","status":"busy"}')).toEqual({sessionId: 'abc', name: 'fix-it', isBusy: true});
+    expect(parseClaudeStatus('{"status":"idle"}')).toEqual({sessionId: undefined, name: undefined, isBusy: false});
   });
   it('is undefined for a broken file', () => expect(parseClaudeStatus('{"pid":1')).toBeUndefined());
 });

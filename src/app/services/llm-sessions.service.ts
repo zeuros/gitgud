@@ -16,11 +16,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, effect, inject, Injectable, linkedSignal, type Signal} from '@angular/core';
+import {computed, effect, inject, Injectable, linkedSignal, signal, type Signal} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {from, interval, startWith, switchMap} from 'rxjs';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {type LlmSession, llmConsoles, llmSessionsByWorktree, parseClaudeStatus} from '../utils/llm-session-utils';
+import {claudeProjectDirName} from '../utils/claude-transcript-utils';
 import {ToastService} from './toast.service';
 
 const POLL_MS = 3000;
@@ -57,6 +58,9 @@ export class LlmSessionsService {
     return [localStorage.getItem(SELECTED_LLM_CLI_KEY), 'claude'].find(cli => cli && installed.includes(cli)) ?? installed[0];
   });
 
+  /** The session shown in the agent view */
+  openedSession = signal<LlmSession | undefined>(undefined);
+
   constructor() {
     effect(() => {
       const cli = this.selectedCli();
@@ -71,10 +75,14 @@ export class LlmSessionsService {
     if (cwd && cli) window.tauri.openInTerminal(cwd, cli).catch((error: unknown) => this.toast.err(`Couldn't start ${cli}: ${error}`));
   };
 
+  /** Claude Code's transcript of the session, undefined for other CLIs */
+  transcriptPath = ({cwd, sessionId}: LlmSession) =>
+    sessionId ? `${this.claudeConfigDir}/projects/${claudeProjectDirName(cwd)}/${sessionId}.jsonl` : undefined;
+
   private async readSessions() {
     const consoles = llmConsoles(await window.tauri.findProcesses(LLM_CLIS));
     return Promise.all(consoles.map(async ({pid, name, cwd}): Promise<LlmSession> =>
-      ({tool: name, cwd, isBusy: false, ...name === 'claude' ? await this.readClaudeStatus(pid) : undefined})));
+      ({tool: name, cwd, pid, isBusy: false, ...name === 'claude' ? await this.readClaudeStatus(pid) : undefined})));
   }
 
   private readClaudeStatus(pid: number) {

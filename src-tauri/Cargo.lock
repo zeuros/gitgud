@@ -1517,6 +1517,7 @@ dependencies = [
  "keyring-core",
  "libc",
  "md5",
+ "memchr",
  "notify",
  "oo7",
  "serde",

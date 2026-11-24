@@ -34,12 +34,13 @@ import {type ShortcutMenuItem, shortcutLabel} from './utils/menu-shortcuts';
 import {FixupService} from './services/fixup.service';
 import {MessageService} from 'primeng/api';
 import {GitRepositoryService} from './services/git-repository.service';
+import {AgentViewComponent} from './components/agent-view/agent-view.component';
 import {LordReflogComponent} from './components/lord-reflog/lord-reflog.component';
 import {ACTION_TOAST_KEY, type ToastAction} from './services/toast.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, ButtonDirective, LordReflogComponent],
+  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, ButtonDirective, LordReflogComponent, AgentViewComponent],
   selector: 'gitgud-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',

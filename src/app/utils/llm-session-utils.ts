@@ -22,6 +22,9 @@ import type {FoundProcess} from '../../typings';
 export interface LlmSession {
   tool: string; // 'claude', 'codex', 'gemini'…
   cwd: string;
+  pid?: number;
+  /** Claude Code's session id, naming its transcript */
+  sessionId?: string;
   name?: string;
   isBusy: boolean;
 }
@@ -34,10 +37,14 @@ export const llmConsoles = (processes: FoundProcess[]) =>
     .sort((a, b) => a.startTimeSecs - b.startTimeSecs || a.pid - b.pid);
 
 // Claude Code writes <config dir>/sessions/<pid>.json for each running session: its name, and 'busy' while it works
-export const parseClaudeStatus = (json: string): Pick<LlmSession, 'name' | 'isBusy'> | undefined => {
+export const parseClaudeStatus = (json: string): Pick<LlmSession, 'sessionId' | 'name' | 'isBusy'> | undefined => {
   try {
-    const {name, status} = JSON.parse(json) as {name?: unknown; status?: unknown};
-    return {name: typeof name === 'string' ? name : undefined, isBusy: status === 'busy'};
+    const {sessionId, name, status} = JSON.parse(json) as {sessionId?: unknown; name?: unknown; status?: unknown};
+    return {
+      sessionId: typeof sessionId === 'string' ? sessionId : undefined,
+      name: typeof name === 'string' ? name : undefined,
+      isBusy: status === 'busy',
+    };
   } catch {
     return undefined;
   }

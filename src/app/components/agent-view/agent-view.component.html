@@ -1,0 +1,38 @@
+<p-dialog [visible]="!!session()"
+          (visibleChange)="close($event)"
+          [header]="header()"
+          [modal]="false"
+          [maximizable]="true"
+          [resizable]="true"
+          [style]="{width: '60vw', height: '75vh'}"
+          [contentStyle]="{display: 'flex', flexDirection: 'column', flex: '1', minHeight: '0', padding: '0'}">
+    @if (transcript(); as transcript) {
+        <div #scroller class="transcript" (scroll)="onScroll(scroller)">
+            @let hiddenCount = hiddenEntryCount();
+            @if (hiddenCount) {
+                <div class="show-earlier" (click)="showEarlierEntries()">Show earlier ({{ hiddenCount }} more)</div>
+            }
+            @for (entry of shownEntries(); track hiddenEntryCount() + $index) {
+                @if (entry.kind === 'prompt') {
+                    <div class="prompt">&gt; {{ entry.text }}</div>
+                } @else if (entry.kind === 'text') {
+                    <div class="entry"><span class="bullet">⏺</span><span>{{ entry.text }}</span></div>
+                } @else {
+                    <div class="entry">
+                        <span class="bullet" [class.error]="entry.isError">⏺</span>
+                        <span><b>{{ entry.name }}</b>({{ entry.summary }})</span>
+                    </div>
+                    @if (entry.result) {
+                        <div class="result" (click)="toggleResult(entry.id)" title="Show more or less">
+                            <span class="bullet">⎿</span><span>{{ shownResult(entry.id, entry.result) }}</span>
+                        </div>
+                    }
+                }
+            } @empty {
+                <div class="text-gray">No message yet</div>
+            }
+        </div>
+    } @else {
+        <div class="p-3 text-gray">Only Claude Code sessions have a transcript GitGud can show</div>
+    }
+</p-dialog>

@@ -208,6 +208,7 @@
                         @let agent = $agent(item);
                         <div class="flex align-items-center gap-2 ellipsis"
                              [title]="agent.worktree.path"
+                             (click)="llmSessions.openedSession.set(agent.session)"
                              (dblclick)="switchToWorktree(agent.worktree)">
                             <span class="llm-session-icon">
                                 <i [class]="agent.session.isBusy ? 'fa fa-spinner fa-spin' : 'fa fa-terminal'" class="small-icon"></i>

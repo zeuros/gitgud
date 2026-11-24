@@ -8,6 +8,23 @@
 import type {SpawnOptionsWithoutStdio} from 'node:child_process';
 import type {editor} from 'monaco-editor';
 
+/** What the agent view shows of a transcript line. A tool's result comes in a later line than the tool. */
+export type TranscriptLineEntry =
+  | {kind: 'prompt'; text: string}
+  | {kind: 'text'; text: string}
+  | {kind: 'tool'; id: string; name: string; summary: string}
+  | {kind: 'result'; toolId: string; result: string; isError: boolean};
+
+/** The lines of a transcript from a byte on */
+export interface TranscriptChunk {
+  entries: TranscriptLineEntry[];
+  title: string | null;
+  /** Where the next chunk starts: after the last complete line */
+  nextByte: number;
+  /** The file was shorter than the byte asked (rewritten): read from its start */
+  restarted: boolean;
+}
+
 export interface FoundProcess {
   pid: number;
   parentPid: number | null;
@@ -91,6 +108,8 @@ interface TauriApi {
   findPrograms: (names: string[]) => Promise<string[]>;
   /** Opens the user's terminal in `cwd`, running `program` */
   openInTerminal: (cwd: string, program: string) => Promise<void>;
+  /** Claude Code's transcript at `path`, from `fromByte` on, up to its last complete line */
+  readTranscript: (path: string, fromByte: number) => Promise<TranscriptChunk>;
   zoom: {
     setFactor: (factor: number) => void | Promise<void>;
     getFactor: () => number;
