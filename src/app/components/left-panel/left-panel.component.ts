@@ -46,7 +46,9 @@ import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.direc
 import {TreeListComponent, type TreeNodeContextMenuEvent} from '../tree-list/tree-list.component';
 import {otherWorktreeTooltip} from '../../utils/worktree-utils';
 import {LlmSessionsService} from '../../services/llm-sessions.service';
-import {llmSessionLabel} from '../../utils/llm-session-utils';
+import {type LlmSession, llmSessionLabel} from '../../utils/llm-session-utils';
+import {Button} from 'primeng/button';
+import {Select} from 'primeng/select';
 
 @Component({
   selector: 'gitgud-left-panel',
@@ -61,6 +63,8 @@ import {llmSessionLabel} from '../../utils/llm-session-utils';
     SplitterPanel,
     CdkDropList,
     TitleIfOverflowDirective,
+    Button,
+    Select,
   ],
   providers: [TerminalService],
   templateUrl: './left-panel.component.html',
@@ -90,7 +94,7 @@ export class LeftPanelComponent {
   protected activeContextMenu = inject(ActiveContextMenuService);
   protected aheadBehind = inject(BranchAheadBehindService);
   protected worktreeContextMenu = inject(WorktreeContextMenuService);
-  private llmSessions = inject(LlmSessionsService);
+  protected llmSessions = inject(LlmSessionsService);
   private branch = inject(BranchService);
   private dialog = inject(DialogService);
   private gitRepositoryService = inject(GitRepositoryService);
@@ -191,10 +195,13 @@ export class LeftPanelComponent {
 
   protected llmSessionsIn = ({path}: GitWorktree) => this.llmSessions.byWorktree().get(path) ?? [];
   protected llmSessionLabel = llmSessionLabel;
+  protected runningAgents = computed(() => this.currentRepo.worktrees().flatMap(worktree =>
+    (this.llmSessions.byWorktree().get(worktree.path) ?? []).map(session => ({session, worktree}))));
 
   protected otherWorktreeTooltip = otherWorktreeTooltip;
 
   protected $stash = (stash: Commit) => stash;
   protected $localAndDistantTagWithName = (t: LocalAndDistantTagWithName) => t;
   protected $worktree = (wt: GitWorktree) => wt;
+  protected $agent = (agent: {session: LlmSession; worktree: GitWorktree}) => agent;
 }

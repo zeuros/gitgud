@@ -16,28 +16,30 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, inject, Injectable, type Signal} from '@angular/core';
+import {computed, effect, inject, Injectable, linkedSignal, type Signal} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {from, interval, startWith, switchMap} from 'rxjs';
 import {CurrentRepoStore} from '../stores/current-repo.store';
 import {type LlmSession, llmConsoles, llmSessionsByWorktree, parseClaudeStatus} from '../utils/llm-session-utils';
+import {ToastService} from './toast.service';
 
 const POLL_MS = 3000;
+const SELECTED_LLM_CLI_KEY = 'llm-cli';
 
 // LLM CLIs, by the name of their program or script
 const LLM_CLIS = ['claude', 'codex', 'gemini', 'qwen', 'aider', 'opencode', 'crush', 'goose', 'cursor-agent', 'copilot', 'amp'];
 
-/** The LLM consoles open in the current repository's worktrees */
 @Injectable({providedIn: 'root'})
 export class LlmSessionsService {
 
   private currentRepo = inject(CurrentRepoStore);
+  private toast = inject(ToastService);
 
-  private claudeSessionsDir = (() => {
+  private claudeConfigDir = (() => {
     const env = window.tauri.process.env as Record<string, string | undefined>;
-    const configDir = env['CLAUDE_CONFIG_DIR'] ?? (env['HOME'] ?? env['USERPROFILE']) + '/.claude';
-    return `${configDir}/sessions`;
+    return env['CLAUDE_CONFIG_DIR'] ?? (env['HOME'] ?? env['USERPROFILE']) + '/.claude';
   })();
+  private claudeSessionsDir = `${this.claudeConfigDir}/sessions`;
 
   private sessions: Signal<LlmSession[]> = toSignal(interval(POLL_MS).pipe(
     startWith(0),
@@ -46,6 +48,28 @@ export class LlmSessionsService {
 
   /** The sessions open in each worktree, by worktree path */
   byWorktree = computed(() => llmSessionsByWorktree(this.sessions(), this.currentRepo.worktrees().map(w => w.path)));
+
+  /** The LLM CLIs found on PATH */
+  installedClis = toSignal(from(window.tauri.findPrograms(LLM_CLIS).catch((): string[] => [])), {initialValue: []});
+  /** The CLI a new agent starts with: the last one started, else Claude */
+  selectedCli = linkedSignal(() => {
+    const installed = this.installedClis();
+    return [localStorage.getItem(SELECTED_LLM_CLI_KEY), 'claude'].find(cli => cli && installed.includes(cli)) ?? installed[0];
+  });
+
+  constructor() {
+    effect(() => {
+      const cli = this.selectedCli();
+      if (cli) localStorage.setItem(SELECTED_LLM_CLI_KEY, cli);
+    });
+  }
+
+  /** Opens the user's terminal in the current worktree, running the selected CLI */
+  startAgent = () => {
+    const cwd = this.currentRepo.cwd();
+    const cli = this.selectedCli();
+    if (cwd && cli) window.tauri.openInTerminal(cwd, cli).catch((error: unknown) => this.toast.err(`Couldn't start ${cli}: ${error}`));
+  };
 
   private async readSessions() {
     const consoles = llmConsoles(await window.tauri.findProcesses(LLM_CLIS));

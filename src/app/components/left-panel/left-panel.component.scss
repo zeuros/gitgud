@@ -136,3 +136,10 @@
     text-shadow: 0 0 4px var(--p-primary-color);
   }
 }
+
+// The CLI to start, in the Agents title: not uppercased nor bold like it
+.agent-cli-select {
+  text-transform: none;
+  font-weight: normal;
+}
+

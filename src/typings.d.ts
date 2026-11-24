@@ -13,6 +13,7 @@ export interface FoundProcess {
   parentPid: number | null;
   name: string;
   cwd: string;
+  startTimeSecs: number;
 }
 
 interface FsApi {

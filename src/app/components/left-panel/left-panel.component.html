@@ -3,7 +3,7 @@
             [style]="{ height: '100%' }"
             layout="vertical"
             stateStorage="local"
-            [stateKey]="'splitter-left-panel-' + repoId"
+            [stateKey]="'splitter-left-panel-with-agents-' + repoId"
     >
         <p-splitter-panel [minSize]="15">
             <div class="panel">
@@ -182,6 +182,38 @@
                             @if (ab?.behind) {
                                 <span class="ahead-behind"><i class="fa fa-arrow-down"></i>{{ ab.behind }}</span>
                             }
+                        </div>
+                    </ng-template>
+                </p-listbox>
+            </div>
+        </p-splitter-panel>
+
+        <p-splitter-panel [minSize]="10">
+            <div class="panel">
+                <div class="title flex align-items-center gap-2">
+                    <span><i class="fa fa-terminal mr-2"></i>Agents</span>
+                    @if (llmSessions.installedClis().length) {
+                        <p-select [options]="llmSessions.installedClis()" [(ngModel)]="llmSessions.selectedCli" size="small" class="agent-cli-select"/>
+                        <p-button icon="fa fa-play" size="small" [text]="true" (onClick)="llmSessions.startAgent()"
+                                  title="Open a terminal in this worktree, running the agent"/>
+                    }
+                </div>
+                <p-listbox
+                        [options]="runningAgents()"
+                        scrollHeight="auto"
+                        class="border-none"
+                        emptyMessage="No agent running"
+                >
+                    <ng-template #item let-item>
+                        @let agent = $agent(item);
+                        <div class="flex align-items-center gap-2 ellipsis"
+                             [title]="agent.worktree.path"
+                             (dblclick)="switchToWorktree(agent.worktree)">
+                            <span class="llm-session-icon">
+                                <i [class]="agent.session.isBusy ? 'fa fa-spinner fa-spin' : 'fa fa-terminal'" class="small-icon"></i>
+                            </span>
+                            <span class="ellipsis flex-1">{{ llmSessionLabel(agent.session) }}</span>
+                            <span class="ellipsis text-gray small-icon">{{ agent.worktree.branch ?? 'HEAD' }}</span>
                         </div>
                     </ng-template>
                 </p-listbox>

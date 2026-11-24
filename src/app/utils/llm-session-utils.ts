@@ -26,9 +26,12 @@ export interface LlmSession {
   isBusy: boolean;
 }
 
-// A CLI often runs as a launcher and its child (node wrapper + native binary): only the launcher is a console
+// A CLI often runs as a launcher and its child (node wrapper + native binary): only the launcher is a console.
+// The oldest started first, so the order stays as consoles come and go
 export const llmConsoles = (processes: FoundProcess[]) =>
-  processes.filter(({name, parentPid}) => !processes.some(p => p.pid === parentPid && p.name === name));
+  processes
+    .filter(({name, parentPid}) => !processes.some(p => p.pid === parentPid && p.name === name))
+    .sort((a, b) => a.startTimeSecs - b.startTimeSecs || a.pid - b.pid);
 
 // Claude Code writes <config dir>/sessions/<pid>.json for each running session: its name, and 'busy' while it works
 export const parseClaudeStatus = (json: string): Pick<LlmSession, 'name' | 'isBusy'> | undefined => {

@@ -3,13 +3,24 @@ import type {FoundProcess} from '../../typings';
 import {type LlmSession, llmConsoles, llmSessionLabel, llmSessionsByWorktree, parseClaudeStatus} from './llm-session-utils';
 
 describe('llmConsoles', () => {
-  const process = (pid: number, parentPid: number | null, name: string): FoundProcess => ({pid, parentPid, name, cwd: '/repo'});
+  const process = (pid: number, parentPid: number | null, name: string): FoundProcess => ({pid, parentPid, name, cwd: '/repo', startTimeSecs: 0});
 
   it('keeps a launcher, not its child of the same CLI, and each console of a folder', () =>
     expect(llmConsoles([
       process(10, 1, 'codex'), process(11, 10, 'codex'),
       process(20, 2, 'claude'), process(30, 3, 'claude'),
     ]).map(p => p.pid)).toEqual([10, 20, 30]));
+});
+
+describe('llmConsoles order', () => {
+  it('lists the oldest started first, then by pid', () => {
+    const consoles = llmConsoles([
+      {pid: 30, parentPid: 1, name: 'codex', cwd: '/repo', startTimeSecs: 200},
+      {pid: 20, parentPid: 1, name: 'claude', cwd: '/repo', startTimeSecs: 100},
+      {pid: 10, parentPid: 1, name: 'claude', cwd: '/repo', startTimeSecs: 200},
+    ]);
+    expect(consoles.map(c => c.pid)).toEqual([20, 10, 30]);
+  });
 });
 
 describe('parseClaudeStatus', () => {
