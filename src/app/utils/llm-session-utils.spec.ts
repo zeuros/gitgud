@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import type {FoundProcess} from '../../typings';
-import {type LlmSession, llmConsoles, llmSessionLabel, llmSessionsByWorktree, parseClaudeStatus} from './llm-session-utils';
+import {gitgudClaudeAgents, type LlmSession, llmConsoles, llmSessionLabel, llmSessionsByWorktree, parseClaudeStatus} from './llm-session-utils';
 
 describe('llmConsoles', () => {
   const process = (pid: number, parentPid: number | null, name: string): FoundProcess => ({pid, parentPid, name, cwd: '/repo', startTimeSecs: 0});
@@ -55,4 +55,17 @@ describe('llmSessionsByWorktree', () => {
 
   it('skips the sessions outside the worktrees', () =>
     expect(llmSessionsByWorktree([session('/repository')], worktrees).size).toBe(0));
+});
+
+describe('gitgudClaudeAgents', () => {
+  it('keeps the Claude terminals with a session id: the running one, else the one resumed', () =>
+    expect(gitgudClaudeAgents([
+      {pid: 1, program: 'claude', args: [], cwd: '/a'},
+      {pid: 2, program: 'claude', args: ['--resume', 'old'], cwd: '/b'},
+      {pid: 3, program: 'claude', args: [], cwd: '/c'},
+      {pid: 4, program: 'codex', args: [], cwd: '/d'},
+    ], [
+      {tool: 'claude', cwd: '/a', pid: 1, sessionId: 's1', isBusy: false},
+      {tool: 'codex', cwd: '/d', pid: 4, isBusy: false},
+    ])).toEqual([{cwd: '/a', sessionId: 's1'}, {cwd: '/b', sessionId: 'old'}]));
 });

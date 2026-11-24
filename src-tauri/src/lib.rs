@@ -13,7 +13,7 @@ pub mod credential_helper;
 pub mod sequence_editor;
 mod shell_pool;
 
-use commands::{agent::*, fs::*, process::*, transcript::*, util::*, watcher::*};
+use commands::{agent::*, fs::*, process::*, pty::*, transcript::*, util::*, watcher::*};
 use tauri_plugin_window_state::StateFlags;
 
 const FALLBACK_PATHS: &[&str] = &["/usr/local/bin", "/usr/bin", "/bin", "/opt/homebrew/bin"];
@@ -135,6 +135,13 @@ pub fn run() {
             // agent
             find_programs,
             open_in_terminal,
+            // pty
+            pty_spawn,
+            pty_write,
+            pty_resize,
+            pty_kill,
+            pty_list,
+            pty_attach,
             // transcript
             read_transcript,
         ])

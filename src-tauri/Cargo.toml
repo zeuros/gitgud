@@ -26,6 +26,7 @@ tauri-plugin-window-state = "2.4.1"
 tauri-plugin-prevent-default = "6"
 sysinfo = { version = "0.40.0", default-features = false, features = ["system"] }
 ignore = "0.4.34"
+portable-pty = "0.9.0"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

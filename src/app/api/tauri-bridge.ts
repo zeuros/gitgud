@@ -6,7 +6,7 @@
  * Node-like signatures (execFile, spawn, fs…), so the app's code doesn't depend on Tauri's API.
  */
 
-import {invoke} from '@tauri-apps/api/core';
+import {Channel, invoke} from '@tauri-apps/api/core';
 import {listen} from '@tauri-apps/api/event';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import {getCurrentWebview} from '@tauri-apps/api/webview';
@@ -15,7 +15,7 @@ import {open as openDialog} from '@tauri-apps/plugin-dialog';
 import {tempDir} from '@tauri-apps/api/path';
 import {openPath, openUrl} from '@tauri-apps/plugin-opener';
 import posixPath from './path-utils';
-import type {FoundProcess, TranscriptChunk, WatchError, WatchOptions} from '../../typings';
+import type {FoundProcess, PtyList, TranscriptChunk, WatchError, WatchOptions} from '../../typings';
 
 // ---------------------------------------------------------------------------
 // Watcher registry — maps caller IDs to Tauri event unlisten functions
@@ -170,6 +170,21 @@ async function buildBridge() {
     openInTerminal: (cwd: string, program: string) => invoke<void>('open_in_terminal', {cwd, program}),
 
     readTranscript: (path: string, fromByte: number) => invoke<TranscriptChunk>('read_transcript', {path, fromByte}),
+
+    pty: {
+      spawn: (program: string, args: string[], cwd: string, {cols, rows}: {cols: number; rows: number},
+              onOutput: (data: ArrayBuffer) => void, onExit: (exitCode: number) => void) => {
+        const outputChannel = new Channel<ArrayBuffer>(onOutput);
+        const exitChannel = new Channel<number>(onExit);
+        return invoke<number>('pty_spawn', {program, args, cwd, cols, rows, onOutput: outputChannel, onExit: exitChannel});
+      },
+      list: () => invoke<PtyList>('pty_list'),
+      attach: (pid: number, onOutput: (data: ArrayBuffer) => void, onExit: (exitCode: number) => void) =>
+        invoke<void>('pty_attach', {pid, onOutput: new Channel<ArrayBuffer>(onOutput), onExit: new Channel<number>(onExit)}),
+      write: (pid: number, data: string) => invoke<void>('pty_write', {pid, data}),
+      resize: (pid: number, {cols, rows}: {cols: number; rows: number}) => invoke<void>('pty_resize', {pid, cols, rows}),
+      kill: (pid: number) => invoke<void>('pty_kill', {pid}),
+    },
 
     openExternal: (url: string) => openUrl(url),
 

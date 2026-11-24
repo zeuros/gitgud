@@ -20,7 +20,9 @@ import {ChangeDetectionStrategy, Component, computed, effect, type ElementRef, i
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {concatMap, defer, distinctUntilChanged, EMPTY, from, of, switchMap, timer} from 'rxjs';
 import {Dialog} from 'primeng/dialog';
+import {Button} from 'primeng/button';
 import {LlmSessionsService} from '../../services/llm-sessions.service';
+import {AgentTerminalsService} from '../../services/agent-terminals.service';
 import {appendTranscriptChunk, EMPTY_TRANSCRIPT, type Transcript} from '../../utils/claude-transcript-utils';
 import {llmSessionLabel} from '../../utils/llm-session-utils';
 
@@ -35,41 +37,62 @@ const STICK_TO_BOTTOM_PX = 40;
 @Component({
   selector: 'gitgud-agent-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Dialog],
+  imports: [Dialog, Button],
   templateUrl: './agent-view.component.html',
   styleUrl: './agent-view.component.scss',
 })
 export class AgentViewComponent {
 
   protected llmSessions = inject(LlmSessionsService);
+  private agentTerminals = inject(AgentTerminalsService);
 
   protected session = this.llmSessions.openedSession;
-  protected transcript = toSignal(toObservable(this.session).pipe(
-    switchMap(session => {
-      const path = session && this.llmSessions.transcriptPath(session);
-      return path ? this.watchTranscript(path) : of(undefined);
-    }),
+  /** The terminal of an agent started from GitGud: interactive, shown instead of the transcript */
+  protected terminal = computed(() => {
+    const pid = this.session()?.pid;
+    return pid === undefined ? undefined : this.agentTerminals.terminals().get(pid);
+  });
+  private transcriptPath = computed(() => {
+    const session = this.llmSessions.openedSessionNow();
+    return session && this.llmSessions.transcriptPath(session);
+  });
+  protected transcript = toSignal(toObservable(this.transcriptPath).pipe(
+    distinctUntilChanged(),
+    switchMap(path => path ? this.watchTranscript(path) : of(undefined)),
   ));
   protected shownEntryCount = linkedSignal(() => {
-    this.session();
+    this.transcriptPath();
     return SHOWN_ENTRIES_STEP;
   });
   protected hiddenEntryCount = computed(() => Math.max(0, (this.transcript()?.entries.length ?? 0) - this.shownEntryCount()));
   protected shownEntries = computed(() => this.transcript()?.entries.slice(this.hiddenEntryCount()) ?? []);
   protected header = computed(() => {
-    const session = this.session();
+    const session = this.llmSessions.openedSessionNow();
     return this.transcript()?.title ?? (session ? llmSessionLabel(session) : '');
   });
   protected expandedToolIds = signal(new Set<string>());
   private isAtBottom = true;
 
   private scroller = viewChild<ElementRef<HTMLElement>>('scroller');
+  private terminalHost = viewChild<ElementRef<HTMLElement>>('terminalHost');
 
   constructor() {
     effect(() => {
       this.transcript();
       const scroller = this.scroller()?.nativeElement;
       if (scroller && this.isAtBottom) requestAnimationFrame(() => scroller.scrollTop = scroller.scrollHeight);
+    });
+    // Moves the terminal in, fitted to the view as it resizes
+    effect(onCleanup => {
+      const terminal = this.terminal();
+      const host = this.terminalHost()?.nativeElement;
+      if (!terminal || !host) return;
+
+      host.replaceChildren(terminal.element);
+      const resizeObserver = new ResizeObserver(() => terminal.fitAddon.fit());
+      resizeObserver.observe(host);
+      terminal.terminal.focus();
+      onCleanup(() => resizeObserver.disconnect());
     });
   }
 
@@ -78,6 +101,8 @@ export class AgentViewComponent {
     this.session.set(undefined);
     this.isAtBottom = true;
   };
+
+  protected stop = (pid: number) => window.tauri.pty.kill(pid);
 
   protected onScroll = ({scrollTop, scrollHeight, clientHeight}: HTMLElement) =>
     this.isAtBottom = scrollHeight - scrollTop - clientHeight < STICK_TO_BOTTOM_PX;

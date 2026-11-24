@@ -16,6 +16,19 @@ export type TranscriptLineEntry =
   | {kind: 'result'; toolId: string; result: string; isError: boolean};
 
 /** The lines of a transcript from a byte on */
+/** A program running in a terminal GitGud draws */
+export interface PtyInfo {
+  pid: number;
+  program: string;
+  args: string[];
+  cwd: string;
+}
+
+export interface PtyList {
+  isAppStart: boolean;
+  terminals: PtyInfo[];
+}
+
 export interface TranscriptChunk {
   entries: TranscriptLineEntry[];
   title: string | null;
@@ -110,6 +123,18 @@ interface TauriApi {
   openInTerminal: (cwd: string, program: string) => Promise<void>;
   /** Claude Code's transcript at `path`, from `fromByte` on, up to its last complete line */
   readTranscript: (path: string, fromByte: number) => Promise<TranscriptChunk>;
+  /** Programs running in a pseudo-terminal the page draws, by their pid */
+  pty: {
+    spawn: (program: string, args: string[], cwd: string, size: {cols: number; rows: number},
+            onOutput: (data: ArrayBuffer) => void, onExit: (exitCode: number) => void) => Promise<number>;
+    /** The programs running, kept across a page reload; `isAppStart` on the app's first page */
+    list: () => Promise<PtyList>;
+    /** Sends a running program's recent output to `onOutput`, then its output to come */
+    attach: (pid: number, onOutput: (data: ArrayBuffer) => void, onExit: (exitCode: number) => void) => Promise<void>;
+    write: (pid: number, data: string) => Promise<void>;
+    resize: (pid: number, size: {cols: number; rows: number}) => Promise<void>;
+    kill: (pid: number) => Promise<void>;
+  };
   zoom: {
     setFactor: (factor: number) => void | Promise<void>;
     getFactor: () => number;

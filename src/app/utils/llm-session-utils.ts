@@ -16,9 +16,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type {FoundProcess} from '../../typings';
+import type {FoundProcess, PtyInfo} from '../../typings';
 
 // An LLM console open in a folder; Claude Code also tells its session's name and whether it works
+export interface GitgudClaudeAgent {
+  cwd: string;
+  sessionId: string;
+}
+
 export interface LlmSession {
   tool: string; // 'claude', 'codex', 'gemini'…
   cwd: string;
@@ -53,6 +58,16 @@ export const parseClaudeStatus = (json: string): Pick<LlmSession, 'sessionId' | 
 // "claude: fix-it (working)", "claude: fix-it (waiting for you)", "codex"
 export const llmSessionLabel = ({tool, name, isBusy}: LlmSession) =>
   name === undefined ? tool : `${tool}: ${name} (${isBusy ? 'working' : 'waiting for you'})`;
+
+/** The Claude sessions run in GitGud's terminals, to resume when the app starts again */
+export const gitgudClaudeAgents = (terminals: PtyInfo[], sessions: LlmSession[]): GitgudClaudeAgent[] =>
+  terminals.flatMap(({pid, program, args, cwd}) => {
+    if (program !== 'claude') return [];
+
+    const resumedSessionId = args[0] === '--resume' ? args[1] : undefined;
+    const sessionId = sessions.find(session => session.pid === pid)?.sessionId ?? resumedSessionId;
+    return sessionId ? [{cwd, sessionId}] : [];
+  });
 
 const isInside = (path: string, dir: string) => path === dir || path.startsWith(`${dir}/`) || path.startsWith(`${dir}\\`);
 

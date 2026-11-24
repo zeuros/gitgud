@@ -171,7 +171,7 @@
                             </span>
                             <!-- One icon per LLM console open in the worktree: a spinner while it works -->
                             @for (session of llmSessionsIn(worktree); track $index) {
-                                <span class="llm-session-icon" [title]="llmSessionLabel(session)">
+                                <span class="llm-session-icon" [title]="llmSessionLabel(session)" [class.run-in-gitgud]="llmSessions.isRunInGitgud(session)">
                                     <i [class]="session.isBusy ? 'fa fa-spinner fa-spin' : 'fa fa-terminal'" class="small-icon"></i>
                                 </span>
                             }
@@ -195,7 +195,7 @@
                     @if (llmSessions.installedClis().length) {
                         <p-select [options]="llmSessions.installedClis()" [(ngModel)]="llmSessions.selectedCli" size="small" class="agent-cli-select"/>
                         <p-button icon="fa fa-play" size="small" [text]="true" (onClick)="llmSessions.startAgent()"
-                                  title="Open a terminal in this worktree, running the agent"/>
+                                  title="Run the agent in this worktree, in GitGud"/>
                     }
                 </div>
                 <p-listbox
@@ -210,10 +210,13 @@
                              [title]="agent.worktree.path"
                              (click)="llmSessions.openedSession.set(agent.session)"
                              (dblclick)="switchToWorktree(agent.worktree)">
-                            <span class="llm-session-icon">
+                            <span class="llm-session-icon" [class.run-in-gitgud]="llmSessions.isRunInGitgud(agent.session)">
                                 <i [class]="agent.session.isBusy ? 'fa fa-spinner fa-spin' : 'fa fa-terminal'" class="small-icon"></i>
                             </span>
                             <span class="ellipsis flex-1">{{ llmSessionLabel(agent.session) }}</span>
+                            @if (llmSessions.isRunInGitgud(agent.session)) {
+                                <i class="fa fa-stop small-icon stop-agent" title="Stop this agent; it can be resumed" (click)="stopAgent($event, agent.session)"></i>
+                            }
                             <span class="ellipsis text-gray small-icon">{{ agent.worktree.branch ?? 'HEAD' }}</span>
                         </div>
                     </ng-template>

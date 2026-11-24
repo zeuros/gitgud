@@ -187,6 +187,12 @@ export class LeftPanelComponent {
 
   protected addWorktree = () => this.dialog.open(CreateWorktreeDialogComponent, {header: 'Create Worktree', width: '520px'});
 
+  // Its row's click would open its view
+  protected stopAgent = (event: MouseEvent, {pid}: LlmSession) => {
+    event.stopPropagation();
+    if (pid !== undefined) window.tauri.pty.kill(pid);
+  };
+
   protected switchToWorktree = (wt: GitWorktree) => {
     if (!this.isCurrentWorktree(wt)) this.gitRepositoryService.switchWorktree(wt.path).subscribe();
   };

@@ -6,7 +6,9 @@
           [resizable]="true"
           [style]="{width: '60vw', height: '75vh'}"
           [contentStyle]="{display: 'flex', flexDirection: 'column', flex: '1', minHeight: '0', padding: '0'}">
-    @if (transcript(); as transcript) {
+    @if (terminal()) {
+        <div #terminalHost class="terminal-host"></div>
+    } @else if (transcript(); as transcript) {
         <div #scroller class="transcript" (scroll)="onScroll(scroller)">
             @let hiddenCount = hiddenEntryCount();
             @if (hiddenCount) {
@@ -34,5 +36,11 @@
         </div>
     } @else {
         <div class="p-3 text-gray">Only Claude Code sessions have a transcript GitGud can show</div>
+    }
+    @if (terminal(); as terminal) {
+        <ng-template #footer>
+            <p-button label="Stop" icon="fa fa-stop" size="small" severity="danger" (onClick)="stop(terminal.pid)"
+                      title="Stop this agent; it can be resumed"/>
+        </ng-template>
     }
 </p-dialog>

@@ -52,3 +52,9 @@
     color: var(--p-primary-color);
   }
 }
+
+.terminal-host {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 0 4px 8px;
+}
