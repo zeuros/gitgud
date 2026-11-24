@@ -116,7 +116,6 @@
   }
 }
 
-
 ::ng-deep .tree-list-row.worktree-current,
 ::ng-deep .p-listbox-option:has(.worktree-current) {
   background: var(--branch-current-bg);
@@ -156,3 +155,51 @@
   font-weight: normal;
 }
 
+// The running agents then the ended ones, in one scrolling list
+.agents-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+
+  ::ng-deep p-listbox.running-agents {
+    flex: none;
+  }
+}
+
+// Ended agents: small rows, the first ones and a hint. Hovering shows them all, the hovered row back to its normal size
+.ended-agents {
+  padding: 2px 0 4px;
+  font-size: 0.72rem;
+  color: var(--hmmmmmmGray);
+
+  .ended-agent {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 18px;
+    padding: 0 10px;
+    cursor: pointer;
+    transition: height 0.1s, font-size 0.1s;
+
+    &:hover {
+      height: 2rem;
+      font-size: 0.875rem;
+      color: var(--wowowowGray);
+      background: var(--p-highlight-focus-background);
+    }
+  }
+
+  .ended-agents-hint {
+    height: 18px;
+    padding: 0 10px;
+    font-style: italic;
+  }
+
+  &:hover .ended-agents-hint {
+    display: none;
+  }
+
+  &:not(:hover) .ended-agent:nth-child(n + 4) {
+    display: none;
+  }
+}

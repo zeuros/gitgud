@@ -37,6 +37,8 @@ describe('llmSessionLabel', () => {
     expect(llmSessionLabel({tool: 'claude', cwd: '/repo', name: 'fix-it', isBusy: false})).toBe('claude: fix-it (waiting for you)');
   });
   it('is the tool for a console without a session name', () => expect(llmSessionLabel({tool: 'codex', cwd: '/repo', isBusy: false})).toBe('codex'));
+  it('says an ended session ended', () =>
+    expect(llmSessionLabel({tool: 'claude', cwd: '/repo', name: 'fix-it', isBusy: false, endedAt: 0})).toBe('claude: fix-it (ended)'));
 });
 
 describe('llmSessionsByWorktree', () => {

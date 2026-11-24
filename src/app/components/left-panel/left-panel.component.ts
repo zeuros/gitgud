@@ -187,6 +187,8 @@ export class LeftPanelComponent {
 
   protected addWorktree = () => this.dialog.open(CreateWorktreeDialogComponent, {header: 'Create Worktree', width: '520px'});
 
+  protected openAgent = ({session}: {session: LlmSession; worktree: GitWorktree}) => this.llmSessions.openedSession.set(session);
+
   // Its row's click would open its view
   protected stopAgent = (event: MouseEvent, {pid}: LlmSession) => {
     event.stopPropagation();
@@ -201,8 +203,19 @@ export class LeftPanelComponent {
 
   protected llmSessionsIn = ({path}: GitWorktree) => this.llmSessions.byWorktree().get(path) ?? [];
   protected llmSessionLabel = llmSessionLabel;
-  protected runningAgents = computed(() => this.currentRepo.worktrees().flatMap(worktree =>
-    (this.llmSessions.byWorktree().get(worktree.path) ?? []).map(session => ({session, worktree}))));
+  protected runningAgents = computed(() => {
+    const worktreeOfSession = new Map(this.currentRepo.worktrees().flatMap(worktree =>
+      (this.llmSessions.byWorktree().get(worktree.path) ?? []).map(session => [session, worktree] as const)));
+    return this.llmSessions.sessions().flatMap(session => {
+      const worktree = worktreeOfSession.get(session);
+      return worktree ? [{session, worktree}] : [];
+    });
+  });
+  protected ENDED_AGENTS_SHOWN_BEFORE_HOVER = 3;
+  // The Claude sessions that ended in them, the most recent first
+  protected endedAgents = computed(() => this.currentRepo.worktrees()
+    .flatMap(worktree => (this.llmSessions.endedByWorktree().get(worktree.path) ?? []).map(session => ({session, worktree})))
+    .sort((a, b) => b.session.endedAt! - a.session.endedAt!));
 
   protected otherWorktreeTooltip = otherWorktreeTooltip;
 

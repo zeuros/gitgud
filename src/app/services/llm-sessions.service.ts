@@ -16,11 +16,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {computed, effect, inject, Injectable, linkedSignal, signal, type Signal} from '@angular/core';
-import {toSignal} from '@angular/core/rxjs-interop';
+import {computed, effect, inject, Injectable, linkedSignal, type Signal, signal} from '@angular/core';
 import {from, interval, startWith, switchMap} from 'rxjs';
+import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {CurrentRepoStore} from '../stores/current-repo.store';
-import {gitgudClaudeAgents, type GitgudClaudeAgent, type LlmSession, llmConsoles, llmSessionsByWorktree, parseClaudeStatus} from '../utils/llm-session-utils';
+import {type GitgudClaudeAgent, gitgudClaudeAgents, isSameSession, llmConsoles, type LlmSession, llmSessionsByWorktree, parseClaudeStatus} from '../utils/llm-session-utils';
 import {claudeProjectDirName} from '../utils/claude-transcript-utils';
 import {ToastService} from './toast.service';
 import {AgentTerminalsService} from './agent-terminals.service';
@@ -29,6 +29,8 @@ const POLL_MS = 3000;
 const SELECTED_LLM_CLI_KEY = 'llm-cli';
 // The Claude sessions GitGud runs, resumed when it starts again
 const GITGUD_CLAUDE_AGENTS_KEY = 'gitgud-claude-agents';
+// Ended Claude sessions listed per worktree, the most recent first
+const ENDED_SESSIONS_PER_WORKTREE = 10;
 
 // LLM CLIs, by the name of their program or script
 const LLM_CLIS = ['claude', 'codex', 'gemini', 'qwen', 'aider', 'opencode', 'crush', 'goose', 'cursor-agent', 'copilot', 'amp'];
@@ -46,13 +48,24 @@ export class LlmSessionsService {
   })();
   private claudeSessionsDir = `${this.claudeConfigDir}/sessions`;
 
-  private sessions: Signal<LlmSession[]> = toSignal(interval(POLL_MS).pipe(
+  /** The LLM consoles running, the oldest started first */
+  sessions: Signal<LlmSession[]> = toSignal(interval(POLL_MS).pipe(
     startWith(0),
     switchMap(() => from(this.readSessions().catch(() => []))),
   ), {initialValue: []});
 
   /** The sessions open in each worktree, by worktree path */
   byWorktree = computed(() => llmSessionsByWorktree(this.sessions(), this.currentRepo.worktrees().map(w => w.path)));
+
+  // Read again when a worktree comes or goes, or a session starts or ends
+  private endedSessionsSource = computed(() => JSON.stringify({
+    worktreePaths: this.currentRepo.worktrees().map(w => w.path),
+    runningSessionIds: this.sessions().map(session => session.sessionId),
+  }));
+  /** The Claude sessions that ran in each worktree and ended, by worktree path */
+  endedByWorktree = toSignal(toObservable(this.endedSessionsSource).pipe(
+    switchMap(() => from(this.readEndedSessions())),
+  ), {initialValue: new Map<string, LlmSession[]>()});
 
   /** The LLM CLIs found on PATH */
   installedClis = toSignal(from(window.tauri.findPrograms(LLM_CLIS).catch((): string[] => [])), {initialValue: []});
@@ -64,10 +77,15 @@ export class LlmSessionsService {
 
   /** The session shown in the agent view */
   openedSession = signal<LlmSession | undefined>(undefined);
-  /** The opened session as last seen running: its name and whether it works */
-  openedSessionNow = computed(() => {
-    const opened = this.openedSession();
-    return [...this.byWorktree().values()].flat().find(session => opened?.pid !== undefined && session.pid === opened.pid) ?? opened;
+  /** The opened session as last seen: its name, whether it works, or that it ended */
+  openedSessionNow = linkedSignal<{opened?: LlmSession; running: LlmSession[]}, LlmSession | undefined>({
+    source: () => ({opened: this.openedSession(), running: this.sessions()}),
+    computation: ({opened, running}, previous) => {
+      if (!opened) return undefined;
+      const now = running.find(session => isSameSession(opened, session));
+      const lastSeen = previous?.value && isSameSession(opened, previous.value) ? previous.value : undefined;
+      return now ?? (lastSeen && {...lastSeen, isBusy: false, endedAt: lastSeen.endedAt ?? Date.now()}) ?? opened;
+    },
   });
 
   // Until the agents of the last run are resumed, the saved ones are kept as they are
@@ -100,6 +118,14 @@ export class LlmSessionsService {
     );
   };
 
+  /** Continues an ended Claude session in a terminal in GitGud, and shows it */
+  resumeSession = ({cwd, sessionId}: LlmSession) => {
+    if (!sessionId) return;
+    this.agentTerminals.start('claude', ['--resume', sessionId], cwd).then(
+      pid => this.openedSession.set({tool: 'claude', cwd, pid, sessionId, isBusy: false}),
+      (error: unknown) => this.toast.err(`Couldn't resume the session: ${error}`),
+    );
+  };
 
   // The Claude sessions GitGud ran when it quit, started again in the background
   private resumeAgents = async () => {
@@ -117,6 +143,22 @@ export class LlmSessionsService {
   /** Claude Code's transcript of the session, undefined for other CLIs */
   transcriptPath = ({cwd, sessionId}: LlmSession) =>
     sessionId ? `${this.claudeConfigDir}/projects/${claudeProjectDirName(cwd)}/${sessionId}.jsonl` : undefined;
+
+  private async readEndedSessions() {
+    const runningSessionIds = new Set(this.sessions().map(session => session.sessionId));
+    const endedByWorktree = new Map<string, LlmSession[]>();
+    for (const {path} of this.currentRepo.worktrees()) {
+      const projectDir = `${this.claudeConfigDir}/projects/${claudeProjectDirName(path)}`;
+      const sessionIds = (await window.tauri.fs.readdir(projectDir).catch((): string[] => []))
+        .filter(file => file.endsWith('.jsonl'))
+        .map(file => file.slice(0, -'.jsonl'.length))
+        .filter(sessionId => !runningSessionIds.has(sessionId));
+      const sessions = await Promise.all(sessionIds.map(async (sessionId): Promise<LlmSession> =>
+        ({tool: 'claude', cwd: path, sessionId, isBusy: false, endedAt: await window.tauri.fs.mtime(`${projectDir}/${sessionId}.jsonl`).catch(() => 0)})));
+      endedByWorktree.set(path, sessions.sort((a, b) => b.endedAt! - a.endedAt!).slice(0, ENDED_SESSIONS_PER_WORKTREE));
+    }
+    return endedByWorktree;
+  }
 
   private async readSessions() {
     const consoles = llmConsoles(await window.tauri.findProcesses(LLM_CLIS));

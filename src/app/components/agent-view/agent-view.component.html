@@ -43,4 +43,12 @@
                       title="Stop this agent; it can be resumed"/>
         </ng-template>
     }
+    @if (!terminal() && llmSessions.openedSessionNow(); as session) {
+        @if (session.endedAt !== undefined && session.sessionId) {
+            <ng-template #footer>
+                <p-button label="Resume" icon="fa fa-play" size="small" (onClick)="llmSessions.resumeSession(session)"
+                          title="Continue this session in GitGud"/>
+            </ng-template>
+        }
+    }
 </p-dialog>

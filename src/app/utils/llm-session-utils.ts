@@ -32,6 +32,8 @@ export interface LlmSession {
   sessionId?: string;
   name?: string;
   isBusy: boolean;
+  /** When its transcript last changed, for a session no longer running */
+  endedAt?: number;
 }
 
 // A CLI often runs as a launcher and its child (node wrapper + native binary): only the launcher is a console.
@@ -55,9 +57,16 @@ export const parseClaudeStatus = (json: string): Pick<LlmSession, 'sessionId' | 
   }
 };
 
-// "claude: fix-it (working)", "claude: fix-it (waiting for you)", "codex"
-export const llmSessionLabel = ({tool, name, isBusy}: LlmSession) =>
-  name === undefined ? tool : `${tool}: ${name} (${isBusy ? 'working' : 'waiting for you'})`;
+// "claude: fix-it (working)", "claude: fix-it (waiting for you)", "codex", "claude: 11/24/26, 6:02 PM (ended)"
+export const llmSessionLabel = ({tool, name, isBusy, endedAt}: LlmSession) => {
+  if (endedAt !== undefined)
+    return `${tool}: ${name ?? new Date(endedAt).toLocaleString(undefined, {dateStyle: 'short', timeStyle: 'short'})} (ended)`;
+  return name === undefined ? tool : `${tool}: ${name} (${isBusy ? 'working' : 'waiting for you'})`;
+};
+
+// The same session in two snapshots: its process while it runs, its Claude session after
+export const isSameSession = (a: LlmSession, b: LlmSession) =>
+  a.pid !== undefined ? a.pid === b.pid : a.sessionId !== undefined && a.sessionId === b.sessionId;
 
 /** The Claude sessions run in GitGud's terminals, to resume when the app starts again */
 export const gitgudClaudeAgents = (terminals: PtyInfo[], sessions: LlmSession[]): GitgudClaudeAgent[] =>
