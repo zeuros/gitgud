@@ -19,7 +19,7 @@
 import {ChangeDetectionStrategy, Component, computed, contentChild, ElementRef, inject, input, output, signal, type TemplateRef} from '@angular/core';
 import {NgTemplateOutlet} from '@angular/common';
 import type {TreeNode} from 'primeng/api';
-import {rowsInView, visibleRows} from '../../utils/tree-utils';
+import {rowsInView, treeKeyAction, visibleRows} from '../../utils/tree-utils';
 import {onResize} from '../../utils/resize.utils';
 
 const ROW_HEIGHT_PX = 30;
@@ -34,13 +34,15 @@ export interface TreeNodeContextMenuEvent<T> {
  * A scrolling tree that only renders the rows in view, all rows being ROW_HEIGHT_PX high.
  * Clicking a node holding data selects it, clicking a folder expands or collapses it; every node starts expanded.
  * The `#node` template renders a row's label, given the node.
+ * The keyboard moves a focus between the rows and activates the focused one as a click does (see treeKeyAction);
+ * the focused node is the one the tree's other keys, such as menu shortcuts, act on.
  */
 @Component({
   selector: 'gitgud-tree-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [NgTemplateOutlet],
-  host: {'role': 'tree', '(scroll)': 'scrollTop.set(host.scrollTop)'},
+  host: {'role': 'tree', 'tabindex': '0', '(scroll)': 'scrollTop.set(host.scrollTop)', '(keydown)': 'onKeydown($event)'},
   templateUrl: './tree-list.component.html',
   styleUrl: './tree-list.component.scss',
 })
@@ -57,6 +59,8 @@ export class TreeListComponent<T> {
   protected nodeTemplate = contentChild.required<TemplateRef<{$implicit: TreeNode<T>}>>('node');
 
   private collapsedKeys = signal<ReadonlySet<string>>(new Set());
+  // The keyboard's position: the selected node until a click or a key moves it
+  private focusedKeyState = signal<string | undefined>(undefined);
   protected scrollTop = signal(0);
   private viewportHeight = signal(0);
   protected rows = computed(() => visibleRows(this.nodes(), this.collapsedKeys()));
@@ -64,6 +68,12 @@ export class TreeListComponent<T> {
     () => rowsInView(this.scrollTop(), this.viewportHeight(), ROW_HEIGHT_PX, OVERSCAN_ROWS, this.rows().length),
     {equal: (a, b) => a.from === b.from && a.to === b.to},
   );
+
+  protected focusedKey = computed(() => {
+    const key = this.focusedKeyState();
+    return key && this.rows().some(row => row.node.key === key) ? key : this.selectedKey();
+  });
+  focusedNode = computed(() => this.rows().find(row => row.node.key === this.focusedKey())?.node);
 
   protected ROW_HEIGHT_PX = ROW_HEIGHT_PX;
 
@@ -74,16 +84,49 @@ export class TreeListComponent<T> {
   protected isExpanded = (node: TreeNode<T>) => !this.collapsedKeys().has(node.key!);
 
   protected onClick = (node: TreeNode<T>) => {
-    if (node.data) this.nodeSelect.emit(node);
-    else this.toggle(node);
+    this.focusedKeyState.set(node.key);
+    this.activate(node);
   };
 
   protected onContextMenu = (node: TreeNode<T>, event: MouseEvent) => {
     event.preventDefault();
+    this.focusedKeyState.set(node.key);
     this.nodeContextMenu.emit({node, event});
   };
 
-  private toggle = ({key}: TreeNode<T>) => this.collapsedKeys.update(keys => {
+  focusedRowElement = () => this.host.querySelector('.tree-list-row.focused');
+
+  protected onKeydown = (event: KeyboardEvent) => {
+    const rows = this.rows();
+    const pageRows = Math.max(1, Math.floor(this.viewportHeight() / ROW_HEIGHT_PX) - 1);
+    const action = treeKeyAction(rows, this.focusedKey(), event.key, pageRows, this.isExpanded);
+    if (!action || event.ctrlKey || event.altKey || event.metaKey) return;
+    event.preventDefault();
+
+    if (action.focusKey) {
+      this.focusedKeyState.set(action.focusKey);
+      this.scrollRowIntoView(rows.findIndex(row => row.node.key === action.focusKey));
+    }
+    if (action.toggleKey) this.toggle({key: action.toggleKey});
+    const focusedNode = this.focusedNode();
+    if (action.activate && focusedNode) this.activate(focusedNode);
+  };
+
+  private activate = (node: TreeNode<T>) => {
+    if (node.data) this.nodeSelect.emit(node);
+    else this.toggle(node);
+  };
+
+  private scrollRowIntoView = (index: number) => {
+    const spacer = this.host.querySelector<HTMLElement>('.tree-list-spacer');
+    if (index < 0 || !spacer) return;
+    const {scrollTop, clientHeight} = this.host;
+    const rowTop = spacer.getBoundingClientRect().top - this.host.getBoundingClientRect().top + scrollTop + index * ROW_HEIGHT_PX;
+    if (rowTop < scrollTop) this.host.scrollTop = rowTop;
+    else if (rowTop + ROW_HEIGHT_PX > scrollTop + clientHeight) this.host.scrollTop = rowTop + ROW_HEIGHT_PX - clientHeight;
+  };
+
+  private toggle = ({key}: Pick<TreeNode<T>, 'key'>) => this.collapsedKeys.update(keys => {
     const toggled = new Set(keys);
     if (!toggled.delete(key!)) toggled.add(key!);
     return toggled;

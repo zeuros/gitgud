@@ -11,6 +11,7 @@
             <div class="tree-list-row {{ node.styleClass ?? '' }}"
                  role="treeitem"
                  [class.selected]="node.key === selectedKey()"
+                 [class.focused]="node.key === focusedKey()"
                  [attr.aria-selected]="node.key === selectedKey()"
                  [attr.aria-expanded]="node.children?.length ? isExpanded(node) : null"
                  [style.height.px]="ROW_HEIGHT_PX"

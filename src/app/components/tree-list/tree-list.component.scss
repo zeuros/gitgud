@@ -1,5 +1,6 @@
 :host {
   display: block;
+  outline: none;
   overflow-x: hidden;
   overflow-y: auto;
   --tree-list-indent: 0.75rem;
@@ -28,6 +29,12 @@
     background: var(--p-highlight-background);
     color: var(--p-highlight-color);
   }
+}
+
+// The keyboard's position, while the tree has the focus
+:host(:focus) .tree-list-row.focused {
+  outline: 1px solid var(--p-primary-color);
+  outline-offset: -1px;
 }
 
 .tree-list-icon {

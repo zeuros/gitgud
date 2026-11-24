@@ -76,7 +76,6 @@ export class LeftPanelComponent {
     const sha = this.currentRepo.selectedCommitSha();
     return sha ? findNode(this.tagTree(), tag => tag.sha === sha)?.key : undefined;
   });
-  private lastSelectedBranchNode?: TreeNode<Branch>;
   protected localBranches = signal<TreeNode<Branch>[]>([]);
   protected remoteBranches = signal<TreeNode<Branch>[]>([]);
   // The selected commit's first chip: its local branch, and the remote branch paired with it
@@ -109,22 +108,35 @@ export class LeftPanelComponent {
   private keyOfBranch = (tree: TreeNode<Branch>[], branch?: Branch) =>
     branch ? findNode(tree, b => b.name === branch.name)?.key : undefined;
 
-  protected selectBranchCommit = (node: TreeNode<Branch>) => {
-    this.lastSelectedBranchNode = node;
-    if (node.data) this.currentRepo.update({selectedCommitsShas: [node.data.tip.sha]});
+  protected selectBranchCommit = ({data: branch}: TreeNode<Branch>) => {
+    if (branch) this.currentRepo.update({selectedCommitsShas: [branch.tip.sha]});
   };
 
-  // The branch last selected in a tree, while its commit stays selected: see onMenuOwnerKeydown
-  protected onBranchTreeKeydown = (event: KeyboardEvent) => {
-    const node = this.lastSelectedBranchNode;
-    if (!node?.data || node.data.tip.sha != this.currentRepo.selectedCommitSha()) return;
+  // The focused branch's or folder's menu: see onMenuOwnerKeydown
+  protected onBranchTreeKeydown = (event: KeyboardEvent, tree: TreeListComponent<Branch>) => {
+    const node = tree.focusedNode();
+    if (!node) return;
     this.activeContextMenu.onMenuOwnerKeydown(
       event,
       () => {
         this.prepareBranchContextMenu(node);
         return this.branchContextMenu.branchContextMenu();
       },
-      () => (event.currentTarget as Element).querySelector('.tree-list-row.selected'),
+      tree.focusedRowElement,
+    );
+  };
+
+  // The focused tag's menu: see onMenuOwnerKeydown
+  protected onTagTreeKeydown = (event: KeyboardEvent, tree: TreeListComponent<LocalAndDistantTagWithName>) => {
+    const tag = tree.focusedNode()?.data;
+    if (!tag) return;
+    this.activeContextMenu.onMenuOwnerKeydown(
+      event,
+      () => {
+        this.tagContextMenu.selectedTag.set(tag);
+        return this.tagContextMenu.tagContextMenu();
+      },
+      tree.focusedRowElement,
     );
   };
 

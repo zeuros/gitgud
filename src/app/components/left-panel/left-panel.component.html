@@ -10,11 +10,12 @@
                 <div class="title">
                     <i class="fa fa-laptop mr-2"></i>Local
                 </div>
-                <gitgud-tree-list class="content"
+                <gitgud-tree-list #localBranchList
+                                  class="content"
                                   [nodes]="localBranches()"
                                   [selectedKey]="selectedLocalBranchKey()"
                                   (nodeSelect)="selectBranchCommit($event)"
-                                  (keydown)="onBranchTreeKeydown($event)"
+                                  (keydown)="onBranchTreeKeydown($event, localBranchList)"
                                   (nodeDoubleClick)="checkoutBranch($event.data)"
                                   (nodeContextMenu)="openBranchContextMenu($event)"
                                   emptyMessage="No local branches"
@@ -53,11 +54,12 @@
                 <div class="title">
                     <i class="fa fa-cloud mr-2"></i>Remote
                 </div>
-                <gitgud-tree-list class="content"
+                <gitgud-tree-list #remoteBranchList
+                                  class="content"
                                   [nodes]="remoteBranches()"
                                   [selectedKey]="selectedRemoteBranchKey()"
                                   (nodeSelect)="selectBranchCommit($event)"
-                                  (keydown)="onBranchTreeKeydown($event)"
+                                  (keydown)="onBranchTreeKeydown($event, remoteBranchList)"
                                   (nodeDoubleClick)="checkoutBranch($event.data)"
                                   (nodeContextMenu)="openBranchContextMenu($event)"
                                   emptyMessage="No branches on remote"
@@ -110,10 +112,12 @@
                 <div class="title">
                     <i class="fa fa-tag mr-2"></i>Tags
                 </div>
-                <gitgud-tree-list class="content"
+                <gitgud-tree-list #tagList
+                                  class="content"
                                   [nodes]="tagTree()"
                                   [selectedKey]="selectedTagKey()"
                                   (nodeSelect)="selectTag($event)"
+                                  (keydown)="onTagTreeKeydown($event, tagList)"
                                   (nodeContextMenu)="openTagContextMenu($event)"
                                   emptyMessage="No tags"
                 >
