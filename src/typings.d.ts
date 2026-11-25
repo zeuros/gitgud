@@ -8,11 +8,52 @@
 import type {SpawnOptionsWithoutStdio} from 'node:child_process';
 import type {editor} from 'monaco-editor';
 
+/** A transcript holding the words searched: its text around their first occurrence */
+export interface TranscriptMatch {
+  path: string;
+  modifiedMs: number;
+  title: string | null;
+  before: string;
+  matched: string;
+  after: string;
+}
+
+/** What the agent view shows of a transcript line. A tool's result comes in a later line than the tool. */
+export type TranscriptLineEntry =
+  | {kind: 'prompt'; text: string}
+  | {kind: 'text'; text: string}
+  | {kind: 'tool'; id: string; name: string; summary: string}
+  | {kind: 'result'; toolId: string; result: string; isError: boolean};
+
+/** The lines of a transcript from a byte on */
+/** A program running in a terminal GitGud draws */
+export interface PtyInfo {
+  pid: number;
+  program: string;
+  args: string[];
+  cwd: string;
+}
+
+export interface PtyList {
+  isAppStart: boolean;
+  terminals: PtyInfo[];
+}
+
+export interface TranscriptChunk {
+  entries: TranscriptLineEntry[];
+  title: string | null;
+  /** Where the next chunk starts: after the last complete line */
+  nextByte: number;
+  /** The file was shorter than the byte asked (rewritten): read from its start */
+  restarted: boolean;
+}
+
 export interface FoundProcess {
   pid: number;
   parentPid: number | null;
   name: string;
   cwd: string;
+  startTimeSecs: number;
 }
 
 interface FsApi {
@@ -86,6 +127,29 @@ interface TauriApi {
   spawn: (cmd: string, args: string[], options: SpawnOptions) => Promise<string>;
   /** Running processes started as one of `names` (the program, or the script an interpreter runs), with their working directory */
   findProcesses: (names: string[]) => Promise<FoundProcess[]>;
+  /** The `names` found on PATH, in the given order */
+  findPrograms: (names: string[]) => Promise<string[]>;
+  /** Opens the user's terminal in `cwd`, running `program` */
+  openInTerminal: (cwd: string, program: string) => Promise<void>;
+  /** Sends each Claude Code transcript in `dirs` whose prompts or answers hold `query` to `onMatch`, the most recent
+   * first; resolves with how many it sent. A newer search stops it. */
+  searchTranscripts: (dirs: string[], query: string, onMatch: (found: TranscriptMatch) => void) => Promise<number>;
+  /** Claude Code's transcript at `path`, from `fromByte` on, up to its last complete line */
+  readTranscript: (path: string, fromByte: number) => Promise<TranscriptChunk>;
+  /** Claude's title of each transcript, null when it has none yet */
+  transcriptTitles: (paths: string[]) => Promise<(string | null)[]>;
+  /** Programs running in a pseudo-terminal the page draws, by their pid */
+  pty: {
+    spawn: (program: string, args: string[], cwd: string, size: {cols: number; rows: number},
+            onOutput: (data: ArrayBuffer) => void, onExit: (exitCode: number) => void) => Promise<number>;
+    /** The programs running, kept across a page reload; `isAppStart` on the app's first page */
+    list: () => Promise<PtyList>;
+    /** Sends a running program's recent output to `onOutput`, then its output to come */
+    attach: (pid: number, onOutput: (data: ArrayBuffer) => void, onExit: (exitCode: number) => void) => Promise<void>;
+    write: (pid: number, data: string) => Promise<void>;
+    resize: (pid: number, size: {cols: number; rows: number}) => Promise<void>;
+    kill: (pid: number) => Promise<void>;
+  };
   zoom: {
     setFactor: (factor: number) => void | Promise<void>;
     getFactor: () => number;

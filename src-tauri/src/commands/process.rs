@@ -226,6 +226,7 @@ pub struct FoundProcess {
     pub parent_pid: Option<u32>,
     pub name: String,
     pub cwd: String,
+    pub start_time_secs: u64,
 }
 
 /// Running processes started as one of `names` (the program itself, or the script an interpreter runs, as in
@@ -260,6 +261,7 @@ pub async fn find_processes(names: Vec<String>) -> Vec<FoundProcess> {
                     parent_pid: process.parent().map(|pid| pid.as_u32()),
                     name,
                     cwd: process.cwd()?.to_str()?.to_string(),
+                    start_time_secs: process.start_time(),
                 })
             })
             .collect()

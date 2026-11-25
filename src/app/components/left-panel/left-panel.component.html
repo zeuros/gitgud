@@ -3,7 +3,7 @@
             [style]="{ height: '100%' }"
             layout="vertical"
             stateStorage="local"
-            [stateKey]="'splitter-left-panel-' + repoId"
+            [stateKey]="'splitter-left-panel-with-agents-' + repoId"
     >
         <p-splitter-panel [minSize]="15">
             <div class="panel">
@@ -171,7 +171,7 @@
                             </span>
                             <!-- One icon per LLM console open in the worktree: a spinner while it works -->
                             @for (session of llmSessionsIn(worktree); track $index) {
-                                <span class="llm-session-icon" [title]="llmSessionLabel(session)">
+                                <span class="llm-session-icon" [title]="llmSessionLabel(session)" [class.run-in-gitgud]="llmSessions.isRunInGitgud(session)">
                                     <i [class]="session.isBusy ? 'fa fa-spinner fa-spin' : 'fa fa-terminal'" class="small-icon"></i>
                                 </span>
                             }
@@ -185,6 +185,105 @@
                         </div>
                     </ng-template>
                 </p-listbox>
+            </div>
+        </p-splitter-panel>
+
+        <p-splitter-panel [minSize]="10">
+            <!-- Focusable, so Ctrl+F in it searches the transcripts rather than the log -->
+            <div class="panel agents-panel" tabindex="-1" (keydown)="onAgentsKeydown($event)">
+                <div class="title flex align-items-center gap-2">
+                    <span><i class="fa fa-terminal mr-2"></i>Agents</span>
+                    @if (waitingAgentCount(); as waiting) {
+                        <span class="waiting-count" [title]="waiting + ' Claude agents wait for you'">{{ waiting }} waiting</span>
+                    }
+                    <p-button icon="fa fa-search" size="small" [text]="true" class="ml-auto" (onClick)="openTranscriptSearch()"
+                              title="Find a session by the words in its transcript (Ctrl+F)"/>
+                    @if (llmSessions.installedClis().length) {
+                        <p-splitbutton label="New" icon="fa fa-plus" size="small" [text]="true" appendTo="body" class="new-agent"
+                                       [model]="newAgentMenu()" (onClick)="startNewAgent()" dropdownIcon="fa fa-angle-down"
+                                       [title]="llmSessions.installedClis().includes('claude') ? 'Claude on a task, in a worktree and branch named after it' : 'Run ' + llmSessions.selectedCli() + ' in this worktree'"/>
+                    }
+                </div>
+                @if (transcriptQuery() !== undefined) {
+                    <div class="transcript-search">
+                        <div class="transcript-search-field">
+                            <input #transcriptSearchInput pInputText type="text" class="w-full p-inputtext-sm" placeholder="Words in a transcript"
+                                   [ngModel]="transcriptQuery()" (ngModelChange)="transcriptQuery.set($event)"/>
+                            @if (transcriptSearch().isSearching) {
+                                <i class="fa fa-spinner fa-spin text-gray" title="Searching the transcripts"></i>
+                            }
+                        </div>
+                        <div class="agents-list">
+                            @for (result of transcriptSearch().results; track result.found.path) {
+                                <div class="transcript-match agent-entry" [title]="result.worktree.path" (click)="openAgent(result, $event)"
+                                     (dblclick)="switchToWorktree(result.worktree)">
+                                    <div class="flex align-items-center gap-2">
+                                        <i [class]="result.session.endedAt === undefined ? 'fa fa-terminal' : 'fa fa-history'" class="small-icon"></i>
+                                        <span class="ellipsis flex-1">{{ result.found.title ?? llmSessionLabel(result.session) }}</span>
+                                        <span class="ellipsis text-gray small-icon">{{ result.worktree.branch ?? 'HEAD' }}</span>
+                                    </div>
+                                    <div class="snippet">{{ result.found.before }}<mark>{{ result.found.matched }}</mark>{{ result.found.after }}</div>
+                                </div>
+                            } @empty {
+                                @if (transcriptQuery()?.trim() && !transcriptSearch().isSearching) {
+                                    <div class="p-2 text-gray">No transcript holds these words</div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+                <!-- The running agents by worktree, then the ended ones, scrolling together -->
+                <div class="agents-list" [class.hidden]="transcriptQuery() !== undefined">
+                    @for (group of runningAgentGroups(); track group.worktree.path) {
+                        <div class="agent-worktree" [class.current]="isCurrentWorktree(group.worktree)" [title]="group.worktree.path"
+                             (click)="selectWorktree(group.worktree)" (dblclick)="switchToWorktree(group.worktree)">
+                            <i class="fa fa-code-fork"></i><span class="ellipsis">{{ group.worktree.branch ?? 'HEAD' }}</span>
+                        </div>
+                        @for (agent of group.agents; track agent.session.pid) {
+                            @let status = agentStatus(agent.session);
+                            <div class="agent-row agent-entry" [title]="llmSessionLabel(agent.session)"
+                                 [class.closed-agent]="llmSessions.isClosedSession(agent.session)"
+                                 [class.opened]="llmSessions.openedSession()?.pid === agent.session.pid"
+                                 (click)="openAgent(agent, $event)" (dblclick)="switchToWorktree(agent.worktree)">
+                                <span class="status-dot" [class]="status" [class.run-in-gitgud]="llmSessions.isRunInGitgud(agent.session)"></span>
+                                <span class="ellipsis flex-1">{{ agentName(agent.session) }}</span>
+                                @if (agent.session.tool !== 'claude') {
+                                    <span class="cli-chip">{{ agent.session.tool }}</span>
+                                }
+                                <span class="status-word" [class]="status">{{ status === 'waiting' ? 'needs you' : status }}</span>
+                                @if (llmSessions.isRunInGitgud(agent.session)) {
+                                    <i class="fa fa-stop stop-agent" title="Stop this agent; it can be resumed" (click)="stopAgent($event, agent.session)"></i>
+                                } @else {
+                                    <i class="fa fa-stop stop-agent external" (click)="$event.stopPropagation()"
+                                       title="Started outside GitGud: GitGud can't manage external sessions. Stop it from its own terminal."></i>
+                                }
+                            </div>
+                        }
+                    } @empty {
+                        <div class="no-agent">No agent running</div>
+                    }
+                    <!-- Small rows, the first ones and a hint; hovering them shows them all -->
+                    @if (endedAgents(); as ended) {
+                        @if (ended.length) {
+                            <div class="ended-agents">
+                                <div class="ended-agents-title">Recent</div>
+                                <div class="ended-agents-list">
+                                    @for (agent of ended; track agent.session.sessionId) {
+                                        <div class="ended-agent agent-entry" [title]="agent.worktree.path + ', on ' + (agent.worktree.branch ?? 'HEAD')"
+                                             [class.closed-agent]="llmSessions.isClosedSession(agent.session)"
+                                             (click)="openAgent(agent, $event)" (dblclick)="switchToWorktree(agent.worktree)">
+                                            <span class="ellipsis flex-1">{{ llmSessions.titleOf(agent.session) ?? 'Untitled session' }}</span>
+                                            <span class="ago">{{ endedAgo(agent.session) }}</span>
+                                        </div>
+                                    }
+                                    @if (ended.length > ENDED_AGENTS_SHOWN_BEFORE_HOVER) {
+                                        <div class="ended-agents-hint">+{{ ended.length - ENDED_AGENTS_SHOWN_BEFORE_HOVER }} more</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
             </div>
         </p-splitter-panel>
     </p-splitter>

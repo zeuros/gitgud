@@ -23,6 +23,9 @@ pub fn fs_is_file(path: String) -> Result<bool, String> {
 /// Writes UTF-8 text to a file.
 #[tauri::command]
 pub fn fs_write_file(path: String, data: String) -> Result<(), String> {
+    if let Some(parent) = std::path::Path::new(&path).parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
     fs::write(&path, data.as_bytes()).map_err(|e| e.to_string())
 }
 

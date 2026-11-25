@@ -16,6 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {AgentWorktreeService} from './services/agent-worktree.service';
 import {ChangeDetectionStrategy, Component, effect, inject, viewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ToastModule} from 'primeng/toast';
@@ -34,12 +35,13 @@ import {type ShortcutMenuItem, shortcutLabel} from './utils/menu-shortcuts';
 import {FixupService} from './services/fixup.service';
 import {MessageService} from 'primeng/api';
 import {GitRepositoryService} from './services/git-repository.service';
+import {AgentViewComponent} from './components/agent-view/agent-view.component';
 import {LordReflogComponent} from './components/lord-reflog/lord-reflog.component';
 import {ACTION_TOAST_KEY, type ToastAction} from './services/toast.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, ButtonDirective, LordReflogComponent],
+  imports: [CommonModule, ToastModule, ConfirmDialog, RouterOutlet, ContextMenu, Dialog, ButtonDirective, LordReflogComponent, AgentViewComponent],
   selector: 'gitgud-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
@@ -96,6 +98,7 @@ export class AppComponent {
   constructor() {
     inject(AutoFetchService); // Starts auto-fetch
     inject(ThemeService);     // Applies theme from config
+    inject(AgentWorktreeService); // Offers agents in the main worktree a worktree of their own
 
     effect(() => this.activeContextMenu.register(this.globalMenu()));
     effect(() => this.router.navigate([this.gitRepositoryStore.hasRepositories() ? 'repo' : 'welcome-screen'], {replaceUrl: true}));

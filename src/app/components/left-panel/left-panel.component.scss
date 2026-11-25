@@ -108,7 +108,6 @@
   }
 }
 
-
 ::ng-deep .tree-list-row.worktree-current,
 ::ng-deep .p-listbox-option:has(.worktree-current) {
   background: var(--branch-current-bg);
@@ -134,5 +133,289 @@
     background: var(--p-highlight-focus-background);
     box-shadow: 0 0 6px var(--p-primary-color);
     text-shadow: 0 0 4px var(--p-primary-color);
+  }
+
+  // An agent GitGud runs: a halo around its icon
+  &.run-in-gitgud > i {
+    filter: drop-shadow(0 0 2px var(--p-orange-400)) drop-shadow(0 0 5px var(--p-orange-500));
+  }
+}
+
+// The Agents title: how many agents wait for the user, and "New", neither uppercased nor bold like it
+.waiting-count {
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  text-transform: none;
+  color: var(--p-orange-400);
+  background: color-mix(in srgb, var(--p-orange-500) 18%, transparent);
+}
+
+.new-agent {
+  text-transform: none;
+  font-weight: normal;
+}
+
+// The agent whose view just closed: two flashes, then a slow dim, to tell which one it was
+@keyframes closed-agent-highlight {
+  0%, 6%, 12% {
+    background: var(--p-highlight-background);
+  }
+  3%, 9% {
+    background: transparent;
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.agent-row.closed-agent,
+.ended-agents .ended-agent.closed-agent {
+  animation: closed-agent-highlight 4s ease-out;
+}
+
+// The running agents then the ended ones, in one scrolling list
+.agents-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 4px;
+}
+
+// A worktree's header, then its agents
+.agent-worktree {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 2px 10px;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--hmmmmmmGray);
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    flex: 1;
+    min-width: 12px;
+    border-top: 1px solid var(--p-content-border-color);
+  }
+
+  &.current {
+    color: var(--branch-current-color);
+  }
+
+  &:hover {
+    color: var(--wowowowGray);
+  }
+}
+
+.agent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 1.9rem;
+  margin: 0 4px;
+  padding: 0 8px 0 14px;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--p-highlight-focus-background);
+  }
+
+  &.opened {
+    background: var(--p-highlight-background);
+  }
+
+  .stop-agent {
+    font-size: 0.7rem;
+    color: var(--p-text-muted-color);
+
+    &:hover {
+      color: var(--p-red-500);
+    }
+
+    // An external session: shown, but GitGud can't stop it
+    &.external {
+      opacity: 0.3;
+      cursor: not-allowed;
+
+      &:hover {
+        color: var(--p-text-muted-color);
+      }
+    }
+  }
+}
+
+// working: the primary color, pulsing; waiting for the user: orange; another CLI: hollow. GitGud's own: a halo
+@keyframes agent-working-pulse {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--p-primary-color) 0%, transparent);
+  }
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--p-primary-color) 60%, transparent);
+  }
+}
+
+.status-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+
+  &.working {
+    background: var(--p-primary-color);
+    animation: agent-working-pulse 1.6s ease-out infinite;
+  }
+
+  &.waiting {
+    background: var(--p-orange-400);
+  }
+
+  &.running {
+    border: 1.5px solid var(--p-text-muted-color);
+  }
+
+  &.run-in-gitgud:not(.working) {
+    box-shadow: 0 0 4px 1px var(--p-orange-500);
+  }
+}
+
+.status-word {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--p-text-muted-color);
+
+  &.working {
+    color: var(--p-primary-color);
+  }
+
+  &.waiting {
+    color: var(--p-orange-400);
+  }
+}
+
+.cli-chip {
+  flex-shrink: 0;
+  padding: 0 5px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  color: var(--p-text-muted-color);
+  border: 1px solid var(--p-content-border-color);
+}
+
+.no-agent {
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+}
+
+.agents-panel {
+  outline: none;
+
+  .agents-list.hidden {
+    display: none;
+  }
+}
+
+// Searching the transcripts: the field, then the sessions found with the words around them
+.transcript-search {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px 0;
+
+  .transcript-search-field {
+    position: relative;
+
+    input {
+      padding-right: 2rem;
+    }
+
+    i {
+      position: absolute;
+      right: 0.6rem;
+      top: 50%;
+      margin-top: -0.5em;
+    }
+  }
+
+  .transcript-match {
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--p-highlight-focus-background);
+    }
+  }
+
+  .snippet {
+    font-size: 0.75rem;
+    color: var(--hmmmmmmGray);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
+    mark {
+      background: none;
+      color: var(--p-primary-color);
+      font-weight: bold;
+    }
+  }
+}
+
+// Ended agents: small rows, the first ones and a hint. Hovering shows them all, the hovered row back to its normal size
+.ended-agents {
+  margin-top: 8px;
+  padding: 2px 0 4px;
+  font-size: 0.72rem;
+  color: var(--hmmmmmmGray);
+
+  .ended-agent {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 18px;
+    padding: 0 10px;
+    cursor: pointer;
+    transition: height 0.1s, font-size 0.1s;
+
+    &:hover {
+      height: 2rem;
+      font-size: 0.875rem;
+      color: var(--wowowowGray);
+      background: var(--p-highlight-focus-background);
+    }
+  }
+
+  .ended-agents-title {
+    padding: 2px 10px;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ago {
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+
+  .ended-agents-hint {
+    height: 18px;
+    padding: 0 10px;
+    font-style: italic;
+  }
+
+  &:hover .ended-agents-hint {
+    display: none;
+  }
+
+  &:not(:hover) .ended-agent:nth-child(n + 4) {
+    display: none;
   }
 }

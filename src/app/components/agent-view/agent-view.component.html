@@ -1,0 +1,55 @@
+<p-dialog [visible]="!!session()"
+          (visibleChange)="close($event)"
+          [header]="header()"
+          styleClass="agent-view-dialog"
+          [modal]="false"
+          [maximizable]="true"
+          [resizable]="true"
+          [style]="{width: '60vw', height: '75vh'}"
+          [contentStyle]="{display: 'flex', flexDirection: 'column', flex: '1', minHeight: '0', padding: '0'}">
+    @if (terminal()) {
+        <div #terminalHost class="terminal-host"></div>
+    } @else if (transcript(); as transcript) {
+        <div #scroller class="transcript" (scroll)="onScroll(scroller)">
+            @let hiddenCount = hiddenEntryCount();
+            @if (hiddenCount) {
+                <div class="show-earlier" (click)="showEarlierEntries()">Show earlier ({{ hiddenCount }} more)</div>
+            }
+            @for (entry of shownEntries(); track hiddenEntryCount() + $index) {
+                @if (entry.kind === 'prompt') {
+                    <div class="prompt">&gt; {{ entry.text }}</div>
+                } @else if (entry.kind === 'text') {
+                    <div class="entry"><span class="bullet">⏺</span><span>{{ entry.text }}</span></div>
+                } @else {
+                    <div class="entry">
+                        <span class="bullet" [class.error]="entry.isError">⏺</span>
+                        <span><b>{{ entry.name }}</b>({{ entry.summary }})</span>
+                    </div>
+                    @if (entry.result) {
+                        <div class="result" (click)="toggleResult(entry.id)" title="Show more or less">
+                            <span class="bullet">⎿</span><span>{{ shownResult(entry.id, entry.result) }}</span>
+                        </div>
+                    }
+                }
+            } @empty {
+                <div class="text-gray">No message yet</div>
+            }
+        </div>
+    } @else {
+        <div class="p-3 text-gray">Only Claude Code sessions have a transcript GitGud can show</div>
+    }
+    @if (terminal(); as terminal) {
+        <ng-template #footer>
+            <p-button label="Stop" icon="fa fa-stop" size="small" severity="danger" (onClick)="stop(terminal.pid)"
+                      title="Stop this agent; it can be resumed"/>
+        </ng-template>
+    }
+    @if (!terminal() && llmSessions.openedSessionNow(); as session) {
+        @if (session.endedAt !== undefined && session.sessionId) {
+            <ng-template #footer>
+                <p-button label="Resume" icon="fa fa-play" size="small" (onClick)="llmSessions.resumeSession(session)"
+                          title="Continue this session in GitGud"/>
+            </ng-template>
+        }
+    }
+</p-dialog>

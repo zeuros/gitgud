@@ -16,33 +16,91 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type {FoundProcess} from '../../typings';
+import type {FoundProcess, PtyInfo} from '../../typings';
 
 // An LLM console open in a folder; Claude Code also tells its session's name and whether it works
+export interface GitgudClaudeAgent {
+  cwd: string;
+  sessionId: string;
+}
+
 export interface LlmSession {
   tool: string; // 'claude', 'codex', 'gemini'…
   cwd: string;
+  pid?: number;
+  /** Claude Code's session id, naming its transcript */
+  sessionId?: string;
   name?: string;
   isBusy: boolean;
+  /** When its transcript last changed, for a session no longer running */
+  endedAt?: number;
 }
 
-// A CLI often runs as a launcher and its child (node wrapper + native binary): only the launcher is a console
+// A CLI often runs as a launcher and its child (node wrapper + native binary): only the launcher is a console.
+// The oldest started first, so the order stays as consoles come and go
 export const llmConsoles = (processes: FoundProcess[]) =>
-  processes.filter(({name, parentPid}) => !processes.some(p => p.pid === parentPid && p.name === name));
+  processes
+    .filter(({name, parentPid}) => !processes.some(p => p.pid === parentPid && p.name === name))
+    .sort((a, b) => a.startTimeSecs - b.startTimeSecs || a.pid - b.pid);
 
 // Claude Code writes <config dir>/sessions/<pid>.json for each running session: its name, and 'busy' while it works
-export const parseClaudeStatus = (json: string): Pick<LlmSession, 'name' | 'isBusy'> | undefined => {
+export const parseClaudeStatus = (json: string): Pick<LlmSession, 'sessionId' | 'name' | 'isBusy'> | undefined => {
   try {
-    const {name, status} = JSON.parse(json) as {name?: unknown; status?: unknown};
-    return {name: typeof name === 'string' ? name : undefined, isBusy: status === 'busy'};
+    const {sessionId, name, status} = JSON.parse(json) as {sessionId?: unknown; name?: unknown; status?: unknown};
+    return {
+      sessionId: typeof sessionId === 'string' ? sessionId : undefined,
+      name: typeof name === 'string' ? name : undefined,
+      isBusy: status === 'busy',
+    };
   } catch {
     return undefined;
   }
 };
 
-// "claude: fix-it (working)", "claude: fix-it (waiting for you)", "codex"
-export const llmSessionLabel = ({tool, name, isBusy}: LlmSession) =>
-  name === undefined ? tool : `${tool}: ${name} (${isBusy ? 'working' : 'waiting for you'})`;
+// "claude: fix-it (working)", "claude: fix-it (waiting for you)", "codex", "claude: 11/24/26, 6:02 PM (ended)"
+export const llmSessionLabel = ({tool, name, isBusy, endedAt}: LlmSession) => {
+  if (endedAt !== undefined)
+    return `${tool}: ${name ?? new Date(endedAt).toLocaleString(undefined, {dateStyle: 'short', timeStyle: 'short'})} (ended)`;
+  return name === undefined ? tool : `${tool}: ${name} (${isBusy ? 'working' : 'waiting for you'})`;
+};
+
+/** What a running agent does: Claude tells whether it works or waits for the user; other CLIs just run */
+export type AgentStatus = 'working' | 'waiting' | 'running';
+export const agentStatus = ({tool, isBusy}: LlmSession): AgentStatus => tool !== 'claude' ? 'running' : isBusy ? 'working' : 'waiting';
+
+/** The agent's name: Claude's title of its transcript, else the session's name, else its CLI */
+export const agentName = ({tool, name}: LlmSession, title: string | undefined) => title ?? name ?? tool;
+
+const MINUTE_MS = 60_000;
+const HOUR_MS = 60 * MINUTE_MS;
+
+/** "just now", "5 min ago", "3 h ago", "yesterday", "4 days ago", then the date */
+export const relativeTime = (timeMs: number, nowMs: number) => {
+  const elapsedMs = nowMs - timeMs;
+  if (elapsedMs < MINUTE_MS) return 'just now';
+  if (elapsedMs < HOUR_MS) return `${Math.floor(elapsedMs / MINUTE_MS)} min ago`;
+
+  const startOfDay = (ms: number) => new Date(ms).setHours(0, 0, 0, 0);
+  const days = Math.round((startOfDay(nowMs) - startOfDay(timeMs)) / (24 * HOUR_MS));
+  if (days === 0) return `${Math.floor(elapsedMs / HOUR_MS)} h ago`;
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  return new Date(timeMs).toLocaleDateString(undefined, {dateStyle: 'short'});
+};
+
+// The same session in two snapshots: its process while it runs, its Claude session after
+export const isSameSession = (a: LlmSession, b: LlmSession) =>
+  a.pid !== undefined ? a.pid === b.pid : a.sessionId !== undefined && a.sessionId === b.sessionId;
+
+/** The Claude sessions run in GitGud's terminals, to resume when the app starts again */
+export const gitgudClaudeAgents = (terminals: PtyInfo[], sessions: LlmSession[]): GitgudClaudeAgent[] =>
+  terminals.flatMap(({pid, program, args, cwd}) => {
+    if (program !== 'claude') return [];
+
+    const resumedSessionId = args[0] === '--resume' ? args[1] : undefined;
+    const sessionId = sessions.find(session => session.pid === pid)?.sessionId ?? resumedSessionId;
+    return sessionId ? [{cwd, sessionId}] : [];
+  });
 
 const isInside = (path: string, dir: string) => path === dir || path.startsWith(`${dir}/`) || path.startsWith(`${dir}\\`);
 
