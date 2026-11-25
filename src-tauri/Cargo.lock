@@ -1527,7 +1527,7 @@ dependencies = [
 
 [[package]]
 name = "gitgud"
-version = "2.14.1"
+version = "2.15.0"
 dependencies = [
  "apple-native-keyring-store",
  "ignore",

@@ -67,6 +67,28 @@
   </provides>
 
   <releases>
+    <release version="2.15.0" date="2026-11-25">
+      <description>
+        <p>What's new in GitGud 2.15.0:</p>
+        <ul>
+          <li>Agents grouped by worktree, named and with a status dot</li>
+          <li>New worktree agent: Claude on a task, in a worktree named after it</li>
+          <li>Ctrl+F in the Agents section finds a session by its transcript's words</li>
+          <li>Offer an agent working in the main worktree a linked worktree</li>
+          <li>Clicking outside an agent's view closes it, its line flashes then dims</li>
+          <li>Clicking an agent selects its worktree's commit in the log</li>
+          <li>List the Claude sessions that ended, resume them</li>
+          <li>Run agents started from GitGud in a terminal it shows</li>
+          <li>Clicking an agent shows its Claude transcript, live</li>
+          <li>Agents section listing the running agents, starting one</li>
+          <li>Find LLM CLIs on PATH, open one in the user's terminal</li>
+          <li>Writing a file creates its folders</li>
+          <li>Navigate the branch and tag trees from the keyboard</li>
+          <li>Letter keys in context menus, shortcuts on items and the toolbar</li>
+          <li>Record on Xvfb, not on the Wayland desktop</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.14.1" date="2026-11-20">
       <description>
         <p>What's new in GitGud 2.14.1:</p>
