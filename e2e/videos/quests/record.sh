@@ -27,6 +27,10 @@ mkdir -p "$OUTPUT_DIR"
 export XDG_CONFIG_HOME="$WORK_DIR/config"
 mkdir -p "$XDG_CONFIG_HOME"
 
+# On a Wayland desktop GDK would open the app there rather than on Xvfb, even without WAYLAND_DISPLAY
+unset WAYLAND_DISPLAY
+export GDK_BACKEND=x11
+
 BINARY="src-tauri/target/release/gitgud"
 if [[ ! -x "$BINARY" || -n "$(find src src-tauri/src src-tauri/Cargo.toml package.json -type f -newer "$BINARY" -print -quit)" ]]; then
   echo "[quests] release binary is missing or stale, rebuilding..."
