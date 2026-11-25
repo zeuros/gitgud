@@ -145,6 +145,7 @@ pub fn run() {
             // transcript
             search_transcripts,
             read_transcript,
+            transcript_titles,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -136,6 +136,8 @@ interface TauriApi {
   searchTranscripts: (dirs: string[], query: string, onMatch: (found: TranscriptMatch) => void) => Promise<number>;
   /** Claude Code's transcript at `path`, from `fromByte` on, up to its last complete line */
   readTranscript: (path: string, fromByte: number) => Promise<TranscriptChunk>;
+  /** Claude's title of each transcript, null when it has none yet */
+  transcriptTitles: (paths: string[]) => Promise<(string | null)[]>;
   /** Programs running in a pseudo-terminal the page draws, by their pid */
   pty: {
     spawn: (program: string, args: string[], cwd: string, size: {cols: number; rows: number},

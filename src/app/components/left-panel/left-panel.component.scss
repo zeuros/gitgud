@@ -24,14 +24,6 @@
           i {
             color: var(--p-text-muted-color);
           }
-
-          i.stop-agent {
-            cursor: pointer;
-
-            &:hover {
-              color: var(--p-red-500);
-            }
-          }
         }
       }
     }
@@ -149,8 +141,17 @@
   }
 }
 
-// The CLI to start, in the Agents title: not uppercased nor bold like it
-.agent-cli-select {
+// The Agents title: how many agents wait for the user, and "New", neither uppercased nor bold like it
+.waiting-count {
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  text-transform: none;
+  color: var(--p-orange-400);
+  background: color-mix(in srgb, var(--p-orange-500) 18%, transparent);
+}
+
+.new-agent {
   text-transform: none;
   font-weight: normal;
 }
@@ -168,7 +169,7 @@
   }
 }
 
-::ng-deep .p-listbox-option:has(.closed-agent),
+.agent-row.closed-agent,
 .ended-agents .ended-agent.closed-agent {
   animation: closed-agent-highlight 4s ease-out;
 }
@@ -178,10 +179,136 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  padding-bottom: 4px;
+}
 
-  ::ng-deep p-listbox.running-agents {
-    flex: none;
+// A worktree's header, then its agents
+.agent-worktree {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 2px 10px;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--hmmmmmmGray);
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    flex: 1;
+    min-width: 12px;
+    border-top: 1px solid var(--p-content-border-color);
   }
+
+  &.current {
+    color: var(--branch-current-color);
+  }
+
+  &:hover {
+    color: var(--wowowowGray);
+  }
+}
+
+.agent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 1.9rem;
+  margin: 0 4px;
+  padding: 0 8px 0 14px;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--p-highlight-focus-background);
+  }
+
+  &.opened {
+    background: var(--p-highlight-background);
+  }
+
+  .stop-agent {
+    font-size: 0.7rem;
+    color: var(--p-text-muted-color);
+
+    &:hover {
+      color: var(--p-red-500);
+    }
+
+    // An external session: shown, but GitGud can't stop it
+    &.external {
+      opacity: 0.3;
+      cursor: not-allowed;
+
+      &:hover {
+        color: var(--p-text-muted-color);
+      }
+    }
+  }
+}
+
+// working: the primary color, pulsing; waiting for the user: orange; another CLI: hollow. GitGud's own: a halo
+@keyframes agent-working-pulse {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--p-primary-color) 0%, transparent);
+  }
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--p-primary-color) 60%, transparent);
+  }
+}
+
+.status-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+
+  &.working {
+    background: var(--p-primary-color);
+    animation: agent-working-pulse 1.6s ease-out infinite;
+  }
+
+  &.waiting {
+    background: var(--p-orange-400);
+  }
+
+  &.running {
+    border: 1.5px solid var(--p-text-muted-color);
+  }
+
+  &.run-in-gitgud:not(.working) {
+    box-shadow: 0 0 4px 1px var(--p-orange-500);
+  }
+}
+
+.status-word {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--p-text-muted-color);
+
+  &.working {
+    color: var(--p-primary-color);
+  }
+
+  &.waiting {
+    color: var(--p-orange-400);
+  }
+}
+
+.cli-chip {
+  flex-shrink: 0;
+  padding: 0 5px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  color: var(--p-text-muted-color);
+  border: 1px solid var(--p-content-border-color);
+}
+
+.no-agent {
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
 }
 
 .agents-panel {
@@ -244,6 +371,7 @@
 
 // Ended agents: small rows, the first ones and a hint. Hovering shows them all, the hovered row back to its normal size
 .ended-agents {
+  margin-top: 8px;
   padding: 2px 0 4px;
   font-size: 0.72rem;
   color: var(--hmmmmmmGray);
@@ -263,6 +391,18 @@
       color: var(--wowowowGray);
       background: var(--p-highlight-focus-background);
     }
+  }
+
+  .ended-agents-title {
+    padding: 2px 10px;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ago {
+    flex-shrink: 0;
+    opacity: 0.8;
   }
 
   .ended-agents-hint {

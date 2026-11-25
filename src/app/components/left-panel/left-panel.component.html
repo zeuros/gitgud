@@ -193,16 +193,15 @@
             <div class="panel agents-panel" tabindex="-1" (keydown)="onAgentsKeydown($event)">
                 <div class="title flex align-items-center gap-2">
                     <span><i class="fa fa-terminal mr-2"></i>Agents</span>
-                    <p-button icon="fa fa-search" size="small" [text]="true" (onClick)="openTranscriptSearch()"
+                    @if (waitingAgentCount(); as waiting) {
+                        <span class="waiting-count" [title]="waiting + ' Claude agents wait for you'">{{ waiting }} waiting</span>
+                    }
+                    <p-button icon="fa fa-search" size="small" [text]="true" class="ml-auto" (onClick)="openTranscriptSearch()"
                               title="Find a session by the words in its transcript (Ctrl+F)"/>
                     @if (llmSessions.installedClis().length) {
-                        <p-select [options]="llmSessions.installedClis()" [(ngModel)]="llmSessions.selectedCli" size="small" class="agent-cli-select"/>
-                        <p-button icon="fa fa-play" size="small" [text]="true" (onClick)="llmSessions.startAgent()"
-                                  title="Run the agent in this worktree, in GitGud"/>
-                        @if (llmSessions.installedClis().includes('claude')) {
-                            <p-button icon="fa fa-code-fork" size="small" [text]="true" (onClick)="agentWorktree.startWorktreeAgent()"
-                                      title="New worktree agent: Claude on a task, in a worktree and branch named after it"/>
-                        }
+                        <p-splitbutton label="New" icon="fa fa-plus" size="small" [text]="true" appendTo="body" class="new-agent"
+                                       [model]="newAgentMenu()" (onClick)="startNewAgent()" dropdownIcon="fa fa-angle-down"
+                                       [title]="llmSessions.installedClis().includes('claude') ? 'Claude on a task, in a worktree and branch named after it' : 'Run ' + llmSessions.selectedCli() + ' in this worktree'"/>
                     }
                 </div>
                 @if (transcriptQuery() !== undefined) {
@@ -233,43 +232,48 @@
                         </div>
                     </div>
                 }
-                <!-- The running agents, then the ended ones, scrolling together -->
+                <!-- The running agents by worktree, then the ended ones, scrolling together -->
                 <div class="agents-list" [class.hidden]="transcriptQuery() !== undefined">
-                    <p-listbox
-                            [options]="runningAgents()"
-                            scrollHeight="auto"
-                            class="border-none running-agents"
-                            emptyMessage="No agent running"
-                    >
-                        <ng-template #item let-item>
-                            @let agent = $agent(item);
-                            <div class="flex align-items-center gap-2 ellipsis agent-entry"
-                                 [title]="agent.worktree.path"
+                    @for (group of runningAgentGroups(); track group.worktree.path) {
+                        <div class="agent-worktree" [class.current]="isCurrentWorktree(group.worktree)" [title]="group.worktree.path"
+                             (click)="selectWorktree(group.worktree)" (dblclick)="switchToWorktree(group.worktree)">
+                            <i class="fa fa-code-fork"></i><span class="ellipsis">{{ group.worktree.branch ?? 'HEAD' }}</span>
+                        </div>
+                        @for (agent of group.agents; track agent.session.pid) {
+                            @let status = agentStatus(agent.session);
+                            <div class="agent-row agent-entry" [title]="llmSessionLabel(agent.session)"
                                  [class.closed-agent]="llmSessions.isClosedSession(agent.session)"
-                                 (click)="openAgent(agent, $event)"
-                                 (dblclick)="switchToWorktree(agent.worktree)">
-                                <span class="llm-session-icon" [class.run-in-gitgud]="llmSessions.isRunInGitgud(agent.session)">
-                                    <i [class]="agent.session.isBusy ? 'fa fa-spinner fa-spin' : 'fa fa-terminal'" class="small-icon"></i>
-                                </span>
-                                <span class="ellipsis flex-1">{{ llmSessionLabel(agent.session) }}</span>
-                                @if (llmSessions.isRunInGitgud(agent.session)) {
-                                    <i class="fa fa-stop small-icon stop-agent" title="Stop this agent; it can be resumed" (click)="stopAgent($event, agent.session)"></i>
+                                 [class.opened]="llmSessions.openedSession()?.pid === agent.session.pid"
+                                 (click)="openAgent(agent, $event)" (dblclick)="switchToWorktree(agent.worktree)">
+                                <span class="status-dot" [class]="status" [class.run-in-gitgud]="llmSessions.isRunInGitgud(agent.session)"></span>
+                                <span class="ellipsis flex-1">{{ agentName(agent.session) }}</span>
+                                @if (agent.session.tool !== 'claude') {
+                                    <span class="cli-chip">{{ agent.session.tool }}</span>
                                 }
-                                <span class="ellipsis text-gray small-icon">{{ agent.worktree.branch ?? 'HEAD' }}</span>
+                                <span class="status-word" [class]="status">{{ status === 'waiting' ? 'needs you' : status }}</span>
+                                @if (llmSessions.isRunInGitgud(agent.session)) {
+                                    <i class="fa fa-stop stop-agent" title="Stop this agent; it can be resumed" (click)="stopAgent($event, agent.session)"></i>
+                                } @else {
+                                    <i class="fa fa-stop stop-agent external" (click)="$event.stopPropagation()"
+                                       title="Started outside GitGud: GitGud can't manage external sessions. Stop it from its own terminal."></i>
+                                }
                             </div>
-                        </ng-template>
-                    </p-listbox>
+                        }
+                    } @empty {
+                        <div class="no-agent">No agent running</div>
+                    }
                     <!-- Small rows, the first ones and a hint; hovering them shows them all -->
                     @if (endedAgents(); as ended) {
                         @if (ended.length) {
                             <div class="ended-agents">
+                                <div class="ended-agents-title">Recent</div>
                                 <div class="ended-agents-list">
                                     @for (agent of ended; track agent.session.sessionId) {
-                                        <div class="ended-agent agent-entry" [title]="agent.worktree.path" [class.closed-agent]="llmSessions.isClosedSession(agent.session)"
+                                        <div class="ended-agent agent-entry" [title]="agent.worktree.path + ', on ' + (agent.worktree.branch ?? 'HEAD')"
+                                             [class.closed-agent]="llmSessions.isClosedSession(agent.session)"
                                              (click)="openAgent(agent, $event)" (dblclick)="switchToWorktree(agent.worktree)">
-                                            <i class="fa fa-history"></i>
-                                            <span class="ellipsis flex-1">{{ llmSessionLabel(agent.session) }}</span>
-                                            <span class="ellipsis">{{ agent.worktree.branch ?? 'HEAD' }}</span>
+                                            <span class="ellipsis flex-1">{{ llmSessions.titleOf(agent.session) ?? 'Untitled session' }}</span>
+                                            <span class="ago">{{ endedAgo(agent.session) }}</span>
                                         </div>
                                     }
                                     @if (ended.length > ENDED_AGENTS_SHOWN_BEFORE_HOVER) {

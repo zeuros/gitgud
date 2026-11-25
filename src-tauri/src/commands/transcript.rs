@@ -124,6 +124,14 @@ pub struct TranscriptChunk {
 }
 
 /// Reads Claude Code's transcript at `path` from `from_byte` on, up to its last complete line
+/// Claude's title of each transcript at `paths`, null when it has none yet or can't be read
+#[tauri::command]
+pub async fn transcript_titles(paths: Vec<String>) -> Result<Vec<Option<String>>, String> {
+    tauri::async_runtime::spawn_blocking(move || paths.iter().map(|path| fs::read(path).ok().and_then(|bytes| title(&bytes))).collect())
+        .await
+        .map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn read_transcript(path: String, from_byte: u64) -> Result<TranscriptChunk, String> {
     tauri::async_runtime::spawn_blocking(move || read_chunk(&path, from_byte))

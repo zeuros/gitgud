@@ -174,6 +174,8 @@ async function buildBridge() {
 
     readTranscript: (path: string, fromByte: number) => invoke<TranscriptChunk>('read_transcript', {path, fromByte}),
 
+    transcriptTitles: (paths: string[]) => invoke<(string | null)[]>('transcript_titles', {paths}),
+
     pty: {
       spawn: (program: string, args: string[], cwd: string, {cols, rows}: {cols: number; rows: number},
               onOutput: (data: ArrayBuffer) => void, onExit: (exitCode: number) => void) => {

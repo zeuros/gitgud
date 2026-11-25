@@ -64,6 +64,30 @@ export const llmSessionLabel = ({tool, name, isBusy, endedAt}: LlmSession) => {
   return name === undefined ? tool : `${tool}: ${name} (${isBusy ? 'working' : 'waiting for you'})`;
 };
 
+/** What a running agent does: Claude tells whether it works or waits for the user; other CLIs just run */
+export type AgentStatus = 'working' | 'waiting' | 'running';
+export const agentStatus = ({tool, isBusy}: LlmSession): AgentStatus => tool !== 'claude' ? 'running' : isBusy ? 'working' : 'waiting';
+
+/** The agent's name: Claude's title of its transcript, else the session's name, else its CLI */
+export const agentName = ({tool, name}: LlmSession, title: string | undefined) => title ?? name ?? tool;
+
+const MINUTE_MS = 60_000;
+const HOUR_MS = 60 * MINUTE_MS;
+
+/** "just now", "5 min ago", "3 h ago", "yesterday", "4 days ago", then the date */
+export const relativeTime = (timeMs: number, nowMs: number) => {
+  const elapsedMs = nowMs - timeMs;
+  if (elapsedMs < MINUTE_MS) return 'just now';
+  if (elapsedMs < HOUR_MS) return `${Math.floor(elapsedMs / MINUTE_MS)} min ago`;
+
+  const startOfDay = (ms: number) => new Date(ms).setHours(0, 0, 0, 0);
+  const days = Math.round((startOfDay(nowMs) - startOfDay(timeMs)) / (24 * HOUR_MS));
+  if (days === 0) return `${Math.floor(elapsedMs / HOUR_MS)} h ago`;
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  return new Date(timeMs).toLocaleDateString(undefined, {dateStyle: 'short'});
+};
+
 // The same session in two snapshots: its process while it runs, its Claude session after
 export const isSameSession = (a: LlmSession, b: LlmSession) =>
   a.pid !== undefined ? a.pid === b.pid : a.sessionId !== undefined && a.sessionId === b.sessionId;

@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import type {FoundProcess} from '../../typings';
-import {gitgudClaudeAgents, type LlmSession, llmConsoles, llmSessionLabel, llmSessionsByWorktree, parseClaudeStatus} from './llm-session-utils';
+import {agentName, agentStatus, gitgudClaudeAgents, type LlmSession, llmConsoles, llmSessionLabel, llmSessionsByWorktree, parseClaudeStatus, relativeTime} from './llm-session-utils';
 
 describe('llmConsoles', () => {
   const process = (pid: number, parentPid: number | null, name: string): FoundProcess => ({pid, parentPid, name, cwd: '/repo', startTimeSecs: 0});
@@ -70,4 +70,33 @@ describe('gitgudClaudeAgents', () => {
       {tool: 'claude', cwd: '/a', pid: 1, sessionId: 's1', isBusy: false},
       {tool: 'codex', cwd: '/d', pid: 4, isBusy: false},
     ])).toEqual([{cwd: '/a', sessionId: 's1'}, {cwd: '/b', sessionId: 'old'}]));
+});
+
+describe('agentStatus', () => {
+  it('tells whether Claude works or waits; other CLIs run', () => {
+    expect(agentStatus({tool: 'claude', cwd: '/', isBusy: true})).toBe('working');
+    expect(agentStatus({tool: 'claude', cwd: '/', isBusy: false})).toBe('waiting');
+    expect(agentStatus({tool: 'codex', cwd: '/', isBusy: false})).toBe('running');
+  });
+});
+
+describe('agentName', () => {
+  it("prefers Claude's title, then the session's name, then the CLI", () => {
+    expect(agentName({tool: 'claude', cwd: '/', name: 'gitgud-38', isBusy: false}, 'Fix login')).toBe('Fix login');
+    expect(agentName({tool: 'claude', cwd: '/', name: 'gitgud-38', isBusy: false}, undefined)).toBe('gitgud-38');
+    expect(agentName({tool: 'codex', cwd: '/', isBusy: false}, undefined)).toBe('codex');
+  });
+});
+
+describe('relativeTime', () => {
+  const now = new Date(2026, 10, 25, 15, 0).getTime();
+  const at = (day: number, hour: number, minute = 0) => new Date(2026, 10, day, hour, minute).getTime();
+
+  it('counts minutes, hours today, then days', () => {
+    expect(relativeTime(now - 10_000, now)).toBe('just now');
+    expect(relativeTime(at(25, 14, 55), now)).toBe('5 min ago');
+    expect(relativeTime(at(25, 12), now)).toBe('3 h ago');
+    expect(relativeTime(at(24, 23), now)).toBe('yesterday');
+    expect(relativeTime(at(21, 9), now)).toBe('4 days ago');
+  });
 });

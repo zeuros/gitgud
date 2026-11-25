@@ -18,12 +18,12 @@
 
 import {ChangeDetectionStrategy, Component, computed, effect, type ElementRef, inject, signal, viewChild} from '@angular/core';
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
-import {concat, map, of, scan, switchMap, timer} from 'rxjs';
+import {concat, interval, map, of, scan, startWith, switchMap, timer} from 'rxjs';
 import {InputText} from 'primeng/inputtext';
 import {TerminalService} from 'primeng/terminal';
 import {CdkDropList} from '@angular/cdk/drag-drop';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
-import type {TreeNode} from 'primeng/api';
+import type {MenuItem, TreeNode} from 'primeng/api';
 import type {Branch} from '../../lib/github-desktop/model/branch';
 import {local, remote, toBranchTree} from '../../utils/branch-utils';
 import {findNode} from '../../utils/tree-utils';
@@ -50,9 +50,9 @@ import {TreeListComponent, type TreeNodeContextMenuEvent} from '../tree-list/tre
 import {otherWorktreeTooltip} from '../../utils/worktree-utils';
 import {AgentWorktreeService} from '../../services/agent-worktree.service';
 import {LlmSessionsService, type TranscriptSearch} from '../../services/llm-sessions.service';
-import {isSameSession, type LlmSession, llmSessionLabel} from '../../utils/llm-session-utils';
+import {agentName, agentStatus, isSameSession, type LlmSession, llmSessionLabel, relativeTime} from '../../utils/llm-session-utils';
 import {Button} from 'primeng/button';
-import {Select} from 'primeng/select';
+import {SplitButton} from 'primeng/splitbutton';
 
 const TRANSCRIPT_SEARCH_DEBOUNCE_MS = 250;
 const STARTING_SEARCH: TranscriptSearch = {results: [], isSearching: true};
@@ -72,7 +72,7 @@ const NO_SEARCH: TranscriptSearch = {results: [], isSearching: false};
     CdkDropList,
     TitleIfOverflowDirective,
     Button,
-    Select,
+    SplitButton,
     InputText,
   ],
   providers: [TerminalService],
@@ -262,6 +262,41 @@ export class LeftPanelComponent {
       return worktree ? [{session, worktree}] : [];
     });
   });
+  /** The running agents by worktree, the current worktree first */
+  protected runningAgentGroups = computed(() => {
+    const groups = new Map<string, {worktree: GitWorktree; agents: {session: LlmSession; worktree: GitWorktree}[]}>();
+    for (const agent of this.runningAgents()) {
+      const group = groups.get(agent.worktree.path) ?? {worktree: agent.worktree, agents: []};
+      group.agents.push(agent);
+      groups.set(agent.worktree.path, group);
+    }
+    return [...groups.values()].sort((a, b) => Number(this.isCurrentWorktree(b.worktree)) - Number(this.isCurrentWorktree(a.worktree)));
+  });
+  protected waitingAgentCount = computed(() => this.runningAgents().filter(({session}) => agentStatus(session) === 'waiting').length);
+  protected agentStatus = agentStatus;
+  protected agentName = (session: LlmSession) => agentName(session, this.llmSessions.titleOf(session));
+  // Ticks each minute, for the ended agents' "5 min ago"
+  private nowMs = toSignal(interval(60_000).pipe(startWith(0), map(() => Date.now())), {initialValue: Date.now()});
+  protected endedAgo = ({endedAt}: LlmSession) => relativeTime(endedAt ?? 0, this.nowMs());
+
+  /** "New": a worktree agent when Claude is installed, else the selected CLI here; its menu holds both */
+  protected newAgentMenu = computed<MenuItem[]>(() => [
+    ...this.llmSessions.installedClis().includes('claude')
+      ? [{label: 'New worktree agent (Claude)', icon: 'fa fa-code-fork', command: () => this.agentWorktree.startWorktreeAgent()}]
+      : [],
+    ...this.llmSessions.installedClis().map(cli => ({
+      label: `Run ${cli} in this worktree`,
+      icon: 'fa fa-play',
+      command: () => {
+        this.llmSessions.selectedCli.set(cli);
+        this.llmSessions.startAgent();
+      },
+    })),
+  ]);
+  protected startNewAgent = () => this.llmSessions.installedClis().includes('claude')
+    ? this.agentWorktree.startWorktreeAgent()
+    : this.llmSessions.startAgent();
+
   protected ENDED_AGENTS_SHOWN_BEFORE_HOVER = 3;
   // The Claude sessions that ended in them, the most recent first
   protected endedAgents = computed(() => this.currentRepo.worktrees()
@@ -273,5 +308,4 @@ export class LeftPanelComponent {
   protected $stash = (stash: Commit) => stash;
   protected $localAndDistantTagWithName = (t: LocalAndDistantTagWithName) => t;
   protected $worktree = (wt: GitWorktree) => wt;
-  protected $agent = (agent: {session: LlmSession; worktree: GitWorktree}) => agent;
 }

@@ -78,6 +78,11 @@ export class LlmSessionsService {
     switchMap(() => from(this.readEndedSessions())),
   ), {initialValue: new Map<string, LlmSession[]>()});
 
+  /** Claude's title of each session, by session id; read again when its transcript changes */
+  titles = signal(new Map<string, string>());
+  // The transcripts' modification time when their title was read, by path
+  private titleReadMtimes = new Map<string, number>();
+
   /** The LLM CLIs found on PATH */
   installedClis = toSignal(from(window.tauri.findPrograms(LLM_CLIS).catch((): string[] => [])), {initialValue: []});
   /** The CLI a new agent starts with: the last one started, else Claude */
@@ -106,6 +111,10 @@ export class LlmSessionsService {
   private hasResumedAgents = signal(false);
 
   constructor() {
+    effect(() => {
+      const sessions = [...this.sessions(), ...[...this.endedByWorktree().values()].flat()];
+      untracked(() => this.readTitles(sessions));
+    });
     this.agentTerminals.restored.then(async ({isAppStart}) => {
       if (isAppStart) await this.resumeAgents();
       this.hasResumedAgents.set(true);
@@ -178,6 +187,24 @@ export class LlmSessionsService {
 
   /** Whether GitGud runs the session, in a terminal it shows, rather than another terminal */
   isRunInGitgud = ({pid}: LlmSession) => pid !== undefined && this.agentTerminals.terminals().has(pid);
+
+  private readTitles = async (sessions: LlmSession[]) => {
+    const changed = (await Promise.all(sessions.map(async session => {
+      const path = this.transcriptPath(session);
+      if (!path || !session.sessionId) return [];
+      const mtimeMs = session.endedAt ?? await window.tauri.fs.mtime(path).catch(() => 0);
+      return this.titleReadMtimes.get(path) === mtimeMs ? [] : [{sessionId: session.sessionId, path, mtimeMs}];
+    }))).flat();
+    if (!changed.length) return;
+
+    const titles = await window.tauri.transcriptTitles(changed.map(({path}) => path)).catch(() => []);
+    changed.forEach(({path, mtimeMs}) => this.titleReadMtimes.set(path, mtimeMs));
+    const found = changed.flatMap(({sessionId}, i) => titles[i] ? [[sessionId, titles[i]] as const] : []);
+    if (found.length) this.titles.update(titlesById => new Map([...titlesById, ...found]));
+  };
+
+  /** Claude's title of the session, if it has one yet */
+  titleOf = ({sessionId}: LlmSession) => sessionId ? this.titles().get(sessionId) : undefined;
 
   /** Claude Code's transcript of the session, undefined for other CLIs */
   transcriptPath = ({cwd, sessionId}: LlmSession) =>
