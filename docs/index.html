@@ -550,7 +550,7 @@
     .xp-bar {
       position: relative;
       display: grid;
-      grid-template-columns: repeat(10, 1fr);
+      grid-template-columns: repeat(var(--quest-count, 16), 1fr);
       gap: 4px;
       height: 30px;
     }
@@ -965,7 +965,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
         Star on GitHub ⭐
       </a>
-      <a class="btn-secondary" href="#quests">Learn git in 10 quests ↓</a>
+      <a class="btn-secondary" href="#quests">Learn git in 16 quests ↓</a>
     </div>
 
     <div class="platform-pills">
@@ -999,7 +999,7 @@
   <div class="quests-head">
     <div>
       <p class="section-label">Quests</p>
-      <h2 id="quests-title">Learn git in ten quests.</h2>
+      <h2 id="quests-title">Learn git in sixteen quests.</h2>
       <p class="section-sub">Each quest shows the move in GitGud, then the same in the terminal. Hover the <span class="term">underlined words</span> for their meaning.</p>
     </div>
     <div class="quest-nav">
@@ -1010,7 +1010,7 @@
 
   <div class="quest-track" id="quest-track" tabindex="0" aria-label="Quests, scroll sideways">
 
-    <article class="quest" id="quest-1" aria-label="Quest 1 of 10">
+    <article class="quest" id="quest-first-commit" aria-label="Quest 1 of 16">
       <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/01-first-commit.jpg"><source src="quests/01-first-commit.webm" type="video/webm"/><source src="quests/01-first-commit.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
         <div class="quest-level"><b>Lv 1</b> Basics</div>
@@ -1024,7 +1024,7 @@
       </div>
     </article>
 
-    <article class="quest" id="quest-2" aria-label="Quest 2 of 10">
+    <article class="quest" id="quest-branch" aria-label="Quest 2 of 16">
       <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/02-branch.jpg"><source src="quests/02-branch.webm" type="video/webm"/><source src="quests/02-branch.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
         <div class="quest-level"><b>Lv 2</b> Basics</div>
@@ -1038,10 +1038,25 @@
       </div>
     </article>
 
-    <article class="quest" id="quest-3" aria-label="Quest 3 of 10">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/03-fast-forward.jpg"><source src="quests/03-fast-forward.webm" type="video/webm"/><source src="quests/03-fast-forward.mp4" type="video/mp4"/></video></div>
+    <article class="quest" id="quest-stash" aria-label="Quest 3 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/03-stash.jpg"><source src="quests/03-stash.webm" type="video/webm"/><source src="quests/03-stash.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 3</b> Integrate</div>
+        <div class="quest-level"><b>Lv 3</b> Basics</div>
+        <h3>Stash</h3>
+        <p>Half-done work, and <code>main</code> needs a fix now? A <em class="term" data-term="stash" tabindex="0">stash</em> puts your uncommitted edits aside and leaves the <em class="term" data-term="working tree" tabindex="0">working tree</em> clean. Switch branch, fix, come back, then pop the stash: your edits are back.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> stash -u              <span class="c"># -u: new files too</span>
+<span class="p">$</span> <span class="g">git</span> switch main
+<span class="p">$</span> <span class="g">git</span> commit -am <span class="s">"fix: open every day"</span>
+<span class="p">$</span> <span class="g">git</span> switch feature/mana
+<span class="p">$</span> <span class="g">git</span> stash pop</pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-fast-forward" aria-label="Quest 4 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/04-fast-forward.jpg"><source src="quests/04-fast-forward.webm" type="video/webm"/><source src="quests/04-fast-forward.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 4</b> Integrate</div>
         <h3>Fast-forward</h3>
         <p>When <code>main</code> is an <em class="term" data-term="ancestor" tabindex="0">ancestor</em> of your branch, there is nothing to combine: git just slides the <code>main</code> label up to your branch. That's a <em class="term" data-term="fast-forward" tabindex="0">fast-forward</em>: no merge commit, the history stays a straight line.</p>
         <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
@@ -1052,10 +1067,10 @@
       </div>
     </article>
 
-    <article class="quest" id="quest-4" aria-label="Quest 4 of 10">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/04-merge.jpg"><source src="quests/04-merge.webm" type="video/webm"/><source src="quests/04-merge.mp4" type="video/mp4"/></video></div>
+    <article class="quest" id="quest-merge" aria-label="Quest 5 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/05-merge.jpg"><source src="quests/05-merge.webm" type="video/webm"/><source src="quests/05-merge.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 4</b> Integrate</div>
+        <div class="quest-level"><b>Lv 5</b> Integrate</div>
         <h3>True merge</h3>
         <p>When both branches got new commits, they have <em class="term" data-term="diverged" tabindex="0">diverged</em>. Merging them creates a <em class="term" data-term="merge commit" tabindex="0">merge commit</em> with two parents, which joins both histories.</p>
         <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
@@ -1066,10 +1081,25 @@
       </div>
     </article>
 
-    <article class="quest" id="quest-5" aria-label="Quest 5 of 10">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/05-rebase.jpg"><source src="quests/05-rebase.webm" type="video/webm"/><source src="quests/05-rebase.mp4" type="video/mp4"/></video></div>
+    <article class="quest" id="quest-merge-conflict" aria-label="Quest 6 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/06-merge-conflict.jpg"><source src="quests/06-merge-conflict.webm" type="video/webm"/><source src="quests/06-merge-conflict.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 5</b> Integrate</div>
+        <div class="quest-level"><b>Lv 6</b> Integrate</div>
+        <h3>See the conflict coming</h3>
+        <p>Both branches changed the same line, so merging them stops on a <em class="term" data-term="conflict" tabindex="0">conflict</em>. GitGud tells you before you merge, right in the menu. The merge waits while you choose the result in the merge editor; continuing records the <em class="term" data-term="merge commit" tabindex="0">merge commit</em>.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> merge-tree --write-tree main feature/mana  <span class="c"># predict</span>
+<span class="p">$</span> <span class="g">git</span> merge feature/mana
+<span class="o">CONFLICT (content): Merge conflict in shop.js</span>
+<span class="p">$</span> <span class="g">git</span> add shop.js        <span class="c"># once edited</span>
+<span class="p">$</span> <span class="g">git</span> merge --continue</pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-rebase" aria-label="Quest 7 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/07-rebase.jpg"><source src="quests/07-rebase.webm" type="video/webm"/><source src="quests/07-rebase.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 7</b> Integrate</div>
         <h3>Rebase onto</h3>
         <p>Instead of merging, <em class="term" data-term="rebase" tabindex="0">rebase</em> replays your branch's commits on top of <code>main</code>. The changes are the same but the commits are new, with new <em class="term" data-term="SHA" tabindex="0">SHAs</em>, and the history is a straight line.</p>
         <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
@@ -1079,10 +1109,23 @@
       </div>
     </article>
 
-    <article class="quest" id="quest-6" aria-label="Quest 6 of 10">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/06-remote.jpg"><source src="quests/06-remote.webm" type="video/webm"/><source src="quests/06-remote.mp4" type="video/mp4"/></video></div>
+    <article class="quest" id="quest-cherry-pick" aria-label="Quest 8 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/08-cherry-pick.jpg"><source src="quests/08-cherry-pick.webm" type="video/webm"/><source src="quests/08-cherry-pick.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 6</b> Team play</div>
+        <div class="quest-level"><b>Lv 8</b> Integrate</div>
+        <h3>Cherry-pick</h3>
+        <p>Need one commit of another branch, not the rest of it? <em class="term" data-term="cherry-pick" tabindex="0">Cherry-pick</em> copies its change onto your branch as a new commit, with a new <em class="term" data-term="SHA" tabindex="0">SHA</em>. The other branch stays as it is.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> switch main
+<span class="p">$</span> <span class="g">git</span> cherry-pick 5c1e8a2   <span class="c"># fix: health potions cost 5</span>
+<span class="p">$</span> <span class="g">git</span> log --oneline --graph --all</pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-remote" aria-label="Quest 9 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/09-remote.jpg"><source src="quests/09-remote.webm" type="video/webm"/><source src="quests/09-remote.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 9</b> Team play</div>
         <h3>Sync with the remote</h3>
         <p><em class="term" data-term="push" tabindex="0">Push</em> uploads your commits to <em class="term" data-term="origin" tabindex="0">origin</em>. <em class="term" data-term="fetch" tabindex="0">Fetch</em> downloads your teammates' commits without touching your files, and <em class="term" data-term="pull" tabindex="0">pull</em> also brings them into your branch, from its <em class="term" data-term="upstream" tabindex="0">upstream</em>.</p>
         <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
@@ -1094,10 +1137,10 @@
       </div>
     </article>
 
-    <article class="quest" id="quest-7" aria-label="Quest 7 of 10">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/07-reword.jpg"><source src="quests/07-reword.webm" type="video/webm"/><source src="quests/07-reword.mp4" type="video/mp4"/></video></div>
+    <article class="quest" id="quest-reword" aria-label="Quest 10 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/10-reword.jpg"><source src="quests/10-reword.webm" type="video/webm"/><source src="quests/10-reword.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 7</b> Second chance</div>
+        <div class="quest-level"><b>Lv 10</b> Second chance</div>
         <h3>Reword</h3>
         <p>A typo in an old commit message? <em class="term" data-term="reword" tabindex="0">Reword</em> it. That commit and the ones after it are rewritten, so do it before you push, or force push afterwards.</p>
         <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
@@ -1108,10 +1151,10 @@
       </div>
     </article>
 
-    <article class="quest" id="quest-8" aria-label="Quest 8 of 10">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/08-fixup.jpg"><source src="quests/08-fixup.webm" type="video/webm"/><source src="quests/08-fixup.mp4" type="video/mp4"/></video></div>
+    <article class="quest" id="quest-fixup" aria-label="Quest 11 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/11-fixup.jpg"><source src="quests/11-fixup.webm" type="video/webm"/><source src="quests/11-fixup.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 8</b> Second chance</div>
+        <div class="quest-level"><b>Lv 11</b> Second chance</div>
         <h3>Fixup</h3>
         <p>Forgot a file in a past commit? Stage it and make it a <em class="term" data-term="fixup" tabindex="0">fixup</em> of that commit: it melts into the commit, keeping its message. A <em class="term" data-term="squash" tabindex="0">squash</em> does the same but combines the messages.</p>
         <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
@@ -1121,10 +1164,24 @@
       </div>
     </article>
 
-    <article class="quest" id="quest-9" aria-label="Quest 9 of 10">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/09-reorder-conflict.jpg"><source src="quests/09-reorder-conflict.webm" type="video/webm"/><source src="quests/09-reorder-conflict.mp4" type="video/mp4"/></video></div>
+    <article class="quest" id="quest-squash" aria-label="Quest 12 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/12-squash.jpg"><source src="quests/12-squash.webm" type="video/webm"/><source src="quests/12-squash.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 9</b> <span class="boss">Boss fight</span></div>
+        <div class="quest-level"><b>Lv 12</b> Second chance</div>
+        <h3>Squash</h3>
+        <p>Three commits for one feature, two of them "wip"? Select them and <em class="term" data-term="squash" tabindex="0">squash</em> them: one commit holding all their changes, with the message you write. Do it before you push.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> rebase -i HEAD~3
+<span class="c">  pick   3f2a1c9 feat: sell mana potions</span>
+<span class="c">  squash 9be04d2 wip</span>
+<span class="c">  squash c71d0e4 wip: forgot the recipe</span></pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-reorder-conflict" aria-label="Quest 13 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/13-reorder-conflict.jpg"><source src="quests/13-reorder-conflict.webm" type="video/webm"/><source src="quests/13-reorder-conflict.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 13</b> <span class="boss">Mini-boss</span></div>
         <h3>Reorder, through a conflict</h3>
         <p>Moving a commit runs an <em class="term" data-term="interactive rebase" tabindex="0">interactive rebase</em>. When two commits edit the same lines, it stops on a <em class="term" data-term="conflict" tabindex="0">conflict</em>. Pick a side, then continue. Careful: during a rebase, <em class="term" data-term="ours / theirs" tabindex="0">ours and theirs</em> are swapped.</p>
         <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
@@ -1136,10 +1193,10 @@
       </div>
     </article>
 
-    <article class="quest" id="quest-10" aria-label="Quest 10 of 10">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/10-undo.jpg"><source src="quests/10-undo.webm" type="video/webm"/><source src="quests/10-undo.mp4" type="video/mp4"/></video></div>
+    <article class="quest" id="quest-undo" aria-label="Quest 14 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/14-undo.jpg"><source src="quests/14-undo.webm" type="video/webm"/><source src="quests/14-undo.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 10</b> Second chance</div>
+        <div class="quest-level"><b>Lv 14</b> Second chance</div>
         <h3>Undo anything</h3>
         <p>Dropped the wrong commit? Git's <em class="term" data-term="reflog" tabindex="0">reflog</em> remembers every place HEAD has been, so a committed change is never really lost. GitGud's undo button reads it for you.</p>
         <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
@@ -1150,6 +1207,35 @@
       </div>
     </article>
 
+    <article class="quest" id="quest-worktree-agent" aria-label="Quest 15 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/15-worktree-agent.jpg"><source src="quests/15-worktree-agent.webm" type="video/webm"/><source src="quests/15-worktree-agent.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 15</b> Agents</div>
+        <h3>Agent in its own worktree</h3>
+        <p>A <em class="term" data-term="linked worktree" tabindex="0">linked worktree</em> is another working tree of the same repository, on its own branch. <b>New</b> starts Claude on your task in one, named after it: the <em class="term" data-term="agent" tabindex="0">agent</em> edits and commits there, while <code>main</code> and your files stay untouched. The Agents section shows when it needs you; the log shows its commits, ready to review.</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> worktree add -b agent/fire-potions \
+    .claude/worktrees/fire-potions
+<span class="p">$</span> cd .claude/worktrees/fire-potions
+<span class="p">$</span> claude <span class="s">"Sell fire potions, 20 gold each"</span></pre></div>
+      </div>
+    </article>
+
+    <article class="quest" id="quest-lord-reflog" aria-label="Quest 16 of 16">
+      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/16-lord-reflog.jpg"><source src="quests/16-lord-reflog.webm" type="video/webm"/><source src="quests/16-lord-reflog.mp4" type="video/mp4"/></video></div>
+      <div class="quest-info">
+        <div class="quest-level"><b>Lv 16</b> <span class="boss">Final boss</span></div>
+        <h3>Lord Reflog</h3>
+        <p>He remembers every commit you abandoned. Face him with two agents working at once, each in its own <em class="term" data-term="linked worktree" tabindex="0">linked worktree</em>. Once both are done, fast-forward <code>main</code> to the first one's branch, then merge the second through their <em class="term" data-term="conflict" tabindex="0">conflict</em>. Fall, and his <em class="term" data-term="reflog" tabindex="0">reflog</em> brings you back. (In GitGud, ↑↑↓↓←→←→BA summons him.)</p>
+        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+<pre><span class="p">$</span> <span class="g">git</span> worktree add -b agent/fire-potions …
+<span class="p">$</span> <span class="g">git</span> worktree add -b agent/elf-discount …
+<span class="p">$</span> <span class="g">git</span> merge --ff-only agent/fire-potions
+<span class="p">$</span> <span class="g">git</span> merge agent/elf-discount
+<span class="o">CONFLICT (content): Merge conflict in shop.js</span></pre></div>
+      </div>
+    </article>
+
   </div>
 
   <div class="xp" aria-label="Course progress">
@@ -1157,7 +1243,7 @@
     <div class="xp-bar" id="xp-bar">
       <div class="xp-fill" id="xp-fill"></div>
     </div>
-    <span class="xp-cleared" id="xp-cleared">0 / 10 cleared</span>
+    <span class="xp-cleared" id="xp-cleared">0 / 16 cleared</span>
   </div>
 
   <details class="codex">
@@ -1166,6 +1252,7 @@
       <div><dt>working tree</dt><dd>The files as they are on your disk, edits included.</dd></div>
       <div><dt>index</dt><dd>Also called the staging area: what the next commit will hold.</dd></div>
       <div><dt>stage</dt><dd>Put a change into the index: <code>git add</code>.</dd></div>
+      <div><dt>stash</dt><dd>Uncommitted edits put aside, leaving the working tree clean, until you pop them back.</dd></div>
       <div><dt>hunk</dt><dd>One block of changed lines in a file's diff.</dd></div>
       <div><dt>commit</dt><dd>A snapshot of the project, with a message, an author and its parent commits.</dd></div>
       <div><dt>SHA</dt><dd>A commit's id, a hash of its content, e.g. <code>3f2a1c9</code>. Changing a commit gives it a new SHA.</dd></div>
@@ -1176,6 +1263,7 @@
       <div><dt>diverged</dt><dd>Two branches that each have commits the other lacks.</dd></div>
       <div><dt>merge commit</dt><dd>A commit with two parents, joining two histories.</dd></div>
       <div><dt>rebase</dt><dd>Replaying commits on top of another commit, which creates new commits.</dd></div>
+      <div><dt>cherry-pick</dt><dd>Copying one commit's change onto your branch, as a new commit.</dd></div>
       <div><dt>interactive rebase</dt><dd>A rebase where you edit the list of commits first: reorder, reword, squash, fixup or drop them.</dd></div>
       <div><dt>remote</dt><dd>Another copy of the repository, e.g. on GitHub.</dd></div>
       <div><dt>origin</dt><dd>The default name of the remote you cloned from.</dd></div>
@@ -1188,6 +1276,8 @@
       <div><dt>squash</dt><dd>Fold a commit into an earlier one, combining both messages.</dd></div>
       <div><dt>conflict</dt><dd>Two changes to the same lines that git can't combine on its own: you choose the result.</dd></div>
       <div><dt>ours / theirs</dt><dd>The two sides of a conflict. In a merge, ours is your branch. In a rebase it's swapped: ours is the base you replay onto, theirs is your commit.</dd></div>
+      <div><dt>linked worktree</dt><dd>Another working tree of the same repository, checked out on its own branch, in its own folder.</dd></div>
+      <div><dt>agent</dt><dd>An AI coding CLI, such as Claude Code, that edits files, runs commands and commits for you.</dd></div>
       <div><dt>reflog</dt><dd>Git's log of every place HEAD and your branches have been. The way back from any mistake.</dd></div>
     </dl>
   </details>
@@ -1340,6 +1430,7 @@
     let clearedQuests = new Set();
     try { clearedQuests = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]')); } catch {}
 
+    bar.style.setProperty('--quest-count', quests.length);
     const segments = quests.map((quest, index) => {
       const button = document.createElement('button');
       button.type = 'button';

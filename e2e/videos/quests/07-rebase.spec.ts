@@ -1,4 +1,4 @@
-// Quest 5: replay feature/mana's commits on top of main instead of merging: new commits, straight history
+// Quest 7: replay feature/mana's commits on top of main instead of merging: new commits, straight history
 import { see, waitForMenuItem } from '../../utils/helpers.js';
 import { annotateAt, centerOfXPath } from '../../utils/annotations.js';
 import { chipPoint, clickAndWait, commitRowXPath, createFixture, dragBranchChip, markScene, menuItemXPath, openQuestRepo } from './quest.js';
@@ -9,7 +9,7 @@ const fixture = () => createFixture('rebase', repo => {
   repo.git('switch', '-q', 'feature/mana');
 });
 
-describe('quest 5 — rebase onto', () => {
+describe('quest 7 — rebase onto', () => {
   before(async () => {
     await openQuestRepo(fixture());
   });

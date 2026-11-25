@@ -1,4 +1,4 @@
-// Quest 6: push a commit to origin, then fetch and pull a teammate's
+// Quest 9: push a commit to origin, then fetch and pull a teammate's
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -8,7 +8,7 @@ import { chipPoint, commitRow, commitRowXPath, createFixture, fixtureRepo, markS
 
 const fixture = () => createFixture('remote', openShop);
 
-describe('quest 6 — sync with the remote', () => {
+describe('quest 9 — sync with the remote', () => {
   let remoteDir: string;
 
   before(async () => {

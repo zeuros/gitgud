@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
-import { beat, clickMenuItem, copyRepo, jsClick, rightClick, typeInto, waitForMenuItem } from '../../utils/helpers.js';
+import { beat, byText, clickMenuItem, copyRepo, jsClick, rightClick, typeInto, waitForMenuItem, waitForMerge } from '../../utils/helpers.js';
 import { annotateAt, centerOfXPath, injectAnnotations } from '../../utils/annotations.js';
 
 // Zoomed in so the UI stays readable in the website's smaller video frames
@@ -176,4 +176,33 @@ export const waitForToast = (text: string) =>
 export async function clickAndWait(label: string, toast: string): Promise<void> {
   await clickMenuItem(label);
   await waitForToast(toast);
+}
+
+/** Opens the conflicted file in the merge editor */
+export async function openMergeEditor(): Promise<void> {
+  await jsClick(await $('.conflicted-section tr'));
+  // A conflict in the file a previous one left selected: that click unselected it
+  const opened = await $('gitgud-merge-editor').waitForDisplayed({ timeout: 2000 }).then(() => true, () => false);
+  if (!opened) await jsClick(await $('.conflicted-section tr'));
+  await waitForMerge();
+  await beat(800);
+}
+
+/** The merge editor's "accept all" button of a side: left is ours, right is theirs */
+export const mergeSideButton = (side: 'left' | 'right') =>
+  `.merge-editor-labels .side-label:nth-child(${side === 'left' ? 1 : 3}) button.accept-all-btn`;
+
+/** Writes `contents` as the merge result, the editor's middle column */
+export const setMergeResult = (contents: string) =>
+  browser.execute((text: string) => {
+    const merge = document.querySelector('mis-merge3') as (HTMLElement & { ctr: string }) | null;
+    if (merge) merge.ctr = text;
+  }, contents);
+
+/** Saves the merge result, then waits for the toolbar's Continue to be enabled */
+export async function saveMergeResult(): Promise<void> {
+  await jsClick(await byText('button', 'Save & Mark Resolved'));
+  await $('gitgud-merge-editor').waitForDisplayed({ reverse: true, timeout: 10_000 });
+  await browser.waitUntil(async () => (await $('button.operation-continue').getAttribute('disabled')) === null,
+    { timeout: 10_000, timeoutMsg: 'Continue never became enabled' });
 }

@@ -3,7 +3,7 @@
 #
 # Usage, from the repository root:
 #   bash e2e/videos/quests/record.sh                  # every quest
-#   bash e2e/videos/quests/record.sh 03-fast-forward  # only these quests
+#   bash e2e/videos/quests/record.sh 04-fast-forward  # only these quests
 #
 # Each spec marks when its scene starts and ends (markScene in quest.ts): the video is cut to it
 
@@ -30,6 +30,12 @@ mkdir -p "$XDG_CONFIG_HOME"
 # On a Wayland desktop GDK would open the app there rather than on Xvfb, even without WAYLAND_DISPLAY
 unset WAYLAND_DISPLAY
 export GDK_BACKEND=x11
+
+# The agent quests' Claude is a script replaying their tasks (fake-claude/claude), with its own config folder
+export PATH="$QUESTS_DIR/fake-claude:$PATH"
+# The app puts the login shell's PATH first (patch_path_from_login_shell), which finds the real claude: no login shell
+export SHELL=/bin/true
+export CLAUDE_CONFIG_DIR="$WORK_DIR/claude"
 
 BINARY="src-tauri/target/release/gitgud"
 if [[ ! -x "$BINARY" || -n "$(find src src-tauri/src src-tauri/Cargo.toml package.json -type f -newer "$BINARY" -print -quit)" ]]; then
@@ -66,6 +72,8 @@ record_quest() {
   local raw_video="$WORK_DIR/$quest.mkv"
   local marks_file="$WORK_DIR/$quest.marks"
   : > "$marks_file"
+  # Each quest's agents start from no session
+  rm -rf "$WORK_DIR/claude"
 
   echo "[quests] $quest: recording..."
   ffmpeg -nostdin -loglevel error \

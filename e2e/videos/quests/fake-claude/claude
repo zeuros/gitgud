@@ -1,0 +1,91 @@
+#!/usr/bin/env node
+// A scripted stand-in for Claude Code, put first on PATH by record.sh so the agent quests replay the same every time.
+//
+// Reads its tasks from $CLAUDE_CONFIG_DIR/fake-claude.json (see FakeClaudeTask in agents.ts): the first task whose
+// `match` the prompt holds. `claude -p <naming prompt>` prints the task's name; `claude <prompt>` plays its steps in
+// the terminal, editing and committing files in its cwd, and writes what Claude Code writes for GitGud: its status in
+// sessions/<pid>.json and its transcript in projects/<cwd>/<session id>.jsonl. Then it waits for the user, until killed.
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const { execFileSync } = require('child_process');
+
+const configDir = process.env.CLAUDE_CONFIG_DIR ?? path.join(process.env.HOME, '.claude');
+const tasks = JSON.parse(fs.readFileSync(path.join(configDir, 'fake-claude.json'), 'utf8'));
+const args = process.argv.slice(2);
+const prompt = args.filter(arg => !arg.startsWith('-')).at(-1) ?? '';
+const task = tasks.find(candidate => prompt.toLowerCase().includes(candidate.match.toLowerCase()));
+
+if (args.includes('-p')) {
+  console.log(task?.name ?? 'task');
+  process.exit(0);
+}
+
+const cwd = process.cwd();
+const sessionId = crypto.randomUUID();
+const statusPath = path.join(configDir, 'sessions', `${process.pid}.json`);
+const transcriptPath = path.join(configDir, 'projects', cwd.replace(/[^a-zA-Z0-9]/g, '-'), `${sessionId}.jsonl`);
+fs.mkdirSync(path.dirname(statusPath), { recursive: true });
+fs.mkdirSync(path.dirname(transcriptPath), { recursive: true });
+
+const setStatus = status => fs.writeFileSync(statusPath, JSON.stringify({ pid: process.pid, sessionId, cwd, status }));
+const record = line => fs.appendFileSync(transcriptPath, JSON.stringify({ sessionId, cwd, timestamp: new Date().toISOString(), ...line }) + '\n');
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const ORANGE = '\x1b[38;5;209m', GREY = '\x1b[90m', GREEN = '\x1b[32m', BOLD = '\x1b[1m', RESET = '\x1b[0m';
+const write = text => process.stdout.write(text.replace(/\n/g, '\r\n'));
+
+const exit = () => {
+  fs.rmSync(statusPath, { force: true });
+  process.exit(0);
+};
+process.on('SIGTERM', exit);
+process.on('SIGHUP', exit);
+process.on('SIGINT', exit);
+
+async function play() {
+  setStatus('busy');
+  write(`${ORANGE}✻${RESET} Welcome to ${BOLD}Claude Code${RESET}\n${GREY}  cwd: ${cwd}${RESET}\n\n`);
+  if (!prompt) return;
+  write(`${GREY}>${RESET} ${prompt}\n\n`);
+  record({ type: 'user', message: { role: 'user', content: prompt } });
+  if (task?.title) record({ type: 'ai-title', aiTitle: task.title });
+
+  for (const [index, step] of (task?.steps ?? []).entries()) {
+    await sleep(step.delayMs ?? 1200);
+    if (step.say) {
+      write(`${ORANGE}⏺${RESET} ${step.say}\n\n`);
+      record({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: step.say }] } });
+    }
+    if (step.files) {
+      for (const [name, contents] of Object.entries(step.files)) {
+        fs.mkdirSync(path.dirname(path.join(cwd, name)), { recursive: true });
+        fs.writeFileSync(path.join(cwd, name), contents);
+        write(`${GREEN}⏺${RESET} ${BOLD}Update${RESET}(${name})\n  ${GREY}⎿  Updated ${name}${RESET}\n\n`);
+        const id = `edit-${index}-${name}`;
+        record({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id, name: 'Edit', input: { file_path: name } }] } });
+        record({ type: 'user', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: id, content: `Updated ${name}` }] } });
+      }
+    }
+    if (step.commit) {
+      execFileSync('git', ['add', '-A'], { cwd });
+      execFileSync('git', ['commit', '-q', '-m', step.commit], { cwd });
+      const command = `git commit -m "${step.commit}"`;
+      write(`${GREEN}⏺${RESET} ${BOLD}Bash${RESET}(${command})\n  ${GREY}⎿  1 file changed${RESET}\n\n`);
+      const id = `commit-${index}`;
+      record({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] } });
+      record({ type: 'user', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: id, content: '1 file changed' }] } });
+    }
+  }
+}
+
+play().then(() => {
+  setStatus('idle');
+  write(`${GREY}>${RESET} `);
+  if (process.stdin.isTTY) process.stdin.setRawMode(true);
+  process.stdin.on('data', data => {
+    // Ctrl+C or Ctrl+D quits, as Claude Code does
+    if (data.includes(3) || data.includes(4)) exit();
+    write(data.toString().replace(/\r/g, '\n'));
+  });
+});
