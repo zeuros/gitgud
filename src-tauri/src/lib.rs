@@ -63,19 +63,8 @@ fn patch_path_from_login_shell() {
     std::env::set_var("PATH", merged.join(":"));
 }
 
-// WebKitGTK on Wayland with the NVIDIA proprietary driver dies with "Error 71 (Protocol error) dispatching to
-// Wayland display" because of the driver's explicit sync. Disabling it keeps native Wayland and GPU rendering
-// (XWayland + WEBKIT_DISABLE_DMABUF_RENDERER=1 also avoids the crash, but renders the page on the CPU: ~23 fps instead
-// of 60 when scrolling the log; XWayland with DMA-BUF fails to allocate GBM buffers on NVIDIA).
-#[cfg(target_os = "linux")]
-fn patch_nvidia_wayland() {
-    std::env::set_var("__NV_DISABLE_EXPLICIT_SYNC", "1");
-    raise_open_files_limit();
-}
-
-// With NVIDIA the web process leaks GPU sync fences (anon_inode:sync_file, ~2 fds per frame drawn) and dies with
-// "Too many open files" once it reaches the soft limit (1024 for apps launched from GNOME). Raise it to the hard limit
-// (inherited by the web process): frames are only drawn while something moves, so a session doesn't get there.
+// With NVIDIA the web process leaks GPU sync fences (anon_inode:sync_file) and dies with "Too many open files" once it
+// reaches the soft limit (1024 for apps launched from GNOME). Raise it to the hard limit, inherited by the web process.
 #[cfg(target_os = "linux")]
 fn raise_open_files_limit() {
     let mut limit = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
@@ -96,7 +85,7 @@ pub fn run() {
     sequence_editor::expose_binary_name();
     credential_helper::configure_git();
     #[cfg(target_os = "linux")]
-    patch_nvidia_wayland();
+    raise_open_files_limit();
 
     tauri::Builder::default()
         .manage(shell_pool::ShellPoolManager::new())

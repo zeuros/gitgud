@@ -20,10 +20,6 @@ const debug = !!process.env['WDIO_DEBUG'];
 // This flag makes webdriverio use Node's native fetch instead.
 process.env['WDIO_USE_NATIVE_FETCH'] = '1';
 
-// Force X11 backend so the Tauri app doesn't try Wayland under Xvfb and crash
-// with "Error 71 (Protocol error) dispatching to Wayland display".
-process.env['GDK_BACKEND'] = 'x11';
-
 // The app keeps its window state and localStorage under its identifier in the user's folders: a run would restore
 // the desktop window size (software-rendered under Xvfb, slow enough to stall IPC) and wipe the user's repository list
 // The config is loaded by the launcher then by each worker, which inherit its folder
