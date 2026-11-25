@@ -1,4 +1,4 @@
-// Quest 9: move a commit below the one it builds on: each replayed commit stops on a conflict
+// Quest 13: move a commit below the one it builds on: each replayed commit stops on a conflict
 //
 //   feat: sell fire potions      potions.txt = health, mana, fire   ← moved down
 //   feat: sell mana potions      potions.txt = health, mana
@@ -6,9 +6,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
-import { beat, byText, jsClick, see, waitForConflict, waitForMerge } from '../../utils/helpers.js';
+import { beat, jsClick, see, waitForConflict } from '../../utils/helpers.js';
 import { annotate, annotateAt, centerOfXPath } from '../../utils/annotations.js';
-import { commitMenu, commitRowXPath, createFixture, markScene, openQuestRepo } from './quest.js';
+import { commitMenu, commitRowXPath, createFixture, markScene, mergeSideButton, openMergeEditor, openQuestRepo, saveMergeResult, setMergeResult } from './quest.js';
 
 const fixture = () => createFixture('reorder-conflict', repo => {
   repo.commit('chore: open the potion shop', { 'potions.txt': 'health\n', 'README.md': '# Potion shop\n' });
@@ -25,32 +25,9 @@ const appliedCount = () => {
   return fs.existsSync(donePath) ? fs.readFileSync(donePath, 'utf8').trim().split('\n').length : 0;
 };
 
-/** Opens the conflicted file in the merge editor */
-async function openMergeEditor(): Promise<void> {
-  await jsClick(await $('.conflicted-section tr'));
-  // The second conflict is in the file the first one left selected: that click unselected it
-  const opened = await $('gitgud-merge-editor').waitForDisplayed({ timeout: 2000 }).then(() => true, () => false);
-  if (!opened) await jsClick(await $('.conflicted-section tr'));
-  await waitForMerge();
-  await beat(800);
-}
-
-const sideButton = (side: 'left' | 'right') =>
-  `.merge-editor-labels .side-label:nth-child(${side === 'left' ? 1 : 3}) button.accept-all-btn`;
-
-/** Writes `contents` as the merge result, the editor's middle column */
-const setMergeResult = (contents: string) =>
-  browser.execute((text: string) => {
-    const merge = document.querySelector('mis-merge3') as (HTMLElement & { ctr: string }) | null;
-    if (merge) merge.ctr = text;
-  }, contents);
-
 /** Saves the merge result, then continues the rebase */
 async function saveAndContinue(): Promise<void> {
-  await jsClick(await byText('button', 'Save & Mark Resolved'));
-  await $('gitgud-merge-editor').waitForDisplayed({ reverse: true, timeout: 10_000 });
-  await browser.waitUntil(async () => (await $('button.operation-continue').getAttribute('disabled')) === null,
-    { timeout: 10_000, timeoutMsg: 'Continue never became enabled' });
+  await saveMergeResult();
   await annotate('button.operation-continue', 'Continue the rebase', 'bottom', 1800);
   const appliedBefore = appliedCount();
   await jsClick(await $('button.operation-continue'));
@@ -60,7 +37,7 @@ async function saveAndContinue(): Promise<void> {
   await beat(1500);
 }
 
-describe('quest 9 — reorder, boss fight', () => {
+describe('quest 13 — reorder, mini-boss', () => {
   before(async () => {
     ({ repoDir } = await openQuestRepo(fixture()));
   });
@@ -79,8 +56,8 @@ describe('quest 9 — reorder, boss fight', () => {
 
     // Replaying "fire" onto "open the potion shop", which has no mana yet
     await openMergeEditor();
-    await annotate(sideButton('left'), '"ours": in a rebase, the base\nyou replay onto (no mana yet)', 'bottom', 3200);
-    await annotate(sideButton('right'), '"theirs": your commit,\nwritten after mana', 'bottom', 3000);
+    await annotate(mergeSideButton('left'), '"ours": in a rebase, the base\nyou replay onto (no mana yet)', 'bottom', 3200);
+    await annotate(mergeSideButton('right'), '"theirs": your commit,\nwritten after mana', 'bottom', 3000);
     await setMergeResult('health\nfire\n');
     await beat(600);
     await annotate('mis-merge3', 'Keep only fire\'s change:\nmana comes later', 'top', 2800);

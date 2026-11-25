@@ -1,4 +1,4 @@
-// Quest 4: both branches moved on: merging them makes a merge commit with two parents
+// Quest 5: both branches moved on: merging them makes a merge commit with two parents
 import { see } from '../../utils/helpers.js';
 import { annotateAt, centerOfXPath } from '../../utils/annotations.js';
 import { branchChipMenu, chipPoint, commitRow, commitRowXPath, createFixture, markScene, openQuestRepo } from './quest.js';
@@ -6,7 +6,7 @@ import { divergedShop } from './diverged-shop.js';
 
 const fixture = () => createFixture('merge', divergedShop);
 
-describe('quest 4 — true merge', () => {
+describe('quest 5 — true merge', () => {
   before(async () => {
     await openQuestRepo(fixture());
   });

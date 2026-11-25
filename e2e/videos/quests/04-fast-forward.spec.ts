@@ -1,4 +1,4 @@
-// Quest 3: main is an ancestor of feature/mana: merging just slides the main label forward, no merge commit
+// Quest 4: main is an ancestor of feature/mana: merging just slides the main label forward, no merge commit
 import { see, waitForMenuItem } from '../../utils/helpers.js';
 import { annotateAt, centerOfXPath } from '../../utils/annotations.js';
 import { chipPoint, clickAndWait, createFixture, dragBranchChip, markScene, menuItemXPath, openQuestRepo, openShop } from './quest.js';
@@ -11,7 +11,7 @@ const fixture = () => createFixture('fast-forward', repo => {
   repo.git('switch', '-q', 'main');
 });
 
-describe('quest 3 — fast-forward', () => {
+describe('quest 4 — fast-forward', () => {
   before(async () => {
     await openQuestRepo(fixture());
   });

@@ -1,4 +1,4 @@
-// Quest 7: fix the message of a past commit
+// Quest 10: fix the message of a past commit
 import { beat, byText, clearInput, jsClick, see } from '../../utils/helpers.js';
 import { annotate, annotateAt, centerOfXPath } from '../../utils/annotations.js';
 import { commitRow, commitRowXPath, createFixture, markScene, openQuestRepo, openShop, typeSlowly } from './quest.js';
@@ -9,7 +9,7 @@ const fixture = () => createFixture('reword', repo => {
   repo.commit('feat: mana costs more', { 'shop.js': "export const potions = ['health', 'mana'];\n\nexport const price = name => name === 'mana' ? 15 : 10;\n" });
 });
 
-describe('quest 7 — reword', () => {
+describe('quest 10 — reword', () => {
   before(async () => {
     await openQuestRepo(fixture());
   });

@@ -1,4 +1,4 @@
-// Quest 8: fold a forgotten change into a past commit, without a "fix" commit
+// Quest 11: fold a forgotten change into a past commit, without a "fix" commit
 import { beat, byText, jsClick, see, waitForDiff } from '../../utils/helpers.js';
 import { annotate, annotateAt, centerOfXPath } from '../../utils/annotations.js';
 import { commitRow, commitRowXPath, createFixture, markScene, openQuestRepo, openShop, waitForToast } from './quest.js';
@@ -9,7 +9,7 @@ const fixture = () => createFixture('fixup', repo => {
   repo.commit('docs: thank the adventurers', { 'README.md': '# Potion shop\n\nSells potions to adventurers.\n\nOpen from dawn to dusk. Thanks for visiting!\n' });
 });
 
-describe('quest 8 — fixup', () => {
+describe('quest 11 — fixup', () => {
   before(async () => {
     const repo = await openQuestRepo(fixture());
     // The recipe "feat: sell mana potions" forgot

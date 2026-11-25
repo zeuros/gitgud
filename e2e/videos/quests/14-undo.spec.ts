@@ -1,4 +1,4 @@
-// Quest 10: drop a commit by mistake, then undo it (GitGud reads the reflog)
+// Quest 14: drop a commit by mistake, then undo it (GitGud reads the reflog)
 import { jsClick, see } from '../../utils/helpers.js';
 import { annotate, annotateAt, centerOfXPath } from '../../utils/annotations.js';
 import { commitMenu, commitRow, commitRowXPath, createFixture, markScene, openQuestRepo, openShop, waitForToast } from './quest.js';
@@ -9,7 +9,7 @@ const fixture = () => createFixture('undo', repo => {
   repo.commit('feat: mana costs more', { 'shop.js': "export const potions = ['health', 'mana'];\n\nexport const price = name => name === 'mana' ? 15 : 10;\n" });
 });
 
-describe('quest 10 — undo anything', () => {
+describe('quest 14 — undo anything', () => {
   before(async () => {
     await openQuestRepo(fixture());
   });
