@@ -174,7 +174,11 @@ export class BranchContextMenuService {
 
     const pushItem = {...push, label: ab.ahead ? `Push ${commitCount(ab.ahead)} to ${upstream}` : `Push (${upstream} up to date)`, disabled: !ab.ahead};
     if (!ab.behind) return [{...pull, label: `Pull (${localName} up to date)`, disabled: true}, pushItem];
-    if (!ab.ahead) return [{...pull, label: `Pull ${commitCount(ab.behind)} from ${upstream}`}, pushItem];
+    // Only behind: pushing can only be a force push, dropping the upstream's extra commits (the dialog confirms it)
+    if (!ab.ahead) return [
+      {...pull, label: `Pull ${commitCount(ab.behind)} from ${upstream}`},
+      {...push, label: `Force push to ${upstream} (drops ${commitCount(ab.behind)})`},
+    ];
 
     // Diverged: a fast-forward is impossible, offer the two ways to integrate instead
     return [{
