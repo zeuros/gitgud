@@ -8,1000 +8,343 @@
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/zeuros/gitgud/main/build/icons/32x32.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Unbounded:wght@900&family=Syne:wght@400;600;700;800&family=Manrope:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Alegreya:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #0f111a;
-      --bg2:      #13162100;
-      --surface:  #181c2c;
-      --border:   #262d45;
-      --text:     #dde1f0;
-      --muted:    #6b7494;
-      --purple:   #a78bfa;
-      --teal:     #2dd4bf;
-      --coral:    #fb923c;
-      --green:    #4ade80;
-      --blue:     #60a5fa;
-      --r:        8px;
-      --max:      1080px;
+      --bg:      oklch(0.14 0.02 245);
+      --surface: oklch(0.19 0.025 245);
+      --fg:      oklch(0.9 0.015 230);
+      --muted:   oklch(0.7 0.03 235);
+      --rule:    oklch(0.33 0.04 240);
+      --accent:  oklch(0.86 0.08 205);
+      --accent-2:oklch(0.82 0.1 85);
+      --on-accent: oklch(0.15 0.02 245);
+      --halo:    oklch(0.09 0.02 250 / .9);
+
+      --display: 'Forum', serif;
+      --text: 'Alegreya', serif;
+      --mono: 'JetBrains Mono', monospace;
+
+      /* 1.333 scale, base 1.125rem */
+      --step-0: 1.125rem;
+      --step-1: 1.6rem;
+      --step-2: 2.1rem;
+      --step-3: clamp(2rem, 4.4vw, 2.85rem);
+      --step-4: clamp(2.8rem, 6.6vw, 5.1rem);
+
+      --space: 8px;
+      --ease-out: cubic-bezier(.2, .8, .2, 1);
+      --max: 1320px;
+      --gutter: clamp(1.25rem, 4vw, 3.5rem);
+      --margin-col: 11rem;
     }
 
-    html { scroll-behavior: smooth; }
-
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body { overflow-x: clip; }
     body {
       background: var(--bg);
-      color: var(--text);
-      font-family: 'Manrope', sans-serif;
-      font-size: 16px;
-      line-height: 1.6;
+      color: var(--fg);
+      font-family: var(--text);
+      font-size: var(--step-0);
+      font-weight: 400;
+      line-height: 1.65;
       -webkit-font-smoothing: antialiased;
     }
+    a { color: inherit; }
+    code { font-family: var(--mono); font-size: .8em; color: var(--accent-2); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
-    /* ── Fixed scene background ─────────────────────────────────────── */
+    .page { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+    /* Dark halo: keeps text readable over the scene */
+    .halo { position: relative; isolation: isolate; }
+    .halo::before {
+      content: ''; position: absolute; inset: -18% -22%; z-index: -1; pointer-events: none;
+      background: radial-gradient(closest-side, var(--halo) 0%, color-mix(in oklch, var(--halo) 70%, transparent) 55%, transparent 100%);
+    }
+
+    .display { font-family: var(--display); font-weight: 400; letter-spacing: .1em; text-transform: uppercase; }
+    .label { font-family: var(--display); font-weight: 400; letter-spacing: .14em; text-transform: uppercase; font-size: .8125rem; }
+
+    /* Running head */
+    .running-head {
+      position: relative;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .running-head .title { color: var(--accent-2); text-decoration: none; font-size: .9375rem; }
+    .running-head nav { display: flex; gap: 2rem; }
+    .running-head nav a { text-decoration: none; color: var(--fg); opacity: .8; padding: .4rem 0; transition: color .15s, opacity .15s; }
+    /* Forum has a single weight: a stroke in the text colour thickens it */
+    .running-head .title, .running-head nav a { -webkit-text-stroke: .45px currentColor; }
+    .running-head nav a:hover { color: var(--accent); opacity: 1; }
+
+    /* Frontispiece */
+    /* Stacked: the title and its text, then the screenshot at full width */
+    .frontispiece {
+      display: grid;
+      gap: calc(var(--space) * 12);
+      padding: calc(var(--space) * 8) 0 calc(var(--space) * 10);
+    }
+    .frontispiece > div.halo {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas: 'title incipit' 'rule rubrics';
+      column-gap: calc(var(--space) * 8);
+      align-items: end;
+    }
+    .frontispiece > div.halo h1 { grid-area: title; }
+    .frontispiece > div.halo .rule-ornament { grid-area: rule; align-self: start; }
+    .frontispiece > div.halo .incipit { grid-area: incipit; }
+    .frontispiece > div.halo .rubrics { grid-area: rubrics; align-self: start; margin-top: calc(var(--space) * 2); }
+    .frontispiece h1 { font-size: var(--step-4); line-height: 1; color: var(--fg); }
+    .frontispiece h1 span { display: block; color: var(--accent); }
+    .frontispiece .rule-ornament { display: block; width: 9rem; height: 1px; margin: calc(var(--space) * 3) 0; background: linear-gradient(90deg, var(--accent), transparent); }
+    .incipit { max-width: 34ch; font-size: 1.3rem; line-height: 1.55; }
+    .rubrics { list-style: none; margin-top: calc(var(--space) * 4); display: grid; gap: .25rem; }
+    .rubrics a {
+      display: inline-flex; align-items: baseline; gap: .8rem;
+      min-height: 44px; padding: .4rem 0;
+      font-size: 1.0625rem; text-decoration: none; color: var(--fg);
+      transition: color .15s;
+    }
+    .rubrics a::before { content: '◇'; color: var(--accent); font-family: var(--text); }
+    .rubrics a small { font-family: var(--text); font-style: italic; letter-spacing: 0; text-transform: none; color: var(--muted); font-size: 1rem; font-weight: 400; }
+    .rubrics a:hover { color: var(--accent); }
+    .rubrics li:first-child a { color: var(--accent-2); }
+
+    /* Video and screenshot frames */
+    .frame { position: relative; padding: 12px; background: oklch(0.1 0.02 250); }
+    .frame { border: 1px solid var(--rule); background:
+        linear-gradient(var(--accent), var(--accent)) top left / 22px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) top left / 2px 22px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) top right / 22px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) top right / 2px 22px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) bottom left / 22px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) bottom left / 2px 22px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) bottom right / 22px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) bottom right / 2px 22px no-repeat,
+        oklch(0.1 0.02 250); }
+    .frame::after { content: ''; position: absolute; inset: var(--frame-inset, 12px); pointer-events: none; box-shadow: inset 0 0 50px oklch(0.04 0.01 40 / .65); }
+    .plate { margin: 0; display: block; }
+    .plate img { display: block; width: 100%; height: auto; cursor: zoom-in; }
+
+    /* Full-screen preview of a screenshot */
+    .lightbox {
+      max-width: none; max-height: none; width: 100vw; height: 100dvh;
+      margin: 0; padding: 2vmin;
+      border: 0; background: transparent; color: var(--fg);
+      display: none; place-items: center; cursor: zoom-out;
+    }
+    .lightbox[open] { display: grid; animation: lightbox-in .18s var(--ease-out); }
+    .lightbox::backdrop { background: oklch(0.07 0.02 250 / .94); }
+    .lightbox figure { margin: 0; display: grid; gap: .9rem; justify-items: center; }
+    .lightbox .frame { width: fit-content; }
+    .lightbox img { display: block; max-width: calc(96vw - 26px); max-height: calc(92dvh - 70px); width: auto; height: auto; }
+    .lightbox figcaption { font-style: italic; color: var(--muted); }
+    @keyframes lightbox-in { from { opacity: 0; transform: scale(.97); } }
+    @media (prefers-reduced-motion: reduce) { .lightbox[open] { animation: none; } }
+    .plate figcaption { margin-top: 1.1rem; font-style: italic; color: var(--muted); font-size: 1.0625rem; }
+    .plate figcaption b, .lightbox figcaption b { font-family: var(--display); font-style: normal; color: var(--accent); font-weight: 400; letter-spacing: .12em; text-transform: uppercase; font-size: .8125rem; margin-right: .6rem; }
+
+    /* Divisions */
+    .liber { padding: calc(var(--space) * 11) 0; border-top: 1px solid var(--rule); }
+    .liber-head { display: grid; grid-template-columns: var(--margin-col) minmax(0, 1fr) auto; gap: calc(var(--space) * 4); align-items: end; margin-bottom: calc(var(--space) * 6); }
+    .liber-head .numeral { color: var(--accent); padding-bottom: .7rem; }
+    .liber-head h2 { font-size: var(--step-3); line-height: 1.05; color: var(--fg); }
+    .liber-head p { font-style: italic; color: var(--muted); margin-top: .75rem; max-width: 52ch; }
+
+    /* ── Quests ─────────────────────────────────────── */
+    .quest-nav { display: flex; gap: .5rem; }
+    .quest-nav button {
+      width: 48px; height: 48px;
+      background: none; border: 1px solid var(--rule); color: var(--accent-2);
+      font-size: 1rem; cursor: pointer; transition: border-color .15s, color .15s;
+    }
+    .quest-nav button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .quest-nav button:disabled { opacity: .3; cursor: default; }
+
+    .quest-track {
+      display: grid; grid-auto-flow: column; grid-auto-columns: 100%;
+      gap: 3rem; overflow-x: auto;
+      scroll-snap-type: x mandatory; scroll-behavior: smooth;
+      scrollbar-width: none; overscroll-behavior-x: contain;
+      padding: 14px 0;
+    }
+    .quest-track::-webkit-scrollbar { display: none; }
+
+    /* The video takes most of the width, the quest's text beside it */
+    .quest {
+      scroll-snap-align: start;
+      display: grid;
+      grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+      grid-template-areas: 'video level' 'video title' 'video text' 'video bash';
+      grid-template-rows: auto auto auto 1fr;
+      gap: 0 calc(var(--space) * 5);
+      align-items: start;
+    }
+    .quest-video { grid-area: video; aspect-ratio: 16 / 9; }
+    .quest-video video { display: block; width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
+    /* Fullscreen shows the whole video, letterboxed, whatever the screen's shape */
+    .quest-video video:fullscreen { object-fit: contain; background: black; cursor: default; }
+    .quest-info { display: contents; }
+    .quest-level { grid-area: level; display: flex; align-items: baseline; gap: .75rem; color: var(--muted); font-style: italic; border-top: 1px solid var(--accent); padding-top: .8rem; margin-bottom: 1rem; }
+    .quest-level b { font-family: var(--display); font-style: normal; font-weight: 400; color: var(--accent); font-size: .875rem; letter-spacing: .14em; text-transform: uppercase; }
+    .quest-level .boss { color: var(--accent-2); }
+    .quest h3 { grid-area: title; font-size: var(--step-1); line-height: 1.15; margin-bottom: 1rem; }
+    .quest p { grid-area: text; line-height: 1.7; }
+
+    .bash { grid-area: bash; margin-top: 1.5rem; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+    .bash-bar { font-family: var(--display); font-weight: 400; font-size: .8125rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); padding: .7rem 0 .2rem; }
+    .bash pre { padding: .4rem 0 .9rem; overflow-x: auto; font-family: var(--mono); font-size: .8125rem; line-height: 1.75; }
+    .bash .p { color: var(--accent); user-select: none; }
+    .bash .g { color: var(--accent-2); }
+    .bash .s { color: oklch(0.82 0.1 85); }
+    .bash .c { color: var(--muted); font-style: italic; }
+    .bash .o { color: var(--muted); }
+
+    .term { font-style: italic; color: var(--accent-2); text-decoration: underline 1px color-mix(in oklch, var(--accent-2) 55%, transparent); text-underline-offset: 4px; cursor: help; }
+    .term-tip {
+      position: fixed; z-index: 200; max-width: 300px;
+      padding: .85rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      font-size: 1rem; line-height: 1.5;
+      pointer-events: none; opacity: 0; transition: opacity .15s var(--ease-out);
+    }
+    .term-tip.shown { opacity: 1; }
+    .term-tip strong { display: block; font-family: var(--display); font-weight: 400; letter-spacing: .08em; text-transform: uppercase; font-size: .875rem; color: var(--accent); margin-bottom: .2rem; }
+
+    .xp { display: grid; grid-template-columns: var(--margin-col) 1fr auto; gap: calc(var(--space) * 4); align-items: center; margin-top: calc(var(--space) * 7); }
+    .xp > span:first-child { color: var(--accent); }
+    .xp-bar { position: relative; display: grid; grid-template-columns: repeat(var(--quest-count, 16), 1fr); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+    .xp-fill { position: absolute; left: 0; bottom: -1px; height: 2px; background: var(--accent); transition: width .35s var(--ease-out); }
+    .xp-bar button { min-height: 44px; background: none; border: 0; color: var(--muted); font-family: var(--display); font-weight: 400; font-size: .875rem; cursor: pointer; transition: color .15s; }
+    .xp-bar button:hover, .xp-bar button.reached { color: var(--fg); }
+    .xp-bar button.current { color: var(--accent); }
+    .xp-bar button.cleared::after { content: '◈'; margin-left: .15rem; color: var(--accent); font-size: .75em; }
+    #xp-cleared { font-style: italic; color: var(--muted); }
+
+    .codex { margin-top: calc(var(--space) * 6); margin-left: calc(var(--margin-col) + var(--space) * 4); }
+    .codex summary { list-style: none; cursor: pointer; font-size: var(--step-1); padding: .5rem 0; }
+    .codex summary::-webkit-details-marker { display: none; }
+    .codex summary small { font-family: var(--text); font-style: italic; text-transform: none; letter-spacing: 0; font-size: 1rem; font-weight: 400; color: var(--muted); margin-left: .75rem; }
+    .codex summary::after { content: ' +'; color: var(--accent); }
+    .codex[open] summary::after { content: ' −'; }
+    .codex dl { columns: 3 240px; column-gap: 3rem; column-rule: 1px solid var(--rule); margin-top: 1.5rem; }
+    .codex dl > div { break-inside: avoid; margin-bottom: 1rem; }
+    .codex dt { font-family: var(--display); font-weight: 400; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; font-size: .875rem; }
+    .codex dd { font-size: 1rem; }
+
+    .spells { margin-left: calc(var(--margin-col) + var(--space) * 4); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--space) * 4) calc(var(--space) * 7); }
+    .spells div { border-top: 1px solid var(--rule); padding-top: 1rem; }
+    .spells h3 { font-size: 1.125rem; color: var(--accent-2); margin-bottom: .35rem; }
+    .spells p { color: var(--fg); opacity: .88; }
+
+    .lore { display: grid; grid-template-columns: var(--margin-col) minmax(0, 1fr) minmax(0, 1.4fr); gap: calc(var(--space) * 4); align-items: center; }
+    .lore .gloss { grid-column: 2; font-size: 1.3rem; }
+    .lore .gloss em { color: var(--accent-2); }
+
+    table { margin-left: calc(var(--margin-col) + var(--space) * 4); width: calc(100% - var(--margin-col) - var(--space) * 4); border-collapse: collapse; }
+    th { text-align: left; font-family: var(--display); font-weight: 400; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; font-size: .8125rem; padding: .5rem 0; border-bottom: 1px solid var(--accent); }
+    td { padding: .75rem 0; border-bottom: 1px solid var(--rule); }
+    td.platform { font-family: var(--display); font-weight: 400; font-size: 1.25rem; letter-spacing: .06em; color: var(--accent-2); vertical-align: top; text-transform: uppercase; }
+    td.format { font-family: var(--mono); font-size: .875rem; }
+    td.format small { font-family: var(--text); font-style: italic; color: var(--muted); margin-left: .5rem; font-size: 1rem; }
+    td.links { text-align: right; }
+    td.links a { display: inline-flex; align-items: center; justify-content: center; min-width: 80px; min-height: 42px; margin-left: .5rem; border: 1px solid var(--rule); font-family: var(--display); font-weight: 400; letter-spacing: .08em; text-decoration: none; transition: border-color .15s, color .15s, background .15s; }
+    td.links a:hover { border-color: var(--accent); color: var(--accent); }
+
+    footer { padding: calc(var(--space) * 13) 0 calc(var(--space) * 10); text-align: center; border-top: 1px solid var(--rule); }
+    footer .closing { font-size: var(--step-2); color: var(--accent); }
+    footer p { font-style: italic; color: var(--muted); margin-top: .6rem; }
+    footer nav { margin-top: 1.5rem; display: flex; justify-content: center; gap: 2rem; }
+    footer nav a { text-decoration: none; padding: .4rem 0; }
+    footer nav a:hover { color: var(--accent); }
+
+    /* The original scene: fixed art, a centre dimmer, a colour shift on scroll */
     #scene-bg {
-      position: fixed;
-      inset: 0;
-      z-index: -3;
+      position: fixed; inset: 0; z-index: -3;
       background: url('img/background.png') center/cover no-repeat;
       filter: blur(2px);
       transform: scale(1.04);
       will-change: opacity, transform;
     }
-
-    /* ── Centre dimmer — kills fire brightness behind content ──────── */
     #vignette {
-      position: fixed;
-      inset: 0;
-      z-index: -3;
-      pointer-events: none;
-      background:
-        radial-gradient(ellipse 65% 55% at 50% 52%,
-          rgba(6, 5, 14, 0.72) 0%,
-          rgba(6, 5, 14, 0.30) 55%,
-          transparent 80%);
+      position: fixed; inset: 0; z-index: -3; pointer-events: none;
+      background: radial-gradient(ellipse 65% 55% at 50% 52%, rgba(6, 5, 14, 0.72) 0%, rgba(6, 5, 14, 0.30) 55%, transparent 80%);
     }
+    #aurora { position: fixed; inset: 0; z-index: -2; pointer-events: none; will-change: opacity, background; }
 
-    /* ── Scroll colour aurora ───────────────────────────────────────── */
-    #aurora {
-      position: fixed;
-      inset: 0;
-      z-index: -2;
-      pointer-events: none;
-      will-change: opacity, background;
+    .frontispiece h1 { font-size: clamp(2.6rem, 6.4vw, 5rem); letter-spacing: .08em; }
+    @media (max-width: 1000px) {
+      :root { --margin-col: 0px; }
+      .frontispiece > div.halo { grid-template-columns: 1fr; grid-template-areas: 'title' 'rule' 'incipit' 'rubrics'; }
+      .quest { grid-template-columns: 1fr; grid-template-areas: 'video' 'level' 'title' 'text' 'bash'; grid-template-rows: none; }
+      .quest-video { margin-bottom: 1.5rem; }
+      .liber-head { grid-template-columns: 1fr; }
+      .lore { grid-template-columns: 1fr; }
+      .lore .gloss { grid-column: 1; }
+      .spells { grid-template-columns: 1fr; }
+      .xp { grid-template-columns: 1fr; gap: .75rem; }
     }
-
-    /* ── Nav ─────────────────────────────────────────────────────────── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 clamp(1.5rem, 5vw, 3rem);
-      height: 56px;
-      background: rgba(15,17,26,.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.06);
+    @media (max-width: 640px) {
+      .running-head nav a.opt { display: none; }
+      .xp-bar button { font-size: .625rem; }
+      td.platform { display: none; }
     }
-
-    .nav-logo {
-      font-family: 'Cinzel Decorative', serif;
-      font-weight: 700;
-      font-size: 1rem;
-      color: #fff;
-      text-decoration: none;
-      letter-spacing: -.02em;
-      display: flex;
-      align-items: center;
-      gap: .45rem;
-    }
-
-    .nav-logo .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--purple);
-      animation: pulse 2.4s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: .5; transform: scale(.7); }
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-    }
-
-    .nav-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: .875rem;
-      font-weight: 500;
-      transition: color .2s;
-    }
-
-    .nav-links a:hover { color: var(--text); }
-
-    .btn-nav {
-      display: flex;
-      align-items: center;
-      gap: .4rem;
-      padding: .4rem .9rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text) !important;
-      font-size: .8125rem !important;
-      background: var(--surface);
-      transition: border-color .2s, background .2s !important;
-    }
-
-    .btn-nav:hover {
-      border-color: var(--purple) !important;
-      background: rgba(167,139,250,.08) !important;
-      color: var(--text) !important;
-    }
-
-    /* ── Hero ────────────────────────────────────────────────────────── */
-    .hero {
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 3rem;
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 100px clamp(1.5rem, 5vw, 3rem) 4rem;
-    }
-
-    .hero-text {
-      text-align: center;
-      max-width: 680px;
-    }
-
-    .hero-sub { margin-left: auto; margin-right: auto; }
-
-    .hero-cta { justify-content: center; }
-
-    .platform-pills { justify-content: center; }
-
-    .hero-text { max-width: 520px; }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: .4rem;
-      padding: .28rem .75rem;
-      background: rgba(167,139,250,.1);
-      border: 1px solid rgba(167,139,250,.25);
-      border-radius: 99px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .75rem;
-      color: var(--purple);
-      margin-bottom: 1.75rem;
-      animation: fadeUp .6s ease both;
-    }
-
-    h1 {
-      font-family: 'Cinzel Decorative', serif;
-      font-weight: 900;
-      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
-      line-height: 1.1;
-      letter-spacing: -.01em;
-      color: #fff;
-      margin-bottom: 1.25rem;
-      animation: fadeUp .6s .1s ease both;
-    }
-
-    h1 em {
-      font-style: normal;
-      display: block;
-      background: linear-gradient(135deg, var(--purple) 0%, var(--teal) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero-sub {
-      font-size: 1.0625rem;
-      color: var(--muted);
-      max-width: 420px;
-      margin-bottom: 2.25rem;
-      animation: fadeUp .6s .2s ease both;
-    }
-
-    .hero-cta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .75rem;
-      margin-bottom: 2.25rem;
-      animation: fadeUp .6s .3s ease both;
-    }
-
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: .5rem;
-      padding: .75rem 1.5rem;
-      background: var(--purple);
-      color: #fff;
-      font-family: 'Manrope', sans-serif;
-      font-weight: 600;
-      font-size: .9375rem;
-      border-radius: var(--r);
-      text-decoration: none;
-      transition: background .2s, transform .15s, box-shadow .2s;
-      box-shadow: 0 0 0 0 rgba(167,139,250,0);
-    }
-
-    .btn-primary:hover {
-      background: #b8a1fd;
-      transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(167,139,250,.3);
-    }
-
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: .5rem;
-      padding: .75rem 1.5rem;
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: 'Manrope', sans-serif;
-      font-weight: 600;
-      font-size: .9375rem;
-      border-radius: var(--r);
-      text-decoration: none;
-      background: transparent;
-      transition: border-color .2s, background .2s, transform .15s;
-    }
-
-    .btn-secondary:hover {
-      border-color: var(--muted);
-      background: var(--surface);
-      transform: translateY(-1px);
-    }
-
-    .platform-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .5rem;
-      animation: fadeUp .6s .4s ease both;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: .3rem;
-      padding: .25rem .65rem;
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      font-size: .75rem;
-      color: var(--muted);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    /* ── Hero log image ─────────────────────────────────────────────── */
-    /* Wider than the hero's column: align-items: center lets it overflow both sides evenly */
-    .hero-graph {
-      width: min(1280px, calc(100vw - 3rem));
-      animation: fadeIn .8s .2s ease both;
-    }
-
-    .hero-graph img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-
-    /* ── Section shared ─────────────────────────────────────────────── */
-    section {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 5rem clamp(1.5rem, 5vw, 3rem);
-    }
-
-    .section-label {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .75rem;
-      color: var(--purple);
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      margin-bottom: .75rem;
-    }
-
-    h2 {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: clamp(1.75rem, 3.5vw, 2.4rem);
-      letter-spacing: -.02em;
-      color: #fff;
-      line-height: 1.15;
-      margin-bottom: 1rem;
-    }
-
-    .section-sub {
-      color: var(--muted);
-      font-size: 1rem;
-      max-width: 520px;
-      margin-bottom: 3rem;
-    }
-
-    /* ── Quests ─────────────────────────────────────────────────────── */
-    #quests {
-      max-width: 1240px;
-      padding-top: 1rem;
-      scroll-margin-top: 56px;
-    }
-
-    .quests-head {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-    }
-
-    .quests-head .section-sub { margin-bottom: 2rem; }
-
-    .quest-nav {
-      display: flex;
-      gap: .5rem;
-      margin-bottom: 2rem;
-    }
-
-    .quest-nav button {
-      width: 42px; height: 42px;
-      border-radius: 50%;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 1rem;
-      cursor: pointer;
-      transition: border-color .2s, background .2s, opacity .2s;
-    }
-
-    .quest-nav button:hover:not(:disabled) { border-color: var(--purple); background: rgba(167,139,250,.1); }
-    .quest-nav button:disabled { opacity: .35; cursor: default; }
-
-    .quest-track {
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: 100%;
-      gap: 1.5rem;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      scroll-behavior: smooth;
-      scrollbar-width: none;
-      overscroll-behavior-x: contain;
-    }
-
-    .quest-track::-webkit-scrollbar { display: none; }
-
-    .quest {
-      scroll-snap-align: start;
-      display: grid;
-      grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
-      gap: 1.75rem;
-      padding: 1.5rem;
-      background: rgba(24, 28, 44, .82);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      backdrop-filter: blur(6px);
-    }
-
-    .quest-video {
-      position: relative;
-      align-self: start;
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background: #0a0c14;
-      aspect-ratio: 16 / 9;
-      box-shadow: 0 24px 60px rgba(0,0,0,.45);
-    }
-
-    .quest-video video {
-      cursor: zoom-in;
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .quest-info {
-      display: flex;
-      flex-direction: column;
-      gap: .9rem;
-      min-width: 0;
-    }
-
-    .quest-level {
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .75rem;
-      color: var(--muted);
-      letter-spacing: .06em;
-      text-transform: uppercase;
-    }
-
-    .quest-level b {
-      display: inline-grid;
-      place-items: center;
-      min-width: 2.1rem; height: 2.1rem;
-      padding: 0 .3rem;
-      border-radius: 8px;
-      background: linear-gradient(135deg, rgba(167,139,250,.25), rgba(45,212,191,.2));
-      border: 1px solid rgba(167,139,250,.4);
-      color: #fff;
-      font-size: .8rem;
-    }
-
-    .quest-level .boss { color: var(--coral); }
-
-    .quest h3 {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 1.45rem;
-      color: #fff;
-      line-height: 1.2;
-    }
-
-    .quest p {
-      color: #b4bad0;
-      font-size: .9375rem;
-      line-height: 1.6;
-    }
-
-    .term {
-      color: var(--teal);
-      font-style: normal;
-      text-decoration: underline dotted rgba(45,212,191,.6);
-      text-underline-offset: 3px;
-      cursor: help;
-      position: relative;
-    }
-
-    .term:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; border-radius: 2px; }
-
-    .term-tip {
-      position: fixed;
-      z-index: 200;
-      max-width: 280px;
-      padding: .6rem .75rem;
-      background: #0b0d16;
-      border: 1px solid rgba(45,212,191,.45);
-      border-radius: 8px;
-      font-size: .8125rem;
-      line-height: 1.5;
-      color: var(--text);
-      box-shadow: 0 12px 32px rgba(0,0,0,.5);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .12s;
-    }
-
-    .term-tip.shown { opacity: 1; }
-    .term-tip strong { color: var(--teal); display: block; margin-bottom: .15rem; }
-
-    /* Terminal panel with the git equivalent */
-    .bash {
-      margin-top: auto;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: #0b0d16;
-      overflow: hidden;
-    }
-
-    .bash-bar {
-      display: flex;
-      align-items: center;
-      gap: .4rem;
-      padding: .45rem .75rem;
-      background: #151929;
-      border-bottom: 1px solid var(--border);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .6875rem;
-      color: var(--muted);
-    }
-
-    .dot-red    { width: 8px; height: 8px; border-radius: 50%; background: #ff5f57; }
-    .dot-yellow { width: 8px; height: 8px; border-radius: 50%; background: #febc2e; }
-    .dot-green  { width: 8px; height: 8px; border-radius: 50%; background: #28c840; }
-    .bash-bar span:last-child { margin-left: .4rem; }
-
-    .bash pre {
-      margin: 0;
-      padding: .85rem 1rem;
-      overflow-x: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .78rem;
-      line-height: 1.7;
-      color: var(--text);
-    }
-
-    .bash .p { color: var(--purple); user-select: none; }
-    .bash .g { color: var(--teal); }
-    .bash .s { color: var(--coral); }
-    .bash .c { color: #5d6587; font-style: italic; }
-    .bash .o { color: var(--muted); }
-
-    /* XP bar: the course's progress, one segment per quest */
-    .xp {
-      margin-top: 1.5rem;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      gap: 1rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .75rem;
-      color: var(--muted);
-    }
-
-    .xp-label { color: var(--purple); letter-spacing: .08em; }
-
-    .xp-bar {
-      position: relative;
-      display: grid;
-      grid-template-columns: repeat(var(--quest-count, 16), 1fr);
-      gap: 4px;
-      height: 30px;
-    }
-
-    .xp-fill {
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: 10%;
-      border-radius: 6px;
-      background: linear-gradient(90deg, var(--purple), var(--teal));
-      box-shadow: 0 0 18px rgba(167,139,250,.45);
-      transition: width .35s ease;
-      pointer-events: none;
-    }
-
-    .xp-bar button {
-      position: relative;
-      z-index: 1;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: rgba(255,255,255,.03);
-      color: var(--muted);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .6875rem;
-      cursor: pointer;
-      transition: color .2s, border-color .2s, background .2s;
-    }
-
-    .xp-bar button:hover { border-color: var(--purple); color: #fff; }
-    .xp-bar button.reached { background: transparent; border-color: transparent; color: #0f111a; font-weight: 500; }
-    .xp-bar button.current { outline: 2px solid #fff; outline-offset: 1px; }
-    .xp-bar button.cleared::after { content: '✓'; margin-left: .2rem; }
-
-    .xp-cleared { min-width: 7.5rem; text-align: right; }
-
-    /* Codex: every term the quests use */
-    .codex {
-      margin-top: 2.5rem;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: rgba(15,17,26,.7);
-    }
-
-    .codex summary {
-      cursor: pointer;
-      padding: 1rem 1.25rem;
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      color: #fff;
-      list-style: none;
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-    }
-
-    .codex summary::-webkit-details-marker { display: none; }
-    .codex summary::after { content: '+'; margin-left: auto; color: var(--purple); font-size: 1.2rem; }
-    .codex[open] summary::after { content: '−'; }
-    .codex summary small { font-family: 'Manrope', sans-serif; font-weight: 500; color: var(--muted); }
-
-    .codex dl {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
-      gap: 1px;
-      background: var(--border);
-      border-top: 1px solid var(--border);
-    }
-
-    .codex dl > div { background: var(--bg); padding: .9rem 1.25rem; }
-    .codex dt { font-family: 'JetBrains Mono', monospace; font-size: .8125rem; color: var(--teal); margin-bottom: .2rem; }
-    .codex dd { font-size: .8125rem; color: var(--muted); line-height: 1.5; }
-
-    @media (max-width: 860px) {
-      .quest { grid-template-columns: 1fr; padding: 1rem; }
-      .xp { grid-template-columns: 1fr; gap: .5rem; }
-      .xp-cleared { text-align: left; }
-      .xp-bar button { font-size: 0; }
-      .xp-bar button.cleared::after { font-size: .6875rem; margin: 0; }
-    }
-
     @media (prefers-reduced-motion: reduce) {
-      .quest-track { scroll-behavior: auto; }
-      .xp-fill { transition: none; }
+      html, .quest-track { scroll-behavior: auto; }
+      .xp-fill, .term-tip { transition: none; }
     }
 
-    /* ── Features ───────────────────────────────────────────────────── */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .feature-card {
-      background: var(--bg);
-      padding: 1.75rem 2rem;
-      transition: background .2s;
-    }
-
-    .feature-card:hover { background: var(--surface); }
-
-    .feature-icon {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .fi-purple { background: rgba(167,139,250,.15); }
-    .fi-teal   { background: rgba(45,212,191,.15);  }
-    .fi-coral  { background: rgba(251,146,60,.15);  }
-    .fi-green  { background: rgba(74,222,128,.15);  }
-    .fi-blue   { background: rgba(96,165,250,.15);  }
-    .fi-pink   { background: rgba(244,114,182,.15); }
-
-    .feature-card h3 {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 1rem;
-      color: #fff;
-      margin-bottom: .4rem;
-    }
-
-    .feature-card p {
-      font-size: .875rem;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    /* ── Screenshot ─────────────────────────────────────────────────── */
-    .screenshot-wrap {
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      box-shadow: 0 32px 80px rgba(0,0,0,.5);
-    }
-
-    .screenshot-wrap img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-
-    /* ── Split section (text left, image right) ─────────────────────── */
-    .split-section {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      gap: 4rem;
-    }
-
-    .split-text .section-sub { margin-bottom: 0; }
-
-    @media (max-width: 700px) {
-      .split-section { grid-template-columns: 1fr; }
-    }
-
-    /* ── Vertical log image with fades ─────────────────────────────── */
-    .log-wrap {
-      position: relative;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      box-shadow: 0 32px 80px rgba(0,0,0,.5);
-    }
-
-    .log-wrap img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-
-    .graph-fades {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background:
-        linear-gradient(to right,  var(--bg) 0%,    transparent 12%),
-        linear-gradient(to left,   var(--bg) 0%,    transparent 12%),
-        linear-gradient(to bottom, transparent 65%, var(--bg) 100%),
-        linear-gradient(to top,    var(--bg) 0%,    transparent 8%);
-    }
-
-    /* ── Download ───────────────────────────────────────────────────── */
-    .download-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-      gap: 1rem;
-    }
-
-    .platform-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      transition: border-color .2s, box-shadow .2s, transform .15s;
-    }
-
-    .platform-card:hover {
-      border-color: var(--purple);
-      box-shadow: 0 0 0 1px rgba(167,139,250,.15), 0 8px 32px rgba(0,0,0,.3);
-      transform: translateY(-2px);
-    }
-
-    .platform-header {
-      display: flex;
-      align-items: center;
-      gap: .75rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .platform-icon {
-      width: 40px; height: 40px;
-      border-radius: 10px;
-      background: rgba(167,139,250,.12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-    }
-
-    .platform-name {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      color: #fff;
-      font-size: 1rem;
-    }
-
-    .platform-arch {
-      font-size: .75rem;
-      color: var(--muted);
-    }
-
-    .dl-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: .4rem;
-    }
-
-    /* One row per package format, with a download link per architecture */
-    .dl-list li {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: .5rem;
-      padding: .4rem .5rem .4rem .75rem;
-      border-radius: 6px;
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      font-size: .8125rem;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .dl-format {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: .4rem;
-    }
-
-    .dl-archs {
-      display: flex;
-      gap: .3rem;
-      flex-shrink: 0;
-    }
-
-    .dl-archs a {
-      padding: .2rem .55rem;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      color: var(--text);
-      text-decoration: none;
-      font-size: .75rem;
-      transition: background .15s, border-color .15s, color .15s;
-    }
-
-    .dl-archs a:hover {
-      background: rgba(167,139,250,.1);
-      border-color: rgba(167,139,250,.25);
-      color: var(--purple);
-    }
-
-    .dl-badge {
-      font-size: .6875rem;
-      padding: .1rem .4rem;
-      border-radius: 4px;
-      background: rgba(74,222,128,.12);
-      color: var(--green);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    /* ── Footer ─────────────────────────────────────────────────────── */
-    footer {
-      border-top: 1px solid var(--border);
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 2.5rem clamp(1.5rem, 5vw, 3rem);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: .75rem;
-    }
-
-    .footer-name {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      color: var(--muted);
-      font-size: .9rem;
-    }
-
-    .footer-sep { color: var(--border); }
-
-    .footer-right {
-      display: flex;
-      gap: 1.25rem;
-    }
-
-    .footer-right a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: .8125rem;
-      transition: color .2s;
-    }
-
-    .footer-right a:hover { color: var(--text); }
-
-    /* ── Divider ────────────────────────────────────────────────────── */
-    .full-divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 0;
-    }
-
-    /* ── Animations ─────────────────────────────────────────────────── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-
-    /* ── Responsive ─────────────────────────────────────────────────── */
-    @media (max-width: 720px) {
-      .hero {
-        grid-template-columns: 1fr;
-        padding-top: 90px;
-      }
-      .hero-graph { display: none; }
-      .nav-links .nav-hidden { display: none; }
-    }
   </style>
 </head>
 <body>
+
 <div id="scene-bg"></div>
 <div id="vignette"></div>
 <div id="aurora"></div>
 
-<!-- ── Nav ──────────────────────────────────────────────────────────── -->
-<nav>
-  <a class="nav-logo" href="#">
-    <span class="dot"></span>
-    GitGud
-  </a>
-  <div class="nav-links">
-    <a href="#quests" class="nav-hidden">Quests</a>
-    <a href="#features" class="nav-hidden">Features</a>
-    <a href="#download" class="nav-hidden">Download</a>
-    <a href="https://github.com/zeuros/gitgud" class="btn-nav" target="_blank" rel="noopener">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-      GitHub
-    </a>
+<div class="page">
+<header class="running-head">
+  <a class="title label" href="#">GitGud</a>
+  <nav aria-label="Sections" class="label">
+    <a href="#quests">Echoes</a>
+    <a class="opt" href="#spells">Sorceries</a>
+    <a class="opt" href="#download">Summon</a>
+    <a href="https://github.com/zeuros/gitgud" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main>
+<div class="frontispiece">
+  <div class="halo">
+    <h1 class="display">Get Gud <span>at Git.</span></h1>
+    <span class="rule-ornament" aria-hidden="true"></span>
+    <p class="incipit">Rebase without fear, undo without shame. A native git client, forged in Tauri and Rust, for every land.</p>
+    <ul class="rubrics label">
+      <li><a href="#download">Summon GitGud <small>v2.15.0, Linux · Windows · macOS</small></a></li>
+      <li><a href="#quests">Follow the sixteen echoes <small>and learn git</small></a></li>
+      <li><a href="https://github.com/zeuros/gitgud" target="_blank" rel="noopener">Star it on GitHub <small>GPL-3.0</small></a></li>
+    </ul>
   </div>
-</nav>
-
-<!-- ── Hero ─────────────────────────────────────────────────────────── -->
-<div class="hero">
-  <div class="hero-text">
-    <div class="hero-badge">
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.5"/><circle cx="5" cy="5" r="1.5" fill="currentColor"/></svg>
-      v2.15.0 · Open source, open world
-    </div>
-
-    <h1>Get Gud<br/><em>at Git.</em></h1>
-
-    <p class="hero-sub">
-      Rebase without fear. Undo without shame. Native, built with Tauri and Rust.
-    </p>
-
-    <div class="hero-cta">
-      <a class="btn-primary" href="#download">
-        <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 1 1 1.414-1.414L9 11.586V3a1 1 0 0 1 1-1zM3 15a1 1 0 1 0 0 2h14a1 1 0 1 0 0-2H3z"/></svg>
-        Git gud
-      </a>
-      <a class="btn-secondary" href="https://github.com/zeuros/gitgud" target="_blank" rel="noopener">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        Star on GitHub ⭐
-      </a>
-      <a class="btn-secondary" href="#quests">Learn git in 16 quests ↓</a>
-    </div>
-
-    <div class="platform-pills">
-      <span class="pill">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 14.4c-.8.4-1.7.7-2.6.7-3.1 0-5.6-2.5-5.6-5.6 0-.9.2-1.8.7-2.6C10.2 7.6 8.3 10 8.3 12.8c0 4 3.2 7.2 7.2 7.2 2.8 0 5.2-1.6 6.4-4H21c.4-.7.6-1.5.6-2.3l-.1-.3zm-5.4-4.9c.9-1.1.7-2.7-.4-3.5-.3-.2-.6-.3-.9-.4.5.6.8 1.3.8 2.1 0 1.9-1.5 3.5-3.4 3.5h-.4c.7 1.1 1.9 1.9 3.3 1.9 1.1 0 2.1-.5 2.8-1.2-.7-.5-1.4-1.4-1.8-2.4z"/></svg>
-        Linux
-      </span>
-      <span class="pill">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
-        Windows
-      </span>
-      <span class="pill">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-        macOS
-      </span>
-    </div>
-  </div>
-
-  <!-- Hero visual -->
-  <div class="hero-graph screenshot-wrap">
-    <img src="img/overview.png" alt="GitGud overview" />
-  </div>
+  <figure class="plate halo">
+    <div class="frame"><img src="img/overview.png" alt="GitGud overview: branches, commit graph and commit details" /></div>
+    <figcaption><b>Echo I</b>The window entire: branches, the graph of commits, the commit beheld.</figcaption>
+  </figure>
 </div>
 
-<hr class="full-divider" />
-<br>
-<br>
-
-<!-- ── Quests ────────────────────────────────────────────────────────── -->
-<section id="quests" aria-labelledby="quests-title">
-  <div class="quests-head">
+<section class="liber" id="quests" aria-labelledby="quests-title">
+  <div class="liber-head">
+    <span class="numeral label">The trials</span>
     <div>
-      <p class="section-label">Quests</p>
-      <h2 id="quests-title">Learn git in sixteen quests.</h2>
-      <p class="section-sub">Each quest shows the move in GitGud, then the same in the terminal. Hover the <span class="term">underlined words</span> for their meaning.</p>
+      <h2 id="quests-title" class="display">Sixteen Echoes</h2>
+      <p>Each shows the move in GitGud, then the same in the terminal. Hover the <span class="term">marked words</span> for their meaning.</p>
     </div>
     <div class="quest-nav">
       <button type="button" id="quest-prev" aria-label="Previous quest">◀</button>
@@ -1010,14 +353,13 @@
   </div>
 
   <div class="quest-track" id="quest-track" tabindex="0" aria-label="Quests, scroll sideways">
-
     <article class="quest" id="quest-first-commit" aria-label="Quest 1 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/01-first-commit.jpg"><source src="quests/01-first-commit.webm" type="video/webm"/><source src="quests/01-first-commit.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/01-first-commit.jpg"><source src="quests/01-first-commit.webm" type="video/webm"/><source src="quests/01-first-commit.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 1</b> Basics</div>
-        <h3>First commit</h3>
+        <div class="quest-level"><b>Echo I</b> Basics</div>
+        <h3 class="display">First commit</h3>
         <p>Your edits start in the <em class="term" data-term="working tree" tabindex="0">working tree</em>. You <em class="term" data-term="stage" tabindex="0">stage</em> what belongs together into the <em class="term" data-term="index" tabindex="0">index</em>, whole files or single <em class="term" data-term="hunk" tabindex="0">hunks</em>, then record it as a <em class="term" data-term="commit" tabindex="0">commit</em>.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> status            <span class="c"># what changed</span>
 <span class="p">$</span> <span class="g">git</span> add -p            <span class="c"># stage hunk by hunk</span>
 <span class="p">$</span> <span class="g">git</span> add recipes.md    <span class="c"># or a whole file</span>
@@ -1026,12 +368,12 @@
     </article>
 
     <article class="quest" id="quest-branch" aria-label="Quest 2 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/02-branch.jpg"><source src="quests/02-branch.webm" type="video/webm"/><source src="quests/02-branch.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/02-branch.jpg"><source src="quests/02-branch.webm" type="video/webm"/><source src="quests/02-branch.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 2</b> Basics</div>
-        <h3>Branch out</h3>
+        <div class="quest-level"><b>Echo II</b> Basics</div>
+        <h3 class="display">Branch out</h3>
         <p>A <em class="term" data-term="branch" tabindex="0">branch</em> is just a movable label on a commit. Create one and <em class="term" data-term="HEAD" tabindex="0">HEAD</em> follows it: new commits move that branch forward, while <code>main</code> stays where it was.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> switch -c feature/mana   <span class="c"># create + check out</span>
 <span class="p">$</span> <span class="g">git</span> add shop.js
 <span class="p">$</span> <span class="g">git</span> commit -m <span class="s">"feat: sell mana potions"</span>
@@ -1040,12 +382,12 @@
     </article>
 
     <article class="quest" id="quest-stash" aria-label="Quest 3 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/03-stash.jpg"><source src="quests/03-stash.webm" type="video/webm"/><source src="quests/03-stash.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/03-stash.jpg"><source src="quests/03-stash.webm" type="video/webm"/><source src="quests/03-stash.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 3</b> Basics</div>
-        <h3>Stash</h3>
+        <div class="quest-level"><b>Echo III</b> Basics</div>
+        <h3 class="display">Stash</h3>
         <p>Half-done work, and <code>main</code> needs a fix now? A <em class="term" data-term="stash" tabindex="0">stash</em> puts your uncommitted edits aside and leaves the <em class="term" data-term="working tree" tabindex="0">working tree</em> clean. Switch branch, fix, come back, then pop the stash: your edits are back.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> stash -u              <span class="c"># -u: new files too</span>
 <span class="p">$</span> <span class="g">git</span> switch main
 <span class="p">$</span> <span class="g">git</span> commit -am <span class="s">"fix: open every day"</span>
@@ -1055,12 +397,12 @@
     </article>
 
     <article class="quest" id="quest-fast-forward" aria-label="Quest 4 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/04-fast-forward.jpg"><source src="quests/04-fast-forward.webm" type="video/webm"/><source src="quests/04-fast-forward.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/04-fast-forward.jpg"><source src="quests/04-fast-forward.webm" type="video/webm"/><source src="quests/04-fast-forward.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 4</b> Integrate</div>
-        <h3>Fast-forward</h3>
+        <div class="quest-level"><b>Echo IV</b> Integrate</div>
+        <h3 class="display">Fast-forward</h3>
         <p>When <code>main</code> is an <em class="term" data-term="ancestor" tabindex="0">ancestor</em> of your branch, there is nothing to combine: git just slides the <code>main</code> label up to your branch. That's a <em class="term" data-term="fast-forward" tabindex="0">fast-forward</em>: no merge commit, the history stays a straight line.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="c"># before: A─B ← main       after: A─B─C─D ← main, feature/mana</span>
 <span class="c">#              ╲C─D ← feature/mana</span>
 <span class="p">$</span> <span class="g">git</span> switch main
@@ -1069,12 +411,12 @@
     </article>
 
     <article class="quest" id="quest-merge" aria-label="Quest 5 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/05-merge.jpg"><source src="quests/05-merge.webm" type="video/webm"/><source src="quests/05-merge.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/05-merge.jpg"><source src="quests/05-merge.webm" type="video/webm"/><source src="quests/05-merge.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 5</b> Integrate</div>
-        <h3>True merge</h3>
+        <div class="quest-level"><b>Echo V</b> Integrate</div>
+        <h3 class="display">True merge</h3>
         <p>When both branches got new commits, they have <em class="term" data-term="diverged" tabindex="0">diverged</em>. Merging them creates a <em class="term" data-term="merge commit" tabindex="0">merge commit</em> with two parents, which joins both histories.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> switch main
 <span class="p">$</span> <span class="g">git</span> merge feature/mana
 <span class="o">Merge made by the 'ort' strategy.</span>
@@ -1083,12 +425,12 @@
     </article>
 
     <article class="quest" id="quest-merge-conflict" aria-label="Quest 6 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/06-merge-conflict.jpg"><source src="quests/06-merge-conflict.webm" type="video/webm"/><source src="quests/06-merge-conflict.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/06-merge-conflict.jpg"><source src="quests/06-merge-conflict.webm" type="video/webm"/><source src="quests/06-merge-conflict.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 6</b> Integrate</div>
-        <h3>See the conflict coming</h3>
+        <div class="quest-level"><b>Echo VI</b> Integrate</div>
+        <h3 class="display">See the conflict coming</h3>
         <p>Both branches changed the same line, so merging them stops on a <em class="term" data-term="conflict" tabindex="0">conflict</em>. GitGud tells you before you merge, right in the menu. The merge waits while you choose the result in the merge editor; continuing records the <em class="term" data-term="merge commit" tabindex="0">merge commit</em>.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> merge-tree --write-tree main feature/mana  <span class="c"># predict</span>
 <span class="p">$</span> <span class="g">git</span> merge feature/mana
 <span class="o">CONFLICT (content): Merge conflict in shop.js</span>
@@ -1098,12 +440,12 @@
     </article>
 
     <article class="quest" id="quest-rebase" aria-label="Quest 7 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/07-rebase.jpg"><source src="quests/07-rebase.webm" type="video/webm"/><source src="quests/07-rebase.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/07-rebase.jpg"><source src="quests/07-rebase.webm" type="video/webm"/><source src="quests/07-rebase.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 7</b> Integrate</div>
-        <h3>Rebase onto</h3>
+        <div class="quest-level"><b>Echo VII</b> Integrate</div>
+        <h3 class="display">Rebase onto</h3>
         <p>Instead of merging, <em class="term" data-term="rebase" tabindex="0">rebase</em> replays your branch's commits on top of <code>main</code>. The changes are the same but the commits are new, with new <em class="term" data-term="SHA" tabindex="0">SHAs</em>, and the history is a straight line.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> switch feature/mana
 <span class="p">$</span> <span class="g">git</span> rebase main
 <span class="o">Successfully rebased and updated refs/heads/feature/mana.</span></pre></div>
@@ -1111,12 +453,12 @@
     </article>
 
     <article class="quest" id="quest-cherry-pick" aria-label="Quest 8 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/08-cherry-pick.jpg"><source src="quests/08-cherry-pick.webm" type="video/webm"/><source src="quests/08-cherry-pick.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/08-cherry-pick.jpg"><source src="quests/08-cherry-pick.webm" type="video/webm"/><source src="quests/08-cherry-pick.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 8</b> Integrate</div>
-        <h3>Cherry-pick</h3>
+        <div class="quest-level"><b>Echo VIII</b> Integrate</div>
+        <h3 class="display">Cherry-pick</h3>
         <p>Need one commit of another branch, not the rest of it? <em class="term" data-term="cherry-pick" tabindex="0">Cherry-pick</em> copies its change onto your branch as a new commit, with a new <em class="term" data-term="SHA" tabindex="0">SHA</em>. The other branch stays as it is.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> switch main
 <span class="p">$</span> <span class="g">git</span> cherry-pick 5c1e8a2   <span class="c"># fix: health potions cost 5</span>
 <span class="p">$</span> <span class="g">git</span> log --oneline --graph --all</pre></div>
@@ -1124,12 +466,12 @@
     </article>
 
     <article class="quest" id="quest-remote" aria-label="Quest 9 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/09-remote.jpg"><source src="quests/09-remote.webm" type="video/webm"/><source src="quests/09-remote.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/09-remote.jpg"><source src="quests/09-remote.webm" type="video/webm"/><source src="quests/09-remote.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 9</b> Team play</div>
-        <h3>Sync with the remote</h3>
+        <div class="quest-level"><b>Echo IX</b> Team play</div>
+        <h3 class="display">Sync with the remote</h3>
         <p><em class="term" data-term="push" tabindex="0">Push</em> uploads your commits to <em class="term" data-term="origin" tabindex="0">origin</em>. <em class="term" data-term="fetch" tabindex="0">Fetch</em> downloads your teammates' commits without touching your files, and <em class="term" data-term="pull" tabindex="0">pull</em> also brings them into your branch, from its <em class="term" data-term="upstream" tabindex="0">upstream</em>.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> push -u origin main   <span class="c"># -u: remember the upstream</span>
 <span class="p">$</span> <span class="g">git</span> fetch                 <span class="c"># update origin/main only</span>
 <span class="p">$</span> <span class="g">git</span> status
@@ -1139,12 +481,12 @@
     </article>
 
     <article class="quest" id="quest-reword" aria-label="Quest 10 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/10-reword.jpg"><source src="quests/10-reword.webm" type="video/webm"/><source src="quests/10-reword.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/10-reword.jpg"><source src="quests/10-reword.webm" type="video/webm"/><source src="quests/10-reword.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 10</b> Second chance</div>
-        <h3>Reword</h3>
+        <div class="quest-level"><b>Echo X</b> Second chance</div>
+        <h3 class="display">Reword</h3>
         <p>A typo in an old commit message? <em class="term" data-term="reword" tabindex="0">Reword</em> it. That commit and the ones after it are rewritten, so do it before you push, or force push afterwards.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> commit --amend          <span class="c"># the last commit only</span>
 <span class="p">$</span> <span class="g">git</span> rebase -i HEAD~2        <span class="c"># an older one:</span>
 <span class="c">  reword 3f2a1c9 feat: sell mana potoins</span>
@@ -1153,12 +495,12 @@
     </article>
 
     <article class="quest" id="quest-fixup" aria-label="Quest 11 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/11-fixup.jpg"><source src="quests/11-fixup.webm" type="video/webm"/><source src="quests/11-fixup.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/11-fixup.jpg"><source src="quests/11-fixup.webm" type="video/webm"/><source src="quests/11-fixup.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 11</b> Second chance</div>
-        <h3>Fixup</h3>
+        <div class="quest-level"><b>Echo XI</b> Second chance</div>
+        <h3 class="display">Fixup</h3>
         <p>Forgot a file in a past commit? Stage it and make it a <em class="term" data-term="fixup" tabindex="0">fixup</em> of that commit: it melts into the commit, keeping its message. A <em class="term" data-term="squash" tabindex="0">squash</em> does the same but combines the messages.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> add recipes.md
 <span class="p">$</span> <span class="g">git</span> commit --fixup=3f2a1c9
 <span class="p">$</span> <span class="g">git</span> rebase -i --autosquash 3f2a1c9~</pre></div>
@@ -1166,12 +508,12 @@
     </article>
 
     <article class="quest" id="quest-squash" aria-label="Quest 12 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/12-squash.jpg"><source src="quests/12-squash.webm" type="video/webm"/><source src="quests/12-squash.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/12-squash.jpg"><source src="quests/12-squash.webm" type="video/webm"/><source src="quests/12-squash.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 12</b> Second chance</div>
-        <h3>Squash</h3>
+        <div class="quest-level"><b>Echo XII</b> Second chance</div>
+        <h3 class="display">Squash</h3>
         <p>Three commits for one feature, two of them "wip"? Select them and <em class="term" data-term="squash" tabindex="0">squash</em> them: one commit holding all their changes, with the message you write. Do it before you push.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> rebase -i HEAD~3
 <span class="c">  pick   3f2a1c9 feat: sell mana potions</span>
 <span class="c">  squash 9be04d2 wip</span>
@@ -1180,12 +522,12 @@
     </article>
 
     <article class="quest" id="quest-reorder-conflict" aria-label="Quest 13 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/13-reorder-conflict.jpg"><source src="quests/13-reorder-conflict.webm" type="video/webm"/><source src="quests/13-reorder-conflict.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/13-reorder-conflict.jpg"><source src="quests/13-reorder-conflict.webm" type="video/webm"/><source src="quests/13-reorder-conflict.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 13</b> <span class="boss">Mini-boss</span></div>
-        <h3>Reorder, through a conflict</h3>
+        <div class="quest-level"><b>Echo XIII</b> <span class="boss">Mini-boss</span></div>
+        <h3 class="display">Reorder, through a conflict</h3>
         <p>Moving a commit runs an <em class="term" data-term="interactive rebase" tabindex="0">interactive rebase</em>. When two commits edit the same lines, it stops on a <em class="term" data-term="conflict" tabindex="0">conflict</em>. Pick a side, then continue. Careful: during a rebase, <em class="term" data-term="ours / theirs" tabindex="0">ours and theirs</em> are swapped.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> rebase -i HEAD~3   <span class="c"># swap the two pick lines</span>
 <span class="o">CONFLICT (content): Merge conflict in potions.txt</span>
 <span class="p">$</span> <span class="g">git</span> checkout --theirs potions.txt  <span class="c"># your commit</span>
@@ -1195,12 +537,12 @@
     </article>
 
     <article class="quest" id="quest-undo" aria-label="Quest 14 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/14-undo.jpg"><source src="quests/14-undo.webm" type="video/webm"/><source src="quests/14-undo.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/14-undo.jpg"><source src="quests/14-undo.webm" type="video/webm"/><source src="quests/14-undo.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 14</b> Second chance</div>
-        <h3>Undo anything</h3>
+        <div class="quest-level"><b>Echo XIV</b> Second chance</div>
+        <h3 class="display">Undo anything</h3>
         <p>Dropped the wrong commit? Git's <em class="term" data-term="reflog" tabindex="0">reflog</em> remembers every place HEAD has been, so a committed change is never really lost. GitGud's undo button reads it for you.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> reflog
 <span class="o">8c41d07 HEAD@{0}: rebase (finish): returning to refs/heads/main</span>
 <span class="o">9be04d2 HEAD@{1}: commit: feat: mana costs more</span>
@@ -1209,12 +551,12 @@
     </article>
 
     <article class="quest" id="quest-worktree-agent" aria-label="Quest 15 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/15-worktree-agent.jpg"><source src="quests/15-worktree-agent.webm" type="video/webm"/><source src="quests/15-worktree-agent.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/15-worktree-agent.jpg"><source src="quests/15-worktree-agent.webm" type="video/webm"/><source src="quests/15-worktree-agent.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 15</b> Agents</div>
-        <h3>Agent in its own worktree</h3>
+        <div class="quest-level"><b>Echo XV</b> Agents</div>
+        <h3 class="display">Agent in its own worktree</h3>
         <p>A <em class="term" data-term="linked worktree" tabindex="0">linked worktree</em> is another working tree of the same repository, on its own branch. <b>New</b> starts Claude on your task in one, named after it: the <em class="term" data-term="agent" tabindex="0">agent</em> edits and commits there, while <code>main</code> and your files stay untouched. The Agents section shows when it needs you; the log shows its commits, ready to review.</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> worktree add -b agent/fire-potions \
     .claude/worktrees/fire-potions
 <span class="p">$</span> cd .claude/worktrees/fire-potions
@@ -1223,12 +565,12 @@
     </article>
 
     <article class="quest" id="quest-lord-reflog" aria-label="Quest 16 of 16">
-      <div class="quest-video"><video muted loop playsinline preload="none" poster="quests/16-lord-reflog.jpg"><source src="quests/16-lord-reflog.webm" type="video/webm"/><source src="quests/16-lord-reflog.mp4" type="video/mp4"/></video></div>
+      <div class="quest-video frame"><video muted loop playsinline preload="none" poster="quests/16-lord-reflog.jpg"><source src="quests/16-lord-reflog.webm" type="video/webm"/><source src="quests/16-lord-reflog.mp4" type="video/mp4"/></video></div>
       <div class="quest-info">
-        <div class="quest-level"><b>Lv 16</b> <span class="boss">Final boss</span></div>
-        <h3>Lord Reflog</h3>
+        <div class="quest-level"><b>Echo XVI</b> <span class="boss">Final boss</span></div>
+        <h3 class="display">Lord Reflog</h3>
         <p>He remembers every commit you abandoned. Face him with two agents working at once, each in its own <em class="term" data-term="linked worktree" tabindex="0">linked worktree</em>. Once both are done, fast-forward <code>main</code> to the first one's branch, then merge the second through their <em class="term" data-term="conflict" tabindex="0">conflict</em>. Fall, and his <em class="term" data-term="reflog" tabindex="0">reflog</em> brings you back. (In GitGud, ↑↑↓↓←→←→BA summons him.)</p>
-        <div class="bash"><div class="bash-bar"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span>bash</span></div>
+        <div class="bash"><div class="bash-bar">Spoken in the terminal</div>
 <pre><span class="p">$</span> <span class="g">git</span> worktree add -b agent/fire-potions …
 <span class="p">$</span> <span class="g">git</span> worktree add -b agent/elf-discount …
 <span class="p">$</span> <span class="g">git</span> merge --ff-only agent/fire-potions
@@ -1240,15 +582,13 @@
   </div>
 
   <div class="xp" aria-label="Course progress">
-    <span class="xp-label">XP</span>
-    <div class="xp-bar" id="xp-bar">
-      <div class="xp-fill" id="xp-fill"></div>
-    </div>
-    <span class="xp-cleared" id="xp-cleared">0 / 16 cleared</span>
+    <span class="label">Echoes</span>
+    <div class="xp-bar" id="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+    <span id="xp-cleared">0 / 16 cleared</span>
   </div>
 
   <details class="codex">
-    <summary>Codex <small>every word the quests use</small></summary>
+    <summary class="display">Lost words <small>every word the trials use</small></summary>
     <dl id="codex">
       <div><dt>working tree</dt><dd>The files as they are on your disk, edits included.</dd></div>
       <div><dt>index</dt><dd>Also called the staging area: what the next commit will hold.</dd></div>
@@ -1280,140 +620,65 @@
       <div><dt>linked worktree</dt><dd>Another working tree of the same repository, checked out on its own branch, in its own folder.</dd></div>
       <div><dt>agent</dt><dd>An AI coding CLI, such as Claude Code, that edits files, runs commands and commits for you.</dd></div>
       <div><dt>reflog</dt><dd>Git's log of every place HEAD and your branches have been. The way back from any mistake.</dd></div>
+      <div><dt>Lord Reflog</dt><dd>When the branch is deleted and the commit cast into darkness, one shall remain who remembers. His name is spoken only once: <code>git reflog</code>. His price: ninety days, then oblivion.</dd></div>
     </dl>
   </details>
 </section>
 
-<hr class="full-divider" />
+<section class="liber" id="spells" aria-labelledby="spells-title">
+  <div class="liber-head">
+    <span class="numeral label">The arts</span>
+    <div>
+      <h2 id="spells-title" class="display">Sorceries</h2>
+      <p>Every spell a git user needs. No mana cost, no subscription, no telemetry.</p>
+    </div>
+  </div>
+  <div class="spells"><div><h3 class="display">Branch map</h3><p>Keep track of your full project history at a glance — merges, rebases, and divergences rendered clearly.</p></div><div><h3 class="display">Truth seeker</h3><p>Side-by-side and inline diffs with syntax highlighting for every language.</p></div><div><h3 class="display">Hunk parry</h3><p>Stage individual hunks or lines. Craft precise, atomic commits without touching the command line.</p></div><div><h3 class="display">Rebase &amp; stash</h3><p>Interactive rebase flow, stash management, and conflict resolution — all from the same interface.</p></div><div><h3 class="display">Second chance</h3><p>Fixup a commit in one click, reword, reorder, squash or drop in the interactive rebase, and undo any git action — keep your history clean before it hits the remote.</p></div><div><h3 class="display">Inventory</h3><p>Push, pull and fetch, drag a branch onto another to merge or rebase, worktrees, tags, and several repositories open in tabs.</p></div></div>
+</section>
 
-<!-- ── Features ─────────────────────────────────────────────────────── -->
-<section id="features">
-  <p class="section-label">Arsenal</p>
-  <h2>Spells &amp; miracles.</h2>
-  <p class="section-sub">Every spell a git user needs. No mana cost, no subscription, no telemetry.</p>
-
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon fi-purple">🌿</div>
-      <h3>Branch map</h3>
-      <p>Keep track of your full project history at a glance — merges, rebases, and divergences rendered clearly.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon fi-teal">⚡</div>
-      <h3>Truth seeker</h3>
-      <p>Side-by-side and inline diffs with syntax highlighting for every language.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon fi-coral">🎯</div>
-      <h3>Hunk parry</h3>
-      <p>Stage individual hunks or lines. Craft precise, atomic commits without touching the command line.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon fi-green">🔄</div>
-      <h3>Rebase &amp; stash</h3>
-      <p>Interactive rebase flow, stash management, and conflict resolution — all from the same interface.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon fi-blue">✨</div>
-      <h3>Second chance</h3>
-      <p>Fixup a commit in one click, reword, reorder, squash or drop in the interactive rebase, and undo any git action — keep your history clean before it hits the remote.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon fi-pink">🏷️</div>
-      <h3>Inventory</h3>
-      <p>Push, pull and fetch, drag a branch onto another to merge or rebase, worktrees, tags, and several repositories open in tabs.</p>
-    </div>
+<section class="liber" aria-labelledby="lore-title">
+  <div class="liber-head">
+    <span class="numeral label">The lore</span>
+    <div><h2 id="lore-title" class="display">Lore, fully readable</h2></div>
+  </div>
+  <div class="lore">
+    <p class="gloss">Find the commit that broke it <em>before the boss finds you.</em> Every merge, rebase and divergence, drawn as it befell.</p>
+    <figure class="plate">
+      <div class="frame"><img src="img/log.png" alt="GitGud branch graph view" loading="lazy" /></div>
+      <figcaption><b>Echo II</b>The graph of a repository, read at a glance.</figcaption>
+    </figure>
   </div>
 </section>
 
-<hr class="full-divider" />
-
-<!-- ── Screenshot ────────────────────────────────────────────────────── -->
-<section class="split-section">
-  <div class="split-text">
-    <p class="section-label">Lore</p>
-    <h2>Lore,<br/>fully readable.</h2>
-    <p class="section-sub">Find the commit that broke it before the boss finds you.</p>
+<section class="liber" id="download" aria-labelledby="download-title">
+  <div class="liber-head">
+    <span class="numeral label">The offering</span>
+    <div>
+      <h2 id="download-title" class="display">Summon GitGud</h2>
+      <p>Lay down the sign: every land, no account, no price.</p>
+    </div>
   </div>
-  <div class="log-wrap">
-    <img src="img/log.png" alt="GitGud branch graph view" loading="lazy" />
-    <div class="graph-fades"></div>
-  </div>
+  <table>
+    <thead><tr><th>Realm</th><th>Package</th><th style="text-align:right">Download</th></tr></thead>
+    <tbody><tr><td class="platform" rowspan="4">Linux</td><td class="format">.deb<small>Debian</small></td><td class="links"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_amd64.deb" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_arm64.deb" download>arm64</a></td></tr><tr><td class="format">.rpm<small>Fedora</small></td><td class="links"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud-2.15.0-1.x86_64.rpm" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud-2.15.0-1.aarch64.rpm" download>arm64</a></td></tr><tr><td class="format">.AppImage</td><td class="links"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_amd64.AppImage" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_aarch64.AppImage" download>arm64</a></td></tr><tr><td class="format">.flatpak</td><td class="links"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud-2.15.0-Linux-x64.flatpak" download>x64</a></td></tr><tr><td class="platform" rowspan="1">Windows</td><td class="format">.exe installer</td><td class="links"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_x64-setup.exe" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_arm64-setup.exe" download>arm64</a></td></tr><tr><td class="platform" rowspan="1">macOS</td><td class="format">.dmg</td><td class="links"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_x64.dmg" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_aarch64.dmg" download>arm64</a></td></tr></tbody>
+  </table>
 </section>
+</main>
 
-<hr class="full-divider" />
-
-<!-- ── Download ──────────────────────────────────────────────────────── -->
-<section id="download">
-  <p class="section-label">Loot</p>
-  <h2>Equip GitGud.</h2>
-  <p class="section-sub">Every platform, no account, no price. Just git gud.</p>
-
-  <div class="download-grid">
-
-    <!-- Linux -->
-    <div class="platform-card">
-      <div class="platform-header">
-        <div class="platform-icon">🐧</div>
-        <div>
-          <div class="platform-name">Linux</div>
-          <div class="platform-arch">x64 &amp; arm64</div>
-        </div>
-      </div>
-      <ul class="dl-list">
-        <li><span class="dl-format">.deb <span class="dl-badge">Debian</span></span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_amd64.deb" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_arm64.deb" download>arm64</a></span></li>
-        <li><span class="dl-format">.rpm <span class="dl-badge">Fedora</span></span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud-2.15.0-1.x86_64.rpm" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud-2.15.0-1.aarch64.rpm" download>arm64</a></span></li>
-        <li><span class="dl-format">.AppImage</span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_amd64.AppImage" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_aarch64.AppImage" download>arm64</a></span></li>
-        <li><span class="dl-format">.flatpak</span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud-2.15.0-Linux-x64.flatpak" download>x64</a></span></li>
-      </ul>
-    </div>
-
-    <!-- Windows -->
-    <div class="platform-card">
-      <div class="platform-header">
-        <div class="platform-icon">🪟</div>
-        <div>
-          <div class="platform-name">Windows</div>
-          <div class="platform-arch">x64 &amp; arm64</div>
-        </div>
-      </div>
-      <ul class="dl-list">
-        <li><span class="dl-format">.exe installer</span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_x64-setup.exe" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_arm64-setup.exe" download>arm64</a></span></li>
-      </ul>
-    </div>
-
-    <!-- macOS -->
-    <div class="platform-card">
-      <div class="platform-header">
-        <div class="platform-icon">🍎</div>
-        <div>
-          <div class="platform-name">macOS</div>
-          <div class="platform-arch">Intel (x64) &amp; Apple Silicon (arm64)</div>
-        </div>
-      </div>
-      <ul class="dl-list">
-        <li><span class="dl-format">.dmg</span><span class="dl-archs"><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_x64.dmg" download>x64</a><a href="https://github.com/zeuros/gitgud/releases/download/v2.15.0/GitGud_2.15.0_aarch64.dmg" download>arm64</a></span></li>
-      </ul>
-    </div>
-
-  </div>
-</section>
-
-<!-- ── Footer ───────────────────────────────────────────────────────── -->
-<hr class="full-divider" />
 <footer>
-  <div class="footer-left">
-    <span class="footer-name">GitGud</span>
-    <span class="footer-sep">·</span>
-    <span style="font-size:.8125rem;color:var(--muted);">GPL-3.0 · Made by a fellow Tarnished</span>
-  </div>
-  <div class="footer-right">
+  <p class="closing display">Lord Reflog remembers every fall.</p>
+  <p>GitGud v2.15.0 · GPL-3.0 · Made by a fellow Tarnished</p>
+  <nav aria-label="Project" class="label">
     <a href="https://github.com/zeuros/gitgud" target="_blank" rel="noopener">GitHub</a>
     <a href="https://github.com/zeuros/gitgud/issues" target="_blank" rel="noopener">Issues</a>
     <a href="https://github.com/zeuros/gitgud/releases" target="_blank" rel="noopener">Releases</a>
-  </div>
+  </nav>
 </footer>
+</div>
 
+<dialog class="lightbox" id="lightbox" aria-label="Screenshot preview">
+  <figure><div class="frame"><img alt="" /></div><figcaption></figcaption></figure>
+</dialog>
 
 <script>
   // ── Quests: sideways track, XP bar, videos, codex tooltips ────────────
@@ -1435,7 +700,7 @@
     const segments = quests.map((quest, index) => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.textContent = `Lv ${index + 1}`;
+      button.textContent = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI'][index];
       button.setAttribute('aria-label', `Quest ${index + 1}: ${quest.querySelector('h3').textContent}`);
       button.addEventListener('click', () => goTo(index));
       bar.appendChild(button);
@@ -1539,6 +804,7 @@
     renderProgress();
   })();
 
+
   // ── Background scroll effect ──────────────────────────────────────────
   (function () {
     const sceneBg  = document.getElementById('scene-bg');
@@ -1610,6 +876,24 @@
         ticking = false;
       });
     }, { passive: true });
+  })();
+
+
+  // ── Screenshots: a click shows them full screen ──────────────────────
+  (function () {
+    const lightbox = document.getElementById('lightbox');
+    const image = lightbox.querySelector('img');
+    const caption = lightbox.querySelector('figcaption');
+    for (const plate of document.querySelectorAll('.plate')) {
+      const source = plate.querySelector('img');
+      source.addEventListener('click', () => {
+        image.src = source.currentSrc || source.src;
+        image.alt = source.alt;
+        caption.innerHTML = plate.querySelector('figcaption')?.innerHTML ?? '';
+        lightbox.showModal();
+      });
+    }
+    lightbox.addEventListener('click', () => lightbox.close());
   })();
 </script>
 </body>
