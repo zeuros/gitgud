@@ -288,8 +288,9 @@
     }
 
     /* ── Hero log image ─────────────────────────────────────────────── */
+    /* Wider than the hero's column: align-items: center lets it overflow both sides evenly */
     .hero-graph {
-      width: 100%;
+      width: min(1280px, calc(100vw - 3rem));
       animation: fadeIn .8s .2s ease both;
     }
 
