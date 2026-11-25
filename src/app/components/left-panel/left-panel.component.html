@@ -199,6 +199,10 @@
                         <p-select [options]="llmSessions.installedClis()" [(ngModel)]="llmSessions.selectedCli" size="small" class="agent-cli-select"/>
                         <p-button icon="fa fa-play" size="small" [text]="true" (onClick)="llmSessions.startAgent()"
                                   title="Run the agent in this worktree, in GitGud"/>
+                        @if (llmSessions.installedClis().includes('claude')) {
+                            <p-button icon="fa fa-code-fork" size="small" [text]="true" (onClick)="agentWorktree.startWorktreeAgent()"
+                                      title="New worktree agent: Claude on a task, in a worktree and branch named after it"/>
+                        }
                     }
                 </div>
                 @if (transcriptQuery() !== undefined) {

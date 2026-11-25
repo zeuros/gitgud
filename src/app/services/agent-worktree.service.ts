@@ -26,7 +26,12 @@ import {WorktreeContextMenuService} from './worktree-context-menu.service';
 import {ToastService} from './toast.service';
 import type {LlmSession} from '../utils/llm-session-utils';
 import {withoutTrailingSlash} from '../utils/worktree-utils';
-import {agentBranchName, offeredAgentKeys, runningOfferedAgentKeys, type TemporaryWorktree} from '../utils/agent-worktree-utils';
+import {
+  agentBranchName, agentTaskName, agentWorktreePath, excludingAgentWorktrees, offeredAgentKeys, runningOfferedAgentKeys, TASK_NAMING_PROMPT,
+  type TemporaryWorktree, uniqueAgentName,
+} from '../utils/agent-worktree-utils';
+import {openNewAgentDialog} from '../components/dialogs/new-agent-dialog/new-agent-dialog.component';
+import {GitApiService} from './git/git-api.service';
 import {type AgentWorktree, openAgentWorktreeDialog} from '../components/dialogs/agent-worktree-dialog/agent-worktree-dialog.component';
 
 const TEMPORARY_WORKTREES_KEY = 'agent-temporary-worktrees';
@@ -35,6 +40,7 @@ const OFFERED_AGENTS_KEY = 'agent-offered-sessions';
 const ENTER_DELAY_MS = 200;
 
 /**
+ * Starts Claude on a task in a linked worktree and branch named after it.
  * Offers an agent found working in the main worktree a linked worktree of its own, and tells it to move there.
  * When that agent ends, asks whether to keep the worktree or remove it, keeping its branch.
  */
@@ -48,6 +54,7 @@ export class AgentWorktreeService {
   private dialog = inject(DialogService);
   private confirmation = inject(ConfirmationService);
   private toast = inject(ToastService);
+  private gitApi = inject(GitApiService);
 
   // Agents in the main worktree already offered a worktree, by offeredAgentKeys: kept across restarts and reloads
   private offeredAgentKeys = signal<string[]>(JSON.parse(localStorage.getItem(OFFERED_AGENTS_KEY) ?? '[]'));
@@ -98,6 +105,48 @@ export class AgentWorktreeService {
     });
   }
 
+  /** Asks for a prompt, has Claude name the task, then starts Claude on it in a new worktree and branch of that name */
+  startWorktreeAgent() {
+    const mainWorktreePath = this.mainWorktreePath();
+    const repoId = this.currentRepo.id();
+    if (!mainWorktreePath || !repoId) return;
+
+    openNewAgentDialog(this.dialog).subscribe(async prompt => {
+      if (!prompt) return;
+
+      this.toast.info('Naming the task…');
+      const name = agentTaskName(await this.askTaskName(prompt), prompt);
+      const branchNames = new Set(this.currentRepo.branches().map(branch => branch.name));
+      const uniqueName = await uniqueAgentName(name, candidate => branchNames.has(`agent/${candidate}`)
+        || window.tauri.fs.exists(agentWorktreePath(mainWorktreePath, candidate)).catch(() => false));
+      const branchName = `agent/${uniqueName}`;
+      const worktreePath = agentWorktreePath(mainWorktreePath, branchName);
+
+      await this.excludeAgentWorktrees();
+      this.gitWorkflow.runAndRefresh(['worktree', 'add', '-b', branchName, worktreePath, 'HEAD'], `Worktree created at ${worktreePath}, on ${branchName}`)
+        .subscribe(async () => {
+          const pid = await this.llmSessions.startAgentIn({tool: 'claude', cwd: worktreePath}, [prompt], "Couldn't start Claude");
+          if (pid !== undefined)
+            this.temporaryWorktrees.update(temporaryWorktrees => [...temporaryWorktrees, {repoId, pid, tool: 'claude', worktreePath, branchName}]);
+        });
+    });
+  }
+
+  // Claude's answer, empty when it fails. Run outside the repo, so this session isn't listed among its ended ones
+  private async askTaskName(prompt: string) {
+    const {stdout, status} = await window.tauri.spawnSync('claude', ['-p', '--model', 'haiku', TASK_NAMING_PROMPT + prompt], {cwd: await window.tauri.tempDir()})
+      .catch(() => ({stdout: '', status: 1}));
+    return status === 0 ? stdout : '';
+  }
+
+  // The agents' worktrees are inside the main worktree: they shouldn't show as untracked there
+  private async excludeAgentWorktrees() {
+    const excludePath = `${(await this.gitApi.gitDirs()).commonDir}/info/exclude`;
+    const exclude = await window.tauri.fs.readFile(excludePath).catch(() => '');
+    const excluded = excludingAgentWorktrees(exclude);
+    if (excluded !== undefined) await window.tauri.fs.writeFile(excludePath, excluded).catch(() => undefined);
+  }
+
   private offerWorktree(session: LlmSession) {
     const mainWorktreePath = this.mainWorktreePath();
     const repoId = this.currentRepo.id();
@@ -117,7 +166,8 @@ export class AgentWorktreeService {
     });
   }
 
-  private createAndTell(session: LlmSession, pid: number, repoId: string, {worktreePath, branchName, message}: AgentWorktree) {
+  private async createAndTell(session: LlmSession, pid: number, repoId: string, {worktreePath, branchName, message}: AgentWorktree) {
+    await this.excludeAgentWorktrees();
     this.gitWorkflow.runAndRefresh(['worktree', 'add', '-b', branchName, worktreePath, 'HEAD'], `Worktree created at ${worktreePath}`)
       .subscribe(() => {
         this.temporaryWorktrees.update(temporaryWorktrees => [...temporaryWorktrees, {repoId, pid, tool: session.tool, worktreePath, branchName}]);

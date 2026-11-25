@@ -145,21 +145,26 @@ export class LlmSessionsService {
   startAgent = () => {
     const cwd = this.currentRepo.cwd();
     const cli = this.selectedCli();
-    if (!cwd || !cli) return;
-    this.agentTerminals.start(cli, [], cwd).then(
-      pid => this.openedSession.set({tool: cli, cwd, pid, isBusy: false}),
-      (error: unknown) => this.toast.err(`Couldn't start ${cli}: ${error}`),
-    );
+    if (cwd && cli) this.startAgentIn({tool: cli, cwd}, [], `Couldn't start ${cli}`);
   };
 
   /** Continues an ended Claude session in a terminal in GitGud, and shows it */
   resumeSession = ({cwd, sessionId}: LlmSession) => {
-    if (!sessionId) return;
-    this.agentTerminals.start('claude', ['--resume', sessionId], cwd).then(
-      pid => this.openedSession.set({tool: 'claude', cwd, pid, sessionId, isBusy: false}),
-      (error: unknown) => this.toast.err(`Couldn't resume the session: ${error}`),
-    );
+    if (sessionId) this.startAgentIn({tool: 'claude', cwd, sessionId}, ['--resume', sessionId], "Couldn't resume the session");
   };
+
+  /** Runs the session's CLI with `args` in its cwd, in a terminal in GitGud, and shows it; resolves with its pid */
+  startAgentIn = (session: Pick<LlmSession, 'tool' | 'cwd' | 'sessionId'>, args: string[], failureMessage: string) =>
+    this.agentTerminals.start(session.tool, args, session.cwd).then(
+      pid => {
+        this.openedSession.set({...session, pid, isBusy: false});
+        return pid;
+      },
+      (error: unknown) => {
+        this.toast.err(`${failureMessage}: ${error}`);
+        return undefined;
+      },
+    );
 
   // The Claude sessions GitGud ran when it quit, started again in the background
   private resumeAgents = async () => {

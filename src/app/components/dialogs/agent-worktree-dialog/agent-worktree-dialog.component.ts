@@ -23,7 +23,7 @@ import {InputText} from 'primeng/inputtext';
 import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import type {Observable} from 'rxjs';
 import {type LlmSession, llmSessionLabel} from '../../../utils/llm-session-utils';
-import {moveToWorktreeMessage} from '../../../utils/agent-worktree-utils';
+import {agentWorktreePath, moveToWorktreeMessage} from '../../../utils/agent-worktree-utils';
 
 export interface AgentWorktreeDialogData {
   session: LlmSession;
@@ -37,8 +37,6 @@ export interface AgentWorktree {
   branchName: string;
   message: string;
 }
-
-const worktreePathFor = (mainWorktreePath: string, branchName: string) => `${mainWorktreePath}.worktrees/${branchName}`;
 
 export const openAgentWorktreeDialog = (dialog: DialogService, data: AgentWorktreeDialogData): Observable<AgentWorktree | undefined> =>
   dialog.open(AgentWorktreeDialogComponent, {header: 'Agent in the main worktree', width: '560px', data})!.onClose;
@@ -102,7 +100,7 @@ export class AgentWorktreeDialogComponent {
   protected data: AgentWorktreeDialogData = inject(DynamicDialogConfig).data;
 
   protected branchName = signal(this.data.branchName);
-  protected worktreePath = signal(worktreePathFor(this.data.mainWorktreePath, this.data.branchName));
+  protected worktreePath = signal(agentWorktreePath(this.data.mainWorktreePath, this.data.branchName));
 
   protected agentLabel = llmSessionLabel(this.data.session);
   protected message = computed(() => moveToWorktreeMessage(this.worktreePath().trim(), this.branchName().trim(), this.data.mainWorktreePath));
@@ -110,7 +108,7 @@ export class AgentWorktreeDialogComponent {
   // The path follows the branch name
   protected onBranchNameInput(branchName: string) {
     this.branchName.set(branchName);
-    this.worktreePath.set(worktreePathFor(this.data.mainWorktreePath, branchName.trim()));
+    this.worktreePath.set(agentWorktreePath(this.data.mainWorktreePath, branchName.trim()));
   }
 
   protected create() {

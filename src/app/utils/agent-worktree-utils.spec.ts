@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {agentBranchName, moveToWorktreeMessage, offeredAgentKeys, runningOfferedAgentKeys} from './agent-worktree-utils';
+import {agentBranchName, agentTaskName, agentWorktreePath, excludingAgentWorktrees, moveToWorktreeMessage, offeredAgentKeys, runningOfferedAgentKeys, uniqueAgentName} from './agent-worktree-utils';
 
 describe('agentBranchName', () => {
   const now = new Date(2026, 10, 24, 20, 5);
@@ -34,4 +34,30 @@ describe('offered agents', () => {
 
   it('keeps the keys of the agents still running', () =>
     expect(runningOfferedAgentKeys(['pid:10', 'abc', 'pid:20', 'gone'], [claude])).toEqual(['pid:10', 'abc']));
+});
+
+describe('agentTaskName', () => {
+  it("takes Claude's answer as a slug", () =>
+    expect(agentTaskName('  Fix-Login Redirect.\n', 'whatever')).toBe('fix-login-redirect'));
+
+  it('falls back to the prompt\'s first words', () =>
+    expect(agentTaskName('', 'Add dark mode to the settings page please')).toBe('add-dark-mode-to'));
+
+  it('stays short', () =>
+    expect(agentTaskName('a'.repeat(30) + ' ' + 'b'.repeat(30), '').length).toBeLessThanOrEqual(40));
+});
+
+describe('uniqueAgentName', () => {
+  it('appends a number while the name is taken', async () =>
+    expect(await uniqueAgentName('fix', async name => ['fix', 'fix-2'].includes(name))).toBe('fix-3'));
+});
+
+describe('agent worktrees', () => {
+  it('go inside the main worktree, named after the branch', () =>
+    expect(agentWorktreePath('/repo', 'agent/fix-login')).toBe('/repo/.claude/worktrees/fix-login'));
+
+  it('are excluded once', () => {
+    expect(excludingAgentWorktrees('# git ls-files\n*.log')).toBe('# git ls-files\n*.log\n/.claude/worktrees/\n');
+    expect(excludingAgentWorktrees('/.claude/worktrees/\n')).toBeUndefined();
+  });
 });

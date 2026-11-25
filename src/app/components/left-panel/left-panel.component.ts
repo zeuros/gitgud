@@ -48,6 +48,7 @@ import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/c
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 import {TreeListComponent, type TreeNodeContextMenuEvent} from '../tree-list/tree-list.component';
 import {otherWorktreeTooltip} from '../../utils/worktree-utils';
+import {AgentWorktreeService} from '../../services/agent-worktree.service';
 import {LlmSessionsService, type TranscriptSearch} from '../../services/llm-sessions.service';
 import {isSameSession, type LlmSession, llmSessionLabel} from '../../utils/llm-session-utils';
 import {Button} from 'primeng/button';
@@ -103,6 +104,7 @@ export class LeftPanelComponent {
   protected aheadBehind = inject(BranchAheadBehindService);
   protected worktreeContextMenu = inject(WorktreeContextMenuService);
   protected llmSessions = inject(LlmSessionsService);
+  protected agentWorktree = inject(AgentWorktreeService);
   private branch = inject(BranchService);
   private dialog = inject(DialogService);
   private gitRepositoryService = inject(GitRepositoryService);
