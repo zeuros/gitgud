@@ -20,6 +20,7 @@ import {ChangeDetectionStrategy, Component, computed, inject, type OnDestroy, ty
 import {ButtonDirective} from 'primeng/button';
 import {InputNumber} from 'primeng/inputnumber';
 import {InputText} from 'primeng/inputtext';
+import {Checkbox} from 'primeng/checkbox';
 import {FormsModule} from '@angular/forms';
 import {SettingsService} from '../../../services/settings.service';
 import {GitApiService} from '../../../services/git/git-api.service';
@@ -36,7 +37,7 @@ import {DEFAULT_EDITOR_COMMAND} from '../../../utils/editor-command.utils';
   selector: 'gitgud-settings-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ButtonDirective, InputNumber, InputText, FormsModule, Tooltip],
+  imports: [ButtonDirective, InputNumber, InputText, Checkbox, FormsModule, Tooltip],
   templateUrl: './settings-dialog.component.html',
   styleUrl: './settings-dialog.component.scss',
 })

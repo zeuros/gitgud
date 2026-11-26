@@ -68,6 +68,18 @@
                [placeholder]="defaultEditorCommand" style="flex: 1"/>
     </div>
 
+    <div class="settings-section-title">Worktree agents' commits</div>
+
+    <div class="checkbox-row">
+        <p-checkbox inputId="agent-gitmoji" [binary]="true" [ngModel]="settings.agentUsesGitmoji()" (ngModelChange)="settings.setAgentUsesGitmoji($event)"/>
+        <label for="agent-gitmoji">Gitmoji</label>
+    </div>
+    <div class="checkbox-row">
+        <p-checkbox inputId="agent-conventional-commits" [binary]="true" [ngModel]="settings.agentUsesConventionalCommits()"
+                    (ngModelChange)="settings.setAgentUsesConventionalCommits($event)"/>
+        <label for="agent-conventional-commits">Conventional Commits</label>
+    </div>
+
     <div class="settings-section-title">Identity</div>
 
     <div>

@@ -21,8 +21,10 @@ import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {concatMap, defer, distinctUntilChanged, EMPTY, from, of, switchMap, timer} from 'rxjs';
 import {Dialog} from 'primeng/dialog';
 import {Button} from 'primeng/button';
+import {Tooltip} from 'primeng/tooltip';
 import {LlmSessionsService} from '../../services/llm-sessions.service';
 import {AgentTerminalsService} from '../../services/agent-terminals.service';
+import {AgentWorktreeService} from '../../services/agent-worktree.service';
 import {appendTranscriptChunk, EMPTY_TRANSCRIPT, type Transcript} from '../../utils/claude-transcript-utils';
 import {llmSessionLabel} from '../../utils/llm-session-utils';
 
@@ -37,7 +39,7 @@ const STICK_TO_BOTTOM_PX = 40;
 @Component({
   selector: 'gitgud-agent-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Dialog, Button],
+  imports: [Dialog, Button, Tooltip],
   templateUrl: './agent-view.component.html',
   styleUrl: './agent-view.component.scss',
   host: {'(document:pointerdown)': 'closeOnPointerDownOutside($event)'},
@@ -46,6 +48,7 @@ export class AgentViewComponent {
 
   protected llmSessions = inject(LlmSessionsService);
   private agentTerminals = inject(AgentTerminalsService);
+  protected agentWorktree = inject(AgentWorktreeService);
 
   protected session = this.llmSessions.openedSession;
   /** The terminal of an agent started from GitGud: interactive, shown instead of the transcript */
@@ -53,6 +56,7 @@ export class AgentViewComponent {
     const pid = this.session()?.pid;
     return pid === undefined ? undefined : this.agentTerminals.terminals().get(pid);
   });
+  protected isWorktreeAgent = computed(() => this.agentWorktree.isTemporaryWorktreeAgent(this.terminal()?.pid));
   private transcriptPath = computed(() => {
     const session = this.llmSessions.openedSessionNow();
     return session && this.llmSessions.transcriptPath(session);

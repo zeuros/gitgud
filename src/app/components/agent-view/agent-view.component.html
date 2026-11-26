@@ -40,6 +40,11 @@
     }
     @if (terminal(); as terminal) {
         <ng-template #footer>
+            @if (isWorktreeAgent()) {
+                <p-button label="Wrap up" icon="fa fa-flag-checkered" size="small" severity="success"
+                          pTooltip="Finish: close the agent, remove the worktree, keep the branch" tooltipPosition="top"
+                          (onClick)="agentWorktree.finish(terminal.pid)"/>
+            }
             <p-button label="Stop" icon="fa fa-stop" size="small" severity="danger" (onClick)="stop(terminal.pid)"
                       title="Stop this agent; it can be resumed"/>
         </ng-template>

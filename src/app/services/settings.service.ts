@@ -37,6 +37,9 @@ export class SettingsService {
   readonly bundlesGit = window.tauri.packageFormat === 'Flatpak';
   private _gitBin = signal(this.bundlesGit ? 'git' : localStorage.getItem('git-binary-path') ?? 'git');
   private _editorCommand = signal(localStorage.getItem('editor-command') ?? DEFAULT_EDITOR_COMMAND);
+  // Commit message styles the worktree agents are told to follow
+  readonly agentUsesGitmoji = signal(localStorage.getItem('agent-uses-gitmoji') === 'true');
+  readonly agentUsesConventionalCommits = signal(localStorage.getItem('agent-uses-conventional-commits') === 'true');
 
   get zoom() { return this._zoom(); }
   get autoFetchIntervalSeconds() { return this.autoFetchIntervalMs() / 1000; }
@@ -67,6 +70,16 @@ export class SettingsService {
   set editorCommand(v: string) {
     this._editorCommand.set(v);
     localStorage.setItem('editor-command', v);
+  }
+
+  setAgentUsesGitmoji(usesGitmoji: boolean) {
+    this.agentUsesGitmoji.set(usesGitmoji);
+    localStorage.setItem('agent-uses-gitmoji', String(usesGitmoji));
+  }
+
+  setAgentUsesConventionalCommits(usesConventionalCommits: boolean) {
+    this.agentUsesConventionalCommits.set(usesConventionalCommits);
+    localStorage.setItem('agent-uses-conventional-commits', String(usesConventionalCommits));
   }
 
 }

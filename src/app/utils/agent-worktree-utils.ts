@@ -52,6 +52,15 @@ const FALLBACK_TASK_NAME_WORDS = 4;
 /** What Claude is asked to name a task by, before the prompt */
 export const TASK_NAMING_PROMPT = 'Reply with only a 2 to 4 word kebab-case name for this coding task, for a git branch, nothing else. The task:\n\n';
 
+/** The task, followed by the commit message styles the agent should follow */
+export const withCommitStyles = (prompt: string, {gitmoji, conventionalCommits}: {gitmoji: boolean, conventionalCommits: boolean}) => {
+  const rules = [
+    conventionalCommits && 'follow Conventional Commits (type(scope): subject)',
+    gitmoji && 'start the subject with a gitmoji (https://gitmoji.dev)',
+  ].filter(Boolean);
+  return rules.length ? `${prompt}\n\nCommit messages: ${rules.join(', and ')}.` : prompt;
+};
+
 /** A worktree and branch name for the task: Claude's answer as a slug, else the prompt's first words */
 export const agentTaskName = (answer: string, prompt: string) => {
   const cut = (name: string) => name.slice(0, MAX_TASK_NAME_LENGTH).replace(/-$/, '');

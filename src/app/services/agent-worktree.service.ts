@@ -28,10 +28,11 @@ import type {LlmSession} from '../utils/llm-session-utils';
 import {withoutTrailingSlash} from '../utils/worktree-utils';
 import {
   agentBranchName, agentTaskName, agentWorktreePath, excludingAgentWorktrees, offeredAgentKeys, runningOfferedAgentKeys, TASK_NAMING_PROMPT,
-  type TemporaryWorktree, uniqueAgentName,
+  type TemporaryWorktree, uniqueAgentName, withCommitStyles,
 } from '../utils/agent-worktree-utils';
 import {openNewAgentDialog} from '../components/dialogs/new-agent-dialog/new-agent-dialog.component';
 import {GitApiService} from './git/git-api.service';
+import {SettingsService} from './settings.service';
 import {type AgentWorktree, openAgentWorktreeDialog} from '../components/dialogs/agent-worktree-dialog/agent-worktree-dialog.component';
 
 const TEMPORARY_WORKTREES_KEY = 'agent-temporary-worktrees';
@@ -55,6 +56,7 @@ export class AgentWorktreeService {
   private confirmation = inject(ConfirmationService);
   private toast = inject(ToastService);
   private gitApi = inject(GitApiService);
+  private settings = inject(SettingsService);
 
   // Agents in the main worktree already offered a worktree, by offeredAgentKeys: kept across restarts and reloads
   private offeredAgentKeys = signal<string[]>(JSON.parse(localStorage.getItem(OFFERED_AGENTS_KEY) ?? '[]'));
@@ -125,12 +127,40 @@ export class AgentWorktreeService {
       await this.excludeAgentWorktrees();
       this.gitWorkflow.runAndRefresh(['worktree', 'add', '-b', branchName, worktreePath, 'HEAD'], `Worktree created at ${worktreePath}, on ${branchName}`)
         .subscribe(async () => {
-          const pid = await this.llmSessions.startAgentIn({tool: 'claude', cwd: worktreePath}, [prompt], "Couldn't start Claude");
+          const pid = await this.llmSessions.startAgentIn({tool: 'claude', cwd: worktreePath}, [this.withCommitStyles(prompt)], "Couldn't start Claude");
           if (pid !== undefined)
             this.temporaryWorktrees.update(temporaryWorktrees => [...temporaryWorktrees, {repoId, pid, tool: 'claude', worktreePath, branchName}]);
         });
     });
   }
+
+  /** Whether the agent was started in, or moved to, a linked worktree GitGud created for it */
+  isTemporaryWorktreeAgent = (pid: number | undefined) =>
+    pid !== undefined && this.currentRepoTemporaryWorktrees().some(temporaryWorktree => temporaryWorktree.pid === pid);
+
+  /** Stops the agent, then removes its worktree, keeping its branch */
+  async finish(pid: number) {
+    const temporaryWorktree = this.currentRepoTemporaryWorktrees().find(candidate => candidate.pid === pid);
+    if (!temporaryWorktree) return;
+    const {worktreePath, branchName} = temporaryWorktree;
+
+    // Forgotten first, so its end doesn't ask what to do with the worktree
+    this.forget(temporaryWorktree);
+    this.llmSessions.closeSession();
+    try {
+      await window.tauri.pty.kill(pid);
+    } catch (error: unknown) {
+      this.temporaryWorktrees.update(temporaryWorktrees => [...temporaryWorktrees, temporaryWorktree]);
+      this.toast.err(`Couldn't stop the agent: ${error}`);
+      return;
+    }
+
+    this.worktreeContextMenu.removeWorktree(worktreePath, `Removed worktree at ${worktreePath}, kept ${branchName}`).subscribe();
+  }
+
+  private withCommitStyles = (prompt: string) => withCommitStyles(prompt, {
+    gitmoji: this.settings.agentUsesGitmoji(), conventionalCommits: this.settings.agentUsesConventionalCommits(),
+  });
 
   // Claude's answer, empty when it fails. Run outside the repo, so this session isn't listed among its ended ones
   private async askTaskName(prompt: string) {
@@ -171,7 +201,7 @@ export class AgentWorktreeService {
     this.gitWorkflow.runAndRefresh(['worktree', 'add', '-b', branchName, worktreePath, 'HEAD'], `Worktree created at ${worktreePath}`)
       .subscribe(() => {
         this.temporaryWorktrees.update(temporaryWorktrees => [...temporaryWorktrees, {repoId, pid, tool: session.tool, worktreePath, branchName}]);
-        this.tell(session, pid, message);
+        this.tell(session, pid, this.withCommitStyles(message));
       });
   }
 

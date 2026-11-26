@@ -19,6 +19,15 @@
       }
     }
 
+    &.checkbox-row {
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0.5rem;
+
+      label { cursor: pointer; }
+    }
+
     .row-with-browse {
       display: flex;
       gap: 6px;
