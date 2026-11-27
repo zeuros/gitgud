@@ -56,11 +56,6 @@ export class BranchAheadBehindService {
       }),
     );
 
-  /** One-shot ahead/behind for HEAD vs its upstream — used by toolbar before push. */
-  aheadBehindForHead = () =>
-    // If head branch is not present on remote, git throws an error, which can be silenced
-    this.aheadBehind('HEAD', '@{u}').pipe(catchError(() => EMPTY));
-
   private aheadBehindCountsForBranch = (branch: Branch): Observable<[string, AheadBehind]> =>
     this.aheadBehind(branch.ref, `refs/remotes/${branch.upstream}`).pipe(
       map(({ahead, behind}): [string, AheadBehind] => [branch.name, {ahead, behind}]),

@@ -39,7 +39,7 @@ import {BranchAheadBehindService} from './branch-ahead-behind.service';
 import {InteractiveRebaseService} from './interactive-rebase.service';
 import {ConflictPredictionService} from './conflict-prediction.service';
 import {withConflictWarning} from '../utils/conflict-prediction.utils';
-import {type BehindRemoteAction, openBehindRemoteDialog} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
+import {PushService} from './push.service';
 import {lockedByWorktree, worktreeName} from '../utils/worktree-utils';
 import {remoteWebUrl} from '../utils/permalink.utils';
 
@@ -59,6 +59,7 @@ export class BranchContextMenuService {
   private aheadBehind = inject(BranchAheadBehindService);
   private interactiveRebase = inject(InteractiveRebaseService);
   private conflictPrediction = inject(ConflictPredictionService);
+  private pushService = inject(PushService);
 
   selectedNode = signal<TreeNode<Branch> | undefined>(undefined);
 
@@ -200,39 +201,11 @@ export class BranchContextMenuService {
 
   // Fast-forwards the local branch to its remote, whichever of the two was right-clicked
   private pullBranch = (branch: Branch) => {
-
-    const {upstream, remote, remoteBranch, localName} = this.trackingPair(branch);
-
-    // git refuses to fetch into the checked out branch, pull it instead
-    if (this.currentRepo.branches().some(b => b.isHeadPointed && b.name === localName))
-      this.gitWorkflow.doRunAndRefresh(['pull', '--ff-only', remote, remoteBranch], `Pulled ${upstream} into ${localName}`);
-    else
-      this.gitWorkflow.doRunAndRefresh(['fetch', remote, `${remoteBranch}:${localName}`], `Pulled ${upstream} into ${localName}`);
+    const {remote, remoteBranch, localName} = this.trackingPair(branch);
+    this.pushService.pull(localName, {remote, branch: remoteBranch}).subscribe();
   };
 
-  // Pushes a local branch to its upstream; without one, asks where and sets it
-  private pushBranch = (branch: Branch) => {
-    if (!branch.upstream) return this.pushToNewUpstream(branch.name);
-
-    const {upstream, remote, remoteBranch, localName} = this.trackingPair(branch);
-    const refspec = `${localName}:${remoteBranch}`;
-    const ab = this.aheadBehind.aheadBehindMap()[localName];
-    if (!ab?.behind) return this.gitWorkflow.doRunAndRefresh(['push', remote, refspec], `Pushed ${localName} to ${upstream}`);
-
-    return openBehindRemoteDialog(this.dialog, localName, upstream, ab.ahead > 0, this.currentRepo.otherWorktreeOf(localName))
-      .subscribe((action: BehindRemoteAction) => {
-        if (action === 'force-push') this.gitWorkflow.doRunAndRefresh(['push', '--force-with-lease', remote, refspec], `Force-pushed ${localName} to ${upstream}`);
-        if (action === 'pull')       this.gitWorkflow.doRunAndRefresh(['fetch', remote, `${remoteBranch}:${localName}`], `Pulled ${upstream} into ${localName}`);
-        if (action === 'rebase')     this.gitWorkflow.rebaseBranchOnto(localName, upstream, `Rebased ${localName} onto ${upstream}`);
-        if (action === 'merge')      this.gitWorkflow.checkoutThenRun(localName, ['merge', '--no-ff', upstream], `Merged ${upstream} into ${localName}`);
-      });
-  };
-
-  private pushToNewUpstream = (localName: string) =>
-    openSetUpstreamDialog(this.dialog, localName)
-      .pipe(first(notUndefined))
-      .subscribe(({remote, branch}) =>
-        this.gitWorkflow.doRunAndRefresh(['push', '--set-upstream', remote, `${localName}:${branch}`], `Pushed ${localName} to ${remote}/${branch}`));
+  private pushBranch = (branch: Branch) => this.pushService.push(this.trackingPair(branch).localName).subscribe();
 
   private setUpstream = (name: string) =>
     openSetUpstreamDialog(this.dialog, name)

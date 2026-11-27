@@ -18,7 +18,7 @@
 
 import {ChangeDetectionStrategy, Component, computed, inject, type OnInit, signal} from '@angular/core';
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
-import {catchError, EMPTY, finalize, interval, map, type Observable, of, switchMap} from 'rxjs';
+import {EMPTY, finalize, interval, map, type Observable, switchMap} from 'rxjs';
 import {ButtonDirective} from 'primeng/button';
 import {Divider} from 'primeng/divider';
 import {Tooltip} from 'primeng/tooltip';
@@ -35,16 +35,13 @@ import {workingDirHasChanges} from '../../utils/utils';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
 import {UndoService} from '../../services/undo.service';
 import {DialogService} from 'primeng/dynamicdialog';
-import {openSetUpstreamDialog} from '../dialogs/set-upstream-dialog/set-upstream-dialog.component';
-import {type BehindRemoteAction, openBehindRemoteDialog} from '../dialogs/behind-remote-dialog/behind-remote-dialog.component';
-import {BranchAheadBehindService} from '../../services/branch-ahead-behind.service';
 import {CreateBranchService} from '../../services/create-branch.service';
 import {canSkip, type GitOperation, OPERATION_LABELS} from '../../utils/operation-in-progress.utils';
 import {UpdateCheckService} from '../../services/update-check.service';
+import {PushService} from '../../services/push.service';
 import {SettingsDialogComponent} from '../dialogs/settings-dialog/settings-dialog.component';
 import {ShellHistoryDialogComponent} from '../dialogs/shell-history-dialog/shell-history-dialog.component';
 import {recentConsoleMessages, reportIssueUrl} from '../../utils/report-issue.utils';
-import {parseRemote, type RemoteAndBranch} from '../../utils/branch-utils';
 import {type GitCommandRecord, GitCommandHistoryService} from '../../services/git-command-history.service';
 import {isTextInput, shortcutLabel, shortcutMatches} from '../../utils/menu-shortcuts';
 
@@ -120,7 +117,7 @@ export class ToolbarComponent implements OnInit {
     },
   })));
   private gitApi = inject(GitApiService);
-  private branchAheadBehind = inject(BranchAheadBehindService);
+  private pushService = inject(PushService);
   private toast = inject(ToastService);
   private dialog = inject(DialogService);
   private gitCommandHistory = inject(GitCommandHistoryService);
@@ -187,9 +184,12 @@ export class ToolbarComponent implements OnInit {
     }} : undefined;
   };
 
-  protected push = () => this.runAction('push', this.upstreamMatchesLocal().pipe(
-    switchMap(ok => ok ? this.checkBehindThenPush() : this.openSetUpstreamDialog()),
-  ), () => this.toast.success('Pushed successfully'));
+  // Detached HEAD: git decides
+  protected push = () => {
+    const localName = this.currentRepo.headBranch()?.name;
+    if (localName) this.runAction('push', this.pushService.push(localName), () => undefined);
+    else this.runAction('push', this.gitApi.gitAction(['push']), () => this.toast.success('Pushed successfully'));
+  };
 
   protected pull = () => this.runAction('pull', this.gitApi.gitAction(['pull']), () => this.toast.success('Pulled successfully'));
 
@@ -222,8 +222,6 @@ export class ToolbarComponent implements OnInit {
     })).subscribe(onSuccess);
   };
 
-  // Returns false when there is no upstream or the upstream branch name differs from the local branch name.
-
   protected openSettingsDialog = () => this.dialog.open(SettingsDialogComponent, {header: 'Settings', width: '460px'});
 
   protected reportIssue = () => window.tauri.openExternal(reportIssueUrl({
@@ -238,60 +236,6 @@ export class ToolbarComponent implements OnInit {
   }));
 
   protected openShellHistoryDialog = () => this.dialog.open(ShellHistoryDialogComponent, {header: 'Git Command History', width: '700px'});
-
-  private checkBehindThenPush = () =>
-    this.branchAheadBehind.aheadBehindForHead().pipe(
-      switchMap(({behind, diverged}) =>
-        behind === 0 ? this.gitApi.gitAction(['push']) : this.openBehindRemoteDialog(diverged)
-      ),
-    );
-
-  private openBehindRemoteDialog = (
-    diverged: boolean,
-    remoteRef = `refs/remotes/${this.currentRepo.headBranch()!.upstream}`,
-    forcePushArgs = ['push', '--force-with-lease'],
-  ) => {
-    const branch = this.currentRepo.headBranch()!;
-    return openBehindRemoteDialog(this.dialog, branch.ref, remoteRef, diverged).pipe(
-      switchMap((action: BehindRemoteAction) => {
-        if (action === 'pull') return this.gitApi.gitAction(['pull', '--ff-only']);
-        if (action === 'merge') return this.gitApi.gitAction(['pull', '--no-ff']);
-        if (action === 'rebase') return this.gitApi.gitAction(['pull', '--rebase']);
-        if (action === 'force-push') return this.gitApi.gitAction(forcePushArgs);
-        return EMPTY;
-      }),
-    );
-  };
-
-  // Uses rev-parse @{u} — plumbing output (refs only), locale-independent.
-  private upstreamMatchesLocal = () => {
-    const localBranch = this.currentRepo.headBranch()?.name;
-    if (!localBranch) return of(true); // detached HEAD — let git decide
-    return this.gitApi.git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']).pipe(
-      map(out => parseRemote(out.trim()).branch === localBranch),
-      catchError(() => of(false)), // @{u} fails when no upstream is configured
-    );
-  };
-
-  private openSetUpstreamDialog = () =>
-    openSetUpstreamDialog(this.dialog, this.currentRepo.headBranch()?.name ?? '').pipe(
-      switchMap(result => result ? this.pushToNewUpstream(result) : EMPTY),
-    );
-
-  // A remote branch the current one is behind (rewritten since pushed) goes through the behind-remote dialog,
-  // offering to force push, rather than a push git rejects
-  private pushToNewUpstream = ({remote, branch}: RemoteAndBranch) => {
-    const remoteRef = `refs/remotes/${remote}/${branch}`;
-    return this.branchAheadBehind.aheadBehind('HEAD', remoteRef).pipe(
-      catchError(() => of({ahead: 0, behind: 0, diverged: false})), // not on the remote yet
-      switchMap(({behind, diverged}) => behind === 0
-        ? this.gitApi.gitAction(['push', '--set-upstream', remote, branch])
-        : this.gitApi.gitAction(['branch', `--set-upstream-to=${remote}/${branch}`]).pipe(
-          // Named: a plain push only goes to an upstream of the same name
-          switchMap(() => this.openBehindRemoteDialog(diverged, remoteRef, ['push', '--force-with-lease', remote, `HEAD:${branch}`])),
-        )),
-    );
-  };
 
   protected donateItems: MenuItem[] = [
     {
