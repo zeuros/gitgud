@@ -31,6 +31,12 @@ export const toBranchTree = (branches: Branch[], isCurrent: (branch: Branch) => 
     styleClass: isCurrent(branch) ? 'worktree-current' : undefined,
   }));
 
+/** The remote already holding a branch of that name, else origin, else the first one */
+export const defaultUpstreamRemote = (remoteNames: string[], branchName: string, remoteBranches: Branch[]) =>
+  remoteNames.find(remoteName => remoteBranches.some(branch => branch.name === `${remoteName}/${branchName}`))
+  ?? remoteNames.find(remoteName => remoteName === 'origin')
+  ?? remoteNames[0];
+
 /** One folder per remote, an empty one for a remote without fetched branches */
 export const toRemoteTree = (remoteBranches: Branch[], remoteNames: string[], isCurrent: (branch: Branch) => boolean): TreeNode<Branch>[] => {
   const folders = toBranchTree(remoteBranches, isCurrent);

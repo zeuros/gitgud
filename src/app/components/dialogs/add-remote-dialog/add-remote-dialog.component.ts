@@ -18,7 +18,7 @@
 
 import {ChangeDetectionStrategy, Component, inject, type OnInit} from '@angular/core';
 import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import {catchError, EMPTY, switchMap, tap} from 'rxjs';
+import {catchError, EMPTY, switchMap} from 'rxjs';
 import {ButtonDirective} from 'primeng/button';
 import {InputText} from 'primeng/inputtext';
 import {DynamicDialogRef} from 'primeng/dynamicdialog';
@@ -70,11 +70,19 @@ export class AddRemoteDialogComponent implements OnInit {
     if (this.form.invalid) return;
 
     const {remoteName, url} = this.form.getRawValue();
-    this.gitWorkflow.runAndRefresh(['remote', 'add', remoteName, url.trim()]).pipe(
-      tap(() => this.ref.close()),
-      switchMap(() => this.gitWorkflow.runAndRefresh(['fetch', remoteName])),
+    this.gitApi.gitAction(['remote', 'add', remoteName, url.trim()]).pipe(
       catchError(e => { this.toast.err(e); return EMPTY; }),
-    ).subscribe(() => this.toast.success(`Remote ${remoteName} added and fetched`));
+      // An unreachable remote is removed again, the dialog stays open to fix its URL
+      switchMap(() => this.gitWorkflow.runAndRefresh(['fetch', remoteName]).pipe(
+        catchError(e => {
+          this.toast.err(e);
+          return this.gitApi.gitAction(['remote', 'remove', remoteName]).pipe(switchMap(() => EMPTY));
+        }),
+      )),
+    ).subscribe(() => {
+      this.ref.close();
+      this.toast.success(`Remote ${remoteName} added and fetched`);
+    });
   };
 
   protected cancel = () => this.ref.close();

@@ -24,7 +24,8 @@ import {InputText} from 'primeng/inputtext';
 import {type DialogService, DynamicDialogConfig, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {GitApiService} from '../../../services/git/git-api.service';
 import type {Observable} from 'rxjs';
-import type {RemoteAndBranch} from '../../../utils/branch-utils';
+import {defaultUpstreamRemote, remote, type RemoteAndBranch} from '../../../utils/branch-utils';
+import {CurrentRepoStore} from '../../../stores/current-repo.store';
 
 export const openSetUpstreamDialog = (dialog: DialogService, branchName: string): Observable<RemoteAndBranch | null> =>
   dialog.open(SetUpstreamDialogComponent, {header: `Set upstream for "${branchName}"`, width: '500px', data: {branchName}})!.onClose
@@ -58,6 +59,7 @@ export class SetUpstreamDialogComponent implements OnInit {
   private ref = inject(DynamicDialogRef<RemoteAndBranch>);
   private config = inject(DynamicDialogConfig);
   private gitApi = inject(GitApiService);
+  private currentRepo = inject(CurrentRepoStore);
 
   branchName: string = this.config.data.branchName;
   remotes = signal<string[]>([]);
@@ -68,7 +70,8 @@ export class SetUpstreamDialogComponent implements OnInit {
     this.gitApi.git(['remote']).subscribe(output => {
       const remotes = output.trim().split('\n').filter(Boolean);
       this.remotes.set(remotes);
-      if (remotes.length) this.remoteControl.setValue(remotes[0]);
+      const remoteName = defaultUpstreamRemote(remotes, this.branchName, this.currentRepo.branches().filter(remote));
+      if (remoteName) this.remoteControl.setValue(remoteName);
     });
   }
 

@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
-import {toLocalAndRemotePairs, toRemoteTree} from './branch-utils';
+import {defaultUpstreamRemote, toLocalAndRemotePairs, toRemoteTree} from './branch-utils';
 
 const tip = {sha: 'abc', author: undefined!};
 const localBranch = (name: string, upstream: string | null = null, isHeadPointed = false) =>
@@ -35,6 +35,17 @@ describe('toLocalAndRemotePairs', () => {
   it('puts the head-pointed pair first', () =>
     expect(names(toLocalAndRemotePairs([localBranch('a'), localBranch('b', null, true)])))
       .toEqual([['b', null], ['a', null]]));
+});
+
+describe('defaultUpstreamRemote', () => {
+  it('picks the remote already holding the branch', () =>
+    expect(defaultUpstreamRemote(['fork', 'origin'], 'feature', [remoteBranch('origin/feature')])).toBe('origin'));
+
+  it('else origin, not the first remote', () =>
+    expect(defaultUpstreamRemote(['fork', 'origin'], 'feature', [])).toBe('origin'));
+
+  it('else the first remote', () =>
+    expect(defaultUpstreamRemote(['fork', 'upstream'], 'feature', [])).toBe('fork'));
 });
 
 describe('toRemoteTree', () => {
