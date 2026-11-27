@@ -45,6 +45,7 @@ import type {GitWorktree} from '../../models/git-worktree';
 import {GitRepositoryService} from '../../services/git-repository.service';
 import {DialogService} from 'primeng/dynamicdialog';
 import {CreateWorktreeDialogComponent} from '../dialogs/create-worktree-dialog/create-worktree-dialog.component';
+import {AddRemoteDialogComponent} from '../dialogs/add-remote-dialog/add-remote-dialog.component';
 import {TitleIfOverflowDirective} from '../../directives/title-if-overflow.directive';
 import {TreeListComponent, type TreeNodeContextMenuEvent} from '../tree-list/tree-list.component';
 import {otherWorktreeTooltip} from '../../utils/worktree-utils';
@@ -196,6 +197,8 @@ export class LeftPanelComponent {
   };
 
   protected addWorktree = () => this.dialog.open(CreateWorktreeDialogComponent, {header: 'Create Worktree', width: '520px'});
+
+  protected addRemote = () => this.dialog.open(AddRemoteDialogComponent, {header: 'Add Remote', width: '450px'});
 
   /** Words searched in the transcripts; undefined while the search is closed */
   protected transcriptQuery = signal<string | undefined>(undefined);

@@ -51,8 +51,9 @@
 
         <p-splitter-panel [minSize]="15">
             <div class="panel">
-                <div class="title">
+                <div class="title flex align-items-center">
                     <i class="fa fa-cloud mr-2"></i>Remote
+                    <i class="fa fa-plus ml-auto cursor-pointer" (click)="addRemote()" title="Add remote"></i>
                 </div>
                 <gitgud-tree-list #remoteBranchList
                                   class="content"

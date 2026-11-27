@@ -41,6 +41,7 @@ import {ConflictPredictionService} from './conflict-prediction.service';
 import {withConflictWarning} from '../utils/conflict-prediction.utils';
 import {type BehindRemoteAction, openBehindRemoteDialog} from '../components/dialogs/behind-remote-dialog/behind-remote-dialog.component';
 import {lockedByWorktree, worktreeName} from '../utils/worktree-utils';
+import {remoteWebUrl} from '../utils/permalink.utils';
 
 @Injectable({providedIn: 'root'})
 export class BranchContextMenuService {
@@ -82,7 +83,13 @@ export class BranchContextMenuService {
 
     if (node.type === 'remote-root') {
       const remoteName = node.label ?? '…';
-      return [{label: `Edit ${remoteName}`, icon: 'fa fa-pencil', command: () => this.editRemote(remoteName)}];
+      return [
+        {label: `Fetch ${remoteName}`, icon: 'fa fa-cloud-download', command: () => this.gitWorkflow.doRunAndRefresh(['fetch', '--prune', remoteName], `Fetched ${remoteName}`)},
+        {label: `Edit ${remoteName}`, icon: 'fa fa-pencil', command: () => this.editRemote(remoteName)},
+        {label: `Open remote: ${remoteName}`, icon: 'fa fa-external-link', command: () => this.openRemote(remoteName)},
+        {separator: true},
+        {label: `Remove ${remoteName}`, icon: 'fa fa-trash', styleClass: 'danger-menuitem', command: () => this.removeRemote(remoteName)},
+      ];
     }
 
     if (node.children?.length) {
@@ -279,6 +286,23 @@ export class BranchContextMenuService {
       )
       .subscribe();
   };
+
+  private openRemote = (remoteName: string) =>
+    this.gitApi.git(['remote', 'get-url', remoteName]).subscribe(remoteUrl => {
+      const webUrl = remoteWebUrl(remoteUrl);
+      if (webUrl) void window.tauri.openExternal(webUrl);
+      else this.toast.warn(`No web page known for ${remoteUrl.trim()}`);
+    });
+
+  private removeRemote = (remoteName: string) =>
+    this.confirmation.confirm({
+      header: `Remove ${remoteName} ?`,
+      message: `Its remote-tracking branches go too, and local branches stop tracking it. Nothing is deleted on the server.`,
+      acceptButtonStyleClass: 'p-button-danger',
+      acceptLabel: 'Remove',
+      rejectLabel: 'Cancel',
+      accept: () => this.gitWorkflow.doRunAndRefresh(['remote', 'remove', remoteName], `Removed remote ${remoteName}`),
+    });
 
   private editRemote = (remoteName: string) =>
     this.dialog.open(EditRemoteComponent, {header: `Edit remote: ${remoteName}`, width: '450px', data: {remoteName}})!
