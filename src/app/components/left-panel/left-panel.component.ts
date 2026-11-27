@@ -25,7 +25,7 @@ import {CdkDropList} from '@angular/cdk/drag-drop';
 import {ActiveContextMenuService} from '../../services/active-context-menu.service';
 import type {MenuItem, TreeNode} from 'primeng/api';
 import type {Branch} from '../../lib/github-desktop/model/branch';
-import {local, remote, toBranchTree} from '../../utils/branch-utils';
+import {local, remote, toBranchTree, toRemoteTree} from '../../utils/branch-utils';
 import {findNode} from '../../utils/tree-utils';
 import type {Commit} from '../../lib/github-desktop/model/commit';
 import {CurrentRepoStore} from '../../stores/current-repo.store';
@@ -114,8 +114,8 @@ export class LeftPanelComponent {
     effect(() => this.localBranches.set(toBranchTree(this.currentRepo.branches().filter(local), branch => branch.isHeadPointed)));
     effect(() => {
       const upstream = this.currentRepo.branches().find(branch => local(branch) && branch.isHeadPointed)?.upstream;
-      const remoteBranches = toBranchTree(this.currentRepo.branches().filter(remote), branch => branch.name === upstream);
-      this.remoteBranches.set(remoteBranches.map(node => ({...node, type: 'remote-root'})));
+      const remoteNames = this.currentRepo.remotes().map(({name}) => name);
+      this.remoteBranches.set(toRemoteTree(this.currentRepo.branches().filter(remote), remoteNames, branch => branch.name === upstream));
     });
     effect(() => this.tagTree.set(toTagTree(this.currentRepo.allTagsByName())));
   }

@@ -21,6 +21,7 @@ import type {Branch} from '../lib/github-desktop/model/branch';
 import type {WorkDirStatus} from '../lib/github-desktop/model/workdir';
 import type {GitTag} from './git-tag';
 import type {GitWorktree} from './git-worktree';
+import type {GitRemote} from './git-remote';
 import type {GitOperation} from '../utils/operation-in-progress.utils';
 
 export type ViewType = 'hunk' | 'inline' | 'split';
@@ -38,7 +39,7 @@ export class GitRepository {
     public detachedHeadSha?: string,
     public selectedCommitsShas = ['index'],
     public startCommit = 0,
-    public remotes: { remote: string; url: string }[] = [],
+    public remotes: GitRemote[] = [],
     // Editor config
     public editorConfig: { viewType: ViewType } = {viewType: 'split'},
     public workDirStatus: WorkDirStatus = {unstaged: [], staged: [], conflicted: []},

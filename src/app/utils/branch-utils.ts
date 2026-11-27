@@ -17,6 +17,7 @@
  */
 
 import {orderBy} from 'lodash-es';
+import type {TreeNode} from 'primeng/api';
 import {type Branch, BranchType} from '../lib/github-desktop/model/branch';
 import {toPathTree} from './tree-utils';
 
@@ -29,6 +30,15 @@ export const toBranchTree = (branches: Branch[], isCurrent: (branch: Branch) => 
     icon: isCurrent(branch) ? 'fa fa-check checkout-icon' : 'fa fa-code-fork',
     styleClass: isCurrent(branch) ? 'worktree-current' : undefined,
   }));
+
+/** One folder per remote, an empty one for a remote without fetched branches */
+export const toRemoteTree = (remoteBranches: Branch[], remoteNames: string[], isCurrent: (branch: Branch) => boolean): TreeNode<Branch>[] => {
+  const folders = toBranchTree(remoteBranches, isCurrent);
+  const emptyFolders = remoteNames
+    .filter(name => !folders.some(folder => folder.key === name))
+    .map(name => ({key: name, label: name, icon: 'pi pi-folder', children: []}));
+  return [...folders, ...emptyFolders].map(folder => ({...folder, type: 'remote-root'}));
+};
 
 export interface RemoteAndBranch {
   remote: string;

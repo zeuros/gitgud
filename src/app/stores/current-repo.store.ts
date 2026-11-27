@@ -82,6 +82,7 @@ export class CurrentRepoStore {
     return this.tags().find(s => s.sha == sha);
   });
   worktrees = computed(() => this.reposStore.selectedRepository()?.worktrees ?? [], {equal: isEqual});
+  remotes = computed(() => this.reposStore.selectedRepository()?.remotes ?? [], {equal: isEqual});
   isCurrentWorktree = (path: string | undefined) => !!path && path === this.cwd();
   private branchesInOtherWorktrees = computed(() => branchesCheckedOutElsewhere(this.worktrees(), this.cwd()), {equal: isEqual});
   // Path of the other worktree a local branch is checked out in: checking it out switches there

@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {Branch, BranchType} from '../lib/github-desktop/model/branch';
-import {toLocalAndRemotePairs} from './branch-utils';
+import {toLocalAndRemotePairs, toRemoteTree} from './branch-utils';
 
 const tip = {sha: 'abc', author: undefined!};
 const localBranch = (name: string, upstream: string | null = null, isHeadPointed = false) =>
@@ -35,4 +35,11 @@ describe('toLocalAndRemotePairs', () => {
   it('puts the head-pointed pair first', () =>
     expect(names(toLocalAndRemotePairs([localBranch('a'), localBranch('b', null, true)])))
       .toEqual([['b', null], ['a', null]]));
+});
+
+describe('toRemoteTree', () => {
+  it('gives a remote without fetched branches an empty folder', () =>
+    expect(toRemoteTree([remoteBranch('origin/main')], ['fork', 'origin'], () => false)
+      .map(({key, type, children}) => [key, type, children?.length]))
+      .toEqual([['origin', 'remote-root', 1], ['fork', 'remote-root', 0]]));
 });

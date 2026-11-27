@@ -23,6 +23,7 @@ import {BranchReaderService} from './git/branch-reader.service';
 import {StashReaderService} from './git/stash-reader.service';
 import {TagReaderService} from './git/tag-reader.service';
 import {WorktreeReaderService} from './git/worktree-reader.service';
+import {RemoteReaderService} from './git/remote-reader.service';
 import {GitApiService} from './git/git-api.service';
 import {filterOutStashes} from '../utils/repository-utils';
 import {detectOperationInProgress} from '../utils/operation-in-progress.utils';
@@ -51,6 +52,7 @@ export class GitRefreshService {
   private stashReader = inject(StashReaderService);
   private tagReader = inject(TagReaderService);
   private worktreeReader = inject(WorktreeReaderService);
+  private remoteReader = inject(RemoteReaderService);
   private gitRepositoryStore = inject(GitRepositoryStore);
   private gitApi = inject(GitApiService);
   private currentRepo = inject(CurrentRepoStore);
@@ -163,6 +165,7 @@ export class GitRefreshService {
             stashes: of(stashes),
             tags: this.tagReader.getTags(),
             worktrees: this.worktreeReader.getWorktrees(),
+            remotes: this.remoteReader.getRemotes(),
           }).pipe(tap((r: Partial<GitRepository>) => {
             save(r);
             this.updateRemoteTags(stashes, remoteTagsInLog, save);
