@@ -63,6 +63,18 @@
   </provides>
 
   <releases>
+    <release version="2.16.0" date="2026-11-27">
+      <description>
+        <p>What's new in GitGud 2.16.0:</p>
+        <ul>
+          <li>Add remote button; fetch, open and remove in a remote's context menu</li>
+          <li>Wrap up button: stop a worktree agent, remove its worktree, keep its branch</li>
+          <li>Offer to reconcile a branch behind its remote from every push</li>
+          <li>Remove a remote whose first fetch fails; upstream defaults to origin</li>
+          <li>List every remote, one without fetched branches too</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.15.0" date="2026-11-25">
       <description>
         <p>What's new in GitGud 2.15.0:</p>
